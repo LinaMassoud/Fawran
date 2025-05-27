@@ -20,7 +20,25 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
-  PageController _pageController = PageController();
+  
+  // Animation duration constants
+  static const Duration kCircle1Duration = Duration(seconds: 8);
+  static const Duration kCircle2Duration = Duration(seconds: 10);
+  static const Duration kCircle3Duration = Duration(seconds: 6);
+  
+  // Layout offset constants
+  static const double kCircle1BaseLeft = -80;
+  static const double kCircle1MovementMultiplier = 60;
+  static const double kCircle2BaseRight = -100;
+  static const double kCircle2MovementMultiplier = 50;
+  static const double kCircle3MovementMultiplier = 80;
+  
+  // Circle size constants
+  static const double kCircle1Size = 200;
+  static const double kCircle2Size = 250;
+  static const double kCircle3Size = 180;
+  
+  late final PageController _pageController;
   int _currentPage = 0;
 
   // Animation controllers for the circles
@@ -57,19 +75,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void initState() {
     super.initState();
     
-    // Initialize animation controllers with faster durations for better visibility
+    // Initialize PageController in initState for better lifecycle management
+    _pageController = PageController();
+    
+    // Initialize animation controllers with duration constants
     _circle1Controller = AnimationController(
-      duration: const Duration(seconds: 8),
+      duration: kCircle1Duration,
       vsync: this,
     );
     
     _circle2Controller = AnimationController(
-      duration: const Duration(seconds: 10),
+      duration: kCircle2Duration,
       vsync: this,
     );
     
     _circle3Controller = AnimationController(
-      duration: const Duration(seconds: 6),
+      duration: kCircle3Duration,
       vsync: this,
     );
 
@@ -114,7 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _nextPage() {
-    if (_currentPage < 3) {
+    if (_currentPage < _onboardingData.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -124,7 +145,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _skipToEnd() {
     _pageController.animateToPage(
-      3,
+      _onboardingData.length - 1,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
@@ -159,11 +180,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             animation: _circle1Animation,
             builder: (context, child) {
               return Positioned(
-                left: -80 + (_circle1Animation.value.dx * 60),
+                left: kCircle1BaseLeft + (_circle1Animation.value.dx * kCircle1MovementMultiplier),
                 top: screenHeight * 0.1 + (_circle1Animation.value.dy * 40),
                 child: Container(
-                  width: 200,
-                  height: 200,
+                  width: kCircle1Size,
+                  height: kCircle1Size,
                   decoration: BoxDecoration(
                     color: const Color(0xFF4A6FA5).withOpacity(0.15),
                     shape: BoxShape.circle,
@@ -177,11 +198,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             animation: _circle2Animation,
             builder: (context, child) {
               return Positioned(
-                right: -100 + (_circle2Animation.value.dx * 50),
+                right: kCircle2BaseRight + (_circle2Animation.value.dx * kCircle2MovementMultiplier),
                 top: screenHeight * 0.25 + (_circle2Animation.value.dy * 50),
                 child: Container(
-                  width: 250,
-                  height: 250,
+                  width: kCircle2Size,
+                  height: kCircle2Size,
                   decoration: BoxDecoration(
                     color: const Color(0xFF4A6FA5).withOpacity(0.18),
                     shape: BoxShape.circle,
@@ -195,11 +216,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             animation: _circle3Animation,
             builder: (context, child) {
               return Positioned(
-                left: screenWidth * 0.2 + (_circle3Animation.value.dx * 80),
+                left: screenWidth * 0.2 + (_circle3Animation.value.dx * kCircle3MovementMultiplier),
                 bottom: screenHeight * 0.45 + (_circle3Animation.value.dy * 30),
                 child: Container(
-                  width: 180,
-                  height: 180,
+                  width: kCircle3Size,
+                  height: kCircle3Size,
                   decoration: BoxDecoration(
                     color: const Color(0xFF4A6FA5).withOpacity(0.20),
                     shape: BoxShape.circle,
@@ -259,7 +280,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         padding: const EdgeInsets.only(bottom: 1),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(4, (index) {
+                          children: List.generate(_onboardingData.length, (index) {
                             return AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -341,7 +362,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    if (_currentPage < 3)
+                                    if (_currentPage < _onboardingData.length - 1)
                                       TextButton(
                                         onPressed: _skipToEnd,
                                         child: const Text(
@@ -356,7 +377,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     else
                                       const SizedBox(width: 60),
                                     ElevatedButton(
-                                      onPressed: _currentPage < 3 ? _nextPage : () {
+                                      onPressed: _currentPage < _onboardingData.length - 1 ? _nextPage : () {
                                         // Handle get started action
                                         print('Get Started pressed');
                                       },
@@ -373,7 +394,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                         elevation: 0,
                                       ),
                                       child: Text(
-                                        _currentPage < 3 ? 'Next' : 'Get Started',
+                                        _currentPage < _onboardingData.length - 1 ? 'Next' : 'Get Started',
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
