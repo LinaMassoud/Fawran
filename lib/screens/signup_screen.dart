@@ -1,3 +1,5 @@
+import 'package:fawran/screens/login_screen.dart';
+import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
@@ -13,6 +15,7 @@ class SignUpScreen extends ConsumerStatefulWidget {
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  final _userNameController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -22,7 +25,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _confirmPasswordController = TextEditingController();
 
   @override
+void initState() {
+  super.initState();
+
+
+}
+
+  @override
   void dispose() {
+    _userNameController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
@@ -35,6 +46,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+      ref.listen<AuthState>(authProvider, (previous, next) {
+    if (next.isSignedUp) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VerificationScreen(
+            phoneNumber: _phoneController.text,
+          ),
+        ),
+      );
+    }
+  });
     final authState = ref.watch(authProvider);
     final loc = AppLocalizations.of(context)!;
 
@@ -46,6 +70,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           key: _formKey,
           child: Column(
             children: [
+               _buildTextField(
+                controller: _userNameController,
+                label: loc.firstName,
+                icon: Icons.person,
+                validator: (val) =>
+                    val == null || val.isEmpty ? '${loc.firstName} is required' : null,
+              ),
+                            const SizedBox(height: 10),
+
               _buildTextField(
                 controller: _firstNameController,
                 label: loc.firstName,
@@ -117,6 +150,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     : () {
                         if (_formKey.currentState!.validate()) {
                           ref.read(authProvider.notifier).signUp(
+                                userName: _userNameController.text,
                                 firstName: _firstNameController.text,
                                 middleName: _middleNameController.text,
                                 lastName: _lastNameController.text,
@@ -125,6 +159,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 password: _passwordController.text,
                               );
                         }
+                                         
                       },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
@@ -143,7 +178,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/login');
+                    Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LoginScreen(isArabic: true, onLanguageChanged: (bool? value) {
+                                print("object");
+                              },),
+                            ),
+                          );
                 },
                 child: Text(loc.alreadyHaveAccount),
               ),

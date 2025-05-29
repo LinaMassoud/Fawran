@@ -1,3 +1,4 @@
+import 'package:fawran/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Generated localization file
@@ -37,11 +38,13 @@ class _MyAppState extends State<MyApp> {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,  
       ],
-      home: LoginScreen(isArabic: isArabic, onLanguageChanged: (bool? value) {
-        setState(() {
-          isArabic = value ?? false;  
-        });
-      }),
+      home: HomeScreen()
+     
     );
   }
 }
+
+// //LoginScreen(isArabic: isArabic, onLanguageChanged: (bool? value) {
+//         setState(() {
+//           isArabic = value ?? false;  
+//         });

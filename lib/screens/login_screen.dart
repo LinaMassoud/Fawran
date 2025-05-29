@@ -1,8 +1,11 @@
+import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   final bool isArabic;
   final ValueChanged<bool?> onLanguageChanged;
 
@@ -13,8 +16,41 @@ class LoginScreen extends StatelessWidget {
   });
 
   @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final authState = ref.watch(authProvider);
+
+    ref.listen<AuthState>(authProvider, (prev, next) {
+      if (next.isLoggedIn) {
+        // Navigate to home or another screen after successful login
+         Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomeScreen(),
+                            ),
+                          );
+      } else if (next.errorMessage.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.errorMessage)),
+        );
+      }
+    });
+
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
@@ -23,7 +59,7 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Language Switch (top-right, fixed LTR)
+          // Language Switch
           Positioned(
             top: 16,
             right: 16,
@@ -33,8 +69,10 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   const Text('العربية', style: TextStyle(fontSize: 14)),
                   Switch(
-                    value: !isArabic,
-                    onChanged: (val) => onLanguageChanged(!val),
+                    value: !widget.isArabic,
+                    onChanged: (val) => widget.onLanguageChanged(!val),
+                    activeTrackColor: Colors.orange,
+                
                   ),
                   const Text('English', style: TextStyle(fontSize: 14)),
                 ],
@@ -61,9 +99,10 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    // Phone Number
+                    // Phone / Email
                     TextField(
-                      keyboardType: TextInputType.phone,
+                      controller: _phoneController,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.phone),
                         labelText: loc.phoneNumber,
@@ -76,6 +115,7 @@ class LoginScreen extends StatelessWidget {
 
                     // Password
                     TextField(
+                      controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.lock),
@@ -106,35 +146,50 @@ class LoginScreen extends StatelessWidget {
                     SizedBox(
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Submit logic here
-                        },
+                        onPressed: authState.isLoading
+                            ? null
+                            : () {
+                                final email = _phoneController.text.trim();
+                                final password =
+                                    _passwordController.text.trim();
+                                ref.read(authProvider.notifier).login(
+                                      phoneNumber: email,
+                                      password: password,
+                                    );
+                              },
                         style: ElevatedButton.styleFrom(
                           textStyle: const TextStyle(fontSize: 16),
+                          backgroundColor: Colors.orange,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: Text(loc.login),
+                        child: authState.isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : Text(loc.login),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // Sign Up
+                    // Sign Up Link
                     Center(
                       child: TextButton(
                         onPressed: () {
-                            Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SignUpScreen()),
-    );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignUpScreen(),
+                            ),
+                          );
                         },
                         child: Text(
                           "${loc.dontHaveAccount} ${loc.signUp}",
                           style: const TextStyle(fontWeight: FontWeight.w300),
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
