@@ -1,0 +1,457 @@
+import 'package:flutter/material.dart';
+import '../widgets/booking_bottom_navigation.dart';
+
+class ServiceDetailsStep extends StatelessWidget {
+  final String selectedNationality;
+  final int workerCount;
+  final String contractDuration;
+  final String selectedTime;
+  final String visitDuration;
+  final String visitsPerWeek;
+  final Function(String) onContractDurationChanged;
+  final Function(int) onWorkerCountChanged;
+  final Function(String) onVisitsPerWeekChanged;
+  final VoidCallback? onSelectDatePressed;
+  final VoidCallback? onDonePressed;
+  final bool showBottomNavigation;
+  final double totalPrice;
+  final List<DateTime> selectedDates;
+
+  const ServiceDetailsStep({
+    Key? key,
+    required this.selectedNationality,
+    required this.workerCount,
+    required this.contractDuration,
+    required this.selectedTime,
+    required this.visitDuration,
+    required this.visitsPerWeek,
+    required this.onContractDurationChanged,
+    required this.onWorkerCountChanged,
+    required this.onVisitsPerWeekChanged,
+    this.onSelectDatePressed,
+    this.onDonePressed,
+    this.showBottomNavigation = false,
+    this.totalPrice = 0.0,
+    this.selectedDates = const [],
+  }) : super(key: key);
+
+  Widget _buildDropdownField(String label, String value, List<String> options, Function(String) onChanged, {bool isEnabled = true}) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 15),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey[300]!, 
+          width: 1.5
+        ),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (isEnabled) ...[
+                SizedBox(width: 4),
+                PopupMenuButton<String>(
+                  onSelected: onChanged,
+                  icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
+                  itemBuilder: (context) => options.map((option) => 
+                    PopupMenuItem<String>(
+                      value: option,
+                      child: Text(option),
+                    )
+                  ).toList(),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkerCountField() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 15),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '$workerCount Worker${workerCount > 1 ? 's' : ''}',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (workerCount > 1) {
+                    onWorkerCountChanged(workerCount - 1);
+                  }
+                },
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[400]!),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.remove, size: 18, color: Colors.grey[600]),
+                ),
+              ),
+              SizedBox(width: 15),
+              Text(
+                '$workerCount',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(width: 15),
+              GestureDetector(
+                onTap: () {
+                  onWorkerCountChanged(workerCount + 1);
+                },
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[400]!),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.add, size: 18, color: Colors.grey[600]),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectDateButton() {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(top: 20, bottom: 20),
+      child: GestureDetector(
+        onTap: onSelectDatePressed,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select date',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF7B2CBF),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (selectedDates.isNotEmpty)
+                    Text(
+                      '${selectedDates.length} date${selectedDates.length > 1 ? 's' : ''} selected',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                ],
+              ),
+              Icon(
+                Icons.arrow_forward,
+                color: Color(0xFF7B2CBF),
+                size: 24,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> contractDurations = [
+      '1 week', '2 weeks', '1 month', '3 months', '6 months'
+    ];
+    final List<String> visitFrequencies = [
+      '1 visit weekly', '2 visits weekly', '3 visits weekly'
+    ];
+    final List<String> nationalities = ['East Asia', 'South Asia', 'Africa', 'Europe'];
+    final List<String> times = ['Morning', 'Afternoon', 'Evening'];
+    final List<String> durations = ['2 hours', '3 hours', '4 hours', '5 hours', '6 hours'];
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: Column(
+        children: [
+          // Main Content
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  // Service Title and Rating
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '1 weekly visit:Cleaning Visit',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.star, color: Colors.amber, size: 20),
+                                SizedBox(width: 5),
+                                Text(
+                                  '4.83 (34K reviews)',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.green[100],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Get SAR 225 off',
+                                style: TextStyle(
+                                  color: Colors.green[700],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 20),
+                  
+                  // Form Section
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // Nationality - disabled dropdown
+                          _buildDropdownField(
+                            'Nationality', 
+                            selectedNationality,
+                            nationalities,
+                            (value) {
+                              // Do nothing - this field is read-only
+                            },
+                            isEnabled: false
+                          ),
+                          
+                          // Worker count field
+                          _buildWorkerCountField(),
+                          
+                          // Contract Duration - functional dropdown
+                          _buildDropdownField(
+                            'Contract Duration', 
+                            contractDuration, 
+                            contractDurations, 
+                            onContractDurationChanged
+                          ),
+                          
+                          // Time - disabled dropdown
+                          _buildDropdownField(
+                            'Time', 
+                            selectedTime,
+                            times,
+                            (value) {
+                              // Do nothing - this field is read-only
+                            },
+                            isEnabled: false
+                          ),
+                          
+                          // Duration of visit - disabled dropdown
+                          _buildDropdownField(
+                            'Duration of visit', 
+                            visitDuration,
+                            durations,
+                            (value) {
+                              // Do nothing - this field is read-only
+                            },
+                            isEnabled: false
+                          ),
+                          
+                          // Visits week number - functional dropdown
+                          _buildDropdownField(
+                            'Visits week number', 
+                            visitsPerWeek, 
+                            visitFrequencies, 
+                            onVisitsPerWeekChanged
+                          ),
+                          
+                          // Select date button
+                          _buildSelectDateButton(),
+                          
+                          SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Bottom Navigation (shown only when dates are selected)
+          if (showBottomNavigation)
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    // Count indicator
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${selectedDates.length}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    SizedBox(width: 16),
+                    
+                    // Price section
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'SAR ${totalPrice.toInt()}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'SAR 1,497',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[400],
+                            fontWeight: FontWeight.w400,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    Spacer(),
+                    
+                    // Done Button
+                    Expanded(
+                      flex: 2,
+                      child: GestureDetector(
+                        onTap: onDonePressed,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF7B2CBF),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Done',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

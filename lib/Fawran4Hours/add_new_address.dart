@@ -1,4 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:io' show Platform;
+
+// You'll need to add these dependencies to your pubspec.yaml:
+// dependencies:
+//   google_maps_flutter: ^2.5.0
+//   geolocator: ^10.1.0
+//   geocoding: ^2.1.1
+
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class AddNewAddressScreen extends StatefulWidget {
   const AddNewAddressScreen({Key? key}) : super(key: key);
@@ -13,6 +25,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   final TextEditingController _streetNameController = TextEditingController();
   final TextEditingController _buildingNumberController = TextEditingController();
   final TextEditingController _fullAddressController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
 
   // Dropdown values
   String? _selectedProvince;
@@ -27,16 +40,58 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   // Current step
   int _currentStep = 1;
 
-  // Sample data for dropdowns
-  final List<String> _provinces = ['Riyadh Province', 'Makkah Province', 'Al Madinah Province'];
-  final List<String> _cities = ['Riyadh', 'Jeddah', 'Makkah', 'Medina'];
-  final List<String> _districts = ['Al Fath', 'Al Rashidiya', 'Al Abha', 'Al Olaya'];
+  // Map related variables
+  GoogleMapController? _mapController;
+  LatLng? _selectedLocation;
+  Set<Marker> _markers = {};
+  bool _showMapSelector = false;
+
+  // Sample data for dropdowns with corresponding coordinates
+  final Map<String, dynamic> _locationData = {
+    'Riyadh Province': {
+      'cities': {
+        'Riyadh': {
+          'districts': {
+            'Al Malaz': LatLng(24.6877, 46.7219),
+            'Al Olaya': LatLng(24.6951, 46.6859),
+            'Al Futah': LatLng(24.6408, 46.7146),
+            'As Salhiyah': LatLng(24.6693, 46.7357),
+          }
+        }
+      }
+    },
+    'Makkah Province': {
+      'cities': {
+        'Jeddah': {
+          'districts': {
+            'Al Hamra': LatLng(21.5169, 39.2192),
+            'Al Balad': LatLng(21.4858, 39.1925),
+          }
+        },
+        'Makkah': {
+          'districts': {
+            'Ajyad': LatLng(21.4225, 39.8262),
+            'Al Misfalah': LatLng(21.4167, 39.8167),
+          }
+        }
+      }
+    },
+    'Al Madinah Province': {
+      'cities': {
+        'Medina': {
+          'districts': {
+            'Al Haram': LatLng(24.4686, 39.6142),
+            'Quba': LatLng(24.4378, 39.6158),
+          }
+        }
+      }
+    }
+  };
 
   @override
   void initState() {
     super.initState();
     _selectedProvince = 'Riyadh Province'; // Default selection
-    _fullAddressController.text = 'Al Madinah Province,Madinah Principality, Madinah,7421';
   }
 
   @override
@@ -45,7 +100,25 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     _streetNameController.dispose();
     _buildingNumberController.dispose();
     _fullAddressController.dispose();
+    _notesController.dispose();
     super.dispose();
+  }
+
+  List<String> get _provinces => _locationData.keys.toList();
+
+  List<String> get _cities {
+    if (_selectedProvince == null) return [];
+    return _locationData[_selectedProvince]?['cities']?.keys?.toList() ?? [];
+  }
+
+  List<String> get _districts {
+    if (_selectedProvince == null || _selectedCity == null) return [];
+    return _locationData[_selectedProvince]?['cities']?[_selectedCity]?['districts']?.keys?.toList() ?? [];
+  }
+
+  LatLng? get _districtLocation {
+    if (_selectedProvince == null || _selectedCity == null || _selectedDistrict == null) return null;
+    return _locationData[_selectedProvince]?['cities']?[_selectedCity]?['districts']?[_selectedDistrict];
   }
 
   void _onProvinceChanged(String? value) {
@@ -100,6 +173,179 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     });
   }
 
+  Future<void> _openMapSelector() async {
+    if (!_isDistrictCompleted) return;
+
+    setState(() {
+      _showMapSelector = true;
+    });
+
+    // Show the map selection dialog
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => _buildMapDialog(),
+    );
+  }
+
+  Widget _buildMapDialog() {
+    LatLng initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
+    
+    return Dialog(
+      insetPadding: EdgeInsets.zero,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Color(0xFF1E3A8A),
+          title: Text(
+            'Select Location',
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+              setState(() {
+                _showMapSelector = false;
+              });
+            },
+          ),
+          elevation: 0,
+        ),
+        body: Stack(
+          children: [
+            GoogleMap(
+              onMapCreated: (GoogleMapController controller) {
+                _mapController = controller;
+              },
+              initialCameraPosition: CameraPosition(
+                target: initialLocation,
+                zoom: 15.0,
+              ),
+              onTap: _onMapTapped,
+              markers: _markers,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: true,
+              mapType: MapType.normal,
+              zoomControlsEnabled: false,
+            ),
+            // Custom location pin in center
+            if (_selectedLocation == null)
+              Center(
+                child: Icon(
+                  Icons.location_on,
+                  color: Colors.red,
+                  size: 40,
+                ),
+              ),
+            // Bottom button
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.all(20),
+                color: Colors.white,
+                child: GestureDetector(
+                  onTap: _selectedLocation != null ? _confirmLocation : null,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _selectedLocation != null ? Color(0xFF1E3A8A) : Colors.grey[400],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'ENTER DETAILS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onMapTapped(LatLng location) {
+    setState(() {
+      _selectedLocation = location;
+      _markers.clear();
+      _markers.add(
+        Marker(
+          markerId: MarkerId('selected_location'),
+          position: location,
+          infoWindow: InfoWindow(title: 'Selected Location'),
+        ),
+      );
+    });
+  }
+
+  Future<void> _confirmLocation() async {
+    if (_selectedLocation == null) return;
+
+    try {
+      // Reverse geocoding to get address from coordinates
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        _selectedLocation!.latitude,
+        _selectedLocation!.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String fullAddress = '';
+        
+        if (place.street != null && place.street!.isNotEmpty) {
+          fullAddress += '${place.street}, ';
+        }
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          fullAddress += '${place.subLocality}, ';
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          fullAddress += '${place.locality}, ';
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          fullAddress += '${place.administrativeArea}, ';
+        }
+        if (place.country != null && place.country!.isNotEmpty) {
+          fullAddress += place.country!;
+        }
+
+        // Remove trailing comma and space
+        if (fullAddress.endsWith(', ')) {
+          fullAddress = fullAddress.substring(0, fullAddress.length - 2);
+        }
+
+        setState(() {
+          _fullAddressController.text = fullAddress.isNotEmpty ? fullAddress : 
+            '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
+          if (place.street != null && place.street!.isNotEmpty) {
+            _streetNameController.text = place.street!;
+          }
+        });
+      }
+    } catch (e) {
+      // Fallback to basic address format
+      setState(() {
+        _fullAddressController.text = '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
+      });
+    }
+
+    Navigator.of(context).pop();
+    setState(() {
+      _showMapSelector = false;
+    });
+    _onMapCompleted();
+  }
+
   void _saveAddress() {
     if (_addressTitleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -114,9 +360,14 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
       'streetName': _streetNameController.text,
       'buildingNumber': _buildingNumberController.text,
       'fullAddress': _fullAddressController.text,
+      'notes': _notesController.text,
       'province': _selectedProvince,
       'city': _selectedCity,
       'district': _selectedDistrict,
+      'coordinates': _selectedLocation != null ? {
+        'latitude': _selectedLocation!.latitude,
+        'longitude': _selectedLocation!.longitude,
+      } : null,
     };
 
     Navigator.pop(context, newAddress);
@@ -130,7 +381,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: isCompleted ? Colors.green : (isActive ? Colors.black : Colors.grey[300]),
+            color: isCompleted ? Colors.green : (isActive ? Color(0xFF1E3A8A) : Colors.grey[300]),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -152,7 +403,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: isCompleted ? Colors.green : (isActive ? Colors.black : Colors.grey[500]),
+            color: isCompleted ? Colors.green : (isActive ? Color(0xFF1E3A8A) : Colors.grey[500]),
           ),
         ),
       ],
@@ -229,7 +480,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
   Widget _buildMapSelector({bool enabled = true}) {
     return GestureDetector(
-      onTap: enabled ? _onMapCompleted : null,
+      onTap: enabled ? _openMapSelector : null,
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 18),
@@ -304,7 +555,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     _buildStepIndicator(1, 'District', _isDistrictCompleted, _currentStep >= 1),
                     SizedBox(height: 20),
                     _buildDropdown(
-                      'Riyadh Province', 
+                      'Province', 
                       _selectedProvince, 
                       _provinces, 
                       _onProvinceChanged
@@ -330,7 +581,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     Container(height: 1, color: Colors.grey[300]),
                     SizedBox(height: 30),
 
-                    // Step 2: Map (Always visible, but disabled until district is completed)
+                    // Step 2: Map
                     _buildStepIndicator(2, 'Map', _isMapCompleted, _currentStep >= 2),
                     SizedBox(height: 20),
                     _buildMapSelector(enabled: _isDistrictCompleted),
@@ -339,7 +590,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     Container(height: 1, color: Colors.grey[300]),
                     SizedBox(height: 30),
 
-                    // Step 3: Details (Always visible, but disabled until map is completed)
+                    // Step 3: Details
                     _buildStepIndicator(3, 'Details', false, _currentStep >= 3),
                     SizedBox(height: 25),
                     
@@ -408,6 +659,19 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     ),
                     SizedBox(height: 8),
                     _buildTextField('Full Address', _fullAddressController, maxLines: 3, enabled: _canProceedToDetails),
+                    
+                    SizedBox(height: 20),
+                    
+                    Text(
+                      'Notes',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    _buildTextField('Unit Number, Entrance code etc..', _notesController, maxLines: 2, enabled: _canProceedToDetails),
                   ],
                 ),
               ),
@@ -428,12 +692,12 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      _canProceedToDetails ? 'SAVE' : 'Next',
+                      'SAVE',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: _canProceedToDetails ? 0.5 : 0,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),

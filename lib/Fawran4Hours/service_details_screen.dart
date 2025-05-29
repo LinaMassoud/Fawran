@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'cleaning_service_screen.dart'; // Import to access PackageModel
+import 'date_selection_screen.dart';
 
 class ServiceDetailsScreen extends StatefulWidget {
   final PackageModel package;
@@ -114,15 +115,34 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen>
     Navigator.pop(context);
   }
 
-  void _selectDate() {
-    // Navigate to date selection or show date picker
+  void _selectDate() async {
+  final selectedDates = await Navigator.push<List<DateTime>>(
+    context,
+    MaterialPageRoute(
+      builder: (context) => DateSelectionScreen(
+        package: widget.package,
+        selectedAddress: widget.selectedAddress,
+        selectedAddressId: widget.selectedAddressId,
+        selectedAddressFullAddress: widget.selectedAddressFullAddress,
+      ),
+    ),
+  );
+  
+  if (selectedDates != null && selectedDates.isNotEmpty) {
+    // Handle the selected dates
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Date selection functionality would be implemented here'),
-        backgroundColor: Colors.purple,
+        content: Text('Selected ${selectedDates.length} date(s) successfully'),
+        backgroundColor: Colors.green,
       ),
     );
+    
+    // You can store the selected dates in the state if needed
+    // setState(() {
+    //   this.selectedDates = selectedDates;
+    // });
   }
+}
 
   void _proceedToBooking() {
     // Create booking data object
