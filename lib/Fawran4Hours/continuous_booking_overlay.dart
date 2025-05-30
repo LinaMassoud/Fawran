@@ -272,34 +272,40 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
   }
 
   void _completePurchase() async {
-    // Create booking data
-    final selectedAddress = addresses.firstWhere((addr) => addr.isSelected);
-    final bookingData = BookingData(
-      selectedDates: selectedDates,
-      totalPrice: _calculateTotalPrice(),
-      selectedAddress: selectedAddress.name,
-      workerCount: workerCount,
-      contractDuration: contractDuration,
-      visitsPerWeek: visitsPerWeek,
-    );
+  // Create booking data
+  final selectedAddress = addresses.firstWhere((addr) => addr.isSelected);
+  final bookingData = BookingData(
+    selectedDates: selectedDates,
+    totalPrice: _calculateTotalPrice(),
+    selectedAddress: selectedAddress.name,
+    workerCount: workerCount,
+    contractDuration: contractDuration,
+    visitsPerWeek: visitsPerWeek,
+  );
 
-    // Close overlay with animation
-    await _animationController.reverse();
-    Navigator.pop(context);
+  // Close overlay with animation
+  await _animationController.reverse();
+  Navigator.pop(context);
 
-    // Call the callback to update the parent screen
-    if (widget.onBookingCompleted != null) {
-      widget.onBookingCompleted!(bookingData);
-    }
-
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Booking completed successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
+  // Call the callback to update the parent screen
+  if (widget.onBookingCompleted != null) {
+    widget.onBookingCompleted!(bookingData);
   }
+
+  // Show success message at header area
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Booking completed successfully!'),
+      backgroundColor: Colors.green,
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.fromLTRB(20, 100, 20, 0), // Positions at header area
+      duration: Duration(seconds: 3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    ),
+  );
+}
 
   // Calculate total price from selected dates
   double _calculateTotalPrice() {

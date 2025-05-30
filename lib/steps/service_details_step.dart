@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/booking_bottom_navigation.dart';
 
-class ServiceDetailsStep extends StatelessWidget {
+class ServiceDetailsStep extends StatefulWidget {
   final String selectedNationality;
   final int workerCount;
   final String contractDuration;
@@ -34,6 +34,12 @@ class ServiceDetailsStep extends StatelessWidget {
     this.totalPrice = 0.0,
     this.selectedDates = const [],
   }) : super(key: key);
+
+  @override
+  _ServiceDetailsStepState createState() => _ServiceDetailsStepState();
+}
+
+class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
 
   Widget _buildDropdownField(String label, String value, List<String> options, Function(String) onChanged, {bool isEnabled = true}) {
     return Container(
@@ -102,7 +108,7 @@ class ServiceDetailsStep extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '$workerCount Worker${workerCount > 1 ? 's' : ''}',
+              '${widget.workerCount} Worker${widget.workerCount > 1 ? 's' : ''}',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -115,8 +121,8 @@ class ServiceDetailsStep extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () {
-                  if (workerCount > 1) {
-                    onWorkerCountChanged(workerCount - 1);
+                  if (widget.workerCount > 1) {
+                    widget.onWorkerCountChanged(widget.workerCount - 1);
                   }
                 },
                 child: Container(
@@ -131,7 +137,7 @@ class ServiceDetailsStep extends StatelessWidget {
               ),
               SizedBox(width: 15),
               Text(
-                '$workerCount',
+                '${widget.workerCount}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -141,7 +147,7 @@ class ServiceDetailsStep extends StatelessWidget {
               SizedBox(width: 15),
               GestureDetector(
                 onTap: () {
-                  onWorkerCountChanged(workerCount + 1);
+                  widget.onWorkerCountChanged(widget.workerCount + 1);
                 },
                 child: Container(
                   width: 30,
@@ -165,7 +171,7 @@ class ServiceDetailsStep extends StatelessWidget {
       width: double.infinity,
       margin: EdgeInsets.only(top: 20, bottom: 20),
       child: GestureDetector(
-        onTap: onSelectDatePressed,
+        onTap: widget.onSelectDatePressed,
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
           decoration: BoxDecoration(
@@ -187,9 +193,9 @@ class ServiceDetailsStep extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (selectedDates.isNotEmpty)
+                  if (widget.selectedDates.isNotEmpty)
                     Text(
-                      '${selectedDates.length} date${selectedDates.length > 1 ? 's' : ''} selected',
+                      '${widget.selectedDates.length} date${widget.selectedDates.length > 1 ? 's' : ''} selected',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -228,136 +234,115 @@ class ServiceDetailsStep extends StatelessWidget {
         children: [
           // Main Content
           Expanded(
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // Service Title and Rating
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '1 weekly visit:Cleaning Visit',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
+            child: SingleChildScrollView(
+              child: Container(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Service Title and Rating
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '1 weekly visit:Cleaning Visit',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(Icons.star, color: Colors.amber, size: 20),
-                                SizedBox(width: 5),
-                                Text(
-                                  '4.83 (34K reviews)',
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(Icons.star, color: Colors.amber, size: 20),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    '4.83 (34K reviews)',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[100],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Get SAR 225 off',
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
+                                    color: Colors.green[700],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.green[100],
-                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Text(
-                                'Get SAR 225 off',
-                                style: TextStyle(
-                                  color: Colors.green[700],
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  
-                  SizedBox(height: 20),
-                  
-                  // Form Section
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // Nationality - disabled dropdown
-                          _buildDropdownField(
-                            'Nationality', 
-                            selectedNationality,
-                            nationalities,
-                            (value) {
-                              // Do nothing - this field is read-only
-                            },
-                            isEnabled: false
-                          ),
-                          
-                          // Worker count field
-                          _buildWorkerCountField(),
-                          
-                          // Contract Duration - functional dropdown
-                          _buildDropdownField(
-                            'Contract Duration', 
-                            contractDuration, 
-                            contractDurations, 
-                            onContractDurationChanged
-                          ),
-                          
-                          // Time - disabled dropdown
-                          _buildDropdownField(
-                            'Time', 
-                            selectedTime,
-                            times,
-                            (value) {
-                              // Do nothing - this field is read-only
-                            },
-                            isEnabled: false
-                          ),
-                          
-                          // Duration of visit - disabled dropdown
-                          _buildDropdownField(
-                            'Duration of visit', 
-                            visitDuration,
-                            durations,
-                            (value) {
-                              // Do nothing - this field is read-only
-                            },
-                            isEnabled: false
-                          ),
-                          
-                          // Visits week number - functional dropdown
-                          _buildDropdownField(
-                            'Visits week number', 
-                            visitsPerWeek, 
-                            visitFrequencies, 
-                            onVisitsPerWeekChanged
-                          ),
-                          
-                          // Select date button
-                          _buildSelectDateButton(),
-                          
-                          SizedBox(height: 20),
-                        ],
-                      ),
+                      ],
                     ),
-                  ),
-                ],
+                    
+                    SizedBox(height: 20),
+                    
+                    // Form Fields
+                    _buildDropdownField(
+                      'Nationality', 
+                      widget.selectedNationality,
+                      nationalities,
+                      (value) {},
+                      isEnabled: false
+                    ),
+                    
+                    _buildWorkerCountField(),
+                    
+                    _buildDropdownField(
+                      'Contract Duration', 
+                      widget.contractDuration, 
+                      contractDurations, 
+                      widget.onContractDurationChanged
+                    ),
+                    
+                    _buildDropdownField(
+                      'Time', 
+                      widget.selectedTime,
+                      times,
+                      (value) {},
+                      isEnabled: false
+                    ),
+                    
+                    _buildDropdownField(
+                      'Duration of visit', 
+                      widget.visitDuration,
+                      durations,
+                      (value) {},
+                      isEnabled: false
+                    ),
+                    
+                    _buildDropdownField(
+                      'Visits week number', 
+                      widget.visitsPerWeek, 
+                      visitFrequencies, 
+                      widget.onVisitsPerWeekChanged
+                    ),
+                    
+                    _buildSelectDateButton(),
+                  ],
+                ),
               ),
             ),
           ),
           
           // Bottom Navigation (shown only when dates are selected)
-          if (showBottomNavigation)
+          if (widget.showBottomNavigation)
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -383,7 +368,7 @@ class ServiceDetailsStep extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          '${selectedDates.length}',
+                          '${widget.selectedDates.length}',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -401,20 +386,19 @@ class ServiceDetailsStep extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'SAR ${totalPrice.toInt()}',
+                          'Total',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          'SAR ${widget.totalPrice.toInt()}',
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'SAR 1,497',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[400],
-                            fontWeight: FontWeight.w400,
-                            decoration: TextDecoration.lineThrough,
                           ),
                         ),
                       ],
@@ -426,7 +410,7 @@ class ServiceDetailsStep extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: GestureDetector(
-                        onTap: onDonePressed,
+                        onTap: widget.onDonePressed,
                         child: Container(
                           padding: EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(

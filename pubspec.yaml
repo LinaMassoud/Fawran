@@ -69,8 +69,6 @@ flutter:
     - assets/images/evening_icon.png
     - assets/images/cleaning_service_card.jpg
     - assets/images/services-image.png
-    - assets/icons/morning.png
-    - assets/icons/evening.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

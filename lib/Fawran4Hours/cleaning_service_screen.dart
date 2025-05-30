@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'address_selection_screen.dart';
 import 'continuous_booking_overlay.dart';
 import 'order_summary_screen.dart';
 
@@ -136,7 +135,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
 
       // Fixed: Use group_code=2 for East Asia
       final response = await http.get(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/hours/packages?service_id=1&group_code=2&service_shift=$selectedEastAsiaShift'),
+        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=1&service_code=FAWRAN4Hours&profession_id=4'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -173,7 +172,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
 
       // Fixed: Use group_code=1 for African
       final response = await http.get(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/hours/packages?service_id=1&group_code=1&service_shift=$selectedAfricanShift'),
+        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=1&service_code=FAWRAN4Hours&profession_id=4'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -486,6 +485,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                           
                           // Service packs (removed Evening pack)
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Expanded(
                                 child: GestureDetector(
@@ -509,8 +509,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                                 ),
                               ),
                               // Removed the Evening pack entirely
-                              SizedBox(width: 15),
-                              Expanded(child: Container()), // Empty space to maintain layout
+                              SizedBox(width: 15), // Empty space to maintain layout
                             ],
                           ),
                           SizedBox(height: 40),

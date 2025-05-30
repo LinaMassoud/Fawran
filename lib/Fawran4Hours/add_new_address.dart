@@ -18,7 +18,330 @@ class AddNewAddressScreen extends StatefulWidget {
   @override
   _AddNewAddressScreenState createState() => _AddNewAddressScreenState();
 }
+class MapSelectorDialog extends StatefulWidget {
+  final LatLng initialLocation;
+  final Function(LatLng) onLocationSelected;
 
+  const MapSelectorDialog({
+    Key? key,
+    required this.initialLocation,
+    required this.onLocationSelected,
+  }) : super(key: key);
+
+  @override
+  _MapSelectorDialogState createState() => _MapSelectorDialogState();
+}
+
+class _MapSelectorDialogState extends State<MapSelectorDialog> {
+  GoogleMapController? _mapController;
+  LatLng? _selectedLocation;
+  bool _hasUserMovedMap = false;
+  bool _isLocationConfirmed = false;
+   MapType _currentMapType = MapType.normal;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with the initial location
+    _selectedLocation = widget.initialLocation;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: EdgeInsets.zero,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Color(0xFF1E3A8A),
+          title: Text(
+            'Select Location',
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          elevation: 0,
+        ),
+        body: Stack(
+          children: [
+            GoogleMap(
+              onMapCreated: (GoogleMapController controller) {
+                _mapController = controller;
+              },
+              initialCameraPosition: CameraPosition(
+                target: widget.initialLocation,
+                zoom: 15.0,
+              ),
+              onCameraMove: _onCameraMove,
+              onCameraIdle: _onCameraIdle,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              mapType: _currentMapType,
+              zoomControlsEnabled: false,
+            ),
+            // Fixed center pin - always visible
+            Center(
+              child: Icon(
+                Icons.location_on,
+                color: Colors.red,
+                size: 40,
+              ),
+            ),
+            // Custom zoom controls (top right)
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Column(
+                children: [
+                  // Zoom in button
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.add, color: Colors.black54, size: 24),
+                      onPressed: _zoomIn,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  // Zoom out button
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.remove, color: Colors.black54, size: 24),
+                      onPressed: _zoomOut,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // In the MapSelectorDialog's build method, replace the map type selector Positioned widget:
+
+// Map type selector (positioned properly above the confirm button)
+Positioned(
+  bottom: 100, // Increased from 80 to give more space above the button
+  left: 20,    // Added left margin
+  right: 20,   // Added right margin
+  child: Center(
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15), // Reduced shadow opacity
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // MAP button
+          GestureDetector(
+            onTap: () => _changeMapType(MapType.normal),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Increased padding
+              decoration: BoxDecoration(
+                color: _currentMapType == MapType.normal 
+                    ? Color(0xFF1E3A8A) 
+                    : Colors.transparent,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  bottomLeft: Radius.circular(8),
+                ),
+              ),
+              child: Text(
+                'MAP',
+                style: TextStyle(
+                  color: _currentMapType == MapType.normal 
+                      ? Colors.white 
+                      : Colors.black87, // Changed from black54 to black87
+                  fontSize: 14, // Increased font size
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          // SATELLITE button
+          GestureDetector(
+            onTap: () => _changeMapType(MapType.satellite),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Increased padding
+              decoration: BoxDecoration(
+                color: _currentMapType == MapType.satellite 
+                    ? Color(0xFF1E3A8A) 
+                    : Colors.transparent,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
+              ),
+              child: Text(
+                'SATELLITE',
+                style: TextStyle(
+                  color: _currentMapType == MapType.satellite 
+                      ? Colors.white 
+                      : Colors.black87, // Changed from black54 to black87
+                  fontSize: 14, // Increased font size
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
+            // Bottom button
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.all(20),
+                color: Colors.white,
+                child: _buildMapActionButton(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapActionButton() {
+    if (!_hasUserMovedMap) {
+      // Initial state - show instruction text
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey[400],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Text(
+            'MOVE MAP TO POSITION PIN ON YOUR LOCATION',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    } else {
+      // User has moved map - show confirm button (ENABLED)
+      return GestureDetector(
+        onTap: _confirmLocationSelection,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Color(0xFF1E3A8A), // Blue color to show it's active
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              'CONFIRM LOCATION',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _onCameraMove(CameraPosition position) {
+    // Update the selected location as the user moves the map
+    _selectedLocation = position.target;
+    
+    // Mark that user has moved the map (but don't trigger setState here for performance)
+    if (!_hasUserMovedMap) {
+      setState(() {
+        _hasUserMovedMap = true;
+      });
+    }
+  }
+
+  void _onCameraIdle() {
+    // This is called when the user stops moving the map
+    // The _selectedLocation is already updated in _onCameraMove
+    print('Camera idle at: ${_selectedLocation?.latitude}, ${_selectedLocation?.longitude}'); // Debug print
+  }
+
+  void _confirmLocationSelection() {
+    print('Confirming location selection'); // Debug print
+    if (_selectedLocation != null) {
+      widget.onLocationSelected(_selectedLocation!);
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _zoomIn() {
+    _mapController?.animateCamera(CameraUpdate.zoomIn());
+  }
+
+  void _zoomOut() {
+    _mapController?.animateCamera(CameraUpdate.zoomOut());
+  }
+
+  void _changeMapType(MapType mapType) {
+    setState(() {
+      _currentMapType = mapType;
+    });
+  }
+
+  void _proceedToDetails() {
+    print('Proceeding to details with location: $_selectedLocation'); // Debug print
+    if (_selectedLocation != null) {
+      widget.onLocationSelected(_selectedLocation!);
+      Navigator.of(context).pop();
+    }
+  }
+}
+
+
+
+
+
+// Remove the old _buildMapDialog, _onMapTapped, _confirmLocationSelection, and _proceedToDetails methods
+// as they are now handled by the MapSelectorDialog widget
 class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   // Controllers for form fields
   final TextEditingController _addressTitleController = TextEditingController();
@@ -45,6 +368,8 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   LatLng? _selectedLocation;
   Set<Marker> _markers = {};
   bool _showMapSelector = false;
+  bool _hasUserMovedPin = false; // Track if user has moved the pin
+  bool _isLocationConfirmed = false; // Track if location is confirmed
 
   // Sample data for dropdowns with corresponding coordinates
   final Map<String, dynamic> _locationData = {
@@ -173,123 +498,87 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     });
   }
 
-  Future<void> _openMapSelector() async {
-    if (!_isDistrictCompleted) return;
+  // Now update your main widget's _openMapSelector method to use this new dialog:
+Future<void> _openMapSelector() async {
+  if (!_isDistrictCompleted) return;
 
-    setState(() {
-      _showMapSelector = true;
-    });
+  LatLng initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
 
-    // Show the map selection dialog
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => _buildMapDialog(),
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) => MapSelectorDialog(
+      initialLocation: initialLocation,
+      onLocationSelected: (LatLng selectedLocation) async {
+        // Handle the selected location here
+        setState(() {
+          _selectedLocation = selectedLocation;
+          _hasUserMovedPin = true;
+          _isLocationConfirmed = false;
+        });
+
+        await _handleLocationSelection(selectedLocation);
+      },
+    ),
+  );
+}
+// Add this new method to handle location selection and geocoding:
+Future<void> _handleLocationSelection(LatLng selectedLocation) async {
+  try {
+    // Reverse geocoding to get address from coordinates
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      selectedLocation.latitude,
+      selectedLocation.longitude,
     );
-  }
 
-  Widget _buildMapDialog() {
-    LatLng initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
-    
-    return Dialog(
-      insetPadding: EdgeInsets.zero,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Color(0xFF1E3A8A),
-          title: Text(
-            'Select Location',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              Navigator.of(context).pop();
-              setState(() {
-                _showMapSelector = false;
-              });
-            },
-          ),
-          elevation: 0,
-        ),
-        body: Stack(
-          children: [
-            GoogleMap(
-              onMapCreated: (GoogleMapController controller) {
-                _mapController = controller;
-              },
-              initialCameraPosition: CameraPosition(
-                target: initialLocation,
-                zoom: 15.0,
-              ),
-              onTap: _onMapTapped,
-              markers: _markers,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-              mapType: MapType.normal,
-              zoomControlsEnabled: false,
-            ),
-            // Custom location pin in center
-            if (_selectedLocation == null)
-              Center(
-                child: Icon(
-                  Icons.location_on,
-                  color: Colors.red,
-                  size: 40,
-                ),
-              ),
-            // Bottom button
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.all(20),
-                color: Colors.white,
-                child: GestureDetector(
-                  onTap: _selectedLocation != null ? _confirmLocation : null,
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: _selectedLocation != null ? Color(0xFF1E3A8A) : Colors.grey[400],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'ENTER DETAILS',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    if (placemarks.isNotEmpty) {
+      Placemark place = placemarks[0];
+      String fullAddress = '';
+      
+      if (place.street != null && place.street!.isNotEmpty) {
+        fullAddress += '${place.street}, ';
+      }
+      if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+        fullAddress += '${place.subLocality}, ';
+      }
+      if (place.locality != null && place.locality!.isNotEmpty) {
+        fullAddress += '${place.locality}, ';
+      }
+      if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+        fullAddress += '${place.administrativeArea}, ';
+      }
+      if (place.country != null && place.country!.isNotEmpty) {
+        fullAddress += place.country!;
+      }
 
-  void _onMapTapped(LatLng location) {
+      // Remove trailing comma and space
+      if (fullAddress.endsWith(', ')) {
+        fullAddress = fullAddress.substring(0, fullAddress.length - 2);
+      }
+
+      setState(() {
+        _fullAddressController.text = fullAddress.isNotEmpty ? fullAddress : 
+          '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
+        if (place.street != null && place.street!.isNotEmpty) {
+          _streetNameController.text = place.street!;
+        }
+      });
+    }
+  } catch (e) {
+    // Fallback to basic address format
     setState(() {
-      _selectedLocation = location;
-      _markers.clear();
-      _markers.add(
-        Marker(
-          markerId: MarkerId('selected_location'),
-          position: location,
-          infoWindow: InfoWindow(title: 'Selected Location'),
-        ),
-      );
+      _fullAddressController.text = '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
     });
   }
 
-  Future<void> _confirmLocation() async {
+  _onMapCompleted();
+}
+
+
+
+
+
+  Future<void> _proceedToDetails() async {
     if (_selectedLocation == null) return;
 
     try {
@@ -342,6 +631,8 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     Navigator.of(context).pop();
     setState(() {
       _showMapSelector = false;
+      _hasUserMovedPin = false;
+      _isLocationConfirmed = false;
     });
     _onMapCompleted();
   }
