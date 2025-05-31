@@ -1,0 +1,26 @@
+{
+  "login": "تسجيل الدخول",
+  "phoneNumber": "رقم الهاتف",
+  "password": "كلمة المرور",
+  "forgotPassword": "هل نسيت كلمة المرور؟",
+  "dontHaveAccount": "ليس لديك حساب؟",
+  
+  "signUp": "سجل الآن",
+  
+  "firstName": "الاسم الأول",
+  "middleName": "الاسم الأوسط",
+  "lastName": "اسم العائلة",
+  "email": "البريد الإلكتروني",
+  "password": "كلمة المرور",
+  "confirmPassword": "تأكيد كلمة المرور",
+  "phoneNumber": "رقم الهاتف",
+  "alreadyHaveAccount": "لديك حساب؟ تسجيل الدخول",
+
+  "verification": "التحقق",
+  "enterOtp": "أدخل الرمز المكون من 6 أرقام",
+  "codeSentTo": "لقد أرسلنا رمزًا إلى",
+  "verify": "تحقق",
+  "resendCode": "إعادة إرسال الرمز",
+  "resendIn": "إعادة الإرسال خلال"
+
+}
