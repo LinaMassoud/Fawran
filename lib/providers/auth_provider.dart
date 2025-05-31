@@ -1,6 +1,10 @@
 // providers/auth_provider.dart
+import 'package:flutter/material.dart'; // ✅ Import for Locale
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+
+final localeProvider = StateProvider<Locale>((ref) => const Locale('en'));
+
 
 class AuthState {
   final bool isLoading;

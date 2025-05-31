@@ -1,4 +1,3 @@
-import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -38,12 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next.isLoggedIn) {
         // Navigate to home or another screen after successful login
-         Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HomeScreen(),
-                            ),
-                          );
+      
       } else if (next.errorMessage.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage)),
