@@ -1,0 +1,22 @@
+{
+  "login": "Login",
+  "email": "Email",
+  "password": "Password",
+  "forgotPassword": "Forgot Password?",
+  "dontHaveAccount": "Don’t have an account?",
+
+  "signUp": "Sign Up",
+  "firstName": "First Name",
+  "middleName": "Middle Name",
+  "lastName": "Last Name",
+  "phoneNumber": "Phone Number",
+  "confirmPassword": "Confirm Password",
+  "alreadyHaveAccount": "Already have an account? Login",
+
+  "verification": "Verification",
+  "enterOtp": "Enter the 6-digit code",
+  "codeSentTo": "We’ve sent a code to",
+  "verify": "Verify",
+  "resendCode": "Resend Code",
+  "resendIn": "Resend in"
+}

@@ -1,23 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart'; // Import your cleaning service screen
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'providers/auth_provider.dart';
+import 'screens/home_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider); // Reactively watch locale
+
     return MaterialApp(
-      title: 'Cleaning Service App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const CleaningServiceScreen(), // Changed to use CleaningServiceScreen
-      debugShowCheckedModeBanner: false, // Optional: removes debug banner
+      title: 'Login App',
+      debugShowCheckedModeBanner: false,
+      locale: locale,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        AppLocalizations.delegate,
+      ],
+      home: HomeScreen(),
     );
   }
 }
