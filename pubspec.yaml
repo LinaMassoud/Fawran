@@ -30,6 +30,7 @@ flutter:
   generate: true
 
   assets:
+    - assets/images/
     - assets/images/cleaning_hero.jpg
     - assets/images/east_asia_flags.png
     - assets/images/african_flags.png

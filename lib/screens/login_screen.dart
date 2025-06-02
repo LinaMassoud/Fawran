@@ -1,18 +1,13 @@
-import 'package:fawran/screens/signup_screen.dart';
+import 'package:fawran/screens/location_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import '../providers/auth_provider.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  final bool isArabic;
-  final ValueChanged<bool?> onLanguageChanged;
-
-  const LoginScreen({
-    super.key,
-    required this.isArabic,
-    required this.onLanguageChanged,
-  });
+  const LoginScreen({super.key});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -33,11 +28,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final authState = ref.watch(authProvider);
+    final locale = ref.watch(localeProvider);
+    final isArabic = locale.languageCode == 'ar';
 
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next.isLoggedIn) {
-        // Navigate to home or another screen after successful login
-      
+        // Navigate to home screen
+       Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LocationScreen(),
+                            ),
+                          );
       } else if (next.errorMessage.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage)),
@@ -63,10 +65,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   const Text('العربية', style: TextStyle(fontSize: 14)),
                   Switch(
-                    value: !widget.isArabic,
-                    onChanged: (val) => widget.onLanguageChanged(!val),
+                    value: !isArabic,
+                    onChanged: (val) {
+                      final newLocale = val
+                          ? const Locale('en')
+                          : const Locale('ar');
+                      ref.read(localeProvider.notifier).state = newLocale;
+                    },
                     activeTrackColor: Colors.orange,
-                
                   ),
                   const Text('English', style: TextStyle(fontSize: 14)),
                 ],
@@ -93,10 +99,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Phone / Email
+                    // Phone Number
                     TextField(
                       controller: _phoneController,
-                      keyboardType: TextInputType.emailAddress,
+                      keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.phone),
                         labelText: loc.phoneNumber,
@@ -133,21 +139,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
 
-                    // Submit Button
+                    // Login Button
                     SizedBox(
                       height: 50,
                       child: ElevatedButton(
                         onPressed: authState.isLoading
                             ? null
                             : () {
-                                final email = _phoneController.text.trim();
+                                final phone = _phoneController.text.trim();
                                 final password =
                                     _passwordController.text.trim();
+
                                 ref.read(authProvider.notifier).login(
-                                      phoneNumber: email,
+                                      phoneNumber: phone,
                                       password: password,
                                     );
                               },
