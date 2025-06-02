@@ -4,12 +4,14 @@ class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
   final Function(List<DateTime>) onDatesChanged;
   final VoidCallback? onNextPressed;
+  final int maxSelectableDates; // This is now the total workers needed
 
   const DateSelectionStep({
     Key? key,
     required this.selectedDates,
     required this.onDatesChanged,
     this.onNextPressed,
+    this.maxSelectableDates = 1,
   }) : super(key: key);
 
   @override
@@ -20,7 +22,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   late DateTime currentMonth;
   late DateTime nextMonth;
   late List<DateTime> selectedDates;
-  Map<DateTime, double> datePrices = {};
+  Map<DateTime, int> dateWorkerCount = {};
+  Map<DateTime, int> allocatedWorkers = {}; // Track workers allocated per date
+  int totalWorkersAllocated = 0;
   
   @override
   void initState() {
@@ -36,40 +40,53 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       nextMonth = DateTime(now.year, now.month + 1);
     }
     
-    _initializePrices();
+    _initializeWorkerAvailability();
+    _calculateAllocatedWorkers();
   }
 
-  void _initializePrices() {
+  void _initializeWorkerAvailability() {
     final now = DateTime.now();
     
-    // Initialize prices for current month
+    // Initialize worker availability for current month
     final daysInCurrentMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
     for (int day = 1; day <= daysInCurrentMonth; day++) {
       final date = DateTime(currentMonth.year, currentMonth.month, day);
-      if (date.isBefore(DateTime(now.year, now.month, now.day))) continue; // Skip past dates
+      if (date.isBefore(DateTime(now.year, now.month, now.day))) continue;
       
-      // Dynamic pricing logic based on day patterns
-      if (day % 7 == 0 || day % 7 == 1) { // Weekend-like pricing
-        datePrices[date] = 125.0; // Premium dates
+      // Dynamic worker availability logic based on day patterns
+      if (day % 7 == 0 || day % 7 == 1) { // Weekend - fewer workers available
+        dateWorkerCount[date] = 2;
       } else if (day % 5 == 0) {
-        datePrices[date] = 119.0; // Special pricing
+        dateWorkerCount[date] = 4;
       } else {
-        datePrices[date] = 115.0; // Standard pricing
+        dateWorkerCount[date] = 6;
       }
     }
     
-    // Initialize prices for next month
+    // Initialize worker availability for next month
     final daysInNextMonth = DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
     for (int day = 1; day <= daysInNextMonth; day++) {
       final date = DateTime(nextMonth.year, nextMonth.month, day);
-      // Generally lower prices for next month
-      datePrices[date] = 105.0;
+      dateWorkerCount[date] = 8;
+    }
+  }
+
+  void _calculateAllocatedWorkers() {
+    allocatedWorkers.clear();
+    totalWorkersAllocated = 0;
+    
+    for (DateTime date in selectedDates) {
+      // For existing selections, assume 1 worker per date (for backward compatibility)
+      // In a real implementation, you might want to store this information differently
+      allocatedWorkers[date] = 1;
+      totalWorkersAllocated += 1;
     }
   }
 
   bool _isDateDisabled(DateTime date) {
     final now = DateTime.now();
-    return date.isBefore(DateTime(now.year, now.month, now.day));
+    final workerCount = dateWorkerCount[date] ?? 0;
+    return date.isBefore(DateTime(now.year, now.month, now.day)) || workerCount == 0;
   }
 
   bool _isDateSelected(DateTime date) {
@@ -80,18 +97,93 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     );
   }
 
+  int _getAvailableWorkersForDate(DateTime date) {
+    final totalAvailable = dateWorkerCount[date] ?? 0;
+    final currentlyAllocated = allocatedWorkers[date] ?? 0;
+    return totalAvailable - currentlyAllocated;
+  }
+
   void _toggleDateSelection(DateTime date) {
     if (_isDateDisabled(date)) return;
     
     setState(() {
       if (_isDateSelected(date)) {
+        // Remove date and its allocated workers
         selectedDates.removeWhere((selectedDate) => 
           selectedDate.year == date.year &&
           selectedDate.month == date.month &&
           selectedDate.day == date.day
         );
+        totalWorkersAllocated -= (allocatedWorkers[date] ?? 0);
+        allocatedWorkers.remove(date);
       } else {
+        // Calculate how many workers we can allocate to this date
+        final availableWorkers = _getAvailableWorkersForDate(date);
+        final workersNeeded = widget.maxSelectableDates - totalWorkersAllocated;
+        
+        if (workersNeeded <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('You have already allocated all ${widget.maxSelectableDates} workers.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        
+        if (availableWorkers <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No workers available on this date.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        
+        // Efficiently allocate the maximum possible workers for this date
+        final workersToAllocate = availableWorkers >= workersNeeded ? workersNeeded : availableWorkers;
+        
         selectedDates.add(date);
+        allocatedWorkers[date] = workersToAllocate;
+        totalWorkersAllocated += workersToAllocate;
+        
+        // Show allocation message
+        if (totalWorkersAllocated == widget.maxSelectableDates) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Perfect! All ${widget.maxSelectableDates} worker${widget.maxSelectableDates > 1 ? 's' : ''} allocated successfully.'
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else if (workersToAllocate < workersNeeded) {
+          final remainingWorkers = workersNeeded - workersToAllocate;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Allocated $workersToAllocate worker${workersToAllocate > 1 ? 's' : ''} for this date. '
+                'You still need $remainingWorkers more worker${remainingWorkers > 1 ? 's' : ''}.'
+              ),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Allocated $workersToAllocate worker${workersToAllocate > 1 ? 's' : ''} for this date.'
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     });
     
@@ -99,33 +191,19 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     widget.onDatesChanged(selectedDates);
   }
 
-  double _calculateTotal() {
-    double total = 0;
-    for (DateTime date in selectedDates) {
-      total += datePrices[date] ?? 0;
-    }
-    return total;
-  }
-
-  Color _getDateColor(DateTime date) {
-    if (_isDateDisabled(date)) {
-      return Colors.grey[300]!;
-    }
-    
-    final price = datePrices[date] ?? 0;
-    if (price >= 125) {
-      return Colors.orange; // Premium pricing
-    } else if (price >= 119) {
-      return Colors.green;
+  Color _getWorkerCountColor(int availableWorkers) {
+    if (availableWorkers == 1) {
+      return Colors.red;
+    } else if (availableWorkers < 3) {
+      return Colors.orange; // Yellow/Orange for less than 3
     } else {
-      return Colors.green;
+      return Colors.green; // Green for 3 or more
     }
   }
 
   Widget _buildCalendarGrid(DateTime month) {
     final firstDay = DateTime(month.year, month.month, 1);
     final lastDay = DateTime(month.year, month.month + 1, 0);
-    // Use proper weekday calculation (Sunday = 0, Monday = 1, etc.)
     final firstWeekday = firstDay.weekday == 7 ? 0 : firstDay.weekday;
     
     List<Widget> dayWidgets = [];
@@ -140,7 +218,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       final date = DateTime(month.year, month.month, day);
       final isDisabled = _isDateDisabled(date);
       final isSelected = _isDateSelected(date);
-      final price = datePrices[date];
+      final availableWorkers = _getAvailableWorkersForDate(date);
       
       dayWidgets.add(
         GestureDetector(
@@ -151,22 +229,20 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
               color: isSelected 
                 ? Colors.blue[100]
                 : Colors.transparent,
-              // Show orange border when date is selected AND has premium pricing
               border: isSelected 
-                ? (price != null && price >= 125)
-                  ? Border.all(color: Colors.orange, width: 2)
-                  : Border.all(color: Colors.blue, width: 2)
-                : null,
+                ? Border.all(color: Colors.blue[600]!, width: 2)
+                : Border.all(color: Colors.grey[200]!, width: 1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '$day',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: isDisabled 
                       ? Colors.grey[400]
                       : isSelected
@@ -174,19 +250,18 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                         : Colors.black,
                   ),
                 ),
-                if (price != null && !isDisabled)
-                  Flexible(
-                    child: Text(
-                      'SAR ${price.toInt()}',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        color: _getDateColor(date),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                if (!isDisabled) ...[
+                  SizedBox(height: 1),
+                  Text(
+                    '$availableWorkers left',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: _getWorkerCountColor(availableWorkers),
                     ),
+                    textAlign: TextAlign.center,
                   ),
+                ],
               ],
             ),
           ),
@@ -198,7 +273,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       crossAxisCount: 7,
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      childAspectRatio: 0.8,
+      childAspectRatio: 1.0,
       children: dayWidgets,
     );
   }
@@ -224,9 +299,14 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
           ),
         ),
         
-        // Day headers
+        // Day headers with background color and bold text
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 8),
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          margin: EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200], // Light grey background like in the image
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -235,9 +315,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                       child: Text(
                         day,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800, // Made more bold
+                          color: Colors.black87,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -251,7 +331,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
         // Calendar grid
         Container(
           padding: EdgeInsets.symmetric(horizontal: 8),
-          height: 280, // Increased height to ensure all weeks are visible
+          height: 240,
           child: _buildCalendarGrid(month),
         ),
       ],
@@ -271,8 +351,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SizedBox(height: 20),
                   Text(
-                    'Select Date',
+                    'Select Dates',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -280,7 +361,8 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     ),
                   ),
                   
-                  SizedBox(height: 16),
+                  SizedBox(height: 8),
+                  
                   
                   // Calendar content
                   Expanded(
@@ -308,7 +390,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                             // Next month
                             _buildMonthSection(nextMonth),
                             
-                            SizedBox(height: 20), // Extra padding at bottom
+                            SizedBox(height: 20),
                           ],
                         ),
                       ),
@@ -319,7 +401,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             ),
           ),
           
-          // Bottom Navigation matching the image design
+          // Bottom Navigation
           Container(
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -340,16 +422,20 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: totalWorkersAllocated == widget.maxSelectableDates 
+                          ? Colors.green[100] 
+                          : Colors.grey[300],
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        '${selectedDates.length}',
+                        '$totalWorkersAllocated',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: totalWorkersAllocated == widget.maxSelectableDates 
+                              ? Colors.green[800] 
+                              : Colors.black87,
                         ),
                       ),
                     ),
@@ -357,13 +443,13 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                   
                   SizedBox(width: 16),
                   
-                  // Total price section
+                  // Allocation progress
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Total',
+                        'Workers Allocated',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.black87,
@@ -371,10 +457,12 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                         ),
                       ),
                       Text(
-                        'SAR ${_calculateTotal().toInt()}',
+                        '$totalWorkersAllocated/${widget.maxSelectableDates}',
                         style: TextStyle(
                           fontSize: 20,
-                          color: Colors.orange,
+                          color: totalWorkersAllocated == widget.maxSelectableDates 
+                              ? Colors.green 
+                              : Colors.blue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -387,20 +475,22 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap: selectedDates.isNotEmpty && widget.onNextPressed != null 
+                      onTap: totalWorkersAllocated > 0 && widget.onNextPressed != null 
                           ? widget.onNextPressed 
                           : null,
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: selectedDates.isNotEmpty 
-                              ? Color(0xFF1E3A8A) // Dark blue color matching the image
+                          color: totalWorkersAllocated > 0 
+                              ? Color(0xFF1E3A8A)
                               : Colors.grey[400],
-                          borderRadius: BorderRadius.circular(25), // More rounded like in the image
+                          borderRadius: BorderRadius.circular(25),
                         ),
                         child: Center(
                           child: Text(
-                            'Next',
+                            totalWorkersAllocated == widget.maxSelectableDates 
+                                ? 'Perfect!' 
+                                : 'Next',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,

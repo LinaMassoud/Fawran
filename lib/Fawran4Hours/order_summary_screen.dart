@@ -407,7 +407,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
             ),
           ),
           
-          // Bottom section with address and proceed button
+          // Bottom section with dynamic address and proceed button
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -422,7 +422,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Address section
+                // Dynamic address section
                 Container(
                   padding: EdgeInsets.all(16),
                   child: Row(
@@ -434,7 +434,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Al Fath',
+                              widget.bookingData.selectedAddress,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -442,7 +442,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                               ),
                             ),
                             Text(
-                              'Al Madinah Province,Madinah Principality,Madinah, 7421',
+                              _getAddressDetails(widget.bookingData.selectedAddress),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -598,6 +598,20 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
     else if (day.endsWith('3') && day != '13') suffix = 'rd';
     
     return '${day}${suffix} ${months[date.month - 1]}\'${date.year.toString().substring(2)}';
+  }
+  
+  // Helper method to get address details based on selected address
+  String _getAddressDetails(String selectedAddress) {
+    // You can customize this based on your address structure
+    // For now, providing default details based on the address name
+    switch (selectedAddress) {
+      case 'Al rashidiya':
+        return 'Riyadh Province, Riyadh Principality, Riyadh';
+      case 'Al Abha':
+        return 'Asir Province, Al Abha Principality, Al Abha';
+      default:
+        return 'Saudi Arabia'; // Default fallback
+    }
   }
   
   void _showPaymentSuccess() {

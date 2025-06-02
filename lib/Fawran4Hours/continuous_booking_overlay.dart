@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 // Import your existing screens
 import 'cleaning_service_screen.dart'; // PackageModel
 import 'add_new_address.dart';
@@ -12,35 +14,39 @@ import '../widgets/booking_step_header.dart';
 
 class ContinuousBookingOverlay extends StatefulWidget {
   final PackageModel package;
+  final int selectedShift;
   final Function(BookingData)? onBookingCompleted; // Add callback for booking completion
 
   const ContinuousBookingOverlay({
-    Key? key,
-    required this.package,
-    this.onBookingCompleted,
-  }) : super(key: key);
+  Key? key,
+  required this.package,
+  required this.selectedShift, // Add this parameter
+  this.onBookingCompleted,
+}) : super(key: key);
 
   @override
   _ContinuousBookingOverlayState createState() => _ContinuousBookingOverlayState();
 
   // Static method to show as overlay
   static void showAsOverlay(
-    BuildContext context, {
-    required PackageModel package,
-    Function(BookingData)? onBookingCompleted,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: true,
-      enableDrag: false,
-      builder: (context) => ContinuousBookingOverlay(
-        package: package,
-        onBookingCompleted: onBookingCompleted,
-      ),
-    );
-  }
+  BuildContext context, {
+  required PackageModel package,
+  required int selectedShift, // Add this parameter
+  Function(BookingData)? onBookingCompleted,
+}) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    isDismissible: true,
+    enableDrag: false,
+    builder: (context) => ContinuousBookingOverlay(
+      package: package,
+      selectedShift: selectedShift, // Pass the shift
+      onBookingCompleted: onBookingCompleted,
+    ),
+  );
+}
 }
 
 // Data class to hold booking information
@@ -75,20 +81,9 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
   bool isReturningFromDateSelection = false;
 
   // Address Selection Data
-  List<AddressModel> addresses = [
-    AddressModel(
-      id: '1',
-      name: 'Al rashidiya',
-      fullAddress: 'Riyadh Province, Riyadh Principality',
-      isSelected: true,
-    ),
-    AddressModel(
-      id: '2',
-      name: 'Al Abha',
-      fullAddress: 'Riyadh Province, Riyadh Principality',
-      isSelected: false,
-    ),
-  ];
+  List<AddressModel> addresses = [];
+  bool isLoadingAddresses = true;
+  String? addressError;
 
   // Service Details Data
   String selectedNationality = 'East Asia';
@@ -102,32 +97,102 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
   List<DateTime> selectedDates = [];
 
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
+  
+  _pageController = PageController();
+  
+  // Initialize service details values
+  workerCount = widget.package.noOfEmployee;
+  contractDuration = '${widget.package.noOfMonth} month${widget.package.noOfMonth > 1 ? 's' : ''}';
+  visitDuration = '${widget.package.duration} hours';
+  visitsPerWeek = '${widget.package.visitsWeekly} visit${widget.package.visitsWeekly > 1 ? 's' : ''} weekly';
+  
+  // Fix: Use the actual selected nationality and time from user selection
+  selectedNationality = widget.package.nationalityDisplay; // This will correctly show "East Asia" or "African"
+  selectedTime = _getTimeFromShift(widget.selectedShift.toString()); // Use the passed shift instead of package shift
+  
+  _animationController = AnimationController(
+    duration: Duration(milliseconds: 300),
+    vsync: this,
+  );
+  _slideAnimation = Tween<double>(
+    begin: 1.0,
+    end: 0.0,
+  ).animate(CurvedAnimation(
+    parent: _animationController,
+    curve: Curves.easeOutCubic,
+  ));
+  
+  _animationController.forward();
+  
+  // Fetch addresses from API
+  _fetchAddresses();
+}
+
+  // Fetch addresses from API
+  Future<void> _fetchAddresses() async {
+    try {
+      setState(() {
+        isLoadingAddresses = true;
+        addressError = null;
+      });
+
+      final response = await http.get(
+        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address?customer_id=428'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        
+        setState(() {
+          addresses = data.asMap().entries.map((entry) {
+            int index = entry.key;
+            var addressData = entry.value;
+            
+            return AddressModel(
+              id: index.toString(),
+              name: _extractLocationName(addressData['CARD_TEXT']),
+              fullAddress: addressData['CARD_TEXT'],
+              isSelected: index == 0, // Select the first address by default
+            );
+          }).toList();
+          
+          isLoadingAddresses = false;
+        });
+      } else {
+        setState(() {
+          addressError = 'Failed to load addresses. Status: ${response.statusCode}';
+          isLoadingAddresses = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        addressError = 'Error loading addresses: $e';
+        isLoadingAddresses = false;
+      });
+    }
+  }
+
+  // Extract a readable location name from the CARD_TEXT
+  String _extractLocationName(String cardText) {
+    // Parse the card text to extract meaningful location name
+    // Example: "Riyadh-Roshan--Villa-Number456-Floor No: Ground-Floor No:0"
+    List<String> parts = cardText.split('-');
     
-    _pageController = PageController();
+    if (parts.length >= 2) {
+      // Take the first two parts as the location name
+      String city = parts[0].trim();
+      String area = parts[1].trim();
+      return '$area, $city';
+    } else if (parts.isNotEmpty) {
+      return parts[0].trim();
+    }
     
-    // Initialize service details values
-    workerCount = widget.package.noOfEmployee;
-    contractDuration = '${widget.package.noOfMonth} month${widget.package.noOfMonth > 1 ? 's' : ''}';
-    visitDuration = '${widget.package.duration} hours';
-    visitsPerWeek = '${widget.package.visitsWeekly} visit${widget.package.visitsWeekly > 1 ? 's' : ''} weekly';
-    selectedNationality = widget.package.groupCode == '2' ? 'East Asia' : 'South Asia';
-    selectedTime = _getTimeFromShift(widget.package.serviceShift);
-    
-    _animationController = AnimationController(
-      duration: Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _slideAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-    
-    _animationController.forward();
+    return 'Address';
   }
 
   String _getTimeFromShift(String shift) {
@@ -272,40 +337,34 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
   }
 
   void _completePurchase() async {
-  // Create booking data
-  final selectedAddress = addresses.firstWhere((addr) => addr.isSelected);
-  final bookingData = BookingData(
-    selectedDates: selectedDates,
-    totalPrice: _calculateTotalPrice(),
-    selectedAddress: selectedAddress.name,
-    workerCount: workerCount,
-    contractDuration: contractDuration,
-    visitsPerWeek: visitsPerWeek,
-  );
+    // Create booking data
+    final selectedAddress = addresses.firstWhere((addr) => addr.isSelected);
+    final bookingData = BookingData(
+      selectedDates: selectedDates,
+      totalPrice: _calculateTotalPrice(),
+      selectedAddress: selectedAddress.name,
+      workerCount: workerCount,
+      contractDuration: contractDuration,
+      visitsPerWeek: visitsPerWeek,
+    );
 
-  // Close overlay with animation
-  await _animationController.reverse();
-  Navigator.pop(context);
+    // Close overlay with animation
+    await _animationController.reverse();
+    Navigator.pop(context);
 
-  // Call the callback to update the parent screen
-  if (widget.onBookingCompleted != null) {
-    widget.onBookingCompleted!(bookingData);
+    // Call the callback to update the parent screen
+    if (widget.onBookingCompleted != null) {
+      widget.onBookingCompleted!(bookingData);
+    }
+
+    // // Show success message
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Text('Booking completed successfully!'),
+    //     backgroundColor: Colors.green,
+    //   ),
+    // );
   }
-
-  // Show success message at header area
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('Booking completed successfully!'),
-      backgroundColor: Colors.green,
-      behavior: SnackBarBehavior.floating,
-      margin: EdgeInsets.fromLTRB(20, 100, 20, 0), // Positions at header area
-      duration: Duration(seconds: 3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-    ),
-  );
-}
 
   // Calculate total price from selected dates
   double _calculateTotalPrice() {
@@ -415,6 +474,9 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
                                 onAddNewAddress: _addNewAddress,
                                 onNextPressed: _nextStep,
                                 price: _currentPrice,
+                                isLoading: isLoadingAddresses,
+                                error: addressError,
+                                onRetryPressed: _fetchAddresses,
                               ),
                               ServiceDetailsStep(
                                 selectedNationality: selectedNationality,
@@ -436,6 +498,7 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
                                 selectedDates: selectedDates,
                                 onDatesChanged: _updateSelectedDates,
                                 onNextPressed: selectedDates.isNotEmpty ? _returnFromDateSelection : null,
+                                maxSelectableDates: workerCount, // Pass the worker count as the limit
                               ),
                             ],
                           ),
