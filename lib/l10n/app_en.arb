@@ -18,5 +18,20 @@
   "codeSentTo": "We’ve sent a code to",
   "verify": "Verify",
   "resendCode": "Resend Code",
-  "resendIn": "Resend in"
+  "resendIn": "Resend in",
+
+  "service_driver": "Private Driver",
+  "service_full_time_maid": "Full-time Maid",
+  "service_maid_4h": "Maid for 4 hours",
+  "service_maid_8h": "Maid for 8 hours",
+  "home": "home",
+  "top_requested":"Top Requested Services",
+  "saving_packages": "Saving Packages",
+
+  "fetching_location" : "fetching your location...",
+    "currentLocation" : "📍 currentLocation:"
+
+
+
+
 }

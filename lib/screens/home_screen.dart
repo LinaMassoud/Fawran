@@ -1,4 +1,5 @@
 import 'package:fawran/providers/auth_provider.dart';
+import 'package:fawran/providers/location_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +9,29 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
      final currentLocale = ref.watch(localeProvider);
-    final isArabic = currentLocale.languageCode == 'ar';
+    final location = ref.watch(locationProvider); // <- reading the state
+    final loc = AppLocalizations.of(context)!;
 
+
+    final isArabic = currentLocale.languageCode == 'ar';
+    final List<String> imagePaths = [
+  'assets/images/5.png',
+  'assets/images/1.png',
+  'assets/images/3.png',
+  'assets/images/2.png',
+  'assets/images/4.png',
+];
+
+    final List<String> services = [
+  loc.service_driver,
+  loc.service_full_time_maid,
+  loc.service_maid_4h,
+  loc.service_maid_8h,
+    loc.service_driver,
+  loc.service_full_time_maid,
+  loc.service_maid_4h,
+  loc.service_maid_8h
+];
     
        final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
@@ -19,42 +41,51 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: Colors.white,
 
       // Fixed Header
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        toolbarHeight: 80,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    appBar: AppBar(
+  elevation: 0,
+  backgroundColor: Colors.white,
+  toolbarHeight: 80,
+  title: SizedBox(
+    height: 80, // match toolbarHeight
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center, // center vertically
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          loc.home,
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        Row(
           children: [
-            Text(
-              'المنزل',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.grey, size: 18),
-                SizedBox(width: 4),
-                Text(
-                  'عمارة رقم 12، شارع الملك في الحي النخيل',
-                  style: TextStyle(color: Colors.grey[700], fontSize: 12),
-                ),
-                Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-              ],
+            Icon(Icons.location_on, color: Colors.grey, size: 18),
+            SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                location,
+                style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
-           actions: [
-          IconButton(
-            icon: const Icon(Icons.language),
-            onPressed: () {
-              ref.read(localeProvider.notifier).state =
-                  isArabic ? const Locale('en') : const Locale('ar');
-            },
-          ),
-        ],
-      ),
-
-      // Body Content
+      ],
+    ),
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.language),
+      onPressed: () {
+        ref.read(localeProvider.notifier).state =
+            isArabic ? const Locale('en') : const Locale('ar');
+      },
+    ),
+  ],
+),
+  // Body Content
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: ListView(
@@ -62,134 +93,248 @@ class HomeScreen extends ConsumerWidget {
             SizedBox(height: 16),
 
             // Services Grid
-            GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 4,
-              physics: NeverScrollableScrollPhysics(),
-              children: List.generate(8, (index) {
-                return Column(
-                  children: [
-                    CircleAvatar(radius: 25, backgroundColor: Colors.orange),
-                    SizedBox(height: 5),
-                    Text("خدمة ${index + 1}", style: TextStyle(fontSize: 12)),
-                  ],
-                );
-              }),
+         GridView.count(
+  shrinkWrap: true,
+  crossAxisCount: 4,
+  physics: NeverScrollableScrollPhysics(),
+  mainAxisSpacing: 12,
+  crossAxisSpacing: 12,
+  childAspectRatio: 0.8, 
+  children: List.generate(4, (index) {
+    return Column(
+      children: [
+        Container(
+          height: 60,
+          width: 60,
+          decoration: BoxDecoration(
+             color: Colors.orange,
+            borderRadius: BorderRadius.circular(12),
+            image: DecorationImage(
+              image: AssetImage('assets/images/${index + 1}.png'),
+              fit: BoxFit.cover,
             ),
-
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          services[index],
+          style: TextStyle(fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }),
+),
             SizedBox(height: 20),
 
             // Horizontal Slider (Colored Rectangles)
-            SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 160,
-                    margin: EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.primaries[index % Colors.primaries.length],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  );
-                },
-              ),
+          SizedBox(
+  height: 130, // ⬆️ Made taller
+  child: ListView.builder(
+    scrollDirection: Axis.horizontal,
+    itemCount: 5,
+    itemBuilder: (context, index) {
+      return Container(
+        width: 160,
+        margin: EdgeInsets.only(right: 10),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.primaries[index % Colors.primaries.length].shade400,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Text(
+            'Save up to 15%\nwhen you order now',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    },
+  ),
+),
+
 
             SizedBox(height: 20),
 
             // New Horizontal Slider with Title "الخدمات الاكثر طلبا"
             Text(
-              'الخدمات الاكثر طلبا',
+              loc.top_requested,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             SizedBox(height: 10),
             SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 160,
-                    margin: EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.accents[index % Colors.accents.length],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "خدمة ${index + 1}",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ),
-                  );
-                },
+  height: 160, // taller to fit bigger image
+  child: ListView.builder(
+    scrollDirection: Axis.horizontal,
+    itemCount: imagePaths.length,
+    itemBuilder: (context, index) {
+      return Container(
+        width: 160,
+        margin: EdgeInsets.only(right: 12),
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.accents[index % Colors.accents.length].withOpacity(0.85),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              services[index],
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12),
+            Image.asset(
+              imagePaths[index],
+              height: 80, // Bigger image
+              width: 80,
+              fit: BoxFit.contain,
+            ),
+          ],
+        ),
+      );
+    },
+  ),
+),
+
+           SizedBox(height: 20),
+ Text(
+              loc.saving_packages,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
             ),
 
-            SizedBox(height: 20),
+                       SizedBox(height: 20),
 
             // Promo Cards
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 90,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      leading: Icon(Icons.drive_eta, size: 30, color: Colors.white),
-                      title: Text(
-                        'خدمة السائق الخاص\n7 أيام',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                      subtitle: Text(
-                        'خصم %10',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 90,
-                    margin: const EdgeInsets.only(left: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      leading: Icon(Icons.person_outline, size: 30, color: Colors.white),
-                      title: Text(
-                        'عقد عاملة منزلية\n3 شهور',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                      subtitle: Text(
-                        'خصم %10',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          Row(
+  children: [
+    Expanded(
+      child: Container(
+        height: 130, // ⬆️ Increased height
+        margin: const EdgeInsetsDirectional.only(end: 8),
+        padding: const EdgeInsets.all(12), // ⬅️ Add inner padding
+        decoration: BoxDecoration(
+          color: Colors.blue[400],
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: Offset(0, 3),
             ),
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: Colors.white.withOpacity(0.2),
+              child: Icon(Icons.drive_eta, size: 28, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'خدمة السائق الخاص\n7 أيام',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'خصم %10',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    Expanded(
+      child: Container(
+        height: 130,
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange[400],
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: Colors.white.withOpacity(0.2),
+              child: Icon(Icons.person_outline, size: 28, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'عقد عاملة منزلية\n3 شهور',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'خصم %10',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  ],
+),
 
             SizedBox(height: 80),
                 // Phone / Email
-                    TextField(
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.phone),
-                        labelText:'ddd',
-                        border: inputBorder
-                      ),
-                    ), // Space for bottom nav
           ],
         ),
       ),
