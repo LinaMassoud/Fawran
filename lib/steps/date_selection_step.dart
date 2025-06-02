@@ -4,12 +4,14 @@ class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
   final Function(List<DateTime>) onDatesChanged;
   final VoidCallback? onNextPressed;
+  final int maxSelectableDates; // This is now the total workers needed
 
   const DateSelectionStep({
     Key? key,
     required this.selectedDates,
     required this.onDatesChanged,
     this.onNextPressed,
+    this.maxSelectableDates = 1,
   }) : super(key: key);
 
   @override
@@ -20,7 +22,8 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   late DateTime currentMonth;
   late DateTime nextMonth;
   late List<DateTime> selectedDates;
-  Map<DateTime, double> datePrices = {};
+  Map<DateTime, int> dateWorkerCount = {};
+  int totalDatesSelected = 0;
   
   @override
   void initState() {
@@ -36,40 +39,48 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       nextMonth = DateTime(now.year, now.month + 1);
     }
     
-    _initializePrices();
+    _initializeWorkerAvailability();
+    _calculateSelectedDates();
   }
 
-  void _initializePrices() {
+  void _initializeWorkerAvailability() {
     final now = DateTime.now();
     
-    // Initialize prices for current month
+    // Initialize worker availability for current month
     final daysInCurrentMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
     for (int day = 1; day <= daysInCurrentMonth; day++) {
       final date = DateTime(currentMonth.year, currentMonth.month, day);
-      if (date.isBefore(DateTime(now.year, now.month, now.day))) continue; // Skip past dates
+      if (date.isBefore(DateTime(now.year, now.month, now.day))) continue;
       
-      // Dynamic pricing logic based on day patterns
-      if (day % 7 == 0 || day % 7 == 1) { // Weekend-like pricing
-        datePrices[date] = 125.0; // Premium dates
+      // Dynamic worker availability logic based on day patterns
+      if (day % 7 == 0 || day % 7 == 1) { // Weekend - fewer workers available
+        dateWorkerCount[date] = 2;
       } else if (day % 5 == 0) {
-        datePrices[date] = 119.0; // Special pricing
+        dateWorkerCount[date] = 4;
       } else {
-        datePrices[date] = 115.0; // Standard pricing
+        dateWorkerCount[date] = 6;
       }
     }
     
-    // Initialize prices for next month
+    // Initialize worker availability for next month
     final daysInNextMonth = DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
     for (int day = 1; day <= daysInNextMonth; day++) {
       final date = DateTime(nextMonth.year, nextMonth.month, day);
-      // Generally lower prices for next month
-      datePrices[date] = 105.0;
+      dateWorkerCount[date] = 8;
     }
+  }
+
+  void _calculateSelectedDates() {
+    totalDatesSelected = selectedDates.length;
   }
 
   bool _isDateDisabled(DateTime date) {
     final now = DateTime.now();
-    return date.isBefore(DateTime(now.year, now.month, now.day));
+    final workerCount = dateWorkerCount[date] ?? 0;
+    
+    // Disable if date is in the past, has no workers, or doesn't have enough workers for the requirement
+    return date.isBefore(DateTime(now.year, now.month, now.day)) || 
+           workerCount < widget.maxSelectableDates;
   }
 
   bool _isDateSelected(DateTime date) {
@@ -85,13 +96,19 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     
     setState(() {
       if (_isDateSelected(date)) {
+        // Remove date
         selectedDates.removeWhere((selectedDate) => 
           selectedDate.year == date.year &&
           selectedDate.month == date.month &&
           selectedDate.day == date.day
         );
+        totalDatesSelected--;
       } else {
+        // Check if we can add more dates (for cases where user might want multiple dates)
+        // For now, assuming one date selection, but keeping flexible for future use
         selectedDates.add(date);
+        totalDatesSelected++;
+        
       }
     });
     
@@ -99,33 +116,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     widget.onDatesChanged(selectedDates);
   }
 
-  double _calculateTotal() {
-    double total = 0;
-    for (DateTime date in selectedDates) {
-      total += datePrices[date] ?? 0;
-    }
-    return total;
-  }
-
-  Color _getDateColor(DateTime date) {
-    if (_isDateDisabled(date)) {
-      return Colors.grey[300]!;
-    }
-    
-    final price = datePrices[date] ?? 0;
-    if (price >= 125) {
-      return Colors.orange; // Premium pricing
-    } else if (price >= 119) {
-      return Colors.green;
-    } else {
-      return Colors.green;
-    }
-  }
-
   Widget _buildCalendarGrid(DateTime month) {
     final firstDay = DateTime(month.year, month.month, 1);
     final lastDay = DateTime(month.year, month.month + 1, 0);
-    // Use proper weekday calculation (Sunday = 0, Monday = 1, etc.)
     final firstWeekday = firstDay.weekday == 7 ? 0 : firstDay.weekday;
     
     List<Widget> dayWidgets = [];
@@ -140,7 +133,6 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       final date = DateTime(month.year, month.month, day);
       final isDisabled = _isDateDisabled(date);
       final isSelected = _isDateSelected(date);
-      final price = datePrices[date];
       
       dayWidgets.add(
         GestureDetector(
@@ -150,44 +142,27 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             decoration: BoxDecoration(
               color: isSelected 
                 ? Colors.blue[100]
-                : Colors.transparent,
-              // Show orange border when date is selected AND has premium pricing
+                : isDisabled
+                  ? Colors.grey[100]
+                  : Colors.transparent,
               border: isSelected 
-                ? (price != null && price >= 125)
-                  ? Border.all(color: Colors.orange, width: 2)
-                  : Border.all(color: Colors.blue, width: 2)
-                : null,
+                ? Border.all(color: Colors.blue[600]!, width: 2)
+                : Border.all(color: Colors.grey[200]!, width: 1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$day',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDisabled 
-                      ? Colors.grey[400]
-                      : isSelected
-                        ? Colors.blue[800]
-                        : Colors.black,
-                  ),
+            child: Center(
+              child: Text(
+                '$day',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDisabled 
+                    ? Colors.grey[400]
+                    : isSelected
+                      ? Colors.blue[800]
+                      : Colors.black,
                 ),
-                if (price != null && !isDisabled)
-                  Flexible(
-                    child: Text(
-                      'SAR ${price.toInt()}',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        color: _getDateColor(date),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -198,7 +173,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       crossAxisCount: 7,
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      childAspectRatio: 0.8,
+      childAspectRatio: 1.0,
       children: dayWidgets,
     );
   }
@@ -224,9 +199,14 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
           ),
         ),
         
-        // Day headers
+        // Day headers with background color and bold text
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 8),
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          margin: EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200], // Light grey background like in the image
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -235,9 +215,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                       child: Text(
                         day,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800, // Made more bold
+                          color: Colors.black87,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -251,7 +231,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
         // Calendar grid
         Container(
           padding: EdgeInsets.symmetric(horizontal: 8),
-          height: 280, // Increased height to ensure all weeks are visible
+          height: 240,
           child: _buildCalendarGrid(month),
         ),
       ],
@@ -271,8 +251,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SizedBox(height: 20),
                   Text(
-                    'Select Date',
+                    'Select Dates',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -280,7 +261,8 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     ),
                   ),
                   
-                  SizedBox(height: 16),
+                  SizedBox(height: 8),
+                  
                   
                   // Calendar content
                   Expanded(
@@ -308,7 +290,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                             // Next month
                             _buildMonthSection(nextMonth),
                             
-                            SizedBox(height: 20), // Extra padding at bottom
+                            SizedBox(height: 20),
                           ],
                         ),
                       ),
@@ -319,7 +301,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             ),
           ),
           
-          // Bottom Navigation matching the image design
+          // Bottom Navigation
           Container(
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -340,16 +322,20 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: totalDatesSelected > 0 
+                          ? Colors.green[100] 
+                          : Colors.grey[300],
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        '${selectedDates.length}',
+                        '$totalDatesSelected',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: totalDatesSelected > 0 
+                              ? Colors.green[800] 
+                              : Colors.black87,
                         ),
                       ),
                     ),
@@ -357,13 +343,13 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                   
                   SizedBox(width: 16),
                   
-                  // Total price section
+                  // Selection status
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Total',
+                        'Dates Selected',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.black87,
@@ -371,10 +357,12 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                         ),
                       ),
                       Text(
-                        'SAR ${_calculateTotal().toInt()}',
+                        '$totalDatesSelected',
                         style: TextStyle(
                           fontSize: 20,
-                          color: Colors.orange,
+                          color: totalDatesSelected > 0 
+                              ? Colors.green 
+                              : Colors.grey,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -387,20 +375,22 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap: selectedDates.isNotEmpty && widget.onNextPressed != null 
+                      onTap: totalDatesSelected > 0 && widget.onNextPressed != null 
                           ? widget.onNextPressed 
                           : null,
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: selectedDates.isNotEmpty 
-                              ? Color(0xFF1E3A8A) // Dark blue color matching the image
+                          color: totalDatesSelected > 0 
+                              ? Color(0xFF1E3A8A)
                               : Colors.grey[400],
-                          borderRadius: BorderRadius.circular(25), // More rounded like in the image
+                          borderRadius: BorderRadius.circular(25),
                         ),
                         child: Center(
                           child: Text(
-                            'Next',
+                            totalDatesSelected > 0 
+                                ? 'Next' 
+                                : 'Select Date',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,

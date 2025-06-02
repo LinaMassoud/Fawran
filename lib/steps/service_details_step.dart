@@ -65,32 +65,41 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
               ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                ),
+          if (isEnabled)
+            PopupMenuButton<String>(
+              onSelected: onChanged,
+              offset: Offset(0, 40),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
+                ],
               ),
-              if (isEnabled) ...[
-                SizedBox(width: 4),
-                PopupMenuButton<String>(
-                  onSelected: onChanged,
-                  icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
-                  itemBuilder: (context) => options.map((option) => 
-                    PopupMenuItem<String>(
-                      value: option,
-                      child: Text(option),
-                    )
-                  ).toList(),
-                ),
-              ],
-            ],
-          ),
+              itemBuilder: (context) => options.map((option) => 
+                PopupMenuItem<String>(
+                  value: option,
+                  child: Text(option),
+                )
+              ).toList(),
+            )
+          else
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
         ],
       ),
     );
@@ -256,20 +265,7 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                                 ),
                               ),
                               SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(Icons.star, color: Colors.amber, size: 20),
-                                  SizedBox(width: 5),
-                                  Text(
-                                    '4.83 (34K reviews)',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 8),
+                              
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(

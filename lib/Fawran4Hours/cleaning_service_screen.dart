@@ -47,35 +47,50 @@ class PackageModel {
   });
 
   factory PackageModel.fromJson(Map<String, dynamic> json) {
-    return PackageModel(
-      pricingId: json['pricing_id'],
-      groupCode: json['group_code'],
-      serviceId: json['service_id'],
-      serviceShift: json['service_shift'],
-      duration: json['duration'],
-      noOfMonth: json['no_of_month'],
-      hourPrice: json['hour_price'].toDouble(),
-      visitsWeekly: json['visits_weekly'],
-      noOfEmployee: json['no_of_employee'],
-      packageId: json['package_id'],
-      visitPrice: json['visit_price'].toDouble(),
-      packageName: json['package_name'],
-      vatPercentage: json['vat_percentage'],
-      packagePrice: json['package_price'].toDouble(),
-      discountPercentage: json['discount_percentage'].toDouble(),
-      priceAfterDiscount: json['price_after_discount'].toDouble(),
-      vatAmount: json['vat_amount'],
-      finalPrice: json['final_price'].toDouble(),
-    );
+  return PackageModel(
+    pricingId: json['pricing_id'] ?? 0,
+    groupCode: json['group_code'] ?? '',
+    serviceId: json['service_id'] ?? 0,
+    serviceShift: json['service_shift']?.toString() ?? '1',
+    duration: json['duration'] ?? 0,
+    noOfMonth: json['no_of_month'] ?? 0,
+    hourPrice: (json['hour_price'] ?? 0).toDouble(),
+    visitsWeekly: json['visits_weekly'] ?? 0,
+    noOfEmployee: json['no_of_employee'] ?? 0,
+    packageId: json['package_id'] ?? 0,
+    visitPrice: (json['visit_price'] ?? 0).toDouble(),
+    packageName: json['package_name'] ?? '',
+    vatPercentage: json['vat_percentage'] ?? 0,
+    packagePrice: (json['package_price'] ?? 0).toDouble(),
+    // Fixed: Handle null, empty, or invalid discount_percentage values
+    discountPercentage: _parseDouble(json['discount_percentage']),
+    priceAfterDiscount: (json['price_after_discount'] ?? 0).toDouble(),
+    vatAmount: json['vat_amount'] ?? 0,
+    finalPrice: (json['final_price'] ?? 0).toDouble(),
+  );
+}
+
+// Helper method to safely parse double values that might be null or empty
+static double _parseDouble(dynamic value) {
+  if (value == null || value == '') return 0.0;
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    try {
+      return double.parse(value);
+    } catch (e) {
+      return 0.0;
+    }
   }
+  return 0.0;
+}
 
   // Helper methods to get display values
   String get nationalityDisplay {
-    if (groupCode == '1') return 'African';        // Fixed: group code 1 is African
-    if (groupCode == '2') return 'East Asia';      // Fixed: group code 2 is East Asia
-    if (groupCode == '3') return 'South Asia';
-    return 'East Asia'; // default
-  }
+  if (groupCode == '2') return 'East Asia';      // Fixed: group code 2 is East Asia
+  if (groupCode == '3') return 'African';        // Fixed: group code 3 is African  
+  if (groupCode == '1') return 'South Asia';     // group code 1 is South Asia
+  return 'East Asia'; // default
+}
 
   String get timeDisplay {
     if (serviceShift == 1) return 'Morning';
@@ -90,7 +105,22 @@ class PackageModel {
 }
 
 class CleaningServiceScreen extends StatefulWidget {
-  const CleaningServiceScreen({Key? key}) : super(key: key);
+  final PackageModel? autoOpenPackage;
+  final int? autoOpenShift;
+  final String serviceType; // Add this parameter
+  final String serviceCode; // Add this parameter
+  final int serviceId; // Add this parameter
+  final int professionId; // Add this parameter
+  
+  const CleaningServiceScreen({
+    Key? key, 
+    this.autoOpenPackage,
+    this.autoOpenShift,
+    this.serviceType = 'Fawran 4 Hours', // Default value
+    this.serviceCode = 'FAWRAN4Hours', // Default value
+    this.serviceId = 1, // Default value
+    this.professionId = 4, // Default value
+  }) : super(key: key);
 
   @override
   _CleaningServiceScreenState createState() => _CleaningServiceScreenState();
@@ -110,6 +140,12 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   String? eastAsiaErrorMessage;
   String? africanErrorMessage;
   
+
+  bool isSearchActive = false;
+String searchQuery = '';
+TextEditingController searchController = TextEditingController();
+List<PackageModel> filteredEastAsiaPackages = [];
+List<PackageModel> filteredAfricanPackages = [];
   // Shift selection state
   int selectedEastAsiaShift = 1; // 1 = Morning, 2 = Evening
   int selectedAfricanShift = 1;  // 1 = Morning, 2 = Evening
@@ -119,86 +155,202 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   double totalSavings = 375.0; // This can be calculated based on discounts
   double originalPrice = 1497.0; // This can be calculated from package prices
 
-  @override
-  void initState() {
-    super.initState();
-    fetchEastAsiaPackages();
-    fetchAfricanPackages();
-  }
+ @override
+void initState() {
+  super.initState();
+  fetchEastAsiaPackages();
+  fetchAfricanPackages();
+  
+  // Initialize filtered lists
+  filteredEastAsiaPackages = eastAsiaPackages;
+  filteredAfricanPackages = africanPackages;
+  
+  // Check if we need to auto-open overlay
+  _checkAndShowAutoOverlay();
+}
 
-  Future<void> fetchEastAsiaPackages() async {
-    try {
-      setState(() {
-        isEastAsiaLoading = true;
-        eastAsiaErrorMessage = null;
-      });
-
-      // Fixed: Use group_code=2 for East Asia
-      final response = await http.get(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=1&service_code=FAWRAN4Hours&profession_id=4'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+void _checkAndShowAutoOverlay() {
+  if (widget.autoOpenPackage != null) {
+    // Use WidgetsBinding to ensure the widget is fully built before showing overlay
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ContinuousBookingOverlay.showAsOverlay(
+        context,
+        package: widget.autoOpenPackage!,
+        selectedShift: widget.autoOpenShift ?? 1,
+        onBookingCompleted: _onBookingCompleted,
       );
+    });
+  }
+}
+  void _filterPackages(String query) {
+  setState(() {
+    searchQuery = query.toLowerCase();
+    
+    if (query.isEmpty) {
+      filteredEastAsiaPackages = eastAsiaPackages;
+      filteredAfricanPackages = africanPackages;
+    } else {
+      filteredEastAsiaPackages = eastAsiaPackages.where((package) {
+        return package.packageName.toLowerCase().contains(searchQuery) ||
+               package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
+               package.timeDisplay.toLowerCase().contains(searchQuery) ||
+               package.durationDisplay.toLowerCase().contains(searchQuery) ||
+               package.visitsWeekly.toString().contains(searchQuery) ||
+               'cleaning'.contains(searchQuery) ||
+               'visit'.contains(searchQuery) ||
+               'hours'.contains(searchQuery);
+      }).toList();
+      
+      filteredAfricanPackages = africanPackages.where((package) {
+        return package.packageName.toLowerCase().contains(searchQuery) ||
+               package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
+               package.timeDisplay.toLowerCase().contains(searchQuery) ||
+               package.durationDisplay.toLowerCase().contains(searchQuery) ||
+               package.visitsWeekly.toString().contains(searchQuery) ||
+               'cleaning'.contains(searchQuery) ||
+               'visit'.contains(searchQuery) ||
+               'hours'.contains(searchQuery);
+      }).toList();
+    }
+  });
+}
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        final List<dynamic> packagesJson = data['packages'];
-        
-        setState(() {
-          eastAsiaPackages = packagesJson.map((json) => PackageModel.fromJson(json)).toList();
-          isEastAsiaLoading = false;
-        });
-      } else {
-        setState(() {
-          eastAsiaErrorMessage = 'Failed to load East Asia packages. Status code: ${response.statusCode}';
-          isEastAsiaLoading = false;
-        });
-      }
-    } catch (e) {
+void _toggleSearch() {
+  setState(() {
+    isSearchActive = !isSearchActive;
+    if (!isSearchActive) {
+      searchController.clear();
+      searchQuery = '';
+      filteredEastAsiaPackages = eastAsiaPackages;
+      filteredAfricanPackages = africanPackages;
+    } else {
+      filteredEastAsiaPackages = eastAsiaPackages;
+      filteredAfricanPackages = africanPackages;
+    }
+  });
+}
+Future<void> fetchEastAsiaPackages() async {
+  try {
+    setState(() {
+      isEastAsiaLoading = true;
+      eastAsiaErrorMessage = null;
+    });
+
+    String apiUrl;
+    // For Fawran 4 Hours (service_id=1), include service_shift parameter
+    if (widget.serviceId == 1) {
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=2&service_shift=$selectedEastAsiaShift&job_id=251';
+    } else {
+      // For Fawran 8 Hours (service_id=21), no service_shift parameter
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=2&job_id=251';
+    }
+
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // Fix malformed JSON before parsing
+      String jsonString = response.body;
+      
+      // Replace empty discount_percentage values
+      jsonString = jsonString.replaceAll('"discount_percentage":,', '"discount_percentage":0,');
+      jsonString = jsonString.replaceAll('"discount_percentage":"",', '"discount_percentage":0,');
+      
+      // Also fix any other potential empty numeric fields
+      jsonString = jsonString.replaceAll('":,', '":0,');
+      jsonString = jsonString.replaceAll('":",', '":0,');
+      
+      final Map<String, dynamic> data = json.decode(jsonString);
+      final List<dynamic> packagesJson = data['packages'];
+      
       setState(() {
-        eastAsiaErrorMessage = 'Error loading East Asia packages: $e';
+        eastAsiaPackages = packagesJson.map((json) => PackageModel.fromJson(json)).toList();
+        isEastAsiaLoading = false;
+      });
+    } else {
+      setState(() {
+        eastAsiaErrorMessage = 'Failed to load East Asia packages. Status code: ${response.statusCode}';
         isEastAsiaLoading = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      eastAsiaErrorMessage = 'Error loading East Asia packages: $e';
+      isEastAsiaLoading = false;
+    });
   }
+  if (searchQuery.isEmpty) {
+    filteredEastAsiaPackages = eastAsiaPackages;
+  } else {
+    _filterPackages(searchQuery);
+  }
+}
 
-  Future<void> fetchAfricanPackages() async {
-    try {
+// Update the fetchAfricanPackages method
+Future<void> fetchAfricanPackages() async {
+  try {
+    setState(() {
+      isAfricanLoading = true;
+      africanErrorMessage = null;
+    });
+
+    String apiUrl;
+    // For Fawran 4 Hours (service_id=1), include service_shift parameter
+    if (widget.serviceId == 1) {
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=3&service_shift=$selectedAfricanShift&job_id=251';
+    } else {
+      // For Fawran 8 Hours (service_id=21), no service_shift parameter
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=3&job_id=251';
+    }
+
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // Fix malformed JSON before parsing
+      String jsonString = response.body;
+      
+      // Replace empty discount_percentage values
+      jsonString = jsonString.replaceAll('"discount_percentage":,', '"discount_percentage":0,');
+      jsonString = jsonString.replaceAll('"discount_percentage":"",', '"discount_percentage":0,');
+      
+      // Also fix any other potential empty numeric fields
+      jsonString = jsonString.replaceAll('":,', '":0,');
+      jsonString = jsonString.replaceAll('":",', '":0,');
+      
+      final Map<String, dynamic> data = json.decode(jsonString);
+      final List<dynamic> packagesJson = data['packages'];
+      
       setState(() {
-        isAfricanLoading = true;
-        africanErrorMessage = null;
+        africanPackages = packagesJson.map((json) => PackageModel.fromJson(json)).toList();
+        isAfricanLoading = false;
       });
-
-      // Fixed: Use group_code=1 for African
-      final response = await http.get(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=1&service_code=FAWRAN4Hours&profession_id=4'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        final List<dynamic> packagesJson = data['packages'];
-        
-        setState(() {
-          africanPackages = packagesJson.map((json) => PackageModel.fromJson(json)).toList();
-          isAfricanLoading = false;
-        });
-      } else {
-        setState(() {
-          africanErrorMessage = 'Failed to load African packages. Status code: ${response.statusCode}';
-          isAfricanLoading = false;
-        });
-      }
-    } catch (e) {
+    } else {
       setState(() {
-        africanErrorMessage = 'Error loading African packages: $e';
+        africanErrorMessage = 'Failed to load African packages. Status code: ${response.statusCode}';
         isAfricanLoading = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      africanErrorMessage = 'Error loading African packages: $e';
+      isAfricanLoading = false;
+    });
   }
+  if (searchQuery.isEmpty) {
+    filteredAfricanPackages = africanPackages;
+  } else {
+    _filterPackages(searchQuery);
+  }
+}
 
   void _onEastAsiaShiftChanged(int shift) {
     setState(() {
@@ -274,7 +426,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                   ),
                 ),
                 title: Text(
-                  'Fawran 4 Hours',
+                  widget.serviceType, // Use dynamic service type instead of hardcoded 'Fawran 4 Hours'
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20,
@@ -296,9 +448,12 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                       ],
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.search, color: Colors.black),
-                      onPressed: () {},
-                    ),
+                        icon: Icon(
+                          isSearchActive ? Icons.close : Icons.search, 
+                          color: Colors.black
+                        ),
+                        onPressed: _toggleSearch,
+                      ),
                   ),
                   Container(
                     margin: EdgeInsets.only(right: 16, top: 10, bottom: 10),
@@ -319,7 +474,43 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                   ),
                 ],
               ),
-              
+              if (isSearchActive)
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: Colors.white,
+                    padding: EdgeInsets.all(16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        autofocus: true,
+                        onChanged: _filterPackages,
+                        decoration: InputDecoration(
+                          hintText: 'Search packages, duration, visits...',
+                          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                          suffixIcon: searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.clear, color: Colors.grey[600]),
+                                  onPressed: () {
+                                    searchController.clear();
+                                    _filterPackages('');
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                  if (isSearchActive && searchQuery.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: _buildSearchResultsHeader(),
+                    ),
               // Main content
               SliverToBoxAdapter(
                 child: Column(
@@ -407,7 +598,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                         children: [
                           // Service title and rating
                           Text(
-                            'Fawran 4 Hours',
+                            widget.serviceType, // Use dynamic service type
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
@@ -415,20 +606,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(Icons.star, color: Colors.black, size: 20),
-                              SizedBox(width: 4),
-                              Text(
-                                '4.80 (3.5M bookings)',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 20),
+                          
                           
                           // Plus membership banner and offers
                           Container(
@@ -531,98 +709,8 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                                 SizedBox(height: 16),
                                 
                                 // Segmented Control for East Asia
-                                Container(
-  width: double.infinity,
-  decoration: BoxDecoration(
-    color: Colors.grey[200],
-    borderRadius: BorderRadius.circular(25),
-  ),
-  child: Row(
-    children: [
-      Expanded(
-        child: GestureDetector(
-          onTap: () => _onEastAsiaShiftChanged(1),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: selectedEastAsiaShift == 1 ? Colors.white : Colors.transparent,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: selectedEastAsiaShift == 1
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.wb_sunny,
-                  color: selectedEastAsiaShift == 1 ? Colors.orange : Colors.grey,
-                  size: 20,
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'Morning',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: selectedEastAsiaShift == 1 ? Colors.black : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      Expanded(
-        child: GestureDetector(
-          onTap: () => _onEastAsiaShiftChanged(2),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: selectedEastAsiaShift == 2 ? Colors.white : Colors.transparent,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: selectedEastAsiaShift == 2
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.nightlight_round,
-                  color: selectedEastAsiaShift == 2 ? Colors.indigo : Colors.grey,
-                  size: 20,
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'Evening',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: selectedEastAsiaShift == 2 ? Colors.black : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ],
-  ),
-),
-SizedBox(height: 20),
+                                _buildShiftSelector(true),
+                                  SizedBox(height: 20),
 
                                 
                                 if (isEastAsiaLoading)
@@ -659,7 +747,7 @@ SizedBox(height: 20),
                                     ),
                                   )
                                 else
-                                  ...eastAsiaPackages.map((package) => Column(
+                                  ...filteredEastAsiaPackages.map((package) => Column(
                                     children: [
                                       _buildServiceCardFromAPI(package),
                                       SizedBox(height: 20),
@@ -687,98 +775,8 @@ SizedBox(height: 20),
                                 SizedBox(height: 16),
                                 
                                 // Segmented Control for African
-                                Container(
-  width: double.infinity,
-  decoration: BoxDecoration(
-    color: Colors.grey[200],
-    borderRadius: BorderRadius.circular(25),
-  ),
-  child: Row(
-    children: [
-      Expanded(
-        child: GestureDetector(
-          onTap: () => _onEastAsiaShiftChanged(1),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: selectedEastAsiaShift == 1 ? Colors.white : Colors.transparent,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: selectedEastAsiaShift == 1
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.wb_sunny,
-                  color: selectedEastAsiaShift == 1 ? Colors.orange : Colors.grey,
-                  size: 20,
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'Morning',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: selectedEastAsiaShift == 1 ? Colors.black : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      Expanded(
-        child: GestureDetector(
-          onTap: () => _onEastAsiaShiftChanged(2),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: selectedEastAsiaShift == 2 ? Colors.white : Colors.transparent,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: selectedEastAsiaShift == 2
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.nightlight_round,
-                  color: selectedEastAsiaShift == 2 ? Colors.indigo : Colors.grey,
-                  size: 20,
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'Evening',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: selectedEastAsiaShift == 2 ? Colors.black : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ],
-  ),
-),
-SizedBox(height: 20),
+                                _buildShiftSelector(false),
+                                SizedBox(height: 20),
 
                                 
                                 if (isAfricanLoading)
@@ -941,6 +939,160 @@ SizedBox(height: 20),
       ),
     );
   }
+
+
+Widget _buildShiftSelector(bool isEastAsia) {
+  // For Fawran 8 Hours, show only Full Day option
+  if (widget.serviceType == 'Fawran 8 Hours') {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.wb_sunny,
+            color: Colors.orange,
+            size: 20,
+          ),
+          SizedBox(width: 6),
+          Text(
+            'Full Day',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // For Fawran 4 Hours, show Morning/Evening options (existing code)
+  int selectedShift = isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
+  Function(int) onShiftChanged = isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
+  
+  return Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(25),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () => onShiftChanged(1),
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: selectedShift == 1 ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: selectedShift == 1
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.wb_sunny,
+                    color: selectedShift == 1 ? Colors.orange : Colors.grey,
+                    size: 20,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Morning',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: selectedShift == 1 ? Colors.black : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => onShiftChanged(2),
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: selectedShift == 2 ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: selectedShift == 2
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.nightlight_round,
+                    color: selectedShift == 2 ? Colors.indigo : Colors.grey,
+                    size: 20,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Evening',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: selectedShift == 2 ? Colors.black : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+  Widget _buildSearchResultsHeader() {
+  if (!isSearchActive || searchQuery.isEmpty) return SizedBox.shrink();
+  
+  int totalResults = filteredEastAsiaPackages.length + filteredAfricanPackages.length;
+  
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    child: Text(
+      'Found $totalResults result${totalResults != 1 ? 's' : ''} for "$searchQuery"',
+      style: TextStyle(
+        fontSize: 16,
+        color: Colors.grey[600],
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
+}
   
   Widget _buildOfferCard(String title, String discount, Color color) {
     return Container(
@@ -1210,10 +1362,11 @@ SizedBox(height: 20),
                       onTap: () {
                         // Pass the entire package object to address selection with callback
                         ContinuousBookingOverlay.showAsOverlay(
-                          context, 
-                          package: package,
-                          onBookingCompleted: _onBookingCompleted, // Add this callback
-                        );
+                            context, 
+                            package: package,
+                            selectedShift: selectedEastAsiaShift, // Pass the selected shift
+                            onBookingCompleted: _onBookingCompleted,
+                          );
                       },
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1233,19 +1386,6 @@ SizedBox(height: 20),
                   ],
                 ),
                 SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.black, size: 16),
-                    SizedBox(width: 4),
-                    Text(
-                      '4.83 (34K reviews)', // You can make this dynamic if available in API
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
                 SizedBox(height: 8),
                 Row(
                   children: [
@@ -1314,4 +1454,9 @@ SizedBox(height: 20),
       );
     }
   }
+  @override
+void dispose() {
+  searchController.dispose();
+  super.dispose();
+}
 }

@@ -1,16 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io' show Platform;
-
-// You'll need to add these dependencies to your pubspec.yaml:
-// dependencies:
-//   google_maps_flutter: ^2.5.0
-//   geolocator: ^10.1.0
-//   geocoding: ^2.1.1
-
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class City {
+  final int cityId;
+  final String cityName;
+
+  City({required this.cityId, required this.cityName});
+
+  factory City.fromJson(Map<String, dynamic> json) {
+    return City(
+      cityId: json['city_id'],
+      cityName: json['city_name'],
+    );
+  }
+}
+
+class CitiesResponse {
+  final List<City> cities;
+
+  CitiesResponse({required this.cities});
+
+  factory CitiesResponse.fromJson(Map<String, dynamic> json) {
+    var cityList = json['cities'] as List;
+    List<City> cities = cityList.map((city) => City.fromJson(city)).toList();
+    return CitiesResponse(cities: cities);
+  }
+}
+
+// Add District model classes
+class District {
+  final int districtId;
+  final String districtName;
+
+  District({required this.districtId, required this.districtName});
+
+  factory District.fromJson(Map<String, dynamic> json) {
+    return District(
+      districtId: json['district_id'],
+      districtName: json['district_name'],
+    );
+  }
+}
+
+class DistrictsResponse {
+  final List<District> districts;
+
+  DistrictsResponse({required this.districts});
+
+  factory DistrictsResponse.fromJson(Map<String, dynamic> json) {
+    var districtList = json['districts'] as List;
+    List<District> districts = districtList.map((district) => District.fromJson(district)).toList();
+    return DistrictsResponse(districts: districts);
+  }
+}
 
 class AddNewAddressScreen extends StatefulWidget {
   const AddNewAddressScreen({Key? key}) : super(key: key);
@@ -336,12 +384,6 @@ Positioned(
   }
 }
 
-
-
-
-
-// Remove the old _buildMapDialog, _onMapTapped, _confirmLocationSelection, and _proceedToDetails methods
-// as they are now handled by the MapSelectorDialog widget
 class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   // Controllers for form fields
   final TextEditingController _addressTitleController = TextEditingController();
@@ -371,6 +413,14 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   bool _hasUserMovedPin = false; // Track if user has moved the pin
   bool _isLocationConfirmed = false; // Track if location is confirmed
 
+List<City> _availableCities = [];
+bool _isLoadingCities = false;
+int? _selectedCityId; // Store the selected city ID
+
+// Add district-related variables
+List<District> _availableDistricts = [];
+bool _isLoadingDistricts = false;
+int? _selectedDistrictId;
   // Sample data for dropdowns with corresponding coordinates
   final Map<String, dynamic> _locationData = {
     'Riyadh Province': {
@@ -432,43 +482,81 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   List<String> get _provinces => _locationData.keys.toList();
 
   List<String> get _cities {
-    if (_selectedProvince == null) return [];
-    return _locationData[_selectedProvince]?['cities']?.keys?.toList() ?? [];
-  }
+  return _availableCities.map((city) => city.cityName).toList();
+}
 
   List<String> get _districts {
-    if (_selectedProvince == null || _selectedCity == null) return [];
-    return _locationData[_selectedProvince]?['cities']?[_selectedCity]?['districts']?.keys?.toList() ?? [];
-  }
+  return _availableDistricts.map((district) => district.districtName).toList();
+}
 
   LatLng? get _districtLocation {
     if (_selectedProvince == null || _selectedCity == null || _selectedDistrict == null) return null;
     return _locationData[_selectedProvince]?['cities']?[_selectedCity]?['districts']?[_selectedDistrict];
   }
 
-  void _onProvinceChanged(String? value) {
-    setState(() {
-      _selectedProvince = value;
-      _selectedCity = null;
-      _selectedDistrict = null;
-      _checkDistrictCompletion();
-    });
+ void _onProvinceChanged(String? value) {
+  setState(() {
+    _selectedProvince = value;
+    _selectedCity = null;
+    _selectedDistrict = null;
+    _selectedCityId = null;
+    _selectedDistrictId = null;
+    _availableCities.clear(); // Clear previous cities
+    _availableDistricts.clear(); // Clear previous districts
+    _checkDistrictCompletion();
+  });
+  
+  // Fetch cities from API when province is selected
+  if (value != null) {
+    _fetchCitiesFromAPI();
   }
+}
 
   void _onCityChanged(String? value) {
-    setState(() {
-      _selectedCity = value;
-      _selectedDistrict = null;
-      _checkDistrictCompletion();
-    });
-  }
+  setState(() {
+    _selectedCity = value;
+    _selectedDistrict = null;
+    _selectedDistrictId = null;
+    _availableDistricts.clear(); // Clear previous districts
+    
+    // Find and store the selected city ID
+    if (value != null) {
+      final selectedCityObj = _availableCities.firstWhere(
+        (city) => city.cityName == value,
+        orElse: () => City(cityId: 0, cityName: ''),
+      );
+      _selectedCityId = selectedCityObj.cityId;
+      
+      // Fetch districts for the selected city
+      if (_selectedCityId != null && _selectedCityId! > 0) {
+        _fetchDistrictsFromAPI(_selectedCityId!);
+      }
+    } else {
+      _selectedCityId = null;
+    }
+    
+    _checkDistrictCompletion();
+  });
+}
 
   void _onDistrictChanged(String? value) {
-    setState(() {
-      _selectedDistrict = value;
-      _checkDistrictCompletion();
-    });
-  }
+  setState(() {
+    _selectedDistrict = value;
+    
+    // Find and store the selected district ID
+    if (value != null) {
+      final selectedDistrictObj = _availableDistricts.firstWhere(
+        (district) => district.districtName == value,
+        orElse: () => District(districtId: 0, districtName: ''),
+      );
+      _selectedDistrictId = selectedDistrictObj.districtId;
+    } else {
+      _selectedDistrictId = null;
+    }
+    
+    _checkDistrictCompletion();
+  });
+}
 
   void _checkDistrictCompletion() {
     setState(() {
@@ -498,6 +586,68 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     });
   }
 
+Future<void> _fetchCitiesFromAPI() async {
+  setState(() {
+    _isLoadingCities = true;
+  });
+
+  try {
+    final response = await http.get(
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address/cities?service_id=1'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final citiesResponse = CitiesResponse.fromJson(json.decode(response.body));
+      setState(() {
+        _availableCities = citiesResponse.cities;
+        _isLoadingCities = false;
+      });
+    } else {
+      throw Exception('Failed to load cities');
+    }
+  } catch (e) {
+    print('Error fetching cities: $e');
+    setState(() {
+      _isLoadingCities = false;
+    });
+    // Show error message to user
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load cities. Please try again.')),
+    );
+  }
+}
+Future<void> _fetchDistrictsFromAPI(int cityId) async {
+  setState(() {
+    _isLoadingDistricts = true;
+  });
+
+  try {
+    final response = await http.get(
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address/districts?service_id=1&city_id=$cityId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final districtsResponse = DistrictsResponse.fromJson(json.decode(response.body));
+      setState(() {
+        _availableDistricts = districtsResponse.districts;
+        _isLoadingDistricts = false;
+      });
+    } else {
+      throw Exception('Failed to load districts');
+    }
+  } catch (e) {
+    print('Error fetching districts: $e');
+    setState(() {
+      _isLoadingDistricts = false;
+    });
+    // Show error message to user
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load districts. Please try again.')),
+    );
+  }
+}
   // Now update your main widget's _openMapSelector method to use this new dialog:
 Future<void> _openMapSelector() async {
   if (!_isDistrictCompleted) return;
@@ -700,7 +850,88 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
       ],
     );
   }
+Widget _buildCityDropdown() {
+  if (_isLoadingCities) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey[100],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+            ),
+          ),
+          SizedBox(width: 12),
+          Text(
+            'Loading cities...',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  return _buildDropdown(
+    'Please select your city', 
+    _selectedCity, 
+    _cities, 
+    _onCityChanged,
+    enabled: _selectedProvince != null && !_isLoadingCities
+  );
+}
+Widget _buildDistrictDropdown() {
+  if (_isLoadingDistricts) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey[100],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+            ),
+          ),
+          SizedBox(width: 12),
+          Text(
+            'Loading districts...',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  return _buildDropdown(
+    'Please select your District', 
+    _selectedDistrict, 
+    _districts, 
+    _onDistrictChanged,
+    enabled: _selectedCity != null && !_isLoadingDistricts
+  );
+}
   Widget _buildDropdown(String hint, String? value, List<String> items, Function(String?) onChanged, {bool enabled = true}) {
     return Container(
       width: double.infinity,
@@ -852,21 +1083,9 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
                       _onProvinceChanged
                     ),
                     SizedBox(height: 15),
-                    _buildDropdown(
-                      'Please select your city', 
-                      _selectedCity, 
-                      _cities, 
-                      _onCityChanged,
-                      enabled: _selectedProvince != null
-                    ),
+                    _buildCityDropdown(),
                     SizedBox(height: 15),
-                    _buildDropdown(
-                      'Please select your District', 
-                      _selectedDistrict, 
-                      _districts, 
-                      _onDistrictChanged,
-                      enabled: _selectedCity != null
-                    ),
+                    _buildDistrictDropdown(),
 
                     SizedBox(height: 30),
                     Container(height: 1, color: Colors.grey[300]),

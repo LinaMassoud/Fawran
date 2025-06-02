@@ -81,12 +81,16 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Fawran-4 Hours',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                            Expanded( // Wrap the Text with Expanded
+                              child: Text(
+                                widget.bookingData.packageName,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis, // Handle overflow gracefully
+                                maxLines: 2, // Allow up to 2 lines if needed
                               ),
                             ),
                           ],
@@ -94,13 +98,13 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         SizedBox(height: 16),
                         
                         // Service details rows
-                        _buildDetailRow('Pack', 'East Asia'),
+                        _buildDetailRow('Pack', widget.bookingData.selectedNationality), // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
                         _buildDetailRow('Start Date', _formatDate(widget.bookingData.selectedDates.isNotEmpty ? widget.bookingData.selectedDates.first : DateTime.now())),
                         SizedBox(height: 16),
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
-                        _buildDetailRow('Nationality', 'East Asia'),
+                        _buildDetailRow('Nationality', widget.bookingData.selectedNationality), // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
                         _buildDetailRow('Workers', '${widget.bookingData.workerCount}'),
                         SizedBox(height: 12),
@@ -407,7 +411,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
             ),
           ),
           
-          // Bottom section with address and proceed button
+          // Bottom section with dynamic address and proceed button
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -422,7 +426,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Address section
+                // Dynamic address section
                 Container(
                   padding: EdgeInsets.all(16),
                   child: Row(
@@ -434,7 +438,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Al Fath',
+                              widget.bookingData.selectedAddress,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -442,7 +446,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                               ),
                             ),
                             Text(
-                              'Al Madinah Province,Madinah Principality,Madinah, 7421',
+                              _getAddressDetails(widget.bookingData.selectedAddress),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -598,6 +602,20 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
     else if (day.endsWith('3') && day != '13') suffix = 'rd';
     
     return '${day}${suffix} ${months[date.month - 1]}\'${date.year.toString().substring(2)}';
+  }
+  
+  // Helper method to get address details based on selected address
+  String _getAddressDetails(String selectedAddress) {
+    // You can customize this based on your address structure
+    // For now, providing default details based on the address name
+    switch (selectedAddress) {
+      case 'Al rashidiya':
+        return 'Riyadh Province, Riyadh Principality, Riyadh';
+      case 'Al Abha':
+        return 'Asir Province, Al Abha Principality, Al Abha';
+      default:
+        return 'Saudi Arabia'; // Default fallback
+    }
   }
   
   void _showPaymentSuccess() {
