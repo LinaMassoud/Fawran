@@ -86,11 +86,11 @@ static double _parseDouble(dynamic value) {
 
   // Helper methods to get display values
   String get nationalityDisplay {
-    if (groupCode == '1') return 'African';        // Fixed: group code 1 is African
-    if (groupCode == '2') return 'East Asia';      // Fixed: group code 2 is East Asia
-    if (groupCode == '3') return 'South Asia';
-    return 'East Asia'; // default
-  }
+  if (groupCode == '2') return 'East Asia';      // Fixed: group code 2 is East Asia
+  if (groupCode == '3') return 'African';        // Fixed: group code 3 is African  
+  if (groupCode == '1') return 'South Asia';     // group code 1 is South Asia
+  return 'East Asia'; // default
+}
 
   String get timeDisplay {
     if (serviceShift == 1) return 'Morning';
@@ -236,9 +236,17 @@ Future<void> fetchEastAsiaPackages() async {
       eastAsiaErrorMessage = null;
     });
 
-    // Use dynamic service parameters
+    String apiUrl;
+    // For Fawran 4 Hours (service_id=1), include service_shift parameter
+    if (widget.serviceId == 1) {
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=2&service_shift=$selectedEastAsiaShift&job_id=251';
+    } else {
+      // For Fawran 8 Hours (service_id=21), no service_shift parameter
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=2&job_id=251';
+    }
+
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&service_code=${widget.serviceCode}&profession_id=${widget.professionId}'),
+      Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -282,16 +290,25 @@ Future<void> fetchEastAsiaPackages() async {
   }
 }
 
-  Future<void> fetchAfricanPackages() async {
+// Update the fetchAfricanPackages method
+Future<void> fetchAfricanPackages() async {
   try {
     setState(() {
       isAfricanLoading = true;
       africanErrorMessage = null;
     });
 
-    // Use dynamic service parameters with group_code=1 for African
+    String apiUrl;
+    // For Fawran 4 Hours (service_id=1), include service_shift parameter
+    if (widget.serviceId == 1) {
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=3&service_shift=$selectedAfricanShift&job_id=251';
+    } else {
+      // For Fawran 8 Hours (service_id=21), no service_shift parameter
+      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=3&job_id=251';
+    }
+
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&service_code=${widget.serviceCode}&profession_id=${widget.professionId}&group_code=1&service_shift=$selectedAfricanShift'),
+      Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
       },

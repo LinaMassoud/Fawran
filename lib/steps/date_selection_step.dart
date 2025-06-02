@@ -23,8 +23,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   late DateTime nextMonth;
   late List<DateTime> selectedDates;
   Map<DateTime, int> dateWorkerCount = {};
-  Map<DateTime, int> allocatedWorkers = {}; // Track workers allocated per date
-  int totalWorkersAllocated = 0;
+  int totalDatesSelected = 0;
   
   @override
   void initState() {
@@ -41,7 +40,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     }
     
     _initializeWorkerAvailability();
-    _calculateAllocatedWorkers();
+    _calculateSelectedDates();
   }
 
   void _initializeWorkerAvailability() {
@@ -71,22 +70,17 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     }
   }
 
-  void _calculateAllocatedWorkers() {
-    allocatedWorkers.clear();
-    totalWorkersAllocated = 0;
-    
-    for (DateTime date in selectedDates) {
-      // For existing selections, assume 1 worker per date (for backward compatibility)
-      // In a real implementation, you might want to store this information differently
-      allocatedWorkers[date] = 1;
-      totalWorkersAllocated += 1;
-    }
+  void _calculateSelectedDates() {
+    totalDatesSelected = selectedDates.length;
   }
 
   bool _isDateDisabled(DateTime date) {
     final now = DateTime.now();
     final workerCount = dateWorkerCount[date] ?? 0;
-    return date.isBefore(DateTime(now.year, now.month, now.day)) || workerCount == 0;
+    
+    // Disable if date is in the past, has no workers, or doesn't have enough workers for the requirement
+    return date.isBefore(DateTime(now.year, now.month, now.day)) || 
+           workerCount < widget.maxSelectableDates;
   }
 
   bool _isDateSelected(DateTime date) {
@@ -97,108 +91,29 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     );
   }
 
-  int _getAvailableWorkersForDate(DateTime date) {
-    final totalAvailable = dateWorkerCount[date] ?? 0;
-    final currentlyAllocated = allocatedWorkers[date] ?? 0;
-    return totalAvailable - currentlyAllocated;
-  }
-
   void _toggleDateSelection(DateTime date) {
     if (_isDateDisabled(date)) return;
     
     setState(() {
       if (_isDateSelected(date)) {
-        // Remove date and its allocated workers
+        // Remove date
         selectedDates.removeWhere((selectedDate) => 
           selectedDate.year == date.year &&
           selectedDate.month == date.month &&
           selectedDate.day == date.day
         );
-        totalWorkersAllocated -= (allocatedWorkers[date] ?? 0);
-        allocatedWorkers.remove(date);
+        totalDatesSelected--;
       } else {
-        // Calculate how many workers we can allocate to this date
-        final availableWorkers = _getAvailableWorkersForDate(date);
-        final workersNeeded = widget.maxSelectableDates - totalWorkersAllocated;
-        
-        if (workersNeeded <= 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('You have already allocated all ${widget.maxSelectableDates} workers.'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          return;
-        }
-        
-        if (availableWorkers <= 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('No workers available on this date.'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          return;
-        }
-        
-        // Efficiently allocate the maximum possible workers for this date
-        final workersToAllocate = availableWorkers >= workersNeeded ? workersNeeded : availableWorkers;
-        
+        // Check if we can add more dates (for cases where user might want multiple dates)
+        // For now, assuming one date selection, but keeping flexible for future use
         selectedDates.add(date);
-        allocatedWorkers[date] = workersToAllocate;
-        totalWorkersAllocated += workersToAllocate;
+        totalDatesSelected++;
         
-        // Show allocation message
-        if (totalWorkersAllocated == widget.maxSelectableDates) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Perfect! All ${widget.maxSelectableDates} worker${widget.maxSelectableDates > 1 ? 's' : ''} allocated successfully.'
-              ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        } else if (workersToAllocate < workersNeeded) {
-          final remainingWorkers = workersNeeded - workersToAllocate;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Allocated $workersToAllocate worker${workersToAllocate > 1 ? 's' : ''} for this date. '
-                'You still need $remainingWorkers more worker${remainingWorkers > 1 ? 's' : ''}.'
-              ),
-              backgroundColor: Colors.blue,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Allocated $workersToAllocate worker${workersToAllocate > 1 ? 's' : ''} for this date.'
-              ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
       }
     });
     
     // Notify parent component of changes
     widget.onDatesChanged(selectedDates);
-  }
-
-  Color _getWorkerCountColor(int availableWorkers) {
-    if (availableWorkers == 1) {
-      return Colors.red;
-    } else if (availableWorkers < 3) {
-      return Colors.orange; // Yellow/Orange for less than 3
-    } else {
-      return Colors.green; // Green for 3 or more
-    }
   }
 
   Widget _buildCalendarGrid(DateTime month) {
@@ -218,7 +133,6 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       final date = DateTime(month.year, month.month, day);
       final isDisabled = _isDateDisabled(date);
       final isSelected = _isDateSelected(date);
-      final availableWorkers = _getAvailableWorkersForDate(date);
       
       dayWidgets.add(
         GestureDetector(
@@ -228,41 +142,27 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             decoration: BoxDecoration(
               color: isSelected 
                 ? Colors.blue[100]
-                : Colors.transparent,
+                : isDisabled
+                  ? Colors.grey[100]
+                  : Colors.transparent,
               border: isSelected 
                 ? Border.all(color: Colors.blue[600]!, width: 2)
                 : Border.all(color: Colors.grey[200]!, width: 1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$day',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDisabled 
-                      ? Colors.grey[400]
-                      : isSelected
-                        ? Colors.blue[800]
-                        : Colors.black,
-                  ),
+            child: Center(
+              child: Text(
+                '$day',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDisabled 
+                    ? Colors.grey[400]
+                    : isSelected
+                      ? Colors.blue[800]
+                      : Colors.black,
                 ),
-                if (!isDisabled) ...[
-                  SizedBox(height: 1),
-                  Text(
-                    '$availableWorkers left',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      color: _getWorkerCountColor(availableWorkers),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),
@@ -422,18 +322,18 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: totalWorkersAllocated == widget.maxSelectableDates 
+                      color: totalDatesSelected > 0 
                           ? Colors.green[100] 
                           : Colors.grey[300],
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        '$totalWorkersAllocated',
+                        '$totalDatesSelected',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: totalWorkersAllocated == widget.maxSelectableDates 
+                          color: totalDatesSelected > 0 
                               ? Colors.green[800] 
                               : Colors.black87,
                         ),
@@ -443,13 +343,13 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                   
                   SizedBox(width: 16),
                   
-                  // Allocation progress
+                  // Selection status
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Workers Allocated',
+                        'Dates Selected',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.black87,
@@ -457,12 +357,12 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                         ),
                       ),
                       Text(
-                        '$totalWorkersAllocated/${widget.maxSelectableDates}',
+                        '$totalDatesSelected',
                         style: TextStyle(
                           fontSize: 20,
-                          color: totalWorkersAllocated == widget.maxSelectableDates 
+                          color: totalDatesSelected > 0 
                               ? Colors.green 
-                              : Colors.blue,
+                              : Colors.grey,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -475,22 +375,22 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap: totalWorkersAllocated > 0 && widget.onNextPressed != null 
+                      onTap: totalDatesSelected > 0 && widget.onNextPressed != null 
                           ? widget.onNextPressed 
                           : null,
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: totalWorkersAllocated > 0 
+                          color: totalDatesSelected > 0 
                               ? Color(0xFF1E3A8A)
                               : Colors.grey[400],
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: Center(
                           child: Text(
-                            totalWorkersAllocated == widget.maxSelectableDates 
-                                ? 'Perfect!' 
-                                : 'Next',
+                            totalDatesSelected > 0 
+                                ? 'Next' 
+                                : 'Select Date',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,

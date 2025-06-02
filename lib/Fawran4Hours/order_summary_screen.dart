@@ -81,12 +81,16 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Fawran-4 Hours',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                            Expanded( // Wrap the Text with Expanded
+                              child: Text(
+                                widget.bookingData.packageName,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis, // Handle overflow gracefully
+                                maxLines: 2, // Allow up to 2 lines if needed
                               ),
                             ),
                           ],
@@ -94,13 +98,13 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         SizedBox(height: 16),
                         
                         // Service details rows
-                        _buildDetailRow('Pack', 'East Asia'),
+                        _buildDetailRow('Pack', widget.bookingData.selectedNationality), // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
                         _buildDetailRow('Start Date', _formatDate(widget.bookingData.selectedDates.isNotEmpty ? widget.bookingData.selectedDates.first : DateTime.now())),
                         SizedBox(height: 16),
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
-                        _buildDetailRow('Nationality', 'East Asia'),
+                        _buildDetailRow('Nationality', widget.bookingData.selectedNationality), // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
                         _buildDetailRow('Workers', '${widget.bookingData.workerCount}'),
                         SizedBox(height: 12),

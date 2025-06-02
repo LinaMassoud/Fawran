@@ -57,6 +57,8 @@ class BookingData {
   final int workerCount;
   final String contractDuration;
   final String visitsPerWeek;
+  final String selectedNationality; // Add this field
+  final String packageName; // Add this field
 
   BookingData({
     required this.selectedDates,
@@ -65,6 +67,8 @@ class BookingData {
     required this.workerCount,
     required this.contractDuration,
     required this.visitsPerWeek,
+    required this.selectedNationality, // Add this parameter
+    required this.packageName, // Add this parameter
   });
 }
 
@@ -337,34 +341,28 @@ void initState() {
   }
 
   void _completePurchase() async {
-    // Create booking data
-    final selectedAddress = addresses.firstWhere((addr) => addr.isSelected);
-    final bookingData = BookingData(
-      selectedDates: selectedDates,
-      totalPrice: _calculateTotalPrice(),
-      selectedAddress: selectedAddress.name,
-      workerCount: workerCount,
-      contractDuration: contractDuration,
-      visitsPerWeek: visitsPerWeek,
-    );
+  // Create booking data
+  final selectedAddress = addresses.firstWhere((addr) => addr.isSelected);
+  final bookingData = BookingData(
+    selectedDates: selectedDates,
+    totalPrice: _calculateTotalPrice(),
+    selectedAddress: selectedAddress.name,
+    workerCount: workerCount,
+    contractDuration: contractDuration,
+    visitsPerWeek: visitsPerWeek,
+    selectedNationality: selectedNationality, // Pass the actual nationality
+    packageName: widget.package.packageName, // Pass the actual package name
+  );
 
-    // Close overlay with animation
-    await _animationController.reverse();
-    Navigator.pop(context);
+  // Close overlay with animation
+  await _animationController.reverse();
+  Navigator.pop(context);
 
-    // Call the callback to update the parent screen
-    if (widget.onBookingCompleted != null) {
-      widget.onBookingCompleted!(bookingData);
-    }
-
-    // // Show success message
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(
-    //     content: Text('Booking completed successfully!'),
-    //     backgroundColor: Colors.green,
-    //   ),
-    // );
+  // Call the callback to update the parent screen
+  if (widget.onBookingCompleted != null) {
+    widget.onBookingCompleted!(bookingData);
   }
+}
 
   // Calculate total price from selected dates
   double _calculateTotalPrice() {
