@@ -1,13 +1,12 @@
-import 'package:fawran/Fawran4Hours/continuous_booking_overlay.dart';
-import 'package:fawran/screens/location_screen.dart';
+import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'providers/auth_provider.dart';
-import 'screens/home_screen.dart';
-import 'Fawran4Hours/cleaning_service_screen.dart';
+
 
 void main() {
   runApp(
@@ -38,7 +37,7 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
-      home: LocationScreen()
+      home: const OnboardingScreen()
     );
        }
 }

@@ -6,6 +6,7 @@
   "dontHaveAccount": "Don’t have an account?",
 
   "signUp": "Sign Up",
+  "username": "User Name",
   "firstName": "First Name",
   "middleName": "Middle Name",
   "lastName": "Last Name",
@@ -29,7 +30,8 @@
   "saving_packages": "Saving Packages",
 
   "fetching_location" : "fetching your location...",
-    "currentLocation" : "📍 currentLocation:"
+  "currentLocation" : "📍 currentLocation:",
+   "offer":  "Save up to 15%\nwhen you order now"
 
 
 

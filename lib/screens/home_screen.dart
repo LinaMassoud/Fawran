@@ -144,7 +144,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         child: Center(
           child: Text(
-            'Save up to 15%\nwhen you order now',
+            loc.offer,
             style: TextStyle(
               color: Colors.white,
               fontSize: 14,

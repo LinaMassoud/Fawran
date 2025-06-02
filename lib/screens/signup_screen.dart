@@ -72,7 +72,7 @@ void initState() {
             children: [
                _buildTextField(
                 controller: _userNameController,
-                label: loc.firstName,
+                label: loc.username,
                 icon: Icons.person,
                 validator: (val) =>
                     val == null || val.isEmpty ? '${loc.firstName} is required' : null,
@@ -181,9 +181,7 @@ void initState() {
                     Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => LoginScreen(isArabic: true, onLanguageChanged: (bool? value) {
-                                print("object");
-                              },),
+                              builder: (context) => LoginScreen(),
                             ),
                           );
                 },

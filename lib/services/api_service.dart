@@ -1,11 +1,10 @@
-// services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String _baseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran';
 
-  // API method for sign up
+  // Sign up API
   Future<bool> signUp({
     required String userName,
     required String firstName,
@@ -38,7 +37,7 @@ class ApiService {
     }
   }
 
-  // ✅ API method for login
+  // Login API
   Future<Map<String, dynamic>?> login({
     required String phoneNumber,
     required String password,
@@ -50,18 +49,41 @@ class ApiService {
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'username': phoneNumber,
+          'phone_number': phoneNumber,
           'password': password,
         }),
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body); // Return token or user info
+        return json.decode(response.body);
       } else {
-        return null; // Login failed
+        return null;
       }
     } catch (ex) {
       return null;
+    }
+  }
+
+  // ✅ OTP Verification API
+  Future<bool> verifyCode({
+    required String username,
+    required String otp,
+  }) async {
+    final url = Uri.parse('$_baseUrl/auth/verify');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'username': username,
+          'otp': otp,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (ex) {
+      return false;
     }
   }
 }

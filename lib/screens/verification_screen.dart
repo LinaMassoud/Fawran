@@ -1,4 +1,6 @@
+import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/signup_screen.dart';
+import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -36,18 +38,35 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     });
   }
 
-  void _submitOtp() {
-    final code = _otpControllers.map((c) => c.text).join();
-    if (code.length < 6) return;
+  void _submitOtp() async {
+  final code = _otpControllers.map((c) => c.text).join();
+  if (code.length < 6) return;
 
-    setState(() => _isVerifying = true);
+  setState(() => _isVerifying = true);
 
-    // TODO: Trigger API verification via Riverpod provider
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() => _isVerifying = false);
-      // Navigate or show success
-    });
+  final apiService = ApiService();
+
+  final success = await apiService.verifyCode(
+    username: 'testuser4', // Replace this with the actual value
+    otp: '000000',
+  );
+
+  setState(() => _isVerifying = false);
+
+  if (!mounted) return;
+
+  if (success) {
+ Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                          );  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Verification failed. Please try again.')),
+    );
   }
+}
 
   void _onOtpChanged(int index, String value) {
     if (value.length == 1 && index < 5) {
