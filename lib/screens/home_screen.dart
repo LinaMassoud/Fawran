@@ -1,3 +1,4 @@
+import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
 import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,28 @@ class HomeScreen extends ConsumerWidget {
      final currentLocale = ref.watch(localeProvider);
     final location = ref.watch(locationProvider); // <- reading the state
     final loc = AppLocalizations.of(context)!;
+    final examplePackage = PackageModel(
+  pricingId: 101,
+  groupCode: "GRP001",
+  serviceId: 5,
+  serviceShift: "Evening",
+  duration: 90, // duration in minutes
+  noOfMonth: 3,
+  hourPrice: 25.0,
+  visitsWeekly: 2,
+  noOfEmployee: 1,
+  packageId: 2001,
+  visitPrice: 50.0,
+  packageName: "Aisian Package",
+  vatPercentage: 15,
+  packagePrice: 1200.0,
+  discountPercentage: 10.0,
+  priceAfterDiscount: 1080.0,
+  vatAmount: 162,
+  finalPrice: 1242.0,
+);
+void navigateToCleaningWithOffer(PackageModel package, int shift) {  
+Navigator.push(    context,    MaterialPageRoute(      builder: (context) => CleaningServiceScreen(        autoOpenPackage: package,        autoOpenShift: shift,      ),    ),  );}
 
 
     final isArabic = currentLocale.languageCode == 'ar';
@@ -42,6 +65,7 @@ class HomeScreen extends ConsumerWidget {
 
       // Fixed Header
     appBar: AppBar(
+      automaticallyImplyLeading: false,
   elevation: 0,
   backgroundColor: Colors.white,
   toolbarHeight: 80,
@@ -91,23 +115,21 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           children: [
             SizedBox(height: 16),
-
-            // Services Grid
-         GridView.count(
+GridView.count(
   shrinkWrap: true,
   crossAxisCount: 4,
   physics: NeverScrollableScrollPhysics(),
   mainAxisSpacing: 12,
   crossAxisSpacing: 12,
-  childAspectRatio: 0.8, 
+  childAspectRatio: 0.8,
   children: List.generate(4, (index) {
-    return Column(
+    Widget content = Column(
       children: [
         Container(
           height: 60,
           width: 60,
           decoration: BoxDecoration(
-             color: Colors.orange,
+            color: Colors.orange,
             borderRadius: BorderRadius.circular(12),
             image: DecorationImage(
               image: AssetImage('assets/images/${index + 1}.png'),
@@ -123,34 +145,71 @@ class HomeScreen extends ConsumerWidget {
         ),
       ],
     );
+
+    // Add navigation for 3rd and 4th items
+    if (index == 2) {
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CleaningServiceScreen()),
+          );
+        },
+        child: content,
+      );
+    } else if (index == 3) {
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CleaningServiceScreen(
+  serviceType: 'Fawran 8 Hours',
+  serviceCode: 'FAWRAN8Hours',
+  serviceId: 21,
+  professionId: 3,
+)),
+          );
+        },
+        child: content,
+      );
+    } else {
+      return content;
+    }
   }),
 ),
+
+            // Services Grid
             SizedBox(height: 20),
 
             // Horizontal Slider (Colored Rectangles)
-          SizedBox(
-  height: 130, // ⬆️ Made taller
+    SizedBox(
+  height: 130,
   child: ListView.builder(
     scrollDirection: Axis.horizontal,
     itemCount: 5,
     itemBuilder: (context, index) {
-      return Container(
-        width: 160,
-        margin: EdgeInsets.only(right: 10),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.primaries[index % Colors.primaries.length].shade400,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(
-          child: Text(
-            loc.offer,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+      return GestureDetector(
+        onTap: () {
+          navigateToCleaningWithOffer(examplePackage,1); // 👈 Call your function here with optional index
+        },
+        child: Container(
+          width: 160,
+          margin: EdgeInsets.only(right: 10),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.primaries[index % Colors.primaries.length].shade400,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Center(
+            child: Text(
+              loc.offer,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
         ),
       );
