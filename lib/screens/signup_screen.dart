@@ -54,6 +54,7 @@ void initState() {
         MaterialPageRoute(
           builder: (_) => VerificationScreen(
             phoneNumber: _phoneController.text,
+            usernme: _userNameController.text,
           ),
         ),
       );

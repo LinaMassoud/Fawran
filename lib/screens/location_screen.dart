@@ -122,7 +122,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
 
     return Scaffold(
-      appBar: AppBar(title: const Text("تحديد الموقع")),
+      appBar: AppBar( automaticallyImplyLeading: false,title: const Text("تحديد الموقع")),
       body: Center(
         child: isLoading
             ? Column(

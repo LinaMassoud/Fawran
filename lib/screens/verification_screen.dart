@@ -7,8 +7,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class VerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
+  final String usernme;
 
-  const VerificationScreen({super.key, required this.phoneNumber});
+  const VerificationScreen({super.key, required this.phoneNumber, required this.usernme});
 
   @override
   ConsumerState<VerificationScreen> createState() => _VerificationScreenState();
@@ -47,7 +48,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   final apiService = ApiService();
 
   final success = await apiService.verifyCode(
-    username: 'testuser4', // Replace this with the actual value
+    username: widget.usernme, // Replace this with the actual value
     otp: '000000',
   );
 
