@@ -88,6 +88,7 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
   List<AddressModel> addresses = [];
   bool isLoadingAddresses = true;
   String? addressError;
+  List<String> selectedDays = [];
 
   // Service Details Data
   String selectedNationality = 'East Asia';
@@ -202,8 +203,7 @@ void initState() {
   String _getTimeFromShift(String shift) {
     switch (shift) {
       case '1': return 'Morning';
-      case '2': return 'Afternoon';
-      case '3': return 'Evening';
+      case '2': return 'Evening';
       default: return 'Morning';
     }
   }
@@ -220,6 +220,11 @@ void initState() {
     Navigator.pop(context);
   }
 
+void _updateSelectedDays(List<String> newSelectedDays) {
+    setState(() {
+      selectedDays = newSelectedDays;
+    });
+  }
   void _nextStep() {
     if (currentStep < totalSteps - 1) {
       setState(() {
@@ -311,10 +316,16 @@ void initState() {
   }
 
   void _updateSelectedDates(List<DateTime> dates) {
-    setState(() {
-      selectedDates = dates;
-    });
-  }
+  // Use WidgetsBinding.instance.addPostFrameCallback to defer setState
+  // until after the current build phase is complete
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        selectedDates = dates;
+      });
+    }
+  });
+}
 
   void _goToDateSelection() {
     setState(() {
@@ -483,11 +494,17 @@ void initState() {
                                 selectedTime: selectedTime,
                                 visitDuration: visitDuration,
                                 visitsPerWeek: visitsPerWeek,
+                                selectedDays: selectedDays, // Add this
                                 onContractDurationChanged: _updateContractDuration,
                                 onWorkerCountChanged: _updateWorkerCount,
-                                onVisitsPerWeekChanged: _updateVisitsPerWeek,
+                                onVisitsPerWeekChanged: (newVisitsPerWeek) {
+                                  _updateVisitsPerWeek(newVisitsPerWeek);
+                                  // Reset selected days when visits per week changes
+                                  _updateSelectedDays([]);
+                                },
+                                onSelectedDaysChanged: _updateSelectedDays, // Add this
                                 onSelectDatePressed: _goToDateSelection,
-                                onDonePressed: _completePurchase, // This will now close overlay and update parent
+                                onDonePressed: _completePurchase,
                                 showBottomNavigation: isReturningFromDateSelection && selectedDates.isNotEmpty,
                                 totalPrice: _calculateTotalPrice(),
                                 selectedDates: selectedDates,
@@ -496,7 +513,9 @@ void initState() {
                                 selectedDates: selectedDates,
                                 onDatesChanged: _updateSelectedDates,
                                 onNextPressed: selectedDates.isNotEmpty ? _returnFromDateSelection : null,
-                                maxSelectableDates: workerCount, // Pass the worker count as the limit
+                                maxSelectableDates: workerCount,
+                                selectedDays: selectedDays, // Pass the selected days
+                                contractDuration: contractDuration, // Pass the contract duration
                               ),
                             ],
                           ),

@@ -94,8 +94,7 @@ static double _parseDouble(dynamic value) {
 
   String get timeDisplay {
     if (serviceShift == 1) return 'Morning';
-    if (serviceShift == 2) return 'Afternoon';
-    if (serviceShift == 3) return 'Evening';
+    if (serviceShift == 2) return 'Evening';
     return 'Morning'; // default
   }
 
@@ -130,6 +129,9 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   // Global keys for navigation to specific sections
   final GlobalKey eastAsiaKey = const GlobalObjectKey("eastAsia");
   final GlobalKey africanKey = const GlobalObjectKey("african");
+  final GlobalKey searchResultsKey = const GlobalObjectKey("searchResults");
+final GlobalKey eastAsiaSearchKey = const GlobalObjectKey("eastAsiaSearch");
+final GlobalKey africanSearchKey = const GlobalObjectKey("africanSearch");
 
   // Package lists for different groups and shifts
   List<PackageModel> eastAsiaPackages = [];
@@ -211,10 +213,45 @@ void _checkAndShowAutoOverlay() {
                'visit'.contains(searchQuery) ||
                'hours'.contains(searchQuery);
       }).toList();
+      
+      // Auto-scroll to search results after filtering
+      if (filteredEastAsiaPackages.isNotEmpty || filteredAfricanPackages.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToSearchResults();
+        });
+      }
     }
   });
 }
 
+void _scrollToSearchResults() {
+  GlobalKey? targetKey;
+  
+  // Determine which section to scroll to based on search results
+  if (filteredEastAsiaPackages.isNotEmpty && filteredAfricanPackages.isNotEmpty) {
+    // Both have results, scroll to East Asia first
+    targetKey = eastAsiaSearchKey;
+  } else if (filteredEastAsiaPackages.isNotEmpty) {
+    // Only East Asia has results
+    targetKey = eastAsiaSearchKey;
+  } else if (filteredAfricanPackages.isNotEmpty) {
+    // Only African has results
+    targetKey = africanSearchKey;
+  }
+  
+  // Scroll to the target section
+  if (targetKey != null) {
+    final context = targetKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: Duration(milliseconds: 800),
+        curve: Curves.easeInOut,
+        alignment: 0.0, // Scroll to top of the section
+      );
+    }
+  }
+}
 void _toggleSearch() {
   setState(() {
     isSearchActive = !isSearchActive;
@@ -694,30 +731,50 @@ Future<void> fetchAfricanPackages() async {
                           
                           // East Asia Pack Section with Segmented Control
                           Container(
-                            key: eastAsiaKey,
+                            key: isSearchActive && searchQuery.isNotEmpty ? eastAsiaSearchKey : eastAsiaKey,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'East Asia Pack',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                // Show section title only if there are results or no search is active
+                                if (!isSearchActive || searchQuery.isEmpty || filteredEastAsiaPackages.isNotEmpty)
+                                  Text(
+                                    'East Asia Pack',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 16),
                                 
-                                // Segmented Control for East Asia
-                                _buildShiftSelector(true),
-                                  SizedBox(height: 20),
-
+                                // Show search results count for this section
+                                if (isSearchActive && searchQuery.isNotEmpty && filteredEastAsiaPackages.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 8, bottom: 8),
+                                    child: Text(
+                                      '${filteredEastAsiaPackages.length} result${filteredEastAsiaPackages.length != 1 ? 's' : ''} found',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
                                 
+                                // Show shift selector only if not searching or has results
+                                if ((!isSearchActive || searchQuery.isEmpty || filteredEastAsiaPackages.isNotEmpty))
+                                  Column(
+                                    children: [
+                                      SizedBox(height: 16),
+                                      _buildShiftSelector(true),
+                                      SizedBox(height: 20),
+                                    ],
+                                  ),
+                                
+                                // Show loading, error, or packages
                                 if (isEastAsiaLoading)
-                                  Center(
-                                    child: CircularProgressIndicator(),
-                                  )
+                                  Center(child: CircularProgressIndicator())
                                 else if (eastAsiaErrorMessage != null)
+                                  // Your existing error container
                                   Container(
                                     padding: EdgeInsets.all(20),
                                     decoration: BoxDecoration(
@@ -746,7 +803,22 @@ Future<void> fetchAfricanPackages() async {
                                       ],
                                     ),
                                   )
+                                else if (isSearchActive && searchQuery.isNotEmpty && filteredEastAsiaPackages.isEmpty)
+                                  // Show "no results" message for this section
+                                  Container(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                      'No East Asia packages match your search',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 16,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  )
                                 else
+                                  // Show filtered packages
                                   ...filteredEastAsiaPackages.map((package) => Column(
                                     children: [
                                       _buildServiceCardFromAPI(package),
@@ -760,30 +832,50 @@ Future<void> fetchAfricanPackages() async {
                           
                           // African Pack Section with Segmented Control
                           Container(
-                            key: africanKey,
+                            key: isSearchActive && searchQuery.isNotEmpty ? africanSearchKey : africanKey,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'African Pack',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                // Show section title only if there are results or no search is active
+                                if (!isSearchActive || searchQuery.isEmpty || filteredAfricanPackages.isNotEmpty)
+                                  Text(
+                                    'African Pack',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 16),
                                 
-                                // Segmented Control for African
-                                _buildShiftSelector(false),
-                                SizedBox(height: 20),
-
+                                // Show search results count for this section
+                                if (isSearchActive && searchQuery.isNotEmpty && filteredAfricanPackages.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 8, bottom: 8),
+                                    child: Text(
+                                      '${filteredAfricanPackages.length} result${filteredAfricanPackages.length != 1 ? 's' : ''} found',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
                                 
+                                // Show shift selector only if not searching or has results
+                                if ((!isSearchActive || searchQuery.isEmpty || filteredAfricanPackages.isNotEmpty))
+                                  Column(
+                                    children: [
+                                      SizedBox(height: 16),
+                                      _buildShiftSelector(false),
+                                      SizedBox(height: 20),
+                                    ],
+                                  ),
+                                
+                                // Show loading, error, or packages
                                 if (isAfricanLoading)
-                                  Center(
-                                    child: CircularProgressIndicator(),
-                                  )
+                                  Center(child: CircularProgressIndicator())
                                 else if (africanErrorMessage != null)
+                                  // Your existing error container
                                   Container(
                                     padding: EdgeInsets.all(20),
                                     decoration: BoxDecoration(
@@ -812,8 +904,23 @@ Future<void> fetchAfricanPackages() async {
                                       ],
                                     ),
                                   )
+                                else if (isSearchActive && searchQuery.isNotEmpty && filteredAfricanPackages.isEmpty)
+                                  // Show "no results" message for this section
+                                  Container(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                      'No African packages match your search',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 16,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  )
                                 else
-                                  ...africanPackages.map((package) => Column(
+                                  // Show filtered packages - Fix: Use filteredAfricanPackages instead of africanPackages
+                                  ...filteredAfricanPackages.map((package) => Column(
                                     children: [
                                       _buildServiceCardFromAPI(package),
                                       SizedBox(height: 20),
