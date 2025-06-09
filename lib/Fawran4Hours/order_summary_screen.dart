@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'continuous_booking_overlay.dart';
+import '../models/booking_model.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
   final BookingData bookingData;
