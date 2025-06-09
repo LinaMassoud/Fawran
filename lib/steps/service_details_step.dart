@@ -8,9 +8,11 @@ class ServiceDetailsStep extends StatefulWidget {
   final String selectedTime;
   final String visitDuration;
   final String visitsPerWeek;
+  final List<String> selectedDays;
   final Function(String) onContractDurationChanged;
   final Function(int) onWorkerCountChanged;
   final Function(String) onVisitsPerWeekChanged;
+  final Function(List<String>) onSelectedDaysChanged;
   final VoidCallback? onSelectDatePressed;
   final VoidCallback? onDonePressed;
   final bool showBottomNavigation;
@@ -25,9 +27,11 @@ class ServiceDetailsStep extends StatefulWidget {
     required this.selectedTime,
     required this.visitDuration,
     required this.visitsPerWeek,
+    this.selectedDays = const [],
     required this.onContractDurationChanged,
     required this.onWorkerCountChanged,
     required this.onVisitsPerWeekChanged,
+    required this.onSelectedDaysChanged,
     this.onSelectDatePressed,
     this.onDonePressed,
     this.showBottomNavigation = false,
@@ -40,6 +44,137 @@ class ServiceDetailsStep extends StatefulWidget {
 }
 
 class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
+  final List<String> weekDays = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'
+];
+
+  int _getMaxSelectableDays() {
+    // Extract number from visits per week string (e.g., "2 visits weekly" -> 2)
+    final match = RegExp(r'^(\d+)').firstMatch(widget.visitsPerWeek);
+    if (match != null) {
+      return int.parse(match.group(1)!);
+    }
+    return 1; // Default to 1 if parsing fails
+  }
+
+  Widget _buildDaySelectionWidget() {
+    final maxSelectable = _getMaxSelectableDays();
+    final selectedCount = widget.selectedDays.length;
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 12),
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Please select ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  TextSpan(
+                    text: maxSelectable == 1 ? 'one day' : '$maxSelectable days',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF7B2CBF),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Days grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 2.5,
+            ),
+            itemCount: weekDays.length,
+            itemBuilder: (context, index) {
+              final day = weekDays[index];
+              final isSelected = widget.selectedDays.contains(day);
+              final canSelect = selectedCount < maxSelectable || isSelected;
+              
+              return GestureDetector(
+                onTap: canSelect ? () => _toggleDaySelection(day) : null,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isSelected 
+                          ? Color(0xFF7B2CBF) 
+                          : canSelect 
+                              ? Colors.grey[300]! 
+                              : Colors.grey[200]!,
+                      width: isSelected ? 2 : 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                    color: isSelected 
+                        ? Color(0xFF7B2CBF).withOpacity(0.1) 
+                        : canSelect 
+                            ? Colors.white 
+                            : Colors.grey[50],
+                  ),
+                  child: Center(
+                    child: Text(
+                      day,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isSelected 
+                            ? Color(0xFF7B2CBF) 
+                            : canSelect 
+                                ? Colors.grey[700] 
+                                : Colors.grey[400],
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          
+          // Selection status indicator
+        ],
+      ),
+    );
+  }
+
+  void _toggleDaySelection(String day) {
+    List<String> newSelectedDays = List.from(widget.selectedDays);
+    
+    if (newSelectedDays.contains(day)) {
+      newSelectedDays.remove(day);
+    } else {
+      final maxSelectable = _getMaxSelectableDays();
+      if (newSelectedDays.length < maxSelectable) {
+        newSelectedDays.add(day);
+      }
+    }
+    
+    widget.onSelectedDaysChanged(newSelectedDays);
+    
+    // Auto-navigate to date selection when required days are selected
+    final maxSelectable = _getMaxSelectableDays();
+    if (newSelectedDays.length == maxSelectable && widget.onSelectDatePressed != null) {
+      // Add a small delay to show the selection state before navigating
+      Future.delayed(Duration(milliseconds: 300), () {
+        widget.onSelectDatePressed!();
+      });
+    }
+  }
 
   Widget _buildDropdownField(String label, String value, List<String> options, Function(String) onChanged, {bool isEnabled = true}) {
     return Container(
@@ -163,7 +298,6 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                   height: 30,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[400]!),
-                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(Icons.add, size: 18, color: Colors.grey[600]),
                 ),
@@ -171,56 +305,6 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSelectDateButton() {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(top: 20, bottom: 20),
-      child: GestureDetector(
-        onTap: widget.onSelectDatePressed,
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!, width: 1.5),
-            borderRadius: BorderRadius.circular(12),
-            color: Colors.white,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Select date',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Color(0xFF7B2CBF),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (widget.selectedDates.isNotEmpty)
-                    Text(
-                      '${widget.selectedDates.length} date${widget.selectedDates.length > 1 ? 's' : ''} selected',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                ],
-              ),
-              Icon(
-                Icons.arrow_forward,
-                color: Color(0xFF7B2CBF),
-                size: 24,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -330,7 +414,10 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                       widget.onVisitsPerWeekChanged
                     ),
                     
-                    _buildSelectDateButton(),
+                    // Day Selection Widget - Auto-navigates when complete
+                    _buildDaySelectionWidget(),
+                    
+                    // Removed the _buildSelectDateButton() call
                   ],
                 ),
               ),
