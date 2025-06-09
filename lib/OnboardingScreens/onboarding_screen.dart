@@ -1,3 +1,4 @@
+import 'package:fawran/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 
 // Data class for onboarding content
@@ -379,6 +380,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     ElevatedButton(
                                       onPressed: _currentPage < _onboardingData.length - 1 ? _nextPage : () {
                                         // Handle get started action
+                                         Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                          );
                                         print('Get Started pressed');
                                       },
                                       style: ElevatedButton.styleFrom(

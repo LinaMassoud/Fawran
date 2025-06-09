@@ -1,0 +1,39 @@
+{
+  "login": "Login",
+  "email": "Email",
+  "password": "Password",
+  "forgotPassword": "Forgot Password?",
+  "dontHaveAccount": "Don’t have an account?",
+
+  "signUp": "Sign Up",
+  "username": "User Name",
+  "firstName": "First Name",
+  "middleName": "Middle Name",
+  "lastName": "Last Name",
+  "phoneNumber": "Phone Number",
+  "confirmPassword": "Confirm Password",
+  "alreadyHaveAccount": "Already have an account? Login",
+
+  "verification": "Verification",
+  "enterOtp": "Enter the 6-digit code",
+  "codeSentTo": "We’ve sent a code to",
+  "verify": "Verify",
+  "resendCode": "Resend Code",
+  "resendIn": "Resend in",
+
+  "service_driver": "Private Driver",
+  "service_full_time_maid": "Full-time Maid",
+  "service_maid_4h": "Maid for 4 hours",
+  "service_maid_8h": "Maid for 8 hours",
+  "home": "home",
+  "top_requested":"Top Requested Services",
+  "saving_packages": "Saving Packages",
+
+  "fetching_location" : "fetching your location...",
+  "currentLocation" : "📍 currentLocation:",
+   "offer":  "Save up to 15%\nwhen you order now"
+
+
+
+
+}
