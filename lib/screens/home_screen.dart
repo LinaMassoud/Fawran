@@ -1,6 +1,7 @@
 import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
 import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/providers/location_provider.dart';
+import 'package:fawran/screens/select_address.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -173,7 +174,19 @@ GridView.count(
         child: content,
       );
     } else {
-      return content;
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+           
+        MaterialPageRoute(
+                              builder: (context) =>  AddressSelectionScreen(header:services[index]),
+                            ),
+          );
+        },
+        child: content,
+      );
+  ;
     }
   }),
 ),
@@ -190,7 +203,7 @@ GridView.count(
     itemBuilder: (context, index) {
       return GestureDetector(
         onTap: () {
-          navigateToCleaningWithOffer(examplePackage,1); // 👈 Call your function here with optional index
+          //navigateToCleaningWithOffer(examplePackage,1); // 👈 Call your function here with optional index
         },
         child: Container(
           width: 160,
