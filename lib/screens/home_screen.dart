@@ -1,7 +1,10 @@
 import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
+import 'package:fawran/models/package_model.dart';
 import 'package:fawran/providers/auth_provider.dart';
+import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/select_address.dart';
+import 'package:fawran/screens/serviceScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +14,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
      final currentLocale = ref.watch(localeProvider);
-    final location = ref.watch(locationProvider); // <- reading the state
+    final location = ref.watch(locationProvider); 
+    final professionsAsync = ref.watch(professionsProvider);
     final loc = AppLocalizations.of(context)!;
     final examplePackage = PackageModel(
   pricingId: 101,
@@ -116,79 +120,70 @@ Navigator.push(    context,    MaterialPageRoute(      builder: (context) => Cle
         child: ListView(
           children: [
             SizedBox(height: 16),
-GridView.count(
-  shrinkWrap: true,
-  crossAxisCount: 4,
-  physics: NeverScrollableScrollPhysics(),
-  mainAxisSpacing: 12,
-  crossAxisSpacing: 12,
-  childAspectRatio: 0.8,
-  children: List.generate(4, (index) {
-    Widget content = Column(
-      children: [
-        Container(
-          height: 60,
-          width: 60,
-          decoration: BoxDecoration(
-            color: Colors.orange,
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: AssetImage('assets/images/${index + 1}.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
+SizedBox(
+  height: 160,
+  child: professionsAsync.when(
+    data: (professions) {
+      return GridView.count(
+        shrinkWrap: true,
+        crossAxisCount: 4,
+        physics: NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.8,
+        children: List.generate(professions.length, (index) {
+          final profession = professions[index];
+          return GestureDetector(
+         onTap: () {
+            ref.read(selectedProfessionProvider.notifier).state = profession;
+  if (profession.services.length > 1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ServicesScreen(
         ),
-        SizedBox(height: 8),
-        Text(
-          services[index],
-          style: TextStyle(fontSize: 12),
-          textAlign: TextAlign.center,
-        ),
-      ],
+      ),
     );
-
-    // Add navigation for 3rd and 4th items
-    if (index == 2) {
-      return GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CleaningServiceScreen()),
+  } else {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddressSelectionScreen(
+          header: profession.positionName,
+        ),
+      ),
+    );
+  }
+},
+            child: Column(
+              children: [
+                Container(
+                  height: 60,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/${(index % 5) + 1}.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  profession.positionName,
+                  style: TextStyle(fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           );
-        },
-        child: content,
+        }),
       );
-    } else if (index == 3) {
-      return GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CleaningServiceScreen(
-  serviceType: 'Fawran 8 Hours',
-  serviceCode: 'FAWRAN8Hours',
-  serviceId: 21,
-  professionId: 3,
-)),
-          );
-        },
-        child: content,
-      );
-    } else {
-      return GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-           
-        MaterialPageRoute(
-                              builder: (context) =>  AddressSelectionScreen(header:services[index]),
-                            ),
-          );
-        },
-        child: content,
-      );
-  ;
-    }
-  }),
+    },
+    loading: () => Center(child: CircularProgressIndicator()),
+    error: (error, stack) => Center(child: Text('Error: $error')),
+  ),
 ),
 
             // Services Grid

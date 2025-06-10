@@ -89,7 +89,7 @@ Future<void> login({
 
   final result = await _apiService.login(phoneNumber: phoneNumber, password: password);
 
-  if (result != null && result['access_token'] != null) {
+  if (result != null && result['token'] != null) {
     final token = result['token'];
     // Optionally store token in secure storage
     state = state.copyWith(
