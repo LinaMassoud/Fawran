@@ -6,105 +6,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../models/package_model.dart';
+import '../models/address_model.dart';
 
-class DistrictMapResponse {
-  final double latitude;
-  final double longitude;
-  final String mapUrl;
-  final String districtDays;
-  final String districtsShift;
-  final List<LatLng> polygonCoordinates;
-  final Map<String, dynamic> geojson;
-  final String specialPlace;
-
-  DistrictMapResponse({
-    required this.latitude,
-    required this.longitude,
-    required this.mapUrl,
-    required this.districtDays,
-    required this.districtsShift,
-    required this.polygonCoordinates,
-    required this.geojson,
-    required this.specialPlace,
-  });
-
-  factory DistrictMapResponse.fromJson(Map<String, dynamic> json) {
-    // Parse polygon coordinates
-    List<LatLng> coordinates = [];
-    if (json['polygon_coordinates'] != null) {
-      for (var coord in json['polygon_coordinates']) {
-        coordinates.add(LatLng(coord['lat'], coord['lng']));
-      }
-    }
-
-    return DistrictMapResponse(
-      latitude: json['latitude']?.toDouble() ?? 0.0,
-      longitude: json['longitude']?.toDouble() ?? 0.0,
-      mapUrl: json['map_url'] ?? '',
-      districtDays: json['district_days'] ?? '',
-      districtsShift: json['districts_shift'] ?? '',
-      polygonCoordinates: coordinates,
-      geojson: json['geojson'] ?? {},
-      specialPlace: json['special_place'] ?? '',
-    );
-  }
-}
-
-class City {
-  final int cityId;
-  final String cityName;
-
-  City({required this.cityId, required this.cityName});
-
-  factory City.fromJson(Map<String, dynamic> json) {
-    return City(
-      cityId: json['city_id'],
-      cityName: json['city_name'],
-    );
-  }
-}
-
-class CitiesResponse {
-  final List<City> cities;
-
-  CitiesResponse({required this.cities});
-
-  factory CitiesResponse.fromJson(Map<String, dynamic> json) {
-    var cityList = json['cities'] as List;
-    List<City> cities = cityList.map((city) => City.fromJson(city)).toList();
-    return CitiesResponse(cities: cities);
-  }
-}
-
-// Add District model classes
-class District {
-  final int districtId;
-  final String districtName;
-
-  District({required this.districtId, required this.districtName});
-
-  factory District.fromJson(Map<String, dynamic> json) {
-    return District(
-      districtId: json['district_id'],
-      districtName: json['district_name'],
-    );
-  }
-}
-
-class DistrictsResponse {
-  final List<District> districts;
-
-  DistrictsResponse({required this.districts});
-
-  factory DistrictsResponse.fromJson(Map<String, dynamic> json) {
-    var districtList = json['districts'] as List;
-    List<District> districts = districtList.map((district) => District.fromJson(district)).toList();
-    return DistrictsResponse(districts: districts);
-  }
-}
 
 class AddNewAddressScreen extends StatefulWidget {
-  const AddNewAddressScreen({Key? key}) : super(key: key);
+  final PackageModel? package; // Add package parameter
+  
+  const AddNewAddressScreen({
+    Key? key, 
+    this.package, // Add package parameter
+  }) : super(key: key);
 
   @override
   _AddNewAddressScreenState createState() => _AddNewAddressScreenState();
@@ -583,11 +495,18 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   final TextEditingController _buildingNumberController = TextEditingController();
   final TextEditingController _fullAddressController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _houseNumberController = TextEditingController();
+final TextEditingController _apartmentNumberController = TextEditingController();
+String? _selectedHouseType;
+int? _selectedFloorNumber;
+
 
   // Dropdown values
   String? _selectedCity;
   String? _selectedDistrict;
 
+final List<String> _houseTypes = ['Villa', 'Apartment'];
+final List<int> _floorNumbers = List.generate(20, (index) => index + 1);
   // Step completion states
   bool _isDistrictCompleted = false;
   bool _isMapCompleted = false;
@@ -606,15 +525,16 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
 List<City> _availableCities = [];
 bool _isLoadingCities = false;
-int? _selectedCityId; // Store the selected city ID
+int? _selectedCityCode; // Store the selected city ID
 
 DistrictMapResponse? _districtMapData;
 bool _isLoadingDistrictMap = false;
 
+PackageModel? get package => widget.package;
 // Add district-related variables
 List<District> _availableDistricts = [];
 bool _isLoadingDistricts = false;
-int? _selectedDistrictId;
+String? _selectedDistrictCode; 
 
 
   @override
@@ -624,14 +544,16 @@ int? _selectedDistrictId;
   }
 
   @override
-  void dispose() {
-    _addressTitleController.dispose();
-    _streetNameController.dispose();
-    _buildingNumberController.dispose();
-    _fullAddressController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
+void dispose() {
+  _addressTitleController.dispose();
+  _streetNameController.dispose();
+  _buildingNumberController.dispose();
+  _houseNumberController.dispose(); // Add this
+  _apartmentNumberController.dispose(); // Add this
+  _fullAddressController.dispose();
+  _notesController.dispose();
+  super.dispose();
+}
 
   List<String> get _cities {
   return _availableCities.map((city) => city.cityName).toList();
@@ -654,23 +576,21 @@ int? _selectedDistrictId;
   setState(() {
     _selectedCity = value;
     _selectedDistrict = null;
-    _selectedDistrictId = null;
-    _availableDistricts.clear(); // Clear previous districts
+    _selectedDistrictCode = null;
+    _availableDistricts.clear();
     
-    // Find and store the selected city ID
     if (value != null) {
       final selectedCityObj = _availableCities.firstWhere(
         (city) => city.cityName == value,
-        orElse: () => City(cityId: 0, cityName: ''),
+        orElse: () => City(cityCode: 0, cityName: ''),
       );
-      _selectedCityId = selectedCityObj.cityId;
+      _selectedCityCode = selectedCityObj.cityCode;
       
-      // Fetch districts for the selected city
-      if (_selectedCityId != null && _selectedCityId! > 0) {
-        _fetchDistrictsFromAPI(_selectedCityId!);
+      if (_selectedCityCode != null && _selectedCityCode! > 0) {
+        _fetchDistrictsFromAPI(_selectedCityCode!);
       }
     } else {
-      _selectedCityId = null;
+      _selectedCityCode = null;
     }
     
     _checkDistrictCompletion();
@@ -681,20 +601,18 @@ int? _selectedDistrictId;
   setState(() {
     _selectedDistrict = value;
     
-    // Find and store the selected district ID
     if (value != null) {
       final selectedDistrictObj = _availableDistricts.firstWhere(
         (district) => district.districtName == value,
-        orElse: () => District(districtId: 0, districtName: ''),
+        orElse: () => District(districtCode: '', districtName: ''),
       );
-      _selectedDistrictId = selectedDistrictObj.districtId;
+      _selectedDistrictCode = selectedDistrictObj.districtCode;
       
-      // Fetch district map data when district is selected
-      if (_selectedDistrictId != null && _selectedDistrictId! > 0) {
-        _fetchDistrictMapData(_selectedDistrictId!);
+      if (_selectedDistrictCode != null && _selectedDistrictCode!.isNotEmpty) {
+        _fetchDistrictMapData(_selectedDistrictCode!);
       }
     } else {
-      _selectedDistrictId = null;
+      _selectedDistrictCode = null;
       _districtMapData = null;
     }
     
@@ -728,11 +646,35 @@ int? _selectedDistrictId;
     });
   }
   Future<void> _createAddressAPI() async {
-  if (_selectedLocation == null || _selectedDistrictId == null) {
+  if (_selectedLocation == null || _selectedDistrictCode == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Missing required location or district information')),
     );
     return;
+  }
+
+  // Validate house type selection
+  if (_selectedHouseType == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please select a house type')),
+    );
+    return;
+  }
+
+  // Validate apartment-specific fields if house type is Apartment
+  if (_selectedHouseType == 'Apartment') {
+    if (_selectedFloorNumber == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Floor number is required for apartments')),
+      );
+      return;
+    }
+    if (_apartmentNumberController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Apartment number is required for apartments')),
+      );
+      return;
+    }
   }
 
   // Show loading indicator
@@ -750,59 +692,52 @@ int? _selectedDistrictId;
     // Create map URL
     String mapUrl = 'https://maps.google.com/?q=${_selectedLocation!.latitude},${_selectedLocation!.longitude}';
     
-    // Parse building number and apartment number from notes or building number field
-    int? floorNumber;
-    int? apartmentNumber;
-    int? buildingNumberInt;
+    // Determine house type value (1 for Villa, 2 for Apartment)
+    int houseTypeValue = _selectedHouseType == 'Villa' ? 1 : 2;
     
-    // Try to parse building number as integer
-    if (_buildingNumberController.text.isNotEmpty) {
-      buildingNumberInt = int.tryParse(_buildingNumberController.text);
-    }
-    
-    // Extract floor and apartment from notes if available
-    String notes = _notesController.text.toLowerCase();
-    RegExp floorRegex = RegExp(r'floor\s*(\d+)|level\s*(\d+)|\bfl\s*(\d+)');
-    RegExp aptRegex = RegExp(r'apartment\s*(\d+)|apt\s*(\d+)|unit\s*(\d+)');
-    
-    Match? floorMatch = floorRegex.firstMatch(notes);
-    if (floorMatch != null) {
-      floorNumber = int.tryParse(floorMatch.group(1) ?? floorMatch.group(2) ?? floorMatch.group(3) ?? '');
-    }
-    
-    Match? aptMatch = aptRegex.firstMatch(notes);
-    if (aptMatch != null) {
-      apartmentNumber = int.tryParse(aptMatch.group(1) ?? aptMatch.group(2) ?? aptMatch.group(3) ?? '');
+    // Parse building/house number
+    int? buildingNumber;
+    if (_houseNumberController.text.isNotEmpty) {
+      buildingNumber = int.tryParse(_houseNumberController.text);
     }
 
-    // Prepare request body
+    // Prepare request body - Fix data types to match API expectations
     Map<String, dynamic> requestBody = {
-      'longitude': _selectedLocation!.longitude,
-      'latitude': _selectedLocation!.latitude,
-      'map_url': mapUrl,
-      'customer_id': "428", // Fixed customer ID as per requirement
-      'floor_number': floorNumber ?? 0,
-      'apartment_number': apartmentNumber ?? 0,
-      'created_by': 1, // You might want to make this dynamic based on current user
-      'house_type': 1, // Default house type, you might want to add this as a dropdown
-      'district_id': _selectedDistrictId!.toString(),
-      'city_code': _selectedCityId?.toString() ?? '', 
-      'building_number': buildingNumberInt ?? 0,
       'building_name': _addressTitleController.text.isNotEmpty ? _addressTitleController.text : '',
+      'building_number': buildingNumber ?? 0,
+      'city_code': _selectedCityCode?.toString() ?? '', // Keep as string
+      'district_id': _selectedDistrictCode?.toString() ?? '', // Keep as string  
+      'house_type': houseTypeValue,
+      'created_by': 1, // Keep as int
+      'customer_id': 23, // Change from string to int
+      'map_url': mapUrl,
+      'latitude': _selectedLocation!.latitude,
+      'longitude': _selectedLocation!.longitude,
     };
+
+    // Add apartment-specific fields only if house type is Apartment
+    if (_selectedHouseType == 'Apartment') {
+      requestBody['apartment_number'] = int.tryParse(_apartmentNumberController.text) ?? 0;
+      requestBody['floor_number'] = _selectedFloorNumber ?? 0;
+    }
+    // Note: Don't add apartment_number and floor_number for Villa type at all
 
     print('Sending POST request with body: ${json.encode(requestBody)}'); // Debug print
 
     final response = await http.post(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address?customer_id=428'),
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses'),
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json', // Add Accept header
       },
       body: json.encode(requestBody),
     );
 
     // Hide loading indicator
     Navigator.of(context).pop();
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       // Success
@@ -817,7 +752,10 @@ int? _selectedDistrictId;
       final newAddress = {
         'title': _addressTitleController.text,
         'streetName': _streetNameController.text,
-        'buildingNumber': _buildingNumberController.text,
+        'houseNumber': _houseNumberController.text,
+        'apartmentNumber': _apartmentNumberController.text,
+        'floorNumber': _selectedFloorNumber?.toString() ?? '',
+        'houseType': _selectedHouseType,
         'fullAddress': _fullAddressController.text,
         'notes': _notesController.text,
         'city': _selectedCity,
@@ -831,18 +769,34 @@ int? _selectedDistrictId;
 
       Navigator.pop(context, newAddress);
     } else {
-      // Error
+      // Error - Handle HTML error responses
+      String errorMessage = 'Failed to create address. Please try again.';
+      
+      // Check if response is HTML (like the 555 error you're getting)
+      if (response.body.contains('<!DOCTYPE html>') || response.body.contains('<html>')) {
+        errorMessage = 'Server error occurred. Please check your network connection and try again.';
+      } else {
+        try {
+          final errorData = json.decode(response.body);
+          errorMessage = errorData['message'] ?? errorMessage;
+        } catch (e) {
+          // Keep default error message
+        }
+      }
+      
       print('API Error: ${response.statusCode} - ${response.body}'); // Debug print
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to create address. Please try again. (${response.statusCode})'),
+          content: Text('$errorMessage (${response.statusCode})'),
           backgroundColor: Colors.red,
         ),
       );
     }
   } catch (e) {
     // Hide loading indicator if still showing
-    Navigator.of(context).pop();
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    }
     
     print('Exception creating address: $e'); // Debug print
     ScaffoldMessenger.of(context).showSnackBar(
@@ -853,14 +807,14 @@ int? _selectedDistrictId;
     );
   }
 }
-Future<void> _fetchDistrictMapData(int districtId) async {
+Future<void> _fetchDistrictMapData(String districtCode) async {
   setState(() {
     _isLoadingDistrictMap = true;
   });
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address/districts/map?district_id=$districtId'),
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/districts/info/$districtCode'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -885,20 +839,27 @@ Future<void> _fetchDistrictMapData(int districtId) async {
 }
 
 Future<void> _fetchCitiesFromAPI() async {
+  // You'll need to get the service_id from PackageModel
+  // For now, I'm using a placeholder - replace with actual service_id
+  int serviceId = package?.serviceId ?? 1; // Replace this with actual service_id from PackageModel
+  
   setState(() {
     _isLoadingCities = true;
   });
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address/cities?service_id=1'),
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service_cities/$serviceId'),
       headers: {'Content-Type': 'application/json'},
     );
 
     if (response.statusCode == 200) {
-      final citiesResponse = CitiesResponse.fromJson(json.decode(response.body));
+      // Parse the direct array response
+      List<dynamic> citiesJson = json.decode(response.body);
+      List<City> cities = citiesJson.map((city) => City.fromJson(city)).toList();
+      
       setState(() {
-        _availableCities = citiesResponse.cities;
+        _availableCities = cities;
         _isLoadingCities = false;
       });
     } else {
@@ -909,27 +870,29 @@ Future<void> _fetchCitiesFromAPI() async {
     setState(() {
       _isLoadingCities = false;
     });
-    // Show error message to user
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Failed to load cities. Please try again.')),
     );
   }
 }
-Future<void> _fetchDistrictsFromAPI(int cityId) async {
+Future<void> _fetchDistrictsFromAPI(int cityCode) async {
   setState(() {
     _isLoadingDistricts = true;
   });
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address/districts?service_id=1&city_id=$cityId'),
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/districts/$cityCode'),
       headers: {'Content-Type': 'application/json'},
     );
 
     if (response.statusCode == 200) {
-      final districtsResponse = DistrictsResponse.fromJson(json.decode(response.body));
+      // Parse the direct array response
+      List<dynamic> districtsJson = json.decode(response.body);
+      List<District> districts = districtsJson.map((district) => District.fromJson(district)).toList();
+      
       setState(() {
-        _availableDistricts = districtsResponse.districts;
+        _availableDistricts = districts;
         _isLoadingDistricts = false;
       });
     } else {
@@ -940,7 +903,6 @@ Future<void> _fetchDistrictsFromAPI(int cityId) async {
     setState(() {
       _isLoadingDistricts = false;
     });
-    // Show error message to user
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Failed to load districts. Please try again.')),
     );
@@ -1100,6 +1062,37 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
     return;
   }
 
+  if (_selectedHouseType == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please select a house type')),
+    );
+    return;
+  }
+
+  // Validate house number
+  if (_houseNumberController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_selectedHouseType == 'Villa' ? 'Please enter house number' : 'Please enter building number')),
+    );
+    return;
+  }
+
+  // Validate apartment-specific fields
+  if (_selectedHouseType == 'Apartment') {
+    if (_selectedFloorNumber == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select floor number for apartment')),
+      );
+      return;
+    }
+    if (_apartmentNumberController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please enter apartment number')),
+      );
+      return;
+    }
+  }
+
   if (_selectedLocation == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Please select a location on the map')),
@@ -1107,14 +1100,13 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
     return;
   }
 
-  if (_selectedDistrictId == null) {
+  if (_selectedDistrictCode == null || _selectedDistrictCode!.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Please select a district')),
     );
     return;
   }
 
-  // Call the API to create the address
   _createAddressAPI();
 }
 
@@ -1275,6 +1267,95 @@ Widget _buildDistrictDropdown() {
     );
   }
 
+Widget _buildHouseTypeDropdown({bool enabled = true}) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        hint: Text(
+          'Select house type',
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
+          ),
+        ),
+        value: _selectedHouseType,
+        items: _houseTypes.map((String type) {
+          return DropdownMenuItem<String>(
+            value: type,
+            child: Text(
+              type,
+              style: TextStyle(
+                fontSize: 16,
+                color: enabled ? Colors.black : Colors.grey[400],
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: enabled ? (String? value) {
+          setState(() {
+            _selectedHouseType = value;
+            // Clear apartment-specific fields when switching to Villa
+            if (value == 'Villa') {
+              _selectedFloorNumber = null;
+              _apartmentNumberController.clear();
+            }
+          });
+        } : null,
+        icon: Icon(Icons.keyboard_arrow_down, color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
+      ),
+    ),
+  );
+}
+Widget _buildFloorDropdown({bool enabled = true}) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<int>(
+        hint: Text(
+          'Select floor',
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
+          ),
+        ),
+        value: _selectedFloorNumber,
+        items: _floorNumbers.map((int floor) {
+          return DropdownMenuItem<int>(
+            value: floor,
+            child: Text(
+              'Floor $floor',
+              style: TextStyle(
+                fontSize: 16,
+                color: enabled ? Colors.black : Colors.grey[400],
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: enabled ? (int? value) {
+          setState(() {
+            _selectedFloorNumber = value;
+          });
+        } : null,
+        icon: Icon(Icons.keyboard_arrow_down, color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
+      ),
+    ),
+  );
+}
   Widget _buildTextField(String hint, TextEditingController controller, {int maxLines = 1, bool enabled = true}) {
     return Container(
       width: double.infinity,
@@ -1399,87 +1480,148 @@ Widget _buildDistrictDropdown() {
 
                     // Step 3: Details
                     _buildStepIndicator(3, 'Details', false, _currentStep >= 3),
-                    SizedBox(height: 25),
-                    
-                    Text(
-                      'Address Title',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    _buildTextField('Please give the address a name', _addressTitleController, enabled: _canProceedToDetails),
-                    
-                    SizedBox(height: 20),
-                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Street Name',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              _buildTextField('Street name', _streetNameController, enabled: _canProceedToDetails),
-                            ],
-                          ),
+                      SizedBox(height: 25),
+
+                      Text(
+                        'Address Title',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                          fontWeight: FontWeight.w500,
                         ),
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Building Number',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
-                                  fontWeight: FontWeight.w500,
+                      ),
+                      SizedBox(height: 8),
+                      _buildTextField('Please give the address a name', _addressTitleController, enabled: _canProceedToDetails),
+
+                      SizedBox(height: 20),
+
+                      Text(
+                        'House Type',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      _buildHouseTypeDropdown(enabled: _canProceedToDetails),
+
+                      SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Street Name',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 8),
-                              _buildTextField('Building Number', _buildingNumberController, enabled: _canProceedToDetails),
-                            ],
+                                SizedBox(height: 8),
+                                _buildTextField('Street name', _streetNameController, enabled: _canProceedToDetails),
+                              ],
+                            ),
                           ),
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _selectedHouseType == 'Villa' ? 'House Number' : 'Building Number',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  _selectedHouseType == 'Villa' ? 'House Number' : 'Building Number', 
+                                  _houseNumberController, 
+                                  enabled: _canProceedToDetails
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Conditional apartment fields
+                      if (_selectedHouseType == 'Apartment') ...[
+                        SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Floor Number',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  _buildFloorDropdown(enabled: _canProceedToDetails),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Apartment Number',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  _buildTextField('Apartment Number', _apartmentNumberController, enabled: _canProceedToDetails),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                    
-                    SizedBox(height: 20),
-                    
-                    Text(
-                      'Full Address',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
-                        fontWeight: FontWeight.w500,
+
+                      SizedBox(height: 20),
+
+                      Text(
+                        'Full Address',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    _buildTextField('Full Address', _fullAddressController, maxLines: 3, enabled: _canProceedToDetails),
-                    
-                    SizedBox(height: 20),
-                    
-                    Text(
-                      'Notes',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
-                        fontWeight: FontWeight.w500,
+                      SizedBox(height: 8),
+                      _buildTextField('Full Address', _fullAddressController, maxLines: 3, enabled: _canProceedToDetails),
+
+                      SizedBox(height: 20),
+
+                      Text(
+                        'Notes',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    _buildTextField('Unit Number, Entrance code etc..', _notesController, maxLines: 2, enabled: _canProceedToDetails),
-                  ],
+                      SizedBox(height: 8),
+                      _buildTextField('Unit Number, Entrance code etc..', _notesController, maxLines: 2, enabled: _canProceedToDetails),
+                                        ],
                 ),
               ),
             ),

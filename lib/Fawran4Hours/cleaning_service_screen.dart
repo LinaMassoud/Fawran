@@ -1,3 +1,4 @@
+//cleaning_service_screen.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -13,19 +14,19 @@ import 'order_summary_screen.dart';
 class CleaningServiceScreen extends StatefulWidget {
   final PackageModel? autoOpenPackage;
   final int? autoOpenShift;
-  final String serviceType; // Add this parameter
-  final String serviceCode; // Add this parameter
-  final int serviceId; // Add this parameter
-  final int professionId; // Add this parameter
+  final String serviceType; // Keep this parameter but make it dynamic
+  final String serviceCode;
+  final int serviceId;
+  final int professionId;
   
   const CleaningServiceScreen({
     Key? key, 
     this.autoOpenPackage,
     this.autoOpenShift,
-    this.serviceType = 'Fawran 4 Hours', // Default value
-    this.serviceCode = 'FAWRAN4Hours', // Default value
-    this.serviceId = 1, // Default value
-    this.professionId = 4, // Default value
+    this.serviceType = '', // Remove default, will be set dynamically
+    this.serviceCode = '',
+    this.serviceId = 1,
+    this.professionId = 251,
   }) : super(key: key);
 
   @override
@@ -64,20 +65,124 @@ List<PackageModel> filteredAfricanPackages = [];
   double totalSavings = 375.0; // This can be calculated based on discounts
   double originalPrice = 1497.0; // This can be calculated from package prices
 
+
+String dynamicServiceTitle = '';
+  List<String> servicePackTitles = [];
+  bool isLoadingPackTitles = true;
+// NEW: Dynamic data from API
+  List<dynamic> availableShifts = [];
+  List<dynamic> countryGroups = [];
+  bool isLoadingShifts = true;
+  bool isLoadingGroups = true;
+  String eastAsiaGroupName = 'East Asia Pack';
+  String africanGroupName = 'African Pack';
+
  @override
 void initState() {
-  super.initState();
+    super.initState();
+    _initializeData();
+  }
+Future<void> _initializeData() async {
+  // Set dynamic service title based on serviceId
+  _setServiceTitle();
+  
+  await Future.wait([
+    _loadServiceShifts(),
+    _loadCountryGroups(),
+    _loadServicePackTitles(), // NEW: Load pack titles
+  ]);
+  
+  // After loading shifts and groups, fetch packages
   fetchEastAsiaPackages();
   fetchAfricanPackages();
   
-  // Initialize filtered lists
   filteredEastAsiaPackages = eastAsiaPackages;
   filteredAfricanPackages = africanPackages;
   
-  // Check if we need to auto-open overlay
   _checkAndShowAutoOverlay();
 }
 
+void _setServiceTitle() {
+  switch (widget.serviceId) {
+    case 1:
+      dynamicServiceTitle = 'Fawran 4 Hours';
+      break;
+    case 21:
+      dynamicServiceTitle = 'Fawran 8 Hours';
+      break;
+    default:
+      dynamicServiceTitle = widget.serviceType.isNotEmpty ? widget.serviceType : 'Fawran Service';
+  }
+}
+
+// 5. ADD NEW METHOD TO LOAD SERVICE PACK TITLES
+Future<void> _loadServicePackTitles() async {
+  try {
+    setState(() => isLoadingPackTitles = true);
+    
+    final groups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+    
+    setState(() {
+      servicePackTitles = groups.map<String>((group) => group['group_name'].toString()).toList();
+      isLoadingPackTitles = false;
+    });
+  } catch (e) {
+    setState(() {
+      // Fallback to default titles if API fails
+      servicePackTitles = ['East Asia Pack', 'African Pack'];
+      isLoadingPackTitles = false;
+    });
+    print('Error loading service pack titles: $e');
+  }
+}
+
+Future<void> _loadServiceShifts() async {
+    try {
+      setState(() => isLoadingShifts = true);
+      
+      final shifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
+      
+      setState(() {
+        availableShifts = shifts;
+        isLoadingShifts = false;
+        
+        // Set default shift to first available shift
+        if (shifts.isNotEmpty) {
+          selectedEastAsiaShift = shifts.first['id'];
+          selectedAfricanShift = shifts.first['id'];
+        }
+      });
+    } catch (e) {
+      setState(() => isLoadingShifts = false);
+      print('Error loading service shifts: $e');
+    }
+  }
+
+  // NEW: Load country groups dynamically
+  Future<void> _loadCountryGroups() async {
+    try {
+      setState(() => isLoadingGroups = true);
+      
+      final groups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+      
+      setState(() {
+        countryGroups = groups;
+        isLoadingGroups = false;
+        
+        // Update group names based on API response
+        for (var group in groups) {
+          if (group['group_name'].toString().toUpperCase().contains('ASIAN')) {
+            eastAsiaGroupName = group['group_name'];
+          } else if (group['group_name'].toString().toUpperCase().contains('AFRICAN')) {
+            africanGroupName = group['group_name'];
+          }
+        }
+      });
+    } catch (e) {
+      setState(() => isLoadingGroups = false);
+      print('Error loading country groups: $e');
+    }
+  }
 void _checkAndShowAutoOverlay() {
   if (widget.autoOpenPackage != null) {
     // Use WidgetsBinding to ensure the widget is fully built before showing overlay
@@ -175,21 +280,30 @@ void _toggleSearch() {
 }
 Future<void> fetchEastAsiaPackages() async {
   try {
+    print('Fetching East Asia packages with professionId: ${widget.professionId}, serviceId: ${widget.serviceId}');
+    
     setState(() {
       isEastAsiaLoading = true;
       eastAsiaErrorMessage = null;
     });
 
     final packages = await ApiService.fetchEastAsiaPackages(
+      professionId: widget.professionId,
       serviceId: widget.serviceId,
       serviceShift: widget.serviceId == 1 ? selectedEastAsiaShift : null,
     );
+
+    print('Received ${packages.length} East Asia packages');
+    for (var package in packages) {
+      print('Package: ${package.packageName}, Group: ${package.groupCode}, Shift: ${package.serviceShift}');
+    }
 
     setState(() {
       eastAsiaPackages = packages;
       isEastAsiaLoading = false;
     });
   } catch (e) {
+    print('Error fetching East Asia packages: $e');
     setState(() {
       eastAsiaErrorMessage = e.toString();
       isEastAsiaLoading = false;
@@ -205,21 +319,30 @@ Future<void> fetchEastAsiaPackages() async {
 
 Future<void> fetchAfricanPackages() async {
   try {
+    print('Fetching African packages with professionId: ${widget.professionId}, serviceId: ${widget.serviceId}');
+    
     setState(() {
       isAfricanLoading = true;
       africanErrorMessage = null;
     });
 
     final packages = await ApiService.fetchAfricanPackages(
+      professionId: widget.professionId,
       serviceId: widget.serviceId,
       serviceShift: widget.serviceId == 1 ? selectedAfricanShift : null,
     );
+
+    print('Received ${packages.length} African packages');
+    for (var package in packages) {
+      print('Package: ${package.packageName}, Group: ${package.groupCode}, Shift: ${package.serviceShift}');
+    }
 
     setState(() {
       africanPackages = packages;
       isAfricanLoading = false;
     });
   } catch (e) {
+    print('Error fetching African packages: $e');
     setState(() {
       africanErrorMessage = e.toString();
       isAfricanLoading = false;
@@ -307,7 +430,7 @@ Future<void> fetchAfricanPackages() async {
                   ),
                 ),
                 title: Text(
-                  widget.serviceType, // Use dynamic service type instead of hardcoded 'Fawran 4 Hours'
+                  dynamicServiceTitle, // Use dynamic title
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20,
@@ -479,7 +602,7 @@ Future<void> fetchAfricanPackages() async {
                         children: [
                           // Service title and rating
                           Text(
-                            widget.serviceType, // Use dynamic service type
+                            dynamicServiceTitle, // Use dynamic title
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
@@ -544,234 +667,75 @@ Future<void> fetchAfricanPackages() async {
                           
                           // Service packs (removed Evening pack)
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (servicePackTitles.length >= 1)
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () => _scrollToSection(eastAsiaKey),
                                   child: _buildServicePack(
-                                    'East Asia\nPack',
+                                    _formatPackName(servicePackTitles[0]),
                                     'assets/images/east_asia_flags.png',
                                     Colors.blue,
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 15),
+                            if (servicePackTitles.length >= 2) SizedBox(width: 15),
+                            if (servicePackTitles.length >= 2)
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () => _scrollToSection(africanKey),
                                   child: _buildServicePack(
-                                    'African\nPack',
+                                    _formatPackName(servicePackTitles[1]),
                                     'assets/images/african_flags.png',
                                     Colors.green,
                                   ),
                                 ),
                               ),
-                              // Removed the Evening pack entirely
-                              SizedBox(width: 15), // Empty space to maintain layout
-                            ],
-                          ),
+                            // Show loading if still loading pack titles
+                            if (isLoadingPackTitles)
+                              Expanded(
+                                child: Container(
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              ),
+                            SizedBox(width: 15), // Empty space to maintain layout
+                          ],
+                        ),
                           SizedBox(height: 40),
                           
                           // East Asia Pack Section with Segmented Control
-                          Container(
-                            key: isSearchActive && searchQuery.isNotEmpty ? eastAsiaSearchKey : eastAsiaKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Show section title only if there are results or no search is active
-                                if (!isSearchActive || searchQuery.isEmpty || filteredEastAsiaPackages.isNotEmpty)
-                                  Text(
-                                    'East Asia Pack',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                
-                                // Show search results count for this section
-                                if (isSearchActive && searchQuery.isNotEmpty && filteredEastAsiaPackages.isNotEmpty)
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 8, bottom: 8),
-                                    child: Text(
-                                      '${filteredEastAsiaPackages.length} result${filteredEastAsiaPackages.length != 1 ? 's' : ''} found',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[600],
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                
-                                // Show shift selector only if not searching or has results
-                                if ((!isSearchActive || searchQuery.isEmpty || filteredEastAsiaPackages.isNotEmpty))
-                                  Column(
-                                    children: [
-                                      SizedBox(height: 16),
-                                      _buildShiftSelector(true),
-                                      SizedBox(height: 20),
-                                    ],
-                                  ),
-                                
-                                // Show loading, error, or packages
-                                if (isEastAsiaLoading)
-                                  Center(child: CircularProgressIndicator())
-                                else if (eastAsiaErrorMessage != null)
-                                  // Your existing error container
-                                  Container(
-                                    padding: EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red[50],
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.red[200]!),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Icon(Icons.error_outline, color: Colors.red, size: 40),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          eastAsiaErrorMessage!,
-                                          style: TextStyle(color: Colors.red[700]),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        SizedBox(height: 12),
-                                        ElevatedButton(
-                                          onPressed: fetchEastAsiaPackages,
-                                          child: Text('Retry'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                            foregroundColor: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else if (isSearchActive && searchQuery.isNotEmpty && filteredEastAsiaPackages.isEmpty)
-                                  // Show "no results" message for this section
-                                  Container(
-                                    padding: EdgeInsets.all(20),
-                                    child: Text(
-                                      'No East Asia packages match your search',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 16,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  )
-                                else
-                                  // Show filtered packages
-                                  ...filteredEastAsiaPackages.map((package) => Column(
-                                    children: [
-                                      _buildServiceCardFromAPI(package),
-                                      SizedBox(height: 20),
-                                    ],
-                                  )).toList(),
-                              ],
-                            ),
+                          _buildPackageSection(
+                            sectionTitle: eastAsiaGroupName, // Use dynamic name
+                            packages: eastAsiaPackages,
+                            filteredPackages: filteredEastAsiaPackages,
+                            isLoading: isEastAsiaLoading,
+                            errorMessage: eastAsiaErrorMessage,
+                            onRetry: fetchEastAsiaPackages,
+                            isEastAsia: true,
+                            sectionKey: eastAsiaKey,
+                            searchKey: eastAsiaSearchKey,
                           ),
                           SizedBox(height: 40),
                           
                           // African Pack Section with Segmented Control
-                          Container(
-                            key: isSearchActive && searchQuery.isNotEmpty ? africanSearchKey : africanKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Show section title only if there are results or no search is active
-                                if (!isSearchActive || searchQuery.isEmpty || filteredAfricanPackages.isNotEmpty)
-                                  Text(
-                                    'African Pack',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                
-                                // Show search results count for this section
-                                if (isSearchActive && searchQuery.isNotEmpty && filteredAfricanPackages.isNotEmpty)
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 8, bottom: 8),
-                                    child: Text(
-                                      '${filteredAfricanPackages.length} result${filteredAfricanPackages.length != 1 ? 's' : ''} found',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[600],
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                
-                                // Show shift selector only if not searching or has results
-                                if ((!isSearchActive || searchQuery.isEmpty || filteredAfricanPackages.isNotEmpty))
-                                  Column(
-                                    children: [
-                                      SizedBox(height: 16),
-                                      _buildShiftSelector(false),
-                                      SizedBox(height: 20),
-                                    ],
-                                  ),
-                                
-                                // Show loading, error, or packages
-                                if (isAfricanLoading)
-                                  Center(child: CircularProgressIndicator())
-                                else if (africanErrorMessage != null)
-                                  // Your existing error container
-                                  Container(
-                                    padding: EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red[50],
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.red[200]!),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Icon(Icons.error_outline, color: Colors.red, size: 40),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          africanErrorMessage!,
-                                          style: TextStyle(color: Colors.red[700]),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        SizedBox(height: 12),
-                                        ElevatedButton(
-                                          onPressed: fetchAfricanPackages,
-                                          child: Text('Retry'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                            foregroundColor: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else if (isSearchActive && searchQuery.isNotEmpty && filteredAfricanPackages.isEmpty)
-                                  // Show "no results" message for this section
-                                  Container(
-                                    padding: EdgeInsets.all(20),
-                                    child: Text(
-                                      'No African packages match your search',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 16,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  )
-                                else
-                                  // Show filtered packages - Fix: Use filteredAfricanPackages instead of africanPackages
-                                  ...filteredAfricanPackages.map((package) => Column(
-                                    children: [
-                                      _buildServiceCardFromAPI(package),
-                                      SizedBox(height: 20),
-                                    ],
-                                  )).toList(),
-                              ],
-                            ),
+                          _buildPackageSection(
+                            sectionTitle: africanGroupName, // Use dynamic name
+                            packages: africanPackages,
+                            filteredPackages: filteredAfricanPackages,
+                            isLoading: isAfricanLoading,
+                            errorMessage: africanErrorMessage,
+                            onRetry: fetchAfricanPackages,
+                            isEastAsia: false,
+                            sectionKey: africanKey,
+                            searchKey: africanSearchKey,
                           ),
                           SizedBox(height: completedBooking != null ? 120 : 20), // Add bottom padding when order view is shown
                         ],
@@ -891,142 +855,151 @@ Future<void> fetchAfricanPackages() async {
     );
   }
 
+String _formatPackName(String packName) {
+  // Convert "East Asia Pack" to "East Asia\nPack" format
+  List<String> words = packName.split(' ');
+  if (words.length >= 2) {
+    // Take last word as second line, rest as first line
+    String lastWord = words.removeLast();
+    String firstLine = words.join(' ');
+    return '$firstLine\n$lastWord';
+  }
+  return packName;
+}
 
 Widget _buildShiftSelector(bool isEastAsia) {
-  // For Fawran 8 Hours, show only Full Day option
-  if (widget.serviceType == 'Fawran 8 Hours') {
+    if (isLoadingShifts || availableShifts.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Center(
+          child: isLoadingShifts 
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(
+                'No shifts available',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+        ),
+      );
+    }
+
+    // If only one shift available, show it as a static display
+    if (availableShifts.length == 1) {
+      final shift = availableShifts.first;
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              shift['service_shifts'].toString().toLowerCase().contains('morning') 
+                ? Icons.wb_sunny 
+                : Icons.nightlight_round,
+              color: shift['service_shifts'].toString().toLowerCase().contains('morning')
+                ? Colors.orange 
+                : Colors.indigo,
+              size: 20,
+            ),
+            SizedBox(width: 6),
+            Text(
+              shift['service_shifts'],
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Multiple shifts available - show selector
+    int selectedShift = isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
+    Function(int) onShiftChanged = isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
+    
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey[200],
         borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.wb_sunny,
-            color: Colors.orange,
-            size: 20,
-          ),
-          SizedBox(width: 6),
-          Text(
-            'Full Day',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+        children: availableShifts.map<Widget>((shift) {
+          final shiftId = shift['id'];
+          final shiftName = shift['service_shifts'];
+          final isSelected = selectedShift == shiftId;
+          
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onShiftChanged(shiftId),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      shiftName.toString().toLowerCase().contains('morning')
+                        ? Icons.wb_sunny
+                        : Icons.nightlight_round,
+                      color: isSelected 
+                        ? (shiftName.toString().toLowerCase().contains('morning') 
+                          ? Colors.orange 
+                          : Colors.indigo)
+                        : Colors.grey,
+                      size: 20,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      shiftName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.black : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          );
+        }).toList(),
       ),
     );
   }
-  
-  // For Fawran 4 Hours, show Morning/Evening options (existing code)
-  int selectedShift = isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
-  Function(int) onShiftChanged = isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
-  
-  return Container(
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: BorderRadius.circular(25),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => onShiftChanged(1),
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: selectedShift == 1 ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: selectedShift == 1
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.wb_sunny,
-                    color: selectedShift == 1 ? Colors.orange : Colors.grey,
-                    size: 20,
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'Morning',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: selectedShift == 1 ? Colors.black : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => onShiftChanged(2),
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: selectedShift == 2 ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: selectedShift == 2
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.nightlight_round,
-                    color: selectedShift == 2 ? Colors.indigo : Colors.grey,
-                    size: 20,
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'Evening',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: selectedShift == 2 ? Colors.black : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
   Widget _buildSearchResultsHeader() {
   if (!isSearchActive || searchQuery.isEmpty) return SizedBox.shrink();
   
@@ -1180,7 +1153,113 @@ Widget _buildShiftSelector(bool isEastAsia) {
       ),
     );
   }
-
+Widget _buildPackageSection({
+    required String sectionTitle,
+    required List<PackageModel> packages,
+    required List<PackageModel> filteredPackages,
+    required bool isLoading,
+    required String? errorMessage,
+    required VoidCallback onRetry,
+    required bool isEastAsia,
+    required GlobalKey sectionKey,
+    required GlobalKey searchKey,
+  }) {
+    return Container(
+      key: isSearchActive && searchQuery.isNotEmpty ? searchKey : sectionKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Show section title only if there are results or no search is active
+          if (!isSearchActive || searchQuery.isEmpty || filteredPackages.isNotEmpty)
+            Text(
+              sectionTitle,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          
+          // Show search results count for this section
+          if (isSearchActive && searchQuery.isNotEmpty && filteredPackages.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 8, bottom: 8),
+              child: Text(
+                '${filteredPackages.length} result${filteredPackages.length != 1 ? 's' : ''} found',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          
+          // Show shift selector only if not searching or has results
+          if ((!isSearchActive || searchQuery.isEmpty || filteredPackages.isNotEmpty))
+            Column(
+              children: [
+                SizedBox(height: 16),
+                _buildShiftSelector(isEastAsia),
+                SizedBox(height: 20),
+              ],
+            ),
+          
+          // Show loading, error, or packages
+          if (isLoading)
+            Center(child: CircularProgressIndicator())
+          else if (errorMessage != null)
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red[200]!),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 40),
+                  SizedBox(height: 12),
+                  Text(
+                    errorMessage,
+                    style: TextStyle(color: Colors.red[700]),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: onRetry,
+                    child: Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (isSearchActive && searchQuery.isNotEmpty && filteredPackages.isEmpty)
+            Container(
+              padding: EdgeInsets.all(20),
+              child: Text(
+                'No ${sectionTitle.toLowerCase()} packages match your search',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            ...filteredPackages.map((package) => Column(
+              children: [
+                _buildServiceCardFromAPI(package),
+                SizedBox(height: 20),
+              ],
+            )).toList(),
+        ],
+      ),
+    );
+  }
   Widget _buildServiceCardFromAPI(PackageModel package) {
     return Container(
       decoration: BoxDecoration(
@@ -1256,7 +1335,7 @@ Widget _buildShiftSelector(bool isEastAsia) {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      'GET ${package.discountPercentage.toStringAsFixed(0)}% OFF',
+                      'GET ${package.discountPercentage}% OFF',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

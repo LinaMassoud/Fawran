@@ -118,68 +118,88 @@ void initState() {
 
   // Fetch addresses from API
   Future<void> _fetchAddresses() async {
-    try {
+  try {
+    setState(() {
+      isLoadingAddresses = true;
+      addressError = null;
+    });
+
+    // Updated API endpoint
+    final response = await http.get(
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/23'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      
       setState(() {
-        isLoadingAddresses = true;
-        addressError = null;
-      });
-
-      final response = await http.get(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address?customer_id=428'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        
-        setState(() {
-          addresses = data.asMap().entries.map((entry) {
-            int index = entry.key;
-            var addressData = entry.value;
-            
-            return AddressModel(
-              id: index.toString(),
-              name: _extractLocationName(addressData['CARD_TEXT']),
-              fullAddress: addressData['CARD_TEXT'],
-              isSelected: index == 0, // Select the first address by default
-            );
-          }).toList();
+        addresses = data.asMap().entries.map((entry) {
+          int index = entry.key;
+          var addressData = entry.value;
           
-          isLoadingAddresses = false;
-        });
-      } else {
-        setState(() {
-          addressError = 'Failed to load addresses. Status: ${response.statusCode}';
-          isLoadingAddresses = false;
-        });
-      }
-    } catch (e) {
+          // Safely extract card_text with null check
+          String cardText = addressData['card_text']?.toString() ?? 'Address ${index + 1}';
+          
+          return AddressModel(
+            id: addressData['address_id']?.toString() ?? index.toString(),
+            name: _extractLocationName(cardText),
+            fullAddress: cardText,
+            isSelected: index == 0, // Select the first address by default
+          );
+        }).toList();
+        
+        isLoadingAddresses = false;
+      });
+    } else {
       setState(() {
-        addressError = 'Error loading addresses: $e';
+        addressError = 'Failed to load addresses. Status: ${response.statusCode}';
         isLoadingAddresses = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      addressError = 'Error loading addresses: $e';
+      isLoadingAddresses = false;
+    });
   }
+}
 
   // Extract a readable location name from the CARD_TEXT
-  String _extractLocationName(String cardText) {
+  String _extractLocationName(String? cardText) {
+  // Handle null or empty card text
+  if (cardText == null || cardText.isEmpty) {
+    return 'Address';
+  }
+  
+  try {
     // Parse the card text to extract meaningful location name
-    // Example: "Riyadh-Roshan--Villa-Number456-Floor No: Ground-Floor No:0"
+    // Example: "Riyadh-Al Shohada-Building-Number:77-Apartment-Number:202-Floor No:2"
     List<String> parts = cardText.split('-');
     
     if (parts.length >= 2) {
       // Take the first two parts as the location name
       String city = parts[0].trim();
       String area = parts[1].trim();
+      
+      // Handle empty area names
+      if (area.isEmpty) {
+        return city.isNotEmpty ? city : 'Address';
+      }
+      
       return '$area, $city';
-    } else if (parts.isNotEmpty) {
+    } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
       return parts[0].trim();
     }
-    
-    return 'Address';
+  } catch (e) {
+    // If parsing fails, return a default name
+    print('Error parsing address: $e');
   }
+  
+  return 'Address';
+}
 
   String _getTimeFromShift(String shift) {
     switch (shift) {
@@ -249,7 +269,7 @@ void _updateSelectedDays(List<String> newSelectedDays) {
   void _addNewAddress() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddNewAddressScreen()),
+      MaterialPageRoute(builder: (context) => AddNewAddressScreen(package: widget.package,)),
     );
 
     if (result != null && result is Map<String, dynamic>) {
