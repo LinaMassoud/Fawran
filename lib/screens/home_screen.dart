@@ -3,8 +3,9 @@ import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:fawran/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/package_model.dart';
 
 
 class HomeScreen extends ConsumerWidget {
@@ -18,7 +19,7 @@ class HomeScreen extends ConsumerWidget {
   groupCode: "GRP001",
   serviceId: 5,
   serviceShift: "Evening",
-  duration: 90, // duration in minutes
+  duration: "90", // duration in minutes
   noOfMonth: 3,
   hourPrice: 25.0,
   visitsWeekly: 2,
