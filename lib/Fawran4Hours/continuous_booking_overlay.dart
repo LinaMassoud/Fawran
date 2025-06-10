@@ -7,6 +7,8 @@ import 'add_new_address.dart';
 
 // Import modularized components
 import '../models/address_model.dart';
+import '../models/booking_model.dart';
+import '../models/package_model.dart';
 import '../steps/address_selection_step.dart';
 import '../steps/service_details_step.dart';
 import '../steps/date_selection_step.dart';
@@ -49,28 +51,7 @@ class ContinuousBookingOverlay extends StatefulWidget {
 }
 }
 
-// Data class to hold booking information
-class BookingData {
-  final List<DateTime> selectedDates;
-  final double totalPrice;
-  final String selectedAddress;
-  final int workerCount;
-  final String contractDuration;
-  final String visitsPerWeek;
-  final String selectedNationality; // Add this field
-  final String packageName; // Add this field
 
-  BookingData({
-    required this.selectedDates,
-    required this.totalPrice,
-    required this.selectedAddress,
-    required this.workerCount,
-    required this.contractDuration,
-    required this.visitsPerWeek,
-    required this.selectedNationality, // Add this parameter
-    required this.packageName, // Add this parameter
-  });
-}
 
 class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
     with SingleTickerProviderStateMixin {
@@ -88,6 +69,7 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
   List<AddressModel> addresses = [];
   bool isLoadingAddresses = true;
   String? addressError;
+  List<String> selectedDays = [];
 
   // Service Details Data
   String selectedNationality = 'East Asia';
@@ -202,8 +184,7 @@ void initState() {
   String _getTimeFromShift(String shift) {
     switch (shift) {
       case '1': return 'Morning';
-      case '2': return 'Afternoon';
-      case '3': return 'Evening';
+      case '2': return 'Evening';
       default: return 'Morning';
     }
   }
@@ -220,6 +201,11 @@ void initState() {
     Navigator.pop(context);
   }
 
+void _updateSelectedDays(List<String> newSelectedDays) {
+    setState(() {
+      selectedDays = newSelectedDays;
+    });
+  }
   void _nextStep() {
     if (currentStep < totalSteps - 1) {
       setState(() {
@@ -311,10 +297,16 @@ void initState() {
   }
 
   void _updateSelectedDates(List<DateTime> dates) {
-    setState(() {
-      selectedDates = dates;
-    });
-  }
+  // Use WidgetsBinding.instance.addPostFrameCallback to defer setState
+  // until after the current build phase is complete
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        selectedDates = dates;
+      });
+    }
+  });
+}
 
   void _goToDateSelection() {
     setState(() {
@@ -483,11 +475,17 @@ void initState() {
                                 selectedTime: selectedTime,
                                 visitDuration: visitDuration,
                                 visitsPerWeek: visitsPerWeek,
+                                selectedDays: selectedDays, // Add this
                                 onContractDurationChanged: _updateContractDuration,
                                 onWorkerCountChanged: _updateWorkerCount,
-                                onVisitsPerWeekChanged: _updateVisitsPerWeek,
+                                onVisitsPerWeekChanged: (newVisitsPerWeek) {
+                                  _updateVisitsPerWeek(newVisitsPerWeek);
+                                  // Reset selected days when visits per week changes
+                                  _updateSelectedDays([]);
+                                },
+                                onSelectedDaysChanged: _updateSelectedDays, // Add this
                                 onSelectDatePressed: _goToDateSelection,
-                                onDonePressed: _completePurchase, // This will now close overlay and update parent
+                                onDonePressed: _completePurchase,
                                 showBottomNavigation: isReturningFromDateSelection && selectedDates.isNotEmpty,
                                 totalPrice: _calculateTotalPrice(),
                                 selectedDates: selectedDates,
@@ -496,7 +494,9 @@ void initState() {
                                 selectedDates: selectedDates,
                                 onDatesChanged: _updateSelectedDates,
                                 onNextPressed: selectedDates.isNotEmpty ? _returnFromDateSelection : null,
-                                maxSelectableDates: workerCount, // Pass the worker count as the limit
+                                maxSelectableDates: workerCount,
+                                selectedDays: selectedDays, // Pass the selected days
+                                contractDuration: contractDuration, // Pass the contract duration
                               ),
                             ],
                           ),

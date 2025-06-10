@@ -1,108 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../models/booking_model.dart';
+import '../models/package_model.dart';
+import '../services/api_service.dart';
 import 'continuous_booking_overlay.dart';
 import 'order_summary_screen.dart';
 
 
-class PackageModel {
-  final int pricingId;
-  final String groupCode;
-  final int serviceId;
-  final String serviceShift;
-  final int duration;
-  final int noOfMonth;
-  final double hourPrice;
-  final int visitsWeekly;
-  final int noOfEmployee;
-  final int packageId;
-  final double visitPrice;
-  final String packageName;
-  final int vatPercentage;
-  final double packagePrice;
-  final double discountPercentage;
-  final double priceAfterDiscount;
-  final int vatAmount;
-  final double finalPrice;
 
-  PackageModel({
-    required this.pricingId,
-    required this.groupCode,
-    required this.serviceId,
-    required this.serviceShift,
-    required this.duration,
-    required this.noOfMonth,
-    required this.hourPrice,
-    required this.visitsWeekly,
-    required this.noOfEmployee,
-    required this.packageId,
-    required this.visitPrice,
-    required this.packageName,
-    required this.vatPercentage,
-    required this.packagePrice,
-    required this.discountPercentage,
-    required this.priceAfterDiscount,
-    required this.vatAmount,
-    required this.finalPrice,
-  });
-
-  factory PackageModel.fromJson(Map<String, dynamic> json) {
-  return PackageModel(
-    pricingId: json['pricing_id'] ?? 0,
-    groupCode: json['group_code'] ?? '',
-    serviceId: json['service_id'] ?? 0,
-    serviceShift: json['service_shift']?.toString() ?? '1',
-    duration: json['duration'] ?? 0,
-    noOfMonth: json['no_of_month'] ?? 0,
-    hourPrice: (json['hour_price'] ?? 0).toDouble(),
-    visitsWeekly: json['visits_weekly'] ?? 0,
-    noOfEmployee: json['no_of_employee'] ?? 0,
-    packageId: json['package_id'] ?? 0,
-    visitPrice: (json['visit_price'] ?? 0).toDouble(),
-    packageName: json['package_name'] ?? '',
-    vatPercentage: json['vat_percentage'] ?? 0,
-    packagePrice: (json['package_price'] ?? 0).toDouble(),
-    // Fixed: Handle null, empty, or invalid discount_percentage values
-    discountPercentage: _parseDouble(json['discount_percentage']),
-    priceAfterDiscount: (json['price_after_discount'] ?? 0).toDouble(),
-    vatAmount: json['vat_amount'] ?? 0,
-    finalPrice: (json['final_price'] ?? 0).toDouble(),
-  );
-}
-
-// Helper method to safely parse double values that might be null or empty
-static double _parseDouble(dynamic value) {
-  if (value == null || value == '') return 0.0;
-  if (value is num) return value.toDouble();
-  if (value is String) {
-    try {
-      return double.parse(value);
-    } catch (e) {
-      return 0.0;
-    }
-  }
-  return 0.0;
-}
-
-  // Helper methods to get display values
-  String get nationalityDisplay {
-  if (groupCode == '2') return 'East Asia';      // Fixed: group code 2 is East Asia
-  if (groupCode == '3') return 'African';        // Fixed: group code 3 is African  
-  if (groupCode == '1') return 'South Asia';     // group code 1 is South Asia
-  return 'East Asia'; // default
-}
-
-  String get timeDisplay {
-    if (serviceShift == 1) return 'Morning';
-    if (serviceShift == 2) return 'Afternoon';
-    if (serviceShift == 3) return 'Evening';
-    return 'Morning'; // default
-  }
-
-  String get durationDisplay {
-    return '$duration hours';
-  }
-}
 
 class CleaningServiceScreen extends StatefulWidget {
   final PackageModel? autoOpenPackage;
@@ -130,6 +36,9 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   // Global keys for navigation to specific sections
   final GlobalKey eastAsiaKey = const GlobalObjectKey("eastAsia");
   final GlobalKey africanKey = const GlobalObjectKey("african");
+  final GlobalKey searchResultsKey = const GlobalObjectKey("searchResults");
+final GlobalKey eastAsiaSearchKey = const GlobalObjectKey("eastAsiaSearch");
+final GlobalKey africanSearchKey = const GlobalObjectKey("africanSearch");
 
   // Package lists for different groups and shifts
   List<PackageModel> eastAsiaPackages = [];
@@ -211,10 +120,45 @@ void _checkAndShowAutoOverlay() {
                'visit'.contains(searchQuery) ||
                'hours'.contains(searchQuery);
       }).toList();
+      
+      // Auto-scroll to search results after filtering
+      if (filteredEastAsiaPackages.isNotEmpty || filteredAfricanPackages.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToSearchResults();
+        });
+      }
     }
   });
 }
 
+void _scrollToSearchResults() {
+  GlobalKey? targetKey;
+  
+  // Determine which section to scroll to based on search results
+  if (filteredEastAsiaPackages.isNotEmpty && filteredAfricanPackages.isNotEmpty) {
+    // Both have results, scroll to East Asia first
+    targetKey = eastAsiaSearchKey;
+  } else if (filteredEastAsiaPackages.isNotEmpty) {
+    // Only East Asia has results
+    targetKey = eastAsiaSearchKey;
+  } else if (filteredAfricanPackages.isNotEmpty) {
+    // Only African has results
+    targetKey = africanSearchKey;
+  }
+  
+  // Scroll to the target section
+  if (targetKey != null) {
+    final context = targetKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: Duration(milliseconds: 800),
+        curve: Curves.easeInOut,
+        alignment: 0.0, // Scroll to top of the section
+      );
+    }
+  }
+}
 void _toggleSearch() {
   setState(() {
     isSearchActive = !isSearchActive;
@@ -236,53 +180,22 @@ Future<void> fetchEastAsiaPackages() async {
       eastAsiaErrorMessage = null;
     });
 
-    String apiUrl;
-    // For Fawran 4 Hours (service_id=1), include service_shift parameter
-    if (widget.serviceId == 1) {
-      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=2&service_shift=$selectedEastAsiaShift&job_id=251';
-    } else {
-      // For Fawran 8 Hours (service_id=21), no service_shift parameter
-      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=2&job_id=251';
-    }
-
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    final packages = await ApiService.fetchEastAsiaPackages(
+      serviceId: widget.serviceId,
+      serviceShift: widget.serviceId == 1 ? selectedEastAsiaShift : null,
     );
 
-    if (response.statusCode == 200) {
-      // Fix malformed JSON before parsing
-      String jsonString = response.body;
-      
-      // Replace empty discount_percentage values
-      jsonString = jsonString.replaceAll('"discount_percentage":,', '"discount_percentage":0,');
-      jsonString = jsonString.replaceAll('"discount_percentage":"",', '"discount_percentage":0,');
-      
-      // Also fix any other potential empty numeric fields
-      jsonString = jsonString.replaceAll('":,', '":0,');
-      jsonString = jsonString.replaceAll('":",', '":0,');
-      
-      final Map<String, dynamic> data = json.decode(jsonString);
-      final List<dynamic> packagesJson = data['packages'];
-      
-      setState(() {
-        eastAsiaPackages = packagesJson.map((json) => PackageModel.fromJson(json)).toList();
-        isEastAsiaLoading = false;
-      });
-    } else {
-      setState(() {
-        eastAsiaErrorMessage = 'Failed to load East Asia packages. Status code: ${response.statusCode}';
-        isEastAsiaLoading = false;
-      });
-    }
+    setState(() {
+      eastAsiaPackages = packages;
+      isEastAsiaLoading = false;
+    });
   } catch (e) {
     setState(() {
-      eastAsiaErrorMessage = 'Error loading East Asia packages: $e';
+      eastAsiaErrorMessage = e.toString();
       isEastAsiaLoading = false;
     });
   }
+  
   if (searchQuery.isEmpty) {
     filteredEastAsiaPackages = eastAsiaPackages;
   } else {
@@ -290,7 +203,6 @@ Future<void> fetchEastAsiaPackages() async {
   }
 }
 
-// Update the fetchAfricanPackages method
 Future<void> fetchAfricanPackages() async {
   try {
     setState(() {
@@ -298,53 +210,22 @@ Future<void> fetchAfricanPackages() async {
       africanErrorMessage = null;
     });
 
-    String apiUrl;
-    // For Fawran 4 Hours (service_id=1), include service_shift parameter
-    if (widget.serviceId == 1) {
-      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=3&service_shift=$selectedAfricanShift&job_id=251';
-    } else {
-      // For Fawran 8 Hours (service_id=21), no service_shift parameter
-      apiUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages?service_id=${widget.serviceId}&group_code=3&job_id=251';
-    }
-
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    final packages = await ApiService.fetchAfricanPackages(
+      serviceId: widget.serviceId,
+      serviceShift: widget.serviceId == 1 ? selectedAfricanShift : null,
     );
 
-    if (response.statusCode == 200) {
-      // Fix malformed JSON before parsing
-      String jsonString = response.body;
-      
-      // Replace empty discount_percentage values
-      jsonString = jsonString.replaceAll('"discount_percentage":,', '"discount_percentage":0,');
-      jsonString = jsonString.replaceAll('"discount_percentage":"",', '"discount_percentage":0,');
-      
-      // Also fix any other potential empty numeric fields
-      jsonString = jsonString.replaceAll('":,', '":0,');
-      jsonString = jsonString.replaceAll('":",', '":0,');
-      
-      final Map<String, dynamic> data = json.decode(jsonString);
-      final List<dynamic> packagesJson = data['packages'];
-      
-      setState(() {
-        africanPackages = packagesJson.map((json) => PackageModel.fromJson(json)).toList();
-        isAfricanLoading = false;
-      });
-    } else {
-      setState(() {
-        africanErrorMessage = 'Failed to load African packages. Status code: ${response.statusCode}';
-        isAfricanLoading = false;
-      });
-    }
+    setState(() {
+      africanPackages = packages;
+      isAfricanLoading = false;
+    });
   } catch (e) {
     setState(() {
-      africanErrorMessage = 'Error loading African packages: $e';
+      africanErrorMessage = e.toString();
       isAfricanLoading = false;
     });
   }
+  
   if (searchQuery.isEmpty) {
     filteredAfricanPackages = africanPackages;
   } else {
@@ -694,30 +575,50 @@ Future<void> fetchAfricanPackages() async {
                           
                           // East Asia Pack Section with Segmented Control
                           Container(
-                            key: eastAsiaKey,
+                            key: isSearchActive && searchQuery.isNotEmpty ? eastAsiaSearchKey : eastAsiaKey,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'East Asia Pack',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                // Show section title only if there are results or no search is active
+                                if (!isSearchActive || searchQuery.isEmpty || filteredEastAsiaPackages.isNotEmpty)
+                                  Text(
+                                    'East Asia Pack',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 16),
                                 
-                                // Segmented Control for East Asia
-                                _buildShiftSelector(true),
-                                  SizedBox(height: 20),
-
+                                // Show search results count for this section
+                                if (isSearchActive && searchQuery.isNotEmpty && filteredEastAsiaPackages.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 8, bottom: 8),
+                                    child: Text(
+                                      '${filteredEastAsiaPackages.length} result${filteredEastAsiaPackages.length != 1 ? 's' : ''} found',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
                                 
+                                // Show shift selector only if not searching or has results
+                                if ((!isSearchActive || searchQuery.isEmpty || filteredEastAsiaPackages.isNotEmpty))
+                                  Column(
+                                    children: [
+                                      SizedBox(height: 16),
+                                      _buildShiftSelector(true),
+                                      SizedBox(height: 20),
+                                    ],
+                                  ),
+                                
+                                // Show loading, error, or packages
                                 if (isEastAsiaLoading)
-                                  Center(
-                                    child: CircularProgressIndicator(),
-                                  )
+                                  Center(child: CircularProgressIndicator())
                                 else if (eastAsiaErrorMessage != null)
+                                  // Your existing error container
                                   Container(
                                     padding: EdgeInsets.all(20),
                                     decoration: BoxDecoration(
@@ -746,7 +647,22 @@ Future<void> fetchAfricanPackages() async {
                                       ],
                                     ),
                                   )
+                                else if (isSearchActive && searchQuery.isNotEmpty && filteredEastAsiaPackages.isEmpty)
+                                  // Show "no results" message for this section
+                                  Container(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                      'No East Asia packages match your search',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 16,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  )
                                 else
+                                  // Show filtered packages
                                   ...filteredEastAsiaPackages.map((package) => Column(
                                     children: [
                                       _buildServiceCardFromAPI(package),
@@ -760,30 +676,50 @@ Future<void> fetchAfricanPackages() async {
                           
                           // African Pack Section with Segmented Control
                           Container(
-                            key: africanKey,
+                            key: isSearchActive && searchQuery.isNotEmpty ? africanSearchKey : africanKey,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'African Pack',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                // Show section title only if there are results or no search is active
+                                if (!isSearchActive || searchQuery.isEmpty || filteredAfricanPackages.isNotEmpty)
+                                  Text(
+                                    'African Pack',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 16),
                                 
-                                // Segmented Control for African
-                                _buildShiftSelector(false),
-                                SizedBox(height: 20),
-
+                                // Show search results count for this section
+                                if (isSearchActive && searchQuery.isNotEmpty && filteredAfricanPackages.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 8, bottom: 8),
+                                    child: Text(
+                                      '${filteredAfricanPackages.length} result${filteredAfricanPackages.length != 1 ? 's' : ''} found',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
                                 
+                                // Show shift selector only if not searching or has results
+                                if ((!isSearchActive || searchQuery.isEmpty || filteredAfricanPackages.isNotEmpty))
+                                  Column(
+                                    children: [
+                                      SizedBox(height: 16),
+                                      _buildShiftSelector(false),
+                                      SizedBox(height: 20),
+                                    ],
+                                  ),
+                                
+                                // Show loading, error, or packages
                                 if (isAfricanLoading)
-                                  Center(
-                                    child: CircularProgressIndicator(),
-                                  )
+                                  Center(child: CircularProgressIndicator())
                                 else if (africanErrorMessage != null)
+                                  // Your existing error container
                                   Container(
                                     padding: EdgeInsets.all(20),
                                     decoration: BoxDecoration(
@@ -812,8 +748,23 @@ Future<void> fetchAfricanPackages() async {
                                       ],
                                     ),
                                   )
+                                else if (isSearchActive && searchQuery.isNotEmpty && filteredAfricanPackages.isEmpty)
+                                  // Show "no results" message for this section
+                                  Container(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                      'No African packages match your search',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 16,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  )
                                 else
-                                  ...africanPackages.map((package) => Column(
+                                  // Show filtered packages - Fix: Use filteredAfricanPackages instead of africanPackages
+                                  ...filteredAfricanPackages.map((package) => Column(
                                     children: [
                                       _buildServiceCardFromAPI(package),
                                       SizedBox(height: 20),

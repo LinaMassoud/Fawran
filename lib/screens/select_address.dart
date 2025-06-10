@@ -1,6 +1,7 @@
 import 'package:fawran/Fawran4Hours/add_new_address.dart';
 import 'package:fawran/models/address_model.dart';
 import 'package:fawran/screens/service_provider.dart';
+import 'package:fawran/steps/address_selection_step.dart';
 import 'package:flutter/material.dart';
 
 class AddressSelectionScreen extends StatefulWidget {
@@ -102,106 +103,31 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
 
               // Main content
               Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Add New Address Button
-                      GestureDetector(
-                        onTap: () {
-                          // Handle add address
-                          _addNewAddress();
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add, color: Colors.black),
-                              SizedBox(width: 8),
-                              Text(
-                                "ADD NEW ADDRESS",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 24),
-
-                      // Address Options
-                      Text("Select Address", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 12),
-
-                    ListView.builder(
-  shrinkWrap: true,
-  physics: NeverScrollableScrollPhysics(),
-  itemCount: addresses.length,
-  itemBuilder: (context, index) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: _buildAddressTile(addresses[index].name, addresses[index].fullAddress,index),
-    );
-  },
+  child: AddressSelectionStep(
+    addresses: addresses,
+    onAddressSelected: (id) {
+      setState(() {
+        addresses = addresses.map((address) {
+          return address.copyWith(isSelected: address.id == id);
+        }).toList();
+      });
+    },
+    onAddNewAddress: _addNewAddress,
+    onNextPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ServiceProvidersScreen(header: widget.header),
+        ),
+      );
+    },
+    price: _doorstepServiceSelected ? 150.0 : 0.0,
+    isLoading: false,
+    error: null,
+    onRetryPressed: null,
+  ),
 ),
 
-                      SizedBox(height: 24),
-
-                      // Doorstep Service Option
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _doorstepServiceSelected = !_doorstepServiceSelected;
-                          });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: _doorstepServiceSelected ? headerColor : Colors.grey.shade300,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _doorstepServiceSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                color: _doorstepServiceSelected ? headerColor : Colors.grey,
-                              ),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Doorstep Service", style: TextStyle(fontWeight: FontWeight.bold)),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      "Deliver the labor to your doorstep for just SR 150!",
-                                      style: TextStyle(fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text("SAR 150", style: TextStyle(fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 100),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
 

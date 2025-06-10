@@ -7,6 +7,49 @@ import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+class DistrictMapResponse {
+  final double latitude;
+  final double longitude;
+  final String mapUrl;
+  final String districtDays;
+  final String districtsShift;
+  final List<LatLng> polygonCoordinates;
+  final Map<String, dynamic> geojson;
+  final String specialPlace;
+
+  DistrictMapResponse({
+    required this.latitude,
+    required this.longitude,
+    required this.mapUrl,
+    required this.districtDays,
+    required this.districtsShift,
+    required this.polygonCoordinates,
+    required this.geojson,
+    required this.specialPlace,
+  });
+
+  factory DistrictMapResponse.fromJson(Map<String, dynamic> json) {
+    // Parse polygon coordinates
+    List<LatLng> coordinates = [];
+    if (json['polygon_coordinates'] != null) {
+      for (var coord in json['polygon_coordinates']) {
+        coordinates.add(LatLng(coord['lat'], coord['lng']));
+      }
+    }
+
+    return DistrictMapResponse(
+      latitude: json['latitude']?.toDouble() ?? 0.0,
+      longitude: json['longitude']?.toDouble() ?? 0.0,
+      mapUrl: json['map_url'] ?? '',
+      districtDays: json['district_days'] ?? '',
+      districtsShift: json['districts_shift'] ?? '',
+      polygonCoordinates: coordinates,
+      geojson: json['geojson'] ?? {},
+      specialPlace: json['special_place'] ?? '',
+    );
+  }
+}
+
 class City {
   final int cityId;
   final String cityName;
@@ -69,11 +112,13 @@ class AddNewAddressScreen extends StatefulWidget {
 class MapSelectorDialog extends StatefulWidget {
   final LatLng initialLocation;
   final Function(LatLng) onLocationSelected;
+  final List<LatLng>? boundaryCoordinates;
 
   const MapSelectorDialog({
     Key? key,
     required this.initialLocation,
     required this.onLocationSelected,
+    this.boundaryCoordinates,
   }) : super(key: key);
 
   @override
@@ -85,15 +130,98 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
   LatLng? _selectedLocation;
   bool _hasUserMovedMap = false;
   bool _isLocationConfirmed = false;
-   MapType _currentMapType = MapType.normal;
+  bool _isGettingLocation = false;
+  MapType _currentMapType = MapType.normal;
+  Set<Polygon> _polygons = {};
 
   @override
   void initState() {
     super.initState();
-    // Initialize with the initial location
     _selectedLocation = widget.initialLocation;
+    
+    // Create boundary polygon if coordinates are provided
+    if (widget.boundaryCoordinates != null && widget.boundaryCoordinates!.isNotEmpty) {
+      _polygons.add(
+        Polygon(
+          polygonId: PolygonId('district_boundary'),
+          points: widget.boundaryCoordinates!,
+          strokeColor: Colors.red,
+          strokeWidth: 4,
+          fillColor: Colors.red.withOpacity(0.15),
+        ),
+      );
+    }
   }
+Future<void> _getCurrentLocation() async {
+  setState(() {
+    _isGettingLocation = true;
+  });
 
+  try {
+    // Check location permission
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location permission denied'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isGettingLocation = false;
+        });
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Location permission permanently denied. Please enable in settings.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isGettingLocation = false;
+      });
+      return;
+    }
+
+    // Get current location
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    // Move camera to current location
+    if (_mapController != null) {
+      await _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 16.0,
+          ),
+        ),
+      );
+    }
+
+    setState(() {
+      _isGettingLocation = false;
+    });
+  } catch (e) {
+    print('Error getting current location: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to get current location'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    setState(() {
+      _isGettingLocation = false;
+    });
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -127,6 +255,9 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
               myLocationButtonEnabled: false,
               mapType: _currentMapType,
               zoomControlsEnabled: false,
+              polygons: _polygons,
+              buildingsEnabled: true,
+              trafficEnabled: false,
             ),
             // Fixed center pin - always visible
             Center(
@@ -185,89 +316,119 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
                       padding: EdgeInsets.zero,
                     ),
                   ),
+                  SizedBox(height: 8),
+                  // Current location button
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: _isGettingLocation 
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+                              ),
+                            )
+                          : Icon(Icons.my_location, color: Colors.black54, size: 24),
+                      onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
                 ],
               ),
             ),
-            // In the MapSelectorDialog's build method, replace the map type selector Positioned widget:
 
-// Map type selector (positioned properly above the confirm button)
-Positioned(
-  bottom: 100, // Increased from 80 to give more space above the button
-  left: 20,    // Added left margin
-  right: 20,   // Added right margin
-  child: Center(
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15), // Reduced shadow opacity
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // MAP button
-          GestureDetector(
-            onTap: () => _changeMapType(MapType.normal),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Increased padding
-              decoration: BoxDecoration(
-                color: _currentMapType == MapType.normal 
-                    ? Color(0xFF1E3A8A) 
-                    : Colors.transparent,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  bottomLeft: Radius.circular(8),
-                ),
-              ),
-              child: Text(
-                'MAP',
-                style: TextStyle(
-                  color: _currentMapType == MapType.normal 
-                      ? Colors.white 
-                      : Colors.black87, // Changed from black54 to black87
-                  fontSize: 14, // Increased font size
-                  fontWeight: FontWeight.w600,
+           // Map type selector (positioned properly above the confirm button)
+            Positioned(
+              bottom: 100, // Increased from 80 to give more space above the button
+              left: 20,    // Added left margin
+              right: 20,   // Added right margin
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15), // Reduced shadow opacity
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // MAP button
+                      GestureDetector(
+                        onTap: () => _changeMapType(MapType.normal),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Increased padding
+                          decoration: BoxDecoration(
+                            color: _currentMapType == MapType.normal 
+                                ? Color(0xFF1E3A8A) 
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              bottomLeft: Radius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            'MAP',
+                            style: TextStyle(
+                              color: _currentMapType == MapType.normal 
+                                  ? Colors.white 
+                                  : Colors.black87, // Changed from black54 to black87
+                              fontSize: 14, // Increased font size
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // SATELLITE button
+                      GestureDetector(
+                        onTap: () => _changeMapType(MapType.hybrid), // Changed from MapType.satellite
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _currentMapType == MapType.hybrid  // Changed condition
+                                ? Color(0xFF1E3A8A) 
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(8),
+                              bottomRight: Radius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            'SATELLITE',
+                            style: TextStyle(
+                              color: _currentMapType == MapType.hybrid  // Changed condition
+                                  ? Colors.white 
+                                  : Colors.black87,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          // SATELLITE button
-          GestureDetector(
-            onTap: () => _changeMapType(MapType.satellite),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Increased padding
-              decoration: BoxDecoration(
-                color: _currentMapType == MapType.satellite 
-                    ? Color(0xFF1E3A8A) 
-                    : Colors.transparent,
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(8),
-                  bottomRight: Radius.circular(8),
-                ),
-              ),
-              child: Text(
-                'SATELLITE',
-                style: TextStyle(
-                  color: _currentMapType == MapType.satellite 
-                      ? Colors.white 
-                      : Colors.black87, // Changed from black54 to black87
-                  fontSize: 14, // Increased font size
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-),
             // Bottom button
             Positioned(
               bottom: 0,
@@ -346,7 +507,29 @@ Positioned(
       });
     }
   }
-
+    bool _isLocationWithinBoundary(LatLng location) {
+        if (widget.boundaryCoordinates == null || widget.boundaryCoordinates!.isEmpty) {
+          return true; // If no boundary, allow any location
+        }
+        
+        // Simple point-in-polygon algorithm
+        List<LatLng> polygon = widget.boundaryCoordinates!;
+        int intersectCount = 0;
+        
+        for (int i = 0; i < polygon.length; i++) {
+          int next = (i + 1) % polygon.length;
+          
+          if (((polygon[i].latitude <= location.latitude && location.latitude < polygon[next].latitude) ||
+              (polygon[next].latitude <= location.latitude && location.latitude < polygon[i].latitude)) &&
+              (location.longitude < (polygon[next].longitude - polygon[i].longitude) * 
+              (location.latitude - polygon[i].latitude) / 
+              (polygon[next].latitude - polygon[i].latitude) + polygon[i].longitude)) {
+            intersectCount++;
+          }
+        }
+        
+        return (intersectCount % 2) == 1;
+      }
   void _onCameraIdle() {
     // This is called when the user stops moving the map
     // The _selectedLocation is already updated in _onCameraMove
@@ -354,10 +537,19 @@ Positioned(
   }
 
   void _confirmLocationSelection() {
-    print('Confirming location selection'); // Debug print
     if (_selectedLocation != null) {
-      widget.onLocationSelected(_selectedLocation!);
-      Navigator.of(context).pop();
+      if (_isLocationWithinBoundary(_selectedLocation!)) {
+        widget.onLocationSelected(_selectedLocation!);
+        Navigator.of(context).pop();
+      } else {
+        // Show error message if location is outside boundary
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please select a location within the district boundary'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -393,7 +585,6 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   final TextEditingController _notesController = TextEditingController();
 
   // Dropdown values
-  String? _selectedProvince;
   String? _selectedCity;
   String? _selectedDistrict;
 
@@ -417,56 +608,19 @@ List<City> _availableCities = [];
 bool _isLoadingCities = false;
 int? _selectedCityId; // Store the selected city ID
 
+DistrictMapResponse? _districtMapData;
+bool _isLoadingDistrictMap = false;
+
 // Add district-related variables
 List<District> _availableDistricts = [];
 bool _isLoadingDistricts = false;
 int? _selectedDistrictId;
-  // Sample data for dropdowns with corresponding coordinates
-  final Map<String, dynamic> _locationData = {
-    'Riyadh Province': {
-      'cities': {
-        'Riyadh': {
-          'districts': {
-            'Al Malaz': LatLng(24.6877, 46.7219),
-            'Al Olaya': LatLng(24.6951, 46.6859),
-            'Al Futah': LatLng(24.6408, 46.7146),
-            'As Salhiyah': LatLng(24.6693, 46.7357),
-          }
-        }
-      }
-    },
-    'Makkah Province': {
-      'cities': {
-        'Jeddah': {
-          'districts': {
-            'Al Hamra': LatLng(21.5169, 39.2192),
-            'Al Balad': LatLng(21.4858, 39.1925),
-          }
-        },
-        'Makkah': {
-          'districts': {
-            'Ajyad': LatLng(21.4225, 39.8262),
-            'Al Misfalah': LatLng(21.4167, 39.8167),
-          }
-        }
-      }
-    },
-    'Al Madinah Province': {
-      'cities': {
-        'Medina': {
-          'districts': {
-            'Al Haram': LatLng(24.4686, 39.6142),
-            'Quba': LatLng(24.4378, 39.6158),
-          }
-        }
-      }
-    }
-  };
+
 
   @override
   void initState() {
     super.initState();
-    _selectedProvince = 'Riyadh Province'; // Default selection
+    _fetchCitiesFromAPI();
   }
 
   @override
@@ -479,8 +633,6 @@ int? _selectedDistrictId;
     super.dispose();
   }
 
-  List<String> get _provinces => _locationData.keys.toList();
-
   List<String> get _cities {
   return _availableCities.map((city) => city.cityName).toList();
 }
@@ -490,27 +642,13 @@ int? _selectedDistrictId;
 }
 
   LatLng? get _districtLocation {
-    if (_selectedProvince == null || _selectedCity == null || _selectedDistrict == null) return null;
-    return _locationData[_selectedProvince]?['cities']?[_selectedCity]?['districts']?[_selectedDistrict];
+  // Since we're using API data now, return a default location or use district map data
+  if (_districtMapData != null) {
+    return LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
   }
-
- void _onProvinceChanged(String? value) {
-  setState(() {
-    _selectedProvince = value;
-    _selectedCity = null;
-    _selectedDistrict = null;
-    _selectedCityId = null;
-    _selectedDistrictId = null;
-    _availableCities.clear(); // Clear previous cities
-    _availableDistricts.clear(); // Clear previous districts
-    _checkDistrictCompletion();
-  });
-  
-  // Fetch cities from API when province is selected
-  if (value != null) {
-    _fetchCitiesFromAPI();
-  }
+  return LatLng(24.6877, 46.7219); // Default Riyadh location
 }
+
 
   void _onCityChanged(String? value) {
   setState(() {
@@ -550,8 +688,14 @@ int? _selectedDistrictId;
         orElse: () => District(districtId: 0, districtName: ''),
       );
       _selectedDistrictId = selectedDistrictObj.districtId;
+      
+      // Fetch district map data when district is selected
+      if (_selectedDistrictId != null && _selectedDistrictId! > 0) {
+        _fetchDistrictMapData(_selectedDistrictId!);
+      }
     } else {
       _selectedDistrictId = null;
+      _districtMapData = null;
     }
     
     _checkDistrictCompletion();
@@ -559,16 +703,14 @@ int? _selectedDistrictId;
 }
 
   void _checkDistrictCompletion() {
-    setState(() {
-      _isDistrictCompleted = _selectedProvince != null && 
-                           _selectedCity != null && 
-                           _selectedDistrict != null;
-      if (_isDistrictCompleted && _currentStep == 1) {
-        _currentStep = 2;
-      }
-      _updateCanProceedToDetails();
-    });
-  }
+  setState(() {
+    _isDistrictCompleted = _selectedCity != null && _selectedDistrict != null;
+    if (_isDistrictCompleted && _currentStep == 1) {
+      _currentStep = 2;
+    }
+    _updateCanProceedToDetails();
+  });
+}
 
   void _onMapCompleted() {
     setState(() {
@@ -585,6 +727,162 @@ int? _selectedDistrictId;
       _canProceedToDetails = _isDistrictCompleted && _isMapCompleted;
     });
   }
+  Future<void> _createAddressAPI() async {
+  if (_selectedLocation == null || _selectedDistrictId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Missing required location or district information')),
+    );
+    return;
+  }
+
+  // Show loading indicator
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    },
+  );
+
+  try {
+    // Create map URL
+    String mapUrl = 'https://maps.google.com/?q=${_selectedLocation!.latitude},${_selectedLocation!.longitude}';
+    
+    // Parse building number and apartment number from notes or building number field
+    int? floorNumber;
+    int? apartmentNumber;
+    int? buildingNumberInt;
+    
+    // Try to parse building number as integer
+    if (_buildingNumberController.text.isNotEmpty) {
+      buildingNumberInt = int.tryParse(_buildingNumberController.text);
+    }
+    
+    // Extract floor and apartment from notes if available
+    String notes = _notesController.text.toLowerCase();
+    RegExp floorRegex = RegExp(r'floor\s*(\d+)|level\s*(\d+)|\bfl\s*(\d+)');
+    RegExp aptRegex = RegExp(r'apartment\s*(\d+)|apt\s*(\d+)|unit\s*(\d+)');
+    
+    Match? floorMatch = floorRegex.firstMatch(notes);
+    if (floorMatch != null) {
+      floorNumber = int.tryParse(floorMatch.group(1) ?? floorMatch.group(2) ?? floorMatch.group(3) ?? '');
+    }
+    
+    Match? aptMatch = aptRegex.firstMatch(notes);
+    if (aptMatch != null) {
+      apartmentNumber = int.tryParse(aptMatch.group(1) ?? aptMatch.group(2) ?? aptMatch.group(3) ?? '');
+    }
+
+    // Prepare request body
+    Map<String, dynamic> requestBody = {
+      'longitude': _selectedLocation!.longitude,
+      'latitude': _selectedLocation!.latitude,
+      'map_url': mapUrl,
+      'customer_id': "428", // Fixed customer ID as per requirement
+      'floor_number': floorNumber ?? 0,
+      'apartment_number': apartmentNumber ?? 0,
+      'created_by': 1, // You might want to make this dynamic based on current user
+      'house_type': 1, // Default house type, you might want to add this as a dropdown
+      'district_id': _selectedDistrictId!.toString(),
+      'city_code': _selectedCityId?.toString() ?? '', 
+      'building_number': buildingNumberInt ?? 0,
+      'building_name': _addressTitleController.text.isNotEmpty ? _addressTitleController.text : '',
+    };
+
+    print('Sending POST request with body: ${json.encode(requestBody)}'); // Debug print
+
+    final response = await http.post(
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address?customer_id=428'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(requestBody),
+    );
+
+    // Hide loading indicator
+    Navigator.of(context).pop();
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // Success
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Address created successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      // Return the created address data to previous screen
+      final newAddress = {
+        'title': _addressTitleController.text,
+        'streetName': _streetNameController.text,
+        'buildingNumber': _buildingNumberController.text,
+        'fullAddress': _fullAddressController.text,
+        'notes': _notesController.text,
+        'city': _selectedCity,
+        'district': _selectedDistrict,
+        'coordinates': {
+          'latitude': _selectedLocation!.latitude,
+          'longitude': _selectedLocation!.longitude,
+        },
+        'api_response': json.decode(response.body), // Include API response
+      };
+
+      Navigator.pop(context, newAddress);
+    } else {
+      // Error
+      print('API Error: ${response.statusCode} - ${response.body}'); // Debug print
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create address. Please try again. (${response.statusCode})'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
+    // Hide loading indicator if still showing
+    Navigator.of(context).pop();
+    
+    print('Exception creating address: $e'); // Debug print
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Network error. Please check your connection and try again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+Future<void> _fetchDistrictMapData(int districtId) async {
+  setState(() {
+    _isLoadingDistrictMap = true;
+  });
+
+  try {
+    final response = await http.get(
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address/districts/map?district_id=$districtId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final districtMapResponse = DistrictMapResponse.fromJson(json.decode(response.body));
+      setState(() {
+        _districtMapData = districtMapResponse;
+        _isLoadingDistrictMap = false;
+      });
+    } else {
+      throw Exception('Failed to load district map data');
+    }
+  } catch (e) {
+    print('Error fetching district map data: $e');
+    setState(() {
+      _isLoadingDistrictMap = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load district map data. Please try again.')),
+    );
+  }
+}
 
 Future<void> _fetchCitiesFromAPI() async {
   setState(() {
@@ -652,15 +950,22 @@ Future<void> _fetchDistrictsFromAPI(int cityId) async {
 Future<void> _openMapSelector() async {
   if (!_isDistrictCompleted) return;
 
-  LatLng initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
+  LatLng initialLocation;
+  
+  // Use district map data if available, otherwise fallback to default
+  if (_districtMapData != null) {
+    initialLocation = LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
+  } else {
+    initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
+  }
 
   await showDialog(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) => MapSelectorDialog(
       initialLocation: initialLocation,
+      boundaryCoordinates: _districtMapData?.polygonCoordinates, // Pass boundary coordinates
       onLocationSelected: (LatLng selectedLocation) async {
-        // Handle the selected location here
         setState(() {
           _selectedLocation = selectedLocation;
           _hasUserMovedPin = true;
@@ -708,7 +1013,7 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
 
       setState(() {
         _fullAddressController.text = fullAddress.isNotEmpty ? fullAddress : 
-          '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
+          '$_selectedDistrict, $_selectedCity, Saudi Arabia';
         if (place.street != null && place.street!.isNotEmpty) {
           _streetNameController.text = place.street!;
         }
@@ -717,7 +1022,7 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
   } catch (e) {
     // Fallback to basic address format
     setState(() {
-      _fullAddressController.text = '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
+      _fullAddressController.text = '$_selectedDistrict, $_selectedCity, Saudi Arabia';
     });
   }
 
@@ -765,7 +1070,7 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
 
         setState(() {
           _fullAddressController.text = fullAddress.isNotEmpty ? fullAddress : 
-            '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
+  '$_selectedDistrict, $_selectedCity, Saudi Arabia';
           if (place.street != null && place.street!.isNotEmpty) {
             _streetNameController.text = place.street!;
           }
@@ -774,7 +1079,7 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
     } catch (e) {
       // Fallback to basic address format
       setState(() {
-        _fullAddressController.text = '$_selectedDistrict, $_selectedCity, $_selectedProvince, Saudi Arabia';
+        _fullAddressController.text = '$_selectedDistrict, $_selectedCity Saudi Arabia';
       });
     }
 
@@ -788,31 +1093,30 @@ Future<void> _handleLocationSelection(LatLng selectedLocation) async {
   }
 
   void _saveAddress() {
-    if (_addressTitleController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please provide an address title')),
-      );
-      return;
-    }
-
-    // Create new address and return to previous screen
-    final newAddress = {
-      'title': _addressTitleController.text,
-      'streetName': _streetNameController.text,
-      'buildingNumber': _buildingNumberController.text,
-      'fullAddress': _fullAddressController.text,
-      'notes': _notesController.text,
-      'province': _selectedProvince,
-      'city': _selectedCity,
-      'district': _selectedDistrict,
-      'coordinates': _selectedLocation != null ? {
-        'latitude': _selectedLocation!.latitude,
-        'longitude': _selectedLocation!.longitude,
-      } : null,
-    };
-
-    Navigator.pop(context, newAddress);
+  if (_addressTitleController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please provide an address title')),
+    );
+    return;
   }
+
+  if (_selectedLocation == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please select a location on the map')),
+    );
+    return;
+  }
+
+  if (_selectedDistrictId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please select a district')),
+    );
+    return;
+  }
+
+  // Call the API to create the address
+  _createAddressAPI();
+}
 
   Widget _buildStepIndicator(int stepNumber, String title, bool isCompleted, bool isActive) {
     return Row(
@@ -888,7 +1192,7 @@ Widget _buildCityDropdown() {
     _selectedCity, 
     _cities, 
     _onCityChanged,
-    enabled: _selectedProvince != null && !_isLoadingCities
+    enabled: !_isLoadingCities // Remove dependency on _selectedProvince
   );
 }
 Widget _buildDistrictDropdown() {
@@ -1076,13 +1380,6 @@ Widget _buildDistrictDropdown() {
                     // Step 1: District
                     _buildStepIndicator(1, 'District', _isDistrictCompleted, _currentStep >= 1),
                     SizedBox(height: 20),
-                    _buildDropdown(
-                      'Province', 
-                      _selectedProvince, 
-                      _provinces, 
-                      _onProvinceChanged
-                    ),
-                    SizedBox(height: 15),
                     _buildCityDropdown(),
                     SizedBox(height: 15),
                     _buildDistrictDropdown(),
