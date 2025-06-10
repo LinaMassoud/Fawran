@@ -1,5 +1,6 @@
 import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
 import 'package:fawran/screens/home_screen.dart';
+import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/select_address.dart';
 
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
-      home:  HomeScreen()
+      home:  LoginScreen()
     );
        }
 }

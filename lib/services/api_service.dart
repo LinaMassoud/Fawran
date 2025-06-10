@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fawran/models/ProffesionModel.dart';
 import 'package:http/http.dart' as http;
 import '../models/package_model.dart';
 
@@ -16,7 +17,7 @@ class ApiService {
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse('$_baseUrl/auth/signup');
+    final url = Uri.parse('$_baseUrl/signup');
 
     try {
       final response = await http.post(
@@ -44,7 +45,7 @@ class ApiService {
     required String phoneNumber,
     required String password,
   }) async {
-    final url = Uri.parse('$_baseUrl/auth/login');
+    final url = Uri.parse('$_baseUrl/login');
 
     try {
       final response = await http.post(
@@ -71,7 +72,7 @@ class ApiService {
     required String username,
     required String otp,
   }) async {
-    final url = Uri.parse('$_baseUrl/auth/verify');
+    final url = Uri.parse('$_baseUrl/verify');
 
     try {
       final response = await http.post(
@@ -156,4 +157,51 @@ class ApiService {
       serviceShift: serviceShift,
     );
   }
+  Future<List<ProfessionModel>> fetchProfessions() async {
+  final url = Uri.parse('$_baseUrl/home/professions');
+
+  try {
+    final response = await http.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => ProfessionModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to fetch professions. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error fetching professions: $e');
+  }
 }
+
+Future<List<dynamic>> fetchNationalities({
+  required int professionId,
+  required String cityCode,
+}) async {
+  final url = Uri.parse('$_baseUrl/nationalities/$professionId/$cityCode');
+
+  try {
+    final response = await http.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data;
+    } else {
+      throw Exception('Failed to fetch nationalities. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error fetching nationalities: $e');
+  }
+}
+
+
+
+
+}
+

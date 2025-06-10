@@ -25,3 +25,36 @@ class AddressModel {
     );
   }
 }
+
+
+class Address {
+  final String cardText;
+  final int addressId;
+  final String cityCode;
+  final String districtCode;
+
+  Address({
+    required this.cardText,
+    required this.addressId,
+    required this.cityCode,
+    required this.districtCode,
+  });
+
+  factory Address.fromJson(Map<String, dynamic> json) {
+    return Address(
+      cardText: json['card_text'] as String,
+      addressId: json['address_id'] as int,
+      cityCode: json['city_code'] as String,
+      districtCode: json['district_code'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'card_text': cardText,
+      'address_id': addressId,
+      'city_code': cityCode,
+      'district_code': districtCode,
+    };
+  }
+}

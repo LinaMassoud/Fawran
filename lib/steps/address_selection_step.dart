@@ -34,7 +34,7 @@ class AddressSelectionStep extends StatelessWidget {
     return Column(
       children: [
         // Main content
-        Expanded(
+        Flexible(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Column(
