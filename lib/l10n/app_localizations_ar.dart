@@ -27,6 +27,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signUp => 'سجل الآن';
 
   @override
+  String get username => 'اسم المستخدم';
+
+  @override
   String get firstName => 'الاسم الأول';
 
   @override
@@ -61,4 +64,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get resendIn => 'إعادة الإرسال خلال';
+
+  @override
+  String get service_driver => 'سائق خاص';
+
+  @override
+  String get service_full_time_maid => 'عاملة منزلية دائمة';
+
+  @override
+  String get service_maid_4h => 'عاملة منزلية 4 ساعات';
+
+  @override
+  String get service_maid_8h => 'عاملة منزلية 8 ساعات';
+
+  @override
+  String get home => 'المنزل';
+
+  @override
+  String get top_requested => 'الخدمات الأكثر طلبا ';
+
+  @override
+  String get saving_packages => 'حزم التوفير';
+
+  @override
+  String get fetching_location => 'جارِ الحصول على موقعك الحالي...';
+
+  @override
+  String get currentLocation => '📍 موقعك الحالي:';
+
+  @override
+  String get offer => 'وفر حتى 15%/nاطلب الان';
 }

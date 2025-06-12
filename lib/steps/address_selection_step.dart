@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../Fawran4Hours/add_new_address.dart';
 import '../widgets/booking_bottom_navigation.dart';
 
-class AddressSelectionStep extends StatefulWidget {
+class AddressSelectionStep extends StatelessWidget {
   final List<Address> addresses;
+  final Address? selectedAddress;
   final Function(int) onAddressSelected;
   final VoidCallback onAddNewAddress;
   final VoidCallback onNextPressed;
@@ -12,10 +13,12 @@ class AddressSelectionStep extends StatefulWidget {
   final bool isLoading;
   final String? error;
   final VoidCallback? onRetryPressed;
+  final bool isCustomBooking; // Add this parameter
 
   const AddressSelectionStep({
     Key? key,
     required this.addresses,
+    required this.selectedAddress,
     required this.onAddressSelected,
     required this.onAddNewAddress,
     required this.onNextPressed,
@@ -23,22 +26,45 @@ class AddressSelectionStep extends StatefulWidget {
     this.isLoading = false,
     this.error,
     this.onRetryPressed,
+    this.isCustomBooking = false, // Add this parameter with default value
   }) : super(key: key);
 
-  @override
-  State<AddressSelectionStep> createState() => _AddressSelectionStepState();
-}
+  bool get _hasSelectedAddress {
+    return selectedAddress != null;
+  }
 
-class _AddressSelectionStepState extends State<AddressSelectionStep> {
-  int? _selectedAddressId;
-
-  bool get _hasSelectedAddress => _selectedAddressId != null;
-
-  void _selectAddress(int addressId) {
-    setState(() {
-      _selectedAddressId = addressId;
-    });
-    widget.onAddressSelected(addressId);
+  // Extract a readable location name from the CARD_TEXT
+  String _extractLocationName(String? cardText) {
+    // Handle null or empty card text
+    if (cardText == null || cardText.isEmpty) {
+      return 'Address';
+    }
+    
+    try {
+      // Parse the card text to extract meaningful location name
+      // Example: "Riyadh-Al Shohada-Building-Number:77-Apartment-Number:202-Floor No:2"
+      List<String> parts = cardText.split('-');
+      
+      if (parts.length >= 2) {
+        // Take the first two parts as the location name
+        String city = parts[0].trim();
+        String area = parts[1].trim();
+        
+        // Handle empty area names
+        if (area.isEmpty) {
+          return city.isNotEmpty ? city : 'Address';
+        }
+        
+        return '$area, $city';
+      } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+        return parts[0].trim();
+      }
+    } catch (e) {
+      // If parsing fails, return a default name
+      print('Error parsing address: $e');
+    }
+    
+    return 'Address';
   }
 
   @override
@@ -96,11 +122,11 @@ class _AddressSelectionStepState extends State<AddressSelectionStep> {
           ),
         ),
         BookingBottomNavigation(
-          price: widget.price,
-          canProceed: _hasSelectedAddress && !widget.isLoading && widget.error == null,
-          isLastStep: false,
-          onNextPressed: widget.onNextPressed,
-        ),
+        price: isCustomBooking ? 0.0 : price, // Conditional price
+        canProceed: _hasSelectedAddress && !isLoading && error == null,
+        isLastStep: false,
+        onNextPressed: onNextPressed,
+      ),
       ],
     );
   }
@@ -166,13 +192,13 @@ class _AddressSelectionStepState extends State<AddressSelectionStep> {
     return ListView.builder(
       itemCount: widget.addresses.length,
       itemBuilder: (context, index) {
-        final address = widget.addresses[index];
-        final isSelected = address.addressId == _selectedAddressId;
-
+        final address = addresses[index];
+        final isSelected = selectedAddress?.addressId == address.addressId;
+        
         return Container(
           margin: EdgeInsets.only(bottom: 15),
           child: GestureDetector(
-            onTap: () => _selectAddress(address.addressId),
+            onTap: () => onAddressSelected(address.addressId),
             child: Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -191,7 +217,9 @@ class _AddressSelectionStepState extends State<AddressSelectionStep> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? Colors.black : Colors.grey[400]!,
+                        color: isSelected 
+                            ? Colors.black 
+                            : Colors.grey[400]!,
                         width: 2,
                       ),
                     ),
@@ -207,11 +235,28 @@ class _AddressSelectionStepState extends State<AddressSelectionStep> {
                   ),
                   SizedBox(width: 15),
                   Expanded(
-                    child: Text(
-                      address.cardText,
-                      style: TextStyle(fontSize: 16, color: Colors.black),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _extractLocationName(address.cardText),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          address.cardText,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                   GestureDetector(

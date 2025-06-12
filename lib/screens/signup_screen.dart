@@ -3,7 +3,7 @@ import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:fawran/l10n/app_localizations.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});

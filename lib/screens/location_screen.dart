@@ -1,10 +1,10 @@
+import 'package:fawran/l10n/app_localizations.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 
 class LocationScreen extends ConsumerStatefulWidget {
