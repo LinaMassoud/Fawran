@@ -5,12 +5,10 @@ import 'cleaning_service_screen.dart';
 
 class FawranServicesScreen extends StatefulWidget {
   final int selectedPositionId;
-  final String selectedPositionName;
 
   const FawranServicesScreen({
     Key? key,
     required this.selectedPositionId,
-    required this.selectedPositionName,
   }) : super(key: key);
 
   @override
@@ -93,6 +91,21 @@ class _FawranServicesScreenState extends State<FawranServicesScreen> {
     return Icons.room_service;
   }
 
+  String _getFormattedServiceName(String serviceName) {
+    if (serviceName.toLowerCase().contains('4 hours') || 
+        serviceName.toLowerCase().contains('fawran 4')) {
+      return 'Fawran Services (4 Hours)';
+    } else if (serviceName.toLowerCase().contains('8 hours') || 
+               serviceName.toLowerCase().contains('fawran 8')) {
+      return 'Fawran Services (8 Hours)';
+    } else if (serviceName.toLowerCase().contains('maintenance')) {
+      return 'Maintenance Service';
+    } else if (serviceName.toLowerCase().contains('permanent')) {
+      return 'Permanent Service';
+    }
+    return serviceName; // Return original name if no pattern matches
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,7 +184,7 @@ class _FawranServicesScreenState extends State<FawranServicesScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
-                                    'No services available for ${widget.selectedPositionName}',
+                                    'No services available',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey[600],
@@ -188,6 +201,7 @@ class _FawranServicesScreenState extends State<FawranServicesScreen> {
                                   final service = services[index];
                                   final serviceColor = _getServiceColor(service.name);
                                   final serviceIcon = _getServiceIcon(service.name);
+                                  final formattedServiceName = _getFormattedServiceName(service.name);
                                   
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 16),
@@ -265,7 +279,7 @@ class _FawranServicesScreenState extends State<FawranServicesScreen> {
                                                     ),
                                                     const SizedBox(height: 8),
                                                     Text(
-                                                      '${widget.selectedPositionName} Services',
+                                                      formattedServiceName,
                                                       style: TextStyle(
                                                         color: Colors.white.withOpacity(0.9),
                                                         fontSize: 16,

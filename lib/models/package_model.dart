@@ -1,7 +1,5 @@
 class PackageModel {
-  final int pricingId;
   final String groupCode;
-  final int serviceId;
   final String serviceShift;
   final String duration; // Changed to String to match JSON
   final int noOfMonth;
@@ -20,9 +18,7 @@ class PackageModel {
   final int? noOfWeeks; // Added missing field, nullable
 
   PackageModel({
-    required this.pricingId,
     required this.groupCode,
-    required this.serviceId,
     required this.serviceShift,
     required this.duration,
     required this.noOfMonth,
@@ -59,10 +55,10 @@ class PackageModel {
       groupCode: json['group_code']?.toString() ?? '2',
       noOfWeeks: json['no_of_weeks'] != null ? _parseInt(json['no_of_weeks']) : null,
       noOfMonth: _parseInt(json['no_of_month']),
+      // Get hour_price directly from JSON instead of calculating
+      hourPrice: _parseDouble(json['hour_price']),
       // Default values for fields not present in JSON but required by constructor
-      pricingId: 0, // Set appropriate default or get from another source
-      serviceId: 1, // Set appropriate default or get from another source  
-      hourPrice: _parseDouble(json['visit_price']) / 4, // Calculate hourly rate or get from another source
+ // Set appropriate default or get from another source  
     );
   }
 
@@ -144,6 +140,11 @@ class PackageModel {
     return 'SAR ${visitPrice.toStringAsFixed(2)}';
   }
 
+  // Helper method to get formatted hour price
+  String get formattedHourPrice {
+    return 'SAR ${hourPrice.toStringAsFixed(2)}';
+  }
+
   // Convert back to JSON (useful for API calls)
   Map<String, dynamic> toJson() {
     return {
@@ -163,6 +164,7 @@ class PackageModel {
       'group_code': groupCode,
       'no_of_weeks': noOfWeeks,
       'no_of_month': noOfMonth,
+      'hour_price': hourPrice,
     };
   }
 
@@ -189,9 +191,7 @@ class PackageModel {
     int? noOfWeeks,
   }) {
     return PackageModel(
-      pricingId: pricingId ?? this.pricingId,
       groupCode: groupCode ?? this.groupCode,
-      serviceId: serviceId ?? this.serviceId,
       serviceShift: serviceShift ?? this.serviceShift,
       duration: duration ?? this.duration,
       noOfMonth: noOfMonth ?? this.noOfMonth,
@@ -213,7 +213,7 @@ class PackageModel {
 
   @override
   String toString() {
-    return 'PackageModel(packageId: $packageId, packageName: $packageName, finalPrice: $finalPrice, duration: $duration, visitsWeekly: $visitsWeekly)';
+    return 'PackageModel(packageId: $packageId, packageName: $packageName, finalPrice: $finalPrice, hourPrice: $hourPrice, duration: $duration, visitsWeekly: $visitsWeekly)';
   }
 
   @override

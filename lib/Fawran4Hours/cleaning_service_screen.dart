@@ -185,12 +185,12 @@ Future<void> _loadServiceShifts() async {
   }
 void _checkAndShowAutoOverlay() {
   if (widget.autoOpenPackage != null) {
-    // Use WidgetsBinding to ensure the widget is fully built before showing overlay
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ContinuousBookingOverlay.showAsOverlay(
         context,
         package: widget.autoOpenPackage!,
         selectedShift: widget.autoOpenShift ?? 1,
+        serviceId: widget.serviceId, // Add serviceId
         onBookingCompleted: _onBookingCompleted,
       );
     });
@@ -663,7 +663,10 @@ Future<void> fetchAfricanPackages() async {
                               ],
                             ),
                           ),
-                          SizedBox(height: 30),
+                          
+                          
+                          _buildDesignCardButton(),
+
                           
                           // Service packs (removed Evening pack)
                           Row(
@@ -781,7 +784,7 @@ Future<void> fetchAfricanPackages() async {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'Congratulations! SAR${totalSavings.toStringAsFixed(0)} saved so far!',
+                            'Congratulations! SAR${completedBooking!.discountAmount.toStringAsFixed(0)} saved so far!',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -813,9 +816,9 @@ Future<void> fetchAfricanPackages() async {
                                     ),
                                     SizedBox(width: 8),
                                     Text(
-                                      'SAR ${originalPrice.toStringAsFixed(0)}',
+                                      'SAR ${completedBooking!.originalPrice.toStringAsFixed(0)}',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 14,
                                         color: Colors.grey[600],
                                         decoration: TextDecoration.lineThrough,
                                       ),
@@ -1260,6 +1263,75 @@ Widget _buildPackageSection({
       ),
     );
   }
+Widget _buildDesignCardButton() {
+  return GestureDetector(
+    onTap: () {
+      // Show custom booking overlay when tapped
+      ContinuousBookingOverlay.showAsCustomOverlay(
+        context,
+        serviceId: widget.serviceId,
+        onBookingCompleted: (BookingData bookingData) {
+          // For custom bookings, navigate directly to OrderSummaryScreen
+          // instead of showing the bottom order view
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderSummaryScreen(
+                bookingData: bookingData,
+                totalSavings: bookingData.discountAmount, // Use the actual discount from booking
+                originalPrice: bookingData.originalPrice, // Use the original price from booking
+              ),
+            ),
+          );
+        },
+      );
+    },
+    child: Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              Icons.add,
+              color: Colors.black,
+              size: 16,
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Design your card',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: Colors.grey[400],
+            size: 20,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
   Widget _buildServiceCardFromAPI(PackageModel package) {
     return Container(
       decoration: BoxDecoration(
@@ -1392,11 +1464,12 @@ Widget _buildPackageSection({
                       onTap: () {
                         // Pass the entire package object to address selection with callback
                         ContinuousBookingOverlay.showAsOverlay(
-                            context, 
-                            package: package,
-                            selectedShift: selectedEastAsiaShift, // Pass the selected shift
-                            onBookingCompleted: _onBookingCompleted,
-                          );
+                          context, 
+                          package: package,
+                          selectedShift: selectedEastAsiaShift,
+                          serviceId: widget.serviceId, // Add serviceId
+                          onBookingCompleted: _onBookingCompleted,
+                        );
                       },
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1448,7 +1521,7 @@ Widget _buildPackageSection({
                 Text(
                   'Book ${package.visitsWeekly} weekly cleaning visit from fawran ${package.duration} hours at discounted price.\nAvail first visit now with an option of customizing.\n\n'
                   '• Duration: ${package.duration} hours\n'
-                  '• Monthly visits: ${package.visitsWeekly * 4}\n'
+                  '• No of weeks: ${package.visitsWeekly * 4}\n'
                   '• Number of employees: ${package.noOfEmployee}\n'
                   '• VAT: ${package.vatPercentage}%',
                   style: TextStyle(

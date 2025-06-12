@@ -11,11 +11,13 @@ import '../models/address_model.dart';
 
 
 class AddNewAddressScreen extends StatefulWidget {
-  final PackageModel? package; // Add package parameter
+  final PackageModel? package;
+  final int? serviceId; // Add serviceId parameter
   
   const AddNewAddressScreen({
     Key? key, 
-    this.package, // Add package parameter
+    this.package,
+    this.serviceId, // Add serviceId parameter
   }) : super(key: key);
 
   @override
@@ -538,10 +540,12 @@ String? _selectedDistrictCode;
 
 
   @override
-  void initState() {
-    super.initState();
-    _fetchCitiesFromAPI();
-  }
+void initState() {
+  super.initState();
+  // Get serviceId from package, with fallback to default value
+  int serviceId = widget.serviceId ?? 1;
+  _fetchCitiesFromAPI(serviceId);
+}
 
   @override
 void dispose() {
@@ -838,11 +842,7 @@ Future<void> _fetchDistrictMapData(String districtCode) async {
   }
 }
 
-Future<void> _fetchCitiesFromAPI() async {
-  // You'll need to get the service_id from PackageModel
-  // For now, I'm using a placeholder - replace with actual service_id
-  int serviceId = package?.serviceId ?? 1; // Replace this with actual service_id from PackageModel
-  
+Future<void> _fetchCitiesFromAPI(int serviceId) async {
   setState(() {
     _isLoadingCities = true;
   });

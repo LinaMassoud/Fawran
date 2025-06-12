@@ -132,6 +132,8 @@ class ApiService {
         jsonString = jsonString.replaceAll('"discount_percentage":"",', '"discount_percentage":0,');
         jsonString = jsonString.replaceAll('"no_of_weeks":null', '"no_of_weeks":0');
         jsonString = jsonString.replaceAll('"no_of_weeks":"null"', '"no_of_weeks":0');
+        jsonString = jsonString.replaceAll('"hour_price":null', '"hour_price":0');
+        jsonString = jsonString.replaceAll('"hour_price":"null"', '"hour_price":0');
         
         // Handle any other null values that might cause issues
         jsonString = jsonString.replaceAll(':null,', ':0,');
@@ -411,7 +413,4 @@ Future<List<dynamic>> fetchNationalities({
 }
 
 
-
-
 }
-

@@ -4,18 +4,21 @@ import '../Fawran4Hours/add_new_address.dart';
 import '../widgets/booking_bottom_navigation.dart';
 
 class AddressSelectionStep extends StatelessWidget {
-  final List<AddressModel> addresses;
-  final Function(String) onAddressSelected;
+  final List<Address> addresses;
+  final Address? selectedAddress;
+  final Function(int) onAddressSelected;
   final VoidCallback onAddNewAddress;
   final VoidCallback onNextPressed;
   final double price;
   final bool isLoading;
   final String? error;
   final VoidCallback? onRetryPressed;
+  final bool isCustomBooking; // Add this parameter
 
   const AddressSelectionStep({
     Key? key,
     required this.addresses,
+    required this.selectedAddress,
     required this.onAddressSelected,
     required this.onAddNewAddress,
     required this.onNextPressed,
@@ -23,10 +26,45 @@ class AddressSelectionStep extends StatelessWidget {
     this.isLoading = false,
     this.error,
     this.onRetryPressed,
+    this.isCustomBooking = false, // Add this parameter with default value
   }) : super(key: key);
 
   bool get _hasSelectedAddress {
-    return addresses.any((address) => address.isSelected);
+    return selectedAddress != null;
+  }
+
+  // Extract a readable location name from the CARD_TEXT
+  String _extractLocationName(String? cardText) {
+    // Handle null or empty card text
+    if (cardText == null || cardText.isEmpty) {
+      return 'Address';
+    }
+    
+    try {
+      // Parse the card text to extract meaningful location name
+      // Example: "Riyadh-Al Shohada-Building-Number:77-Apartment-Number:202-Floor No:2"
+      List<String> parts = cardText.split('-');
+      
+      if (parts.length >= 2) {
+        // Take the first two parts as the location name
+        String city = parts[0].trim();
+        String area = parts[1].trim();
+        
+        // Handle empty area names
+        if (area.isEmpty) {
+          return city.isNotEmpty ? city : 'Address';
+        }
+        
+        return '$area, $city';
+      } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+        return parts[0].trim();
+      }
+    } catch (e) {
+      // If parsing fails, return a default name
+      print('Error parsing address: $e');
+    }
+    
+    return 'Address';
   }
 
   @override
@@ -93,11 +131,11 @@ class AddressSelectionStep extends StatelessWidget {
         
         // Bottom Navigation
         BookingBottomNavigation(
-          price: price,
-          canProceed: _hasSelectedAddress && !isLoading && error == null,
-          isLastStep: false,
-          onNextPressed: onNextPressed,
-        ),
+        price: isCustomBooking ? 0.0 : price, // Conditional price
+        canProceed: _hasSelectedAddress && !isLoading && error == null,
+        isLastStep: false,
+        onNextPressed: onNextPressed,
+      ),
       ],
     );
   }
@@ -210,19 +248,21 @@ class AddressSelectionStep extends StatelessWidget {
       itemCount: addresses.length,
       itemBuilder: (context, index) {
         final address = addresses[index];
+        final isSelected = selectedAddress?.addressId == address.addressId;
+        
         return Container(
           margin: EdgeInsets.only(bottom: 15),
           child: GestureDetector(
-            onTap: () => onAddressSelected(address.id),
+            onTap: () => onAddressSelected(address.addressId),
             child: Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: address.isSelected ? Colors.black : Colors.grey[300]!,
-                  width: address.isSelected ? 2 : 1.5,
+                  color: isSelected ? Colors.black : Colors.grey[300]!,
+                  width: isSelected ? 2 : 1.5,
                 ),
                 borderRadius: BorderRadius.circular(15),
-                color: address.isSelected ? Colors.grey[50] : Colors.white,
+                color: isSelected ? Colors.grey[50] : Colors.white,
               ),
               child: Row(
                 children: [
@@ -233,13 +273,13 @@ class AddressSelectionStep extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: address.isSelected 
+                        color: isSelected 
                             ? Colors.black 
                             : Colors.grey[400]!,
                         width: 2,
                       ),
                     ),
-                    child: address.isSelected
+                    child: isSelected
                         ? Center(
                             child: Container(
                               width: 12,
@@ -261,7 +301,7 @@ class AddressSelectionStep extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          address.name,
+                          _extractLocationName(address.cardText),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -270,7 +310,7 @@ class AddressSelectionStep extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          address.fullAddress,
+                          address.cardText,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],

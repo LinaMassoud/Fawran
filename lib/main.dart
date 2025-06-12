@@ -42,10 +42,7 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
-      home: const FawranServicesScreen(
-        selectedPositionId: 251, // Example: Cleaner & Helper
-        selectedPositionName: 'Cleaner & Helper',
-      ),
+      home: HomeScreen()
     );
        }
 }
