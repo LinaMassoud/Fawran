@@ -66,7 +66,7 @@ class _ContinuousBookingOverlayState extends State<ContinuousBookingOverlay>
   bool isReturningFromDateSelection = false;
 
   // Address Selection Data
-  List<AddressModel> addresses = [];
+  List<Address> addresses = [];
   bool isLoadingAddresses = true;
   String? addressError;
   List<String> selectedDays = [];
@@ -139,11 +139,11 @@ void initState() {
             int index = entry.key;
             var addressData = entry.value;
             
-            return AddressModel(
-              id: index.toString(),
-              name: _extractLocationName(addressData['CARD_TEXT']),
-              fullAddress: addressData['CARD_TEXT'],
-              isSelected: index == 0, // Select the first address by default
+            return Address(
+              addressId:  addressData['CARD_TEXT'],
+              cardText: _extractLocationName(addressData['CARD_TEXT']),
+              cityCode: addressData['CARD_TEXT'],
+              districtCode: addressData['CARD_TEXT']
             );
           }).toList();
           
@@ -238,12 +238,8 @@ void _updateSelectedDays(List<String> newSelectedDays) {
     }
   }
 
-  void _selectAddress(String addressId) {
-    setState(() {
-      addresses = addresses.map((address) {
-        return address.copyWith(isSelected: address.id == addressId);
-      }).toList();
-    });
+  void _selectAddress(int addressId) {
+    
   }
 
   void _addNewAddress() async {
@@ -255,7 +251,7 @@ void _updateSelectedDays(List<String> newSelectedDays) {
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         addresses = addresses.map((address) {
-          return address.copyWith(isSelected: false);
+          return Address(cardText: 'cardText', addressId: 2, cityCode: 'cityCode', districtCode: 'districtCode');
         }).toList();
 
         final newAddress = AddressModel(
@@ -266,7 +262,7 @@ void _updateSelectedDays(List<String> newSelectedDays) {
           isSelected: true,
         );
         
-        addresses.add(newAddress);
+       // addresses.add(newAddress);
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -334,26 +330,7 @@ void _updateSelectedDays(List<String> newSelectedDays) {
 
   void _completePurchase() async {
   // Create booking data
-  final selectedAddress = addresses.firstWhere((addr) => addr.isSelected);
-  final bookingData = BookingData(
-    selectedDates: selectedDates,
-    totalPrice: _calculateTotalPrice(),
-    selectedAddress: selectedAddress.name,
-    workerCount: workerCount,
-    contractDuration: contractDuration,
-    visitsPerWeek: visitsPerWeek,
-    selectedNationality: selectedNationality, // Pass the actual nationality
-    packageName: widget.package.packageName, // Pass the actual package name
-  );
-
-  // Close overlay with animation
-  await _animationController.reverse();
-  Navigator.pop(context);
-
-  // Call the callback to update the parent screen
-  if (widget.onBookingCompleted != null) {
-    widget.onBookingCompleted!(bookingData);
-  }
+  
 }
 
   // Calculate total price from selected dates

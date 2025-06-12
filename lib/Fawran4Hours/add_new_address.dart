@@ -58,20 +58,18 @@ class City {
 
   factory City.fromJson(Map<String, dynamic> json) {
     return City(
-      cityId: json['city_id'],
+      cityId: json['city_code'],
       cityName: json['city_name'],
     );
   }
 }
-
 class CitiesResponse {
   final List<City> cities;
 
   CitiesResponse({required this.cities});
 
-  factory CitiesResponse.fromJson(Map<String, dynamic> json) {
-    var cityList = json['cities'] as List;
-    List<City> cities = cityList.map((city) => City.fromJson(city)).toList();
+  factory CitiesResponse.fromJson(List<dynamic> jsonList) {
+    List<City> cities = jsonList.map((city) => City.fromJson(city)).toList();
     return CitiesResponse(cities: cities);
   }
 }
@@ -891,17 +889,21 @@ Future<void> _fetchCitiesFromAPI() async {
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/address/cities?service_id=1'),
+      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service_cities/1'),
       headers: {'Content-Type': 'application/json'},
     );
 
-    if (response.statusCode == 200) {
-      final citiesResponse = CitiesResponse.fromJson(json.decode(response.body));
-      setState(() {
-        _availableCities = citiesResponse.cities;
-        _isLoadingCities = false;
-      });
-    } else {
+if (response.statusCode == 200) {
+  final decoded = json.decode(response.body) as List<dynamic>;
+  final citiesResponse = CitiesResponse.fromJson(decoded);
+  setState(() {
+    _availableCities = citiesResponse.cities;
+    _isLoadingCities = false;
+  });
+}
+    
+    
+    else {
       throw Exception('Failed to load cities');
     }
   } catch (e) {
@@ -915,6 +917,8 @@ Future<void> _fetchCitiesFromAPI() async {
     );
   }
 }
+
+
 Future<void> _fetchDistrictsFromAPI(int cityId) async {
   setState(() {
     _isLoadingDistricts = true;
