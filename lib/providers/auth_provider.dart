@@ -8,7 +8,7 @@ final userIdProvider = StateProvider<int?>((ref) => null);
 
 class AuthState {
   final bool isLoading;
-  final bool isVerified;
+  bool isVerified = true;
   final bool isSignedUp;
   final bool isLoggedIn;
   final String errorMessage;
@@ -30,7 +30,7 @@ class AuthState {
   factory AuthState.initial() {
     return AuthState(
       isLoading: false,
-      isVerified:false,
+      isVerified:true,
       isSignedUp: false,
       isLoggedIn: false,
       errorMessage: '',
@@ -48,7 +48,7 @@ class AuthState {
     String? token,
     String? refreshToken,
     int? userId,
-    bool? isVerified
+    bool? isVerified = true
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -115,27 +115,30 @@ Future<void> login({
   final result = await _apiService.login(phoneNumber: phoneNumber, password: password);
 
   if (result != null) {
-    // Check for error in the response
+    // Check if the response contains an error message
     if (result['error'] != null) {
-      // If the error message contains "not verified", set isVerified to false
-      if (result['error'].contains('not verified')) {
+      String errorMessage = result['error'];
+
+      // Check if the error message contains 'not verified'
+      if (errorMessage.contains('not verified')) {
         final userId = result['user_id'];
         _setUserId(userId);
 
         state = state.copyWith(
           isLoading: false,
+          isLoggedIn: true,
           isVerified: false,
-          errorMessage: result['error'], // You can pass the exact error message here
+          errorMessage: errorMessage, // Set the exact error message here
         );
       } else {
-        // Handle other error messages (e.g., login failed)
+        // For other errors, simply show the error message
         state = state.copyWith(
           isLoading: false,
-          errorMessage: result['error'],
+          errorMessage: errorMessage,
         );
       }
     }
-    // Handle the case where there is no error
+    // Check for a successful login
     else if (result['token'] != null &&
         result['refresh_token'] != null &&
         result['user_id'] != null) {
@@ -155,7 +158,7 @@ Future<void> login({
         token: token,
         refreshToken: refreshToken,
         userId: userId,
-        isVerified: true,
+        isVerified: true, // User is verified after login success
       );
     }
     // If the response is unexpected (i.e., no token or refresh_token)
