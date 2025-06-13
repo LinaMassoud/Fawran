@@ -11,7 +11,9 @@ class AuthState {
   final bool isSignedUp;
   final bool isLoggedIn;
   final String errorMessage;
-  final String? token; // Optional, if API returns a token
+  final String? token;
+  final String? refreshToken;
+  final int? userId;
 
   AuthState({
     required this.isLoading,
@@ -19,6 +21,8 @@ class AuthState {
     required this.isLoggedIn,
     required this.errorMessage,
     this.token,
+    this.refreshToken,
+    this.userId,
   });
 
   factory AuthState.initial() {
@@ -28,6 +32,8 @@ class AuthState {
       isLoggedIn: false,
       errorMessage: '',
       token: null,
+      refreshToken: null,
+      userId: null,
     );
   }
 
@@ -37,6 +43,8 @@ class AuthState {
     bool? isLoggedIn,
     String? errorMessage,
     String? token,
+    String? refreshToken,
+    int? userId,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -44,6 +52,8 @@ class AuthState {
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       errorMessage: errorMessage ?? this.errorMessage,
       token: token ?? this.token,
+      refreshToken: refreshToken ?? this.refreshToken,
+      userId: userId ?? this.userId,
     );
   }
 }
@@ -89,13 +99,24 @@ Future<void> login({
 
   final result = await _apiService.login(phoneNumber: phoneNumber, password: password);
 
-  if (result != null && result['token'] != null) {
+  if (result != null &&
+      result['token'] != null &&
+      result['refresh_token'] != null &&
+      result['user_id'] != null) {
     final token = result['token'];
-    // Optionally store token in secure storage
+    final refreshToken = result['refresh_token'];
+    final userId = result['user_id'];
+
+    // Optionally store token and refreshToken in secure storage
+    // await _secureStorage.write(key: 'token', value: token);
+    // await _secureStorage.write(key: 'refresh_token', value: refreshToken);
+
     state = state.copyWith(
       isLoading: false,
       isLoggedIn: true,
       token: token,
+      refreshToken: refreshToken,
+      userId: userId,
     );
   } else {
     state = state.copyWith(
