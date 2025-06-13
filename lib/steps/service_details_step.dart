@@ -18,26 +18,38 @@ class ServiceDetailsStep extends StatefulWidget {
   final bool showBottomNavigation;
   final double totalPrice;
   final List<DateTime> selectedDates;
+  final double? discountPercentage; 
+  
+  // New parameters for custom booking support
+  final bool isCustomBooking;
+  final Function(String)? onNationalityChanged;
+  final Function(String)? onTimeChanged;
+  final Function(String)? onVisitDurationChanged;
 
   const ServiceDetailsStep({
-    Key? key,
-    required this.selectedNationality,
-    required this.workerCount,
-    required this.contractDuration,
-    required this.selectedTime,
-    required this.visitDuration,
-    required this.visitsPerWeek,
-    this.selectedDays = const [],
-    required this.onContractDurationChanged,
-    required this.onWorkerCountChanged,
-    required this.onVisitsPerWeekChanged,
-    required this.onSelectedDaysChanged,
-    this.onSelectDatePressed,
-    this.onDonePressed,
-    this.showBottomNavigation = false,
-    this.totalPrice = 0.0,
-    this.selectedDates = const [],
-  }) : super(key: key);
+  Key? key,
+  required this.selectedNationality,
+  required this.workerCount,
+  required this.contractDuration,
+  required this.selectedTime,
+  required this.visitDuration,
+  required this.visitsPerWeek,
+  this.selectedDays = const [],
+  required this.onContractDurationChanged,
+  required this.onWorkerCountChanged,
+  required this.onVisitsPerWeekChanged,
+  required this.onSelectedDaysChanged,
+  this.onSelectDatePressed,
+  this.onDonePressed,
+  this.showBottomNavigation = false,
+  this.totalPrice = 0.0,
+  this.selectedDates = const [],
+  this.isCustomBooking = false,
+  this.onNationalityChanged,
+  this.onTimeChanged,
+  this.onVisitDurationChanged,
+  this.discountPercentage, // Add this line
+}) : super(key: key);
 
   @override
   _ServiceDetailsStepState createState() => _ServiceDetailsStepState();
@@ -45,8 +57,8 @@ class ServiceDetailsStep extends StatefulWidget {
 
 class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
   final List<String> weekDays = [
-  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'
-];
+    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'
+  ];
 
   int _getMaxSelectableDays() {
     // Extract number from visits per week string (e.g., "2 visits weekly" -> 2)
@@ -145,8 +157,6 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
               );
             },
           ),
-          
-          // Selection status indicator
         ],
       ),
     );
@@ -176,7 +186,14 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
     }
   }
 
-  Widget _buildDropdownField(String label, String value, List<String> options, Function(String) onChanged, {bool isEnabled = true}) {
+  Widget _buildDropdownField(
+    String label, 
+    String value, 
+    List<String> options, 
+    Function(String) onChanged, {
+    bool isEnabled = true,
+    String? customTitle,
+  }) {
     return Container(
       margin: EdgeInsets.only(bottom: 15),
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -201,9 +218,8 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
             ),
           ),
           if (isEnabled)
-            PopupMenuButton<String>(
-              onSelected: onChanged,
-              offset: Offset(0, 40),
+            GestureDetector(
+              onTap: () => _showCustomDropdown(context, options, value, onChanged, customTitle),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -219,12 +235,6 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                   Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 20),
                 ],
               ),
-              itemBuilder: (context) => options.map((option) => 
-                PopupMenuItem<String>(
-                  value: option,
-                  child: Text(option),
-                )
-              ).toList(),
             )
           else
             Text(
@@ -238,6 +248,168 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
         ],
       ),
     );
+  }
+
+  void _showCustomDropdown(
+    BuildContext context, 
+    List<String> options, 
+    String currentValue, 
+    Function(String) onChanged,
+    String? customTitle,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 20),
+              
+              // Title
+              Text(
+                customTitle ?? 'Select Option',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 10),
+              
+              Divider(color: Colors.grey[200]),
+              
+              // Scrollable options
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options[index];
+                    final isSelected = option == currentValue;
+                    
+                    return InkWell(
+                      onTap: () {
+                        onChanged(option);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Color(0xFF7B2CBF).withOpacity(0.1) : Colors.transparent,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isSelected ? Color(0xFF7B2CBF) : Colors.black87,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(
+                                Icons.check,
+                                color: Color(0xFF7B2CBF),
+                                size: 20,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildVisitDurationField() {
+    if (widget.isCustomBooking && widget.onVisitDurationChanged != null) {
+      // Editable visit duration for custom booking
+      final List<String> durations = ['2 hours', '3 hours', '4 hours', '5 hours', '6 hours', '8 hours'];
+      
+      return _buildDropdownField(
+        'Duration of visit',
+        widget.visitDuration,
+        durations,
+        widget.onVisitDurationChanged!,
+        customTitle: 'Select Visit Duration',
+      );
+    } else {
+      // Read-only visit duration for package booking
+      return Container(
+        margin: EdgeInsets.only(bottom: 15),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey[300]!, 
+            width: 1.5
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Duration of visit',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.visitDuration.replaceAll(RegExp(r'\s*hours?'), ''), // Remove 'hours' from the value
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Hours',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildWorkerCountField() {
@@ -298,6 +470,7 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                   height: 30,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[400]!),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(Icons.add, size: 18, color: Colors.grey[600]),
                 ),
@@ -311,15 +484,37 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
 
   @override
   Widget build(BuildContext context) {
+    // Extended contract duration options
     final List<String> contractDurations = [
-      '1 week', '2 weeks', '1 month', '3 months', '6 months'
+      '1 week',
+      '2 weeks', 
+      '3 weeks',
+      '1 month',    // 4 weeks
+      '5 weeks',
+      '6 weeks',
+      '7 weeks',
+      '2 months',   // 8 weeks
+      '9 weeks',
+      '10 weeks',
+      '3 months',   // 12 weeks
+      '4 months',
+      '5 months',
+      '6 months',
+      '1 year'
     ];
+    
+    // Extended visit frequency options
     final List<String> visitFrequencies = [
-      '1 visit weekly', '2 visits weekly', '3 visits weekly'
+      '1 visit weekly', 
+      '2 visits weekly', 
+      '3 visits weekly',
+      '4 visits weekly',
+      '5 visits weekly',
+      '6 visits weekly'
     ];
+    
     final List<String> nationalities = ['East Asia', 'South Asia', 'Africa', 'Europe'];
     final List<String> times = ['Morning', 'Afternoon', 'Evening'];
-    final List<String> durations = ['2 hours', '3 hours', '4 hours', '5 hours', '6 hours'];
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -341,7 +536,9 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '1 weekly visit:Cleaning Visit',
+                                widget.isCustomBooking 
+                                    ? 'Design your card'
+                                    : '1 weekly visit:Cleaning Visit',
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
@@ -350,6 +547,7 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                               ),
                               SizedBox(height: 8),
                               
+                              if (!widget.isCustomBooking && widget.discountPercentage != null && widget.discountPercentage! > 0)
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
@@ -357,7 +555,7 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  'Get SAR 225 off',
+                                  'Get ${widget.discountPercentage!.toInt()}% off',
                                   style: TextStyle(
                                     color: Colors.green[700],
                                     fontSize: 12,
@@ -378,8 +576,9 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                       'Nationality', 
                       widget.selectedNationality,
                       nationalities,
-                      (value) {},
-                      isEnabled: false
+                      widget.onNationalityChanged ?? (value) {},
+                      isEnabled: widget.isCustomBooking && widget.onNationalityChanged != null,
+                      customTitle: 'Select Nationality',
                     ),
                     
                     _buildWorkerCountField(),
@@ -388,36 +587,31 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                       'Contract Duration', 
                       widget.contractDuration, 
                       contractDurations, 
-                      widget.onContractDurationChanged
+                      widget.onContractDurationChanged,
+                      customTitle: 'Select Contract Duration',
                     ),
                     
                     _buildDropdownField(
                       'Time', 
                       widget.selectedTime,
                       times,
-                      (value) {},
-                      isEnabled: false
+                      widget.onTimeChanged ?? (value) {},
+                      isEnabled: widget.isCustomBooking && widget.onTimeChanged != null,
+                      customTitle: 'Select Time Slot',
                     ),
                     
-                    _buildDropdownField(
-                      'Duration of visit', 
-                      widget.visitDuration,
-                      durations,
-                      (value) {},
-                      isEnabled: false
-                    ),
+                    _buildVisitDurationField(),
                     
                     _buildDropdownField(
                       'Visits week number', 
                       widget.visitsPerWeek, 
                       visitFrequencies, 
-                      widget.onVisitsPerWeekChanged
+                      widget.onVisitsPerWeekChanged,
+                      customTitle: 'Select Visits Per Week',
                     ),
                     
                     // Day Selection Widget - Auto-navigates when complete
                     _buildDaySelectionWidget(),
-                    
-                    // Removed the _buildSelectDateButton() call
                   ],
                 ),
               ),

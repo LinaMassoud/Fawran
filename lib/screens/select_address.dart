@@ -3,7 +3,11 @@ import 'package:fawran/models/address_model.dart';
 import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/screens/service_provider.dart';
 import 'package:fawran/steps/address_selection_step.dart';
+import 'package:fawran/providers/address_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -14,15 +18,12 @@ class AddressSelectionScreen extends ConsumerStatefulWidget {
   final String header;
 
   const AddressSelectionScreen({super.key, required this.header});
-
   @override
-  _AddressSelectionScreenState createState() => _AddressSelectionScreenState();
+  ConsumerState<AddressSelectionScreen> createState() => _AddressSelectionScreenState();
 }
-
 
 class _AddressSelectionScreenState extends ConsumerState<AddressSelectionScreen> {
   final Color headerColor = Color(0xFF112A5C); // Dark blue
-  int _selectedAddress = 0;
   bool _doorstepServiceSelected = false;
   List<Address> addresses = [];
     @override
@@ -61,6 +62,7 @@ class _AddressSelectionScreenState extends ConsumerState<AddressSelectionScreen>
   @override
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final selectedAddress = ref.watch(selectedAddressProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,

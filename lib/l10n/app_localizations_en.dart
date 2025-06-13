@@ -27,6 +27,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signUp => 'Sign Up';
 
   @override
+  String get username => 'User Name';
+
+  @override
   String get firstName => 'First Name';
 
   @override
@@ -61,4 +64,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resendIn => 'Resend in';
+
+  @override
+  String get service_driver => 'Private Driver';
+
+  @override
+  String get service_full_time_maid => 'Full-time Maid';
+
+  @override
+  String get service_maid_4h => 'Maid for 4 hours';
+
+  @override
+  String get service_maid_8h => 'Maid for 8 hours';
+
+  @override
+  String get home => 'home';
+
+  @override
+  String get top_requested => 'Top Requested Services';
+
+  @override
+  String get saving_packages => 'Saving Packages';
+
+  @override
+  String get fetching_location => 'fetching your location...';
+
+  @override
+  String get currentLocation => '📍 currentLocation:';
+
+  @override
+  String get offer => 'Save up to 15%\nwhen you order now';
 }

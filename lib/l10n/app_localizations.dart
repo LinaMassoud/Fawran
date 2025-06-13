@@ -131,6 +131,12 @@ abstract class AppLocalizations {
   /// **'Sign Up'**
   String get signUp;
 
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'User Name'**
+  String get username;
+
   /// No description provided for @firstName.
   ///
   /// In en, this message translates to:
@@ -202,6 +208,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resend in'**
   String get resendIn;
+
+  /// No description provided for @service_driver.
+  ///
+  /// In en, this message translates to:
+  /// **'Private Driver'**
+  String get service_driver;
+
+  /// No description provided for @service_full_time_maid.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-time Maid'**
+  String get service_full_time_maid;
+
+  /// No description provided for @service_maid_4h.
+  ///
+  /// In en, this message translates to:
+  /// **'Maid for 4 hours'**
+  String get service_maid_4h;
+
+  /// No description provided for @service_maid_8h.
+  ///
+  /// In en, this message translates to:
+  /// **'Maid for 8 hours'**
+  String get service_maid_8h;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'home'**
+  String get home;
+
+  /// No description provided for @top_requested.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Requested Services'**
+  String get top_requested;
+
+  /// No description provided for @saving_packages.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving Packages'**
+  String get saving_packages;
+
+  /// No description provided for @fetching_location.
+  ///
+  /// In en, this message translates to:
+  /// **'fetching your location...'**
+  String get fetching_location;
+
+  /// No description provided for @currentLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'📍 currentLocation:'**
+  String get currentLocation;
+
+  /// No description provided for @offer.
+  ///
+  /// In en, this message translates to:
+  /// **'Save up to 15%\nwhen you order now'**
+  String get offer;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
