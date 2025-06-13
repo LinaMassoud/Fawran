@@ -8,7 +8,7 @@ class ApiService {
   static const String packagesBaseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages';
   
   // Sign up API
-  Future<bool> signUp({
+  Future<Map<String, dynamic>?> signUp({
     required String userName,
     required String firstName,
     required String middleName,
@@ -34,9 +34,14 @@ class ApiService {
         }),
       );
 
-      return response.statusCode == 201;
+       if (response.statusCode == 200) {
+        final result = safeJsonDecode(response.body);
+        return result;
+      } else {
+        return null;
+      }
     } catch (ex) {
-      return false;
+      return null;
     }
   }
 
@@ -68,28 +73,46 @@ class ApiService {
   }
 
   // OTP Verification API
-  Future<bool> verifyCode({
-    required String username,
-    required String otp,
-  }) async {
-    final url = Uri.parse('$_baseUrl/verify');
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': username,
-          'otp': otp,
-        }),
-      );
+Future<bool> verifyCode({
+  required String userid,
+  required String otp,
+}) async {
+  final url = Uri.parse('$_baseUrl/verify-otp');
 
-      return response.statusCode == 200;
-    } catch (ex) {
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'user_id': userid,
+        'otp': otp,
+      }),
+    );
+
+    // Always check the status code first
+    if (response.statusCode != 200) {
+      return false;  // Return false for any non-200 status code
+    }
+
+    // Check if the response body contains an error message
+    final Map<String, dynamic> responseBody = json.decode(response.body);
+
+    // If there's an error key in the response, return false
+    if (responseBody.containsKey('error')) {
+      print('Error: ${responseBody['error']}');  // Optional: log the error message
       return false;
     }
-  }
 
+    // If no error found and the status code is 200, assume success
+    return true;
+
+  } catch (ex) {
+    print('Error: $ex');  // Log any exceptions that occur during the request
+    return false;
+  }
+}
+ 
   static Future<List<dynamic>> fetchProfessionsHourly() async {
     try {
       final url = '$_baseUrl/home/professions';
@@ -413,4 +436,23 @@ Future<List<dynamic>> fetchNationalities({
 }
 
 
+}
+
+
+Map<String, dynamic>? safeJsonDecode(String jsonString) {
+  try {
+    return jsonDecode(jsonString);
+  } catch (e) {
+    print('Initial JSON decode failed. Attempting to sanitize…');
+
+    // 1. Remove any trailing commas from the JSON string
+    String fixed = jsonString.replaceAll(RegExp(r',\s*}'), '}');
+
+    try {
+      return jsonDecode(fixed);
+    } catch (e) {
+      print('Failed to decode even after fix: $e');
+      return null;
+    }
+  }
 }

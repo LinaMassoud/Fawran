@@ -1,4 +1,6 @@
+import 'package:fawran/models/user.dart';
 import 'package:fawran/screens/location_screen.dart';
+import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/l10n/app_localizations.dart';
@@ -28,6 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final authState = ref.watch(authProvider);
+    final userId = ref.read(userIdProvider);
     final locale = ref.watch(localeProvider);
     final isArabic = locale.languageCode == 'ar';
 
@@ -40,7 +43,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               builder: (context) => const LocationScreen(),
                             ),
                           );
-      } else if (next.errorMessage.isNotEmpty) {
+      } 
+      else if(!next.isVerified){
+          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => VerificationScreen(
+                                 phoneNumber: _phoneController.text,
+            userId: 'userId',
+                              ),
+                            ),
+                          );
+      }
+      
+      
+      else if (next.errorMessage.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage)),
         );
