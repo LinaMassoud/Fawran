@@ -6,7 +6,7 @@ import '../models/package_model.dart';
 class ApiService {
   static const String _baseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran';
   static const String packagesBaseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages';
-
+  
   // Sign up API
   Future<bool> signUp({
     required String userName,
@@ -67,7 +67,7 @@ class ApiService {
     }
   }
 
-  // ✅ OTP Verification API
+  // OTP Verification API
   Future<bool> verifyCode({
     required String username,
     required String otp,
@@ -89,6 +89,164 @@ class ApiService {
       return false;
     }
   }
+
+  static Future<List<dynamic>> fetchProfessionsHourly() async {
+    try {
+      final url = '$_baseUrl/home/professions';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception('Failed to load professions. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading professions: $e');
+    }
+  }
+
+  static Future<List<PackageModel>> fetchServicePackages({
+    required int professionId,
+    required int serviceId,
+  }) async {
+    try {
+      final url = '$_baseUrl/service_packages/$professionId/$serviceId';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        String jsonString = response.body;
+        
+        // Comprehensive null value handling
+        jsonString = jsonString.replaceAll('"discount_percentage":null', '"discount_percentage":0');
+        jsonString = jsonString.replaceAll('"discount_percentage":"null"', '"discount_percentage":0');
+        jsonString = jsonString.replaceAll('"discount_percentage":,', '"discount_percentage":0,');
+        jsonString = jsonString.replaceAll('"discount_percentage":"",', '"discount_percentage":0,');
+        jsonString = jsonString.replaceAll('"no_of_weeks":null', '"no_of_weeks":0');
+        jsonString = jsonString.replaceAll('"no_of_weeks":"null"', '"no_of_weeks":0');
+        jsonString = jsonString.replaceAll('"hour_price":null', '"hour_price":0');
+        jsonString = jsonString.replaceAll('"hour_price":"null"', '"hour_price":0');
+        
+        // Handle any other null values that might cause issues
+        jsonString = jsonString.replaceAll(':null,', ':0,');
+        jsonString = jsonString.replaceAll(':null}', ':0}');
+        jsonString = jsonString.replaceAll(':"null",', ':0,');
+        jsonString = jsonString.replaceAll(':"null"}', ':0}');
+        
+        final List<dynamic> packagesJson = json.decode(jsonString);
+        
+        List<PackageModel> packages = [];
+        for (int i = 0; i < packagesJson.length; i++) {
+          var packageData = packagesJson[i];
+          try {
+            PackageModel package = PackageModel.fromJson(packageData);
+            packages.add(package);
+          } catch (e) {
+            // Continue with other packages instead of throwing
+          }
+        }
+        
+        return packages;
+      } else {
+        throw Exception('Failed to load service packages. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading service packages: $e');
+    }
+  }
+
+  // Fetch country groups by service ID
+  static Future<List<dynamic>> fetchCountryGroups({required int serviceId}) async {
+    try {
+      final url = '$_baseUrl/country_groups/$serviceId';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception('Failed to load country groups. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading country groups: $e');
+    }
+  }
+
+  // Fetch service shifts by service ID
+  static Future<List<dynamic>> fetchServiceShifts({required int serviceId}) async {
+    try {
+      final url = '$_baseUrl/service_shifts/$serviceId';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception('Failed to load service shifts. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading service shifts: $e');
+    }
+  }
+
+  static Future<List<PackageModel>> fetchPackagesByGroup({
+    required int professionId,
+    required int serviceId,
+    required String groupCode,
+    int? serviceShift,
+  }) async {
+    try {
+      // First get all packages for the service
+      final allPackages = await fetchServicePackages(
+        professionId: professionId,
+        serviceId: serviceId,
+      );
+      
+      // Filter by group code and service shift if provided
+      List<PackageModel> filteredPackages = [];
+      
+      for (int i = 0; i < allPackages.length; i++) {
+        PackageModel package = allPackages[i];
+        bool matchesGroup = package.groupCode.toString() == groupCode.toString();
+        bool matchesShift;
+        
+        if (serviceShift == null) {
+          matchesShift = true;
+        } else {
+          // Convert both to int for comparison to handle string/int mismatches
+          int? packageShift = int.tryParse(package.serviceShift.toString());
+          int? targetShift = int.tryParse(serviceShift.toString());
+          matchesShift = packageShift == targetShift;
+        }
+        
+        if (matchesGroup && matchesShift) {
+          filteredPackages.add(package);
+        }
+      }
+
+      return filteredPackages;
+    } catch (e) {
+      throw Exception('Error loading packages by group: $e');
+    }
+  }
+
+  @Deprecated("Old")
   static Future<List<PackageModel>> fetchPackages({
     required int serviceId,
     required String groupCode,
@@ -127,7 +285,17 @@ class ApiService {
         final Map<String, dynamic> data = json.decode(jsonString);
         final List<dynamic> packagesJson = data['packages'];
         
-        return packagesJson.map((json) => PackageModel.fromJson(json)).toList();
+        List<PackageModel> packages = [];
+        for (int i = 0; i < packagesJson.length; i++) {
+          try {
+            PackageModel package = PackageModel.fromJson(packagesJson[i]);
+            packages.add(package);
+          } catch (e) {
+            // Continue with other packages
+          }
+        }
+        
+        return packages;
       } else {
         throw Exception('Failed to load packages. Status code: ${response.statusCode}');
       }
@@ -137,25 +305,69 @@ class ApiService {
   }
 
   static Future<List<PackageModel>> fetchEastAsiaPackages({
+    required int professionId,
     required int serviceId,
     int? serviceShift,
   }) async {
-    return fetchPackages(
-      serviceId: serviceId,
-      groupCode: '2',
-      serviceShift: serviceShift,
-    );
+    try {
+      // Get country groups to find the correct group code for Asian
+      final countryGroups = await fetchCountryGroups(serviceId: serviceId);
+      
+      var asianGroup;
+      try {
+        asianGroup = countryGroups.firstWhere(
+          (group) => group['group_name'].toString().toUpperCase().contains('ASIAN'),
+        );
+      } catch (e) {
+        asianGroup = {'group_code': '2'}; // fallback to hardcoded value
+      }
+
+      final groupCode = asianGroup['group_code'];
+      
+      final packages = await fetchPackagesByGroup(
+        professionId: professionId,
+        serviceId: serviceId,
+        groupCode: groupCode,
+        serviceShift: serviceShift,
+      );
+      
+      return packages;
+    } catch (e) {
+      throw Exception('Error loading East Asia packages: $e');
+    }
   }
 
   static Future<List<PackageModel>> fetchAfricanPackages({
+    required int professionId,
     required int serviceId,
     int? serviceShift,
   }) async {
-    return fetchPackages(
-      serviceId: serviceId,
-      groupCode: '3',
-      serviceShift: serviceShift,
-    );
+    try {
+      // Get country groups to find the correct group code for African
+      final countryGroups = await fetchCountryGroups(serviceId: serviceId);
+      
+      var africanGroup;
+      try {
+        africanGroup = countryGroups.firstWhere(
+          (group) => group['group_name'].toString().toUpperCase().contains('AFRICAN'),
+        );
+      } catch (e) {
+        africanGroup = {'group_code': '3'}; // fallback to hardcoded value
+      }
+
+      final groupCode = africanGroup['group_code'];
+      
+      final packages = await fetchPackagesByGroup(
+        professionId: professionId,
+        serviceId: serviceId,
+        groupCode: groupCode,
+        serviceShift: serviceShift,
+      );
+      
+      return packages;
+    } catch (e) {
+      throw Exception('Error loading African packages: $e');
+    }
   }
   Future<List<ProfessionModel>> fetchProfessions() async {
   final url = Uri.parse('$_baseUrl/home/professions');
@@ -201,7 +413,4 @@ Future<List<dynamic>> fetchNationalities({
 }
 
 
-
-
 }
-

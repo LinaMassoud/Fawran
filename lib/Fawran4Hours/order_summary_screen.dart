@@ -99,9 +99,10 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         SizedBox(height: 16),
                         
                         // Service details rows
-                        _buildDetailRow('Pack', widget.bookingData.selectedNationality), // Use actual nationality instead of 'East Asia'
-                        SizedBox(height: 12),
                         _buildDetailRow('Start Date', _formatDate(widget.bookingData.selectedDates.isNotEmpty ? widget.bookingData.selectedDates.first : DateTime.now())),
+                         // Use actual nationality instead of 'East Asia'
+                        SizedBox(height: 12),
+                        _buildDetailRow('Weekly visits', widget.bookingData.visitsPerWeek),
                         SizedBox(height: 16),
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
@@ -120,7 +121,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                '${widget.bookingData.visitsPerWeek} Weekly visit:Cleaning Visit',
+                                widget.bookingData.packageName,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -139,14 +140,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                                     color: Colors.black87,
                                   ),
                                 ),
-                                Text(
-                                  'SAR ${widget.originalPrice.toStringAsFixed(0)}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
+                                
                               ],
                             ),
                           ],

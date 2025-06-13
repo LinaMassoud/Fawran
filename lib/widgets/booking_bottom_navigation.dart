@@ -30,29 +30,32 @@ class BookingBottomNavigation extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Price Section
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Starting From',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
+          // Price Section - Only show if price > 0
+          if (price > 0) ...[
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Starting From',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              Text(
-                'SAR ${price.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.orange,
-                  fontWeight: FontWeight.bold,
+                Text(
+                  'SAR ${price.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+            SizedBox(width: 20),
+          ],
           
           SizedBox(width: 20),
           

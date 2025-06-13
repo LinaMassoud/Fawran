@@ -7,6 +7,7 @@ class DateSelectionStep extends StatefulWidget {
   final int maxSelectableDates;
   final List<String> selectedDays; // Days selected in service details
   final String contractDuration; // Contract duration from service details
+  final double totalPrice; // Add this parameter
 
   const DateSelectionStep({
     Key? key,
@@ -16,6 +17,7 @@ class DateSelectionStep extends StatefulWidget {
     this.maxSelectableDates = 10,
     this.selectedDays = const [],
     this.contractDuration = '1 month',
+    required this.totalPrice, // Make this required
   }) : super(key: key);
 
   @override
@@ -30,23 +32,30 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   List<DateTime> autoSelectedDates = [];
   List<DateTime> availableStartDates = [];
   bool showDateDropdown = false;
+
+  List<DateTime> futureMonths = [];
   
   @override
-  void initState() {
-    super.initState();
-    final now = DateTime.now();
-    currentMonth = DateTime(now.year, now.month);
-    
-    // Handle year rollover properly
-    if (now.month == 12) {
-      nextMonth = DateTime(now.year + 1, 1);
+void initState() {
+  super.initState();
+  final now = DateTime.now();
+  currentMonth = DateTime(now.year, now.month);
+  
+  // Generate next 12 months for scrolling
+  futureMonths = [];
+  for (int i = 0; i < 12; i++) {
+    DateTime month;
+    if (now.month + i > 12) {
+      month = DateTime(now.year + ((now.month + i - 1) ~/ 12), ((now.month + i - 1) % 12) + 1);
     } else {
-      nextMonth = DateTime(now.year, now.month + 1);
+      month = DateTime(now.year, now.month + i);
     }
-    
-    // Auto-select the latest available date
-    _initializeAutoSelection();
+    futureMonths.add(month);
   }
+  
+  // Auto-select the latest available date
+  _initializeAutoSelection();
+}
 
   void _initializeAutoSelection() {
     if (widget.selectedDays.isNotEmpty) {
@@ -98,26 +107,29 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
 
   // Convert contract duration string to number of months and visits
   Map<String, int> _getContractDetails() {
-    final duration = widget.contractDuration.toLowerCase();
-    int months = 1;
-    int totalVisits = 0;
+  final duration = widget.contractDuration.toLowerCase();
+  int months = 1;
+  int totalVisits = 0;
+  
+  if (duration.contains('week')) {
+    final match = RegExp(r'(\d+)\s*week').firstMatch(duration);
+    final weeks = int.parse(match?.group(1) ?? '1');
+    months = (weeks / 4).ceil(); // Convert weeks to months (round up)
     
-    if (duration.contains('week')) {
-      final match = RegExp(r'(\d+)\s*week').firstMatch(duration);
-      final weeks = int.parse(match?.group(1) ?? '1');
-      months = (weeks / 4).ceil(); // Convert weeks to months (round up)
-      totalVisits = weeks; // For weekly contracts, total visits = weeks
-    } else if (duration.contains('month')) {
-      final match = RegExp(r'(\d+)\s*month').firstMatch(duration);
-      months = int.parse(match?.group(1) ?? '1');
-      
-      // Calculate total visits based on visits per week
-      final visitsPerWeek = _getVisitsPerWeek();
-      totalVisits = months * 4 * visitsPerWeek; // months * 4 weeks * visits per week
-    }
+    // Fix: For weekly contracts, total visits = weeks * visits per week
+    final visitsPerWeek = _getVisitsPerWeek();
+    totalVisits = weeks * visitsPerWeek; // weeks * visits per week
+  } else if (duration.contains('month')) {
+    final match = RegExp(r'(\d+)\s*month').firstMatch(duration);
+    months = int.parse(match?.group(1) ?? '1');
     
-    return {'months': months, 'totalVisits': totalVisits};
+    // Calculate total visits based on visits per week
+    final visitsPerWeek = _getVisitsPerWeek();
+    totalVisits = months * 4 * visitsPerWeek; // months * 4 weeks * visits per week
   }
+  
+  return {'months': months, 'totalVisits': totalVisits};
+}
 
   // Extract visits per week from the selected days
   int _getVisitsPerWeek() {
@@ -313,7 +325,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Service starting date',
+                    'Service start date',
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFF00BCD4),
@@ -372,15 +384,33 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    serviceEndingDate != null 
-                      ? '${serviceEndingDate!.day.toString().padLeft(2, '0')}/${serviceEndingDate!.month.toString().padLeft(2, '0')}/${serviceEndingDate!.year}'
-                      : '--/--/----',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[50], // Slightly different background to show it's disabled
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            serviceEndingDate != null 
+                              ? '${serviceEndingDate!.day.toString().padLeft(2, '0')}/${serviceEndingDate!.month.toString().padLeft(2, '0')}/${serviceEndingDate!.year}'
+                              : '--/--/----',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: serviceEndingDate != null ? Colors.black87 : Colors.grey[500],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.calendar_today,
+                          color: Colors.grey[400], // Disabled color
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -392,22 +422,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     ),
   );
 }
-bool _hasDiscount(DateTime date) {
-  final day = date.day;
-  // Same logic as your pricing - weekend-like or special pricing dates get discounts
-  return (day % 7 == 0 || day % 7 == 1 || day % 5 == 0);
-}
 
-// Add this method to get discount percentage
-String _getDiscountText(DateTime date) {
-  final day = date.day;
-  if (day % 7 == 0 || day % 7 == 1) {
-    return '8%'; // Weekend-like pricing (125 vs ~115 base = ~8% premium, could be shown as discount from higher rate)
-  } else if (day % 5 == 0) {
-    return '3%'; // Special pricing (119 vs 115 = ~3% premium)
-  }
-  return '';
-}
 void _showDateSelectionDialog() {
   if (availableStartDates.isEmpty) return;
   
@@ -573,8 +588,6 @@ void _showDateSelectionDialog() {
     final isStartingDate = _isServiceStartingDate(date);
     final isAllowed = _isDateAllowed(date);
     final isFriday = date.weekday == 5;
-    final hasDiscount = _hasDiscount(date);
-    final discountText = _getDiscountText(date);
     
     dayWidgets.add(
       Container(
@@ -592,49 +605,21 @@ void _showDateSelectionDialog() {
                   : null,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Stack(
-          children: [
-            // Main date content
-            Center(
-              child: Text(
-                '$day',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDisabled 
-                    ? Colors.grey[400]
-                    : isStartingDate
-                        ? Colors.white
-                        : isAutoSelected
-                            ? Color(0xFF1E3A8A)
-                            : Colors.grey[400],
-                ),
-              ),
+        child: Center(
+          child: Text(
+            '$day',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDisabled 
+                ? Colors.grey[400]
+                : isStartingDate
+                    ? Colors.white
+                    : isAutoSelected
+                        ? Color(0xFF1E3A8A)
+                        : Colors.grey[400],
             ),
-            
-            // Discount icon - shown on all dates that have discounts
-            if (hasDiscount)
-              Positioned(
-                top: 2,
-                right: 2,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: isDisabled 
-                        ? Colors.orange.withOpacity(0.5) // Faded for disabled dates
-                        : Colors.orange,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.card_giftcard,
-                    size: 10,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              
-          ],
+          ),
         ),
       ),
     );
@@ -783,32 +768,32 @@ void _showDateSelectionDialog() {
                     
                     // Calendar content
                     Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          // Current month
-                          _buildMonthSection(currentMonth),
-                          
-                          SizedBox(height: 20),
-                          
-                          // Next month
-                          _buildMonthSection(nextMonth),
-                          
-                          SizedBox(height: 20),
-                        ],
-                      ),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
+                    child: Column(
+                      children: [
+                        // Show all future months in a scrollable list
+                        ...futureMonths.map((month) => Column(
+                          children: [
+                            _buildMonthSection(month),
+                            if (month != futureMonths.last) SizedBox(height: 20),
+                          ],
+                        )).toList(),
+                        
+                        SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
                     
                     SizedBox(height: 100), // Extra space for bottom navigation
                   ],
@@ -847,7 +832,7 @@ void _showDateSelectionDialog() {
                         ),
                       ),
                       Text(
-                        'SAR${_calculateTotalPrice().toInt()}',
+                        'SAR${widget.totalPrice.toInt()}',
                         style: TextStyle(
                           fontSize: 20,
                           color: Colors.orange,
