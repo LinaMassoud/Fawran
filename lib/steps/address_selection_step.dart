@@ -1,5 +1,5 @@
+import 'package:fawran/models/address_model.dart';
 import 'package:flutter/material.dart';
-import '../models/address_model.dart';
 import '../Fawran4Hours/add_new_address.dart';
 import '../widgets/booking_bottom_navigation.dart';
 
@@ -71,16 +71,14 @@ class AddressSelectionStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Main content
         Flexible(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Add New Address Button
                 GestureDetector(
-                  onTap: onAddNewAddress,
+                  onTap: widget.onAddNewAddress,
                   child: Container(
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(vertical: 18),
@@ -106,9 +104,7 @@ class AddressSelectionStep extends StatelessWidget {
                     ),
                   ),
                 ),
-                
                 SizedBox(height: 35),
-                
                 Text(
                   'Select Address',
                   style: TextStyle(
@@ -117,19 +113,14 @@ class AddressSelectionStep extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-                
                 SizedBox(height: 20),
-                
-                // Address List with Loading/Error States
                 Expanded(
-                  child: _buildAddressContent(),
+                  child: _buildAddressContent(context),
                 ),
               ],
             ),
           ),
         ),
-        
-        // Bottom Navigation
         BookingBottomNavigation(
         price: isCustomBooking ? 0.0 : price, // Conditional price
         canProceed: _hasSelectedAddress && !isLoading && error == null,
@@ -140,8 +131,8 @@ class AddressSelectionStep extends StatelessWidget {
     );
   }
 
-  Widget _buildAddressContent() {
-    if (isLoading) {
+  Widget _buildAddressContent(BuildContext context) {
+    if (widget.isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -150,60 +141,31 @@ class AddressSelectionStep extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
             ),
             SizedBox(height: 16),
-            Text(
-              'Loading addresses...',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
+            Text('Loading addresses...', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
           ],
         ),
       );
     }
 
-    if (error != null) {
+    if (widget.error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Colors.red[400],
-            ),
+            Icon(Icons.error_outline, size: 60, color: Colors.red[400]),
             SizedBox(height: 16),
-            Text(
-              'Failed to load addresses',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
+            Text('Failed to load addresses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             SizedBox(height: 8),
-            Text(
-              error!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
+            Text(widget.error!, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
             SizedBox(height: 20),
-            if (onRetryPressed != null)
+            if (widget.onRetryPressed != null)
               ElevatedButton.icon(
-                onPressed: onRetryPressed,
+                onPressed: widget.onRetryPressed,
                 icon: Icon(Icons.refresh, color: Colors.white),
-                label: Text(
-                  'Retry',
-                  style: TextStyle(color: Colors.white),
-                ),
+                label: Text('Retry', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
               ),
@@ -212,40 +174,23 @@ class AddressSelectionStep extends StatelessWidget {
       );
     }
 
-    if (addresses.isEmpty) {
+    if (widget.addresses.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.location_off,
-              size: 60,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.location_off, size: 60, color: Colors.grey[400]),
             SizedBox(height: 16),
-            Text(
-              'No addresses found',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
+            Text('No addresses found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             SizedBox(height: 8),
-            Text(
-              'Please add a new address to continue',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
+            Text('Please add a new address to continue', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           ],
         ),
       );
     }
 
     return ListView.builder(
-      itemCount: addresses.length,
+      itemCount: widget.addresses.length,
       itemBuilder: (context, index) {
         final address = addresses[index];
         final isSelected = selectedAddress?.addressId == address.addressId;
@@ -266,7 +211,6 @@ class AddressSelectionStep extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Radio Button
                   Container(
                     width: 24,
                     height: 24,
@@ -284,18 +228,12 @@ class AddressSelectionStep extends StatelessWidget {
                             child: Container(
                               width: 12,
                               height: 12,
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                shape: BoxShape.circle,
-                              ),
+                              decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
                             ),
                           )
                         : null,
                   ),
-                  
                   SizedBox(width: 15),
-                  
-                  // Address Details
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,8 +259,6 @@ class AddressSelectionStep extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
-                  // Edit Button
                   GestureDetector(
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(

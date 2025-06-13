@@ -34,12 +34,14 @@ class Address {
   final int addressId;
   final String cityCode;
   final String districtCode;
+  final bool isSelected; // NEW FIELD
 
   Address({
     required this.cardText,
     required this.addressId,
     required this.cityCode,
     required this.districtCode,
+    this.isSelected = false, // default
   });
 
   factory Address.fromJson(Map<String, dynamic> json) {
@@ -48,6 +50,7 @@ class Address {
       addressId: json['address_id'] as int,
       cityCode: json['city_code'] as String,
       districtCode: json['district_code'] as String,
+      isSelected: false,
     );
   }
 
@@ -57,7 +60,24 @@ class Address {
       'address_id': addressId,
       'city_code': cityCode,
       'district_code': districtCode,
+      'is_selected': isSelected,
     };
+  }
+
+  Address copyWith({
+    String? cardText,
+    int? addressId,
+    String? cityCode,
+    String? districtCode,
+    bool? isSelected,
+  }) {
+    return Address(
+      cardText: cardText ?? this.cardText,
+      addressId: addressId ?? this.addressId,
+      cityCode: cityCode ?? this.cityCode,
+      districtCode: districtCode ?? this.districtCode,
+      isSelected: isSelected ?? this.isSelected,
+    );
   }
 }
 /// Model for district map response containing location and boundary data

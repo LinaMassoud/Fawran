@@ -42,7 +42,7 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
-      home: HomeScreen()
+      home:  HomeScreen()
     );
        }
 }

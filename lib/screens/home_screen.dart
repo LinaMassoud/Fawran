@@ -136,26 +136,25 @@ SizedBox(
           return GestureDetector(
          onTap: () {
             ref.read(selectedProfessionProvider.notifier).state = profession;
-            if (profession.services.length > 1) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FawranServicesScreen(
-                  selectedPositionId: profession.positionId,
-                ),
-                ),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddressSelectionScreen(
-                    header: profession.positionName,
-                  ),
-                ),
-              );
-            }
-          },
+  if (profession.services.length > 1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+         builder: (context) => const ServicesScreen(
+        ),
+      ),
+    );
+  } else {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddressSelectionScreen(
+          header: profession.positionName,
+        ),
+      ),
+    );
+  }
+},
             child: Column(
               children: [
                 Container(
@@ -165,7 +164,7 @@ SizedBox(
                     color: Colors.orange,
                     borderRadius: BorderRadius.circular(12),
                     image: DecorationImage(
-                      image: AssetImage('assets/images/${(index % 5) + 1}.png'),
+                      image: AssetImage('assets/images/${profession.positionId}.png'),
                       fit: BoxFit.cover,
                     ),
                   ),
