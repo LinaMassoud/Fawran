@@ -140,7 +140,8 @@ SizedBox(
     Navigator.push(
       context,
       MaterialPageRoute(
-         builder: (context) => const ServicesScreen(
+         builder: (context) => FawranServicesScreen(
+          selectedPositionId: professions[index].positionId
         ),
       ),
     );
