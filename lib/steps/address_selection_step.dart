@@ -78,7 +78,7 @@ class AddressSelectionStep extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
-                  onTap: widget.onAddNewAddress,
+                  onTap: onAddNewAddress,
                   child: Container(
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(vertical: 18),
@@ -132,7 +132,7 @@ class AddressSelectionStep extends StatelessWidget {
   }
 
   Widget _buildAddressContent(BuildContext context) {
-    if (widget.isLoading) {
+    if (isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -147,7 +147,7 @@ class AddressSelectionStep extends StatelessWidget {
       );
     }
 
-    if (widget.error != null) {
+    if (error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -156,11 +156,11 @@ class AddressSelectionStep extends StatelessWidget {
             SizedBox(height: 16),
             Text('Failed to load addresses', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             SizedBox(height: 8),
-            Text(widget.error!, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+            Text(error!, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
             SizedBox(height: 20),
-            if (widget.onRetryPressed != null)
+            if (onRetryPressed != null)
               ElevatedButton.icon(
-                onPressed: widget.onRetryPressed,
+                onPressed: onRetryPressed,
                 icon: Icon(Icons.refresh, color: Colors.white),
                 label: Text('Retry', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
@@ -174,7 +174,7 @@ class AddressSelectionStep extends StatelessWidget {
       );
     }
 
-    if (widget.addresses.isEmpty) {
+    if (addresses.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -190,7 +190,7 @@ class AddressSelectionStep extends StatelessWidget {
     }
 
     return ListView.builder(
-      itemCount: widget.addresses.length,
+      itemCount: addresses.length,
       itemBuilder: (context, index) {
         final address = addresses[index];
         final isSelected = selectedAddress?.addressId == address.addressId;

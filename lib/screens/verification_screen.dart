@@ -1,3 +1,4 @@
+import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/signup_screen.dart';
 import 'package:fawran/services/api_service.dart';
@@ -7,9 +8,9 @@ import 'package:fawran/l10n/app_localizations.dart';
 
 class VerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
-  final String usernme;
+  final String userId;
 
-  const VerificationScreen({super.key, required this.phoneNumber, required this.usernme});
+  const VerificationScreen({super.key, required this.phoneNumber, required this.userId});
 
   @override
   ConsumerState<VerificationScreen> createState() => _VerificationScreenState();
@@ -39,17 +40,26 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     });
   }
 
-  void _submitOtp() async {
+void _submitOtp() async {
   final code = _otpControllers.map((c) => c.text).join();
   if (code.length < 6) return;
 
   setState(() => _isVerifying = true);
 
   final apiService = ApiService();
+  final userId = ref.read(userIdProvider); // ✅ Read from provider
+
+  if (userId == null) {
+    setState(() => _isVerifying = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('User ID not available')),
+    );
+    return;
+  }
 
   final success = await apiService.verifyCode(
-    username: widget.usernme, // Replace this with the actual value
-    otp: '000000',
+    userid: userId.toString(),
+    otp: code, // ✅ use actual OTP entered
   );
 
   setState(() => _isVerifying = false);
@@ -57,14 +67,15 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   if (!mounted) return;
 
   if (success) {
- Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );  } else {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
+  } else {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Verification failed. Please try again.')),
+      const SnackBar(content: Text('Verification failed. Please try again.')),
     );
   }
 }
