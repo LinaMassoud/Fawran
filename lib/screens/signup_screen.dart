@@ -23,6 +23,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+ late final ProviderSubscription _subscription;
 
   @override
 void initState() {
@@ -44,10 +45,11 @@ void initState() {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
 
-      ref.listen<AuthState>(authProvider, (previous, next) {
+ref.listen<AuthState>(authProvider, (previous, next) {
     if (next.isSignedUp) {
       Navigator.push(
         context,

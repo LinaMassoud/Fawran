@@ -1,4 +1,5 @@
 import 'package:fawran/models/user.dart';
+import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => const LocationScreen(),
+        builder: (context) =>  HomeScreen(),
       ),
     );
   } 

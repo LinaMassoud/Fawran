@@ -1,3 +1,4 @@
+import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/screens/combined.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,7 @@ class _AddressSelectionScreenState
   List<Address> addresses = [];
   int? _selectedAddress;
 
+
   @override
   void initState() {
     super.initState();
@@ -34,8 +36,13 @@ class _AddressSelectionScreenState
   }
 
   Future<void> fetchAddresses() async {
+
+         final userId = ref.read(userIdProvider);
+if(userId != null){
+  
+}
     final url = Uri.parse(
-        'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/1');
+        'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/'+userId.toString());
 
     try {
       final response = await http.get(url);
@@ -64,7 +71,7 @@ class _AddressSelectionScreenState
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     final selectedAddress = ref.watch(selectedAddressProvider);
-
+ 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(

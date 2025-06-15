@@ -1,4 +1,3 @@
-import 'package:fawran/screens/newAddressDalog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io' show Platform;
@@ -24,6 +23,8 @@ class AddNewAddressScreen extends StatefulWidget {
   @override
   _AddNewAddressScreenState createState() => _AddNewAddressScreenState();
 }
+
+
 
 class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   // Controllers for form fields
@@ -346,9 +347,6 @@ void dispose() {
     );
   }
 }
-
-
-////hene
 Future<void> _fetchDistrictMapData(String districtCode) async {
   setState(() {
     _isLoadingDistrictMap = true;

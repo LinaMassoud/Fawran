@@ -84,7 +84,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: '');
+    state = state.copyWith(isLoading: true, errorMessage: '',isSignedUp: false);
 
     final response = await _apiService.signUp(
       userName:userName,
@@ -96,12 +96,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       password: password,
     );
 
-    if (response!=null) {
-      state = state.copyWith(isLoading: false, isSignedUp: true);
+    if (response !=null && response['error'] != null) {
+           state = state.copyWith(isLoading: false, errorMessage: response['error']);
+
+
+    } 
+    else if(response !=null && response['error'] == null){
+state = state.copyWith(isLoading: false, isSignedUp: true);
        final userId = response['user_id'];
        _setUserId(userId);
-
-    } else {
+    }
+    else {
       state = state.copyWith(isLoading: false, errorMessage: 'Sign up failed. Please try again.');
     }
   }
@@ -127,6 +132,7 @@ Future<void> login({
         state = state.copyWith(
           isLoading: false,
           isLoggedIn: true,
+          isSignedUp:false,
           isVerified: false,
           errorMessage: errorMessage, // Set the exact error message here
         );
@@ -155,6 +161,7 @@ Future<void> login({
       state = state.copyWith(
         isLoading: false,
         isLoggedIn: true,
+        isSignedUp: false,
         token: token,
         refreshToken: refreshToken,
         userId: userId,
