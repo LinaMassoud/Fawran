@@ -28,7 +28,6 @@ class _AddressSelectionScreenState
   List<Address> addresses = [];
   int? _selectedAddress;
 
-
   @override
   void initState() {
     super.initState();
@@ -36,13 +35,11 @@ class _AddressSelectionScreenState
   }
 
   Future<void> fetchAddresses() async {
-
-         final userId = ref.read(userIdProvider);
-if(userId != null){
-  
-}
+    final userId = ref.read(userIdProvider);
+    if (userId != null) {}
     final url = Uri.parse(
-        'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/'+userId.toString());
+        'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/' +
+            userId.toString());
 
     try {
       final response = await http.get(url);
@@ -71,7 +68,7 @@ if(userId != null){
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     final selectedAddress = ref.watch(selectedAddressProvider);
- 
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -117,7 +114,8 @@ if(userId != null){
 
               // Step Info
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -210,7 +208,8 @@ if(userId != null){
       );
 
       setState(() {
-        addresses = addresses.map((a) => a.copyWith(isSelected: false)).toList();
+        addresses =
+            addresses.map((a) => a.copyWith(isSelected: false)).toList();
         addresses.add(newAddress);
         _selectedAddress = newAddress.addressId;
       });

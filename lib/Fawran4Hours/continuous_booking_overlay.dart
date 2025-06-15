@@ -33,7 +33,8 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<ContinuousBookingOverlay> createState() => _ContinuousBookingOverlayState();
+  ConsumerState<ContinuousBookingOverlay> createState() =>
+      _ContinuousBookingOverlayState();
 
   // Static method to show as overlay with package (existing functionality)
   static void showAsOverlay(
@@ -80,7 +81,8 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   }
 }
 
-class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOverlay>
+class _ContinuousBookingOverlayState
+    extends ConsumerState<ContinuousBookingOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
@@ -88,7 +90,7 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
 
   int currentStep = 0;
   final int totalSteps = 3; // Address, Service Details, Date Selection
-  
+
   // Track if we're returning from date selection
   bool isReturningFromDateSelection = false;
 
@@ -113,9 +115,9 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
   @override
   void initState() {
     super.initState();
-    
+
     _pageController = PageController();
-    
+
     // Initialize service details values based on whether it's custom or package booking
     if (widget.isCustomBooking) {
       // Default values for custom booking
@@ -129,14 +131,16 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
     } else {
       // Initialize from package (existing functionality)
       workerCount = widget.package!.noOfEmployee;
-      contractDuration = '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}';
+      contractDuration =
+          '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}';
       visitDuration = '${widget.package!.duration} hours';
-      visitsPerWeek = '${widget.package!.visitsWeekly} visit${widget.package!.visitsWeekly > 1 ? 's' : ''} weekly';
+      visitsPerWeek =
+          '${widget.package!.visitsWeekly} visit${widget.package!.visitsWeekly > 1 ? 's' : ''} weekly';
       selectedNationality = widget.package!.nationalityDisplay;
       selectedTime = _getTimeFromShift(widget.selectedShift.toString());
       hourPrice = widget.package!.hourPrice;
     }
-    
+
     _animationController = AnimationController(
       duration: Duration(milliseconds: 300),
       vsync: this,
@@ -148,9 +152,9 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _animationController.forward();
-    
+
     // Fetch addresses from API
     _fetchAddresses();
   }
@@ -164,7 +168,8 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
       });
 
       final response = await http.get(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/23'),
+        Uri.parse(
+            'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/23'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -172,26 +177,28 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        
+
         setState(() {
           addresses = data.map((addressData) {
             return Address(
               cardText: addressData['card_text']?.toString() ?? 'Address',
               addressId: addressData['address_id'] ?? 0,
-              cityCode: addressData['city_code']?.toString() ?? '',
+              cityCode: addressData['city_code'],
               districtCode: addressData['district_code']?.toString() ?? '',
             );
           }).toList();
-          
-          if (addresses.isNotEmpty && ref.read(selectedAddressProvider) == null) {
+
+          if (addresses.isNotEmpty &&
+              ref.read(selectedAddressProvider) == null) {
             ref.read(selectedAddressProvider.notifier).state = addresses.first;
           }
-          
+
           isLoadingAddresses = false;
         });
       } else {
         setState(() {
-          addressError = 'Failed to load addresses. Status: ${response.statusCode}';
+          addressError =
+              'Failed to load addresses. Status: ${response.statusCode}';
           isLoadingAddresses = false;
         });
       }
@@ -207,18 +214,18 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
     if (cardText == null || cardText.isEmpty) {
       return 'Address';
     }
-    
+
     try {
       List<String> parts = cardText.split('-');
-      
+
       if (parts.length >= 2) {
         String city = parts[0].trim();
         String area = parts[1].trim();
-        
+
         if (area.isEmpty) {
           return city.isNotEmpty ? city : 'Address';
         }
-        
+
         return '$area, $city';
       } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
         return parts[0].trim();
@@ -226,15 +233,18 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
     } catch (e) {
       print('Error parsing address: $e');
     }
-    
+
     return 'Address';
   }
 
   String _getTimeFromShift(String shift) {
     switch (shift) {
-      case '1': return 'Morning';
-      case '2': return 'Evening';
-      default: return 'Morning';
+      case '1':
+        return 'Morning';
+      case '2':
+        return 'Evening';
+      default:
+        return 'Morning';
     }
   }
 
@@ -309,13 +319,13 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
 
     if (result != null && result is Map<String, dynamic>) {
       final newAddress = Address(
-        cardText: result['fullAddress'] ?? 
-                  '${result['province'] ?? ''}, ${result['city'] ?? ''}, ${result['district'] ?? ''}',
+        cardText: result['fullAddress'] ??
+            '${result['province'] ?? ''}, ${result['city'] ?? ''}, ${result['district'] ?? ''}',
         addressId: DateTime.now().millisecondsSinceEpoch,
         cityCode: result['cityCode'] ?? '',
         districtCode: result['districtCode'] ?? '',
       );
-      
+
       setState(() {
         addresses.add(newAddress);
       });
@@ -404,20 +414,24 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
 
   void _completePurchase() async {
     final selectedAddress = ref.read(selectedAddressProvider);
-    
+
     final totalPrice = _calculateTotalPrice();
     final originalPrice = _calculateOriginalPrice();
-    
+
     final bookingData = BookingData(
       selectedDates: selectedDates,
       totalPrice: totalPrice,
       originalPrice: originalPrice,
-      selectedAddress: selectedAddress != null ? _extractLocationName(selectedAddress.cardText) : 'No Address',
+      selectedAddress: selectedAddress != null
+          ? _extractLocationName(selectedAddress.cardText)
+          : 'No Address',
       workerCount: workerCount,
       contractDuration: contractDuration,
       visitsPerWeek: visitsPerWeek,
       selectedNationality: selectedNationality,
-      packageName: widget.isCustomBooking ? 'Custom Service Package' : widget.package!.packageName,
+      packageName: widget.isCustomBooking
+          ? 'Custom Service Package'
+          : widget.package!.packageName,
     );
 
     await _animationController.reverse();
@@ -430,39 +444,51 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
 
   double _calculateTotalPrice() {
     print('=== PRICE CALCULATION DEBUG ===');
-    
-    double durationOfVisit = double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
-    print('Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
-    
+
+    double durationOfVisit =
+        double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
+    print(
+        'Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
+
     int contractMonths = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
     double contractDurationInWeeks = contractMonths * 4.0;
-    print('Contract Duration: $contractMonths months = $contractDurationInWeeks weeks (from string: "$contractDuration")');
-    
+    print(
+        'Contract Duration: $contractMonths months = $contractDurationInWeeks weeks (from string: "$contractDuration")');
+
     int visitsPerWeekCount = int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1;
-    print('Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
+    print(
+        'Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
     print('Worker Count: $workerCount');
     print('Hour Price: $hourPrice');
-    
-    double basePrice = hourPrice * 
-                       durationOfVisit * 
-                       contractDurationInWeeks * 
-                       visitsPerWeekCount * 
-                       workerCount;
-    print('Base Total Price: $basePrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
-    
+
+    double basePrice = hourPrice *
+        durationOfVisit *
+        contractDurationInWeeks *
+        visitsPerWeekCount *
+        workerCount;
+    print(
+        'Base Total Price: $basePrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
+
     double priceAfterDiscount;
-    if (!widget.isCustomBooking && widget.package!.discountPercentage != null && widget.package!.discountPercentage! > 0) {
-      double discountAmount = (widget.package!.discountPercentage! / 100) * basePrice;
+    if (!widget.isCustomBooking &&
+        widget.package!.discountPercentage != null &&
+        widget.package!.discountPercentage! > 0) {
+      double discountAmount =
+          (widget.package!.discountPercentage! / 100) * basePrice;
       priceAfterDiscount = basePrice - discountAmount;
-      print('Discount Applied: ${widget.package!.discountPercentage}% = $discountAmount');
+      print(
+          'Discount Applied: ${widget.package!.discountPercentage}% = $discountAmount');
     } else {
       priceAfterDiscount = basePrice;
       print('No Discount Applied');
     }
-    
+
     double finalPrice;
-    if (!widget.isCustomBooking && widget.package!.vatPercentage != null && widget.package!.vatPercentage! > 0) {
-      double vatAmount = (widget.package!.vatPercentage! / 100) * priceAfterDiscount;
+    if (!widget.isCustomBooking &&
+        widget.package!.vatPercentage != null &&
+        widget.package!.vatPercentage! > 0) {
+      double vatAmount =
+          (widget.package!.vatPercentage! / 100) * priceAfterDiscount;
       finalPrice = priceAfterDiscount + vatAmount;
       print('VAT Applied: ${widget.package!.vatPercentage}% = $vatAmount');
     } else {
@@ -471,7 +497,7 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
       finalPrice = priceAfterDiscount + vatAmount;
       print('Default VAT Applied: 15% = $vatAmount');
     }
-    
+
     print('Final Price: $finalPrice');
     print('=== END PRICE CALCULATION ===');
     return finalPrice;
@@ -479,22 +505,25 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
 
   double _calculateOriginalPrice() {
     print('=== ORIGINAL PRICE CALCULATION ===');
-    
-    double durationOfVisit = double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
+
+    double durationOfVisit =
+        double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
     int contractMonths = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
     double contractDurationInWeeks = contractMonths * 4.0;
     int visitsPerWeekCount = int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1;
-    
-    double basePrice = hourPrice * 
-                      durationOfVisit * 
-                      contractDurationInWeeks * 
-                      visitsPerWeekCount * 
-                      workerCount;
-    
+
+    double basePrice = hourPrice *
+        durationOfVisit *
+        contractDurationInWeeks *
+        visitsPerWeekCount *
+        workerCount;
+
     print('Base Price: $basePrice');
-    
+
     double originalPrice;
-    if (!widget.isCustomBooking && widget.package!.vatPercentage != null && widget.package!.vatPercentage! > 0) {
+    if (!widget.isCustomBooking &&
+        widget.package!.vatPercentage != null &&
+        widget.package!.vatPercentage! > 0) {
       double vatAmount = (widget.package!.vatPercentage! / 100) * basePrice;
       originalPrice = basePrice + vatAmount;
       print('VAT Applied: ${widget.package!.vatPercentage}% = $vatAmount');
@@ -504,7 +533,7 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
       originalPrice = basePrice + vatAmount;
       print('Default VAT Applied: 15% = $vatAmount');
     }
-    
+
     print('Original Price: $originalPrice');
     print('=== END ORIGINAL PRICE CALCULATION ===');
     return originalPrice;
@@ -520,7 +549,7 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
   @override
   Widget build(BuildContext context) {
     final selectedAddress = ref.watch(selectedAddressProvider);
-    
+
     return AnimatedBuilder(
       animation: _slideAnimation,
       builder: (context, child) {
@@ -536,7 +565,6 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
                   color: Colors.black.withOpacity(0.5),
                 ),
               ),
-              
               Positioned(
                 top: 50,
                 right: 20,
@@ -560,13 +588,15 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
                   ),
                 ),
               ),
-
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: Transform.translate(
-                  offset: Offset(0, _slideAnimation.value * MediaQuery.of(context).size.height),
+                  offset: Offset(
+                      0,
+                      _slideAnimation.value *
+                          MediaQuery.of(context).size.height),
                   child: Container(
                     height: MediaQuery.of(context).size.height * 0.85,
                     decoration: BoxDecoration(
@@ -579,7 +609,9 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
                     child: Column(
                       children: [
                         BookingStepHeader(
-                          showBackButton: (currentStep > 0 && !isReturningFromDateSelection) || currentStep == 2,
+                          showBackButton: (currentStep > 0 &&
+                                  !isReturningFromDateSelection) ||
+                              currentStep == 2,
                           onBackPressed: () {
                             if (currentStep == 2) {
                               _returnFromDateSelection();
@@ -588,7 +620,6 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
                             }
                           },
                         ),
-                        
                         Expanded(
                           child: PageView(
                             controller: _pageController,
@@ -604,38 +635,52 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
                                 isLoading: isLoadingAddresses,
                                 error: addressError,
                                 onRetryPressed: _fetchAddresses,
-                                isCustomBooking: widget.isCustomBooking, // Add this line
+                                isCustomBooking:
+                                    widget.isCustomBooking, // Add this line
                               ),
                               ServiceDetailsStep(
-                              selectedNationality: selectedNationality,
-                              workerCount: workerCount,
-                              contractDuration: contractDuration,
-                              selectedTime: selectedTime,
-                              visitDuration: visitDuration,
-                              visitsPerWeek: visitsPerWeek,
-                              selectedDays: selectedDays,
-                              onContractDurationChanged: _updateContractDuration,
-                              onWorkerCountChanged: _updateWorkerCount,
-                              onVisitsPerWeekChanged: (newVisitsPerWeek) {
-                                _updateVisitsPerWeek(newVisitsPerWeek);
-                                _updateSelectedDays([]);
-                              },
-                              onSelectedDaysChanged: _updateSelectedDays,
-                              onSelectDatePressed: _goToDateSelection,
-                              onDonePressed: _completePurchase,
-                              showBottomNavigation: isReturningFromDateSelection && selectedDates.isNotEmpty,
-                              totalPrice: _calculateTotalPrice(),
-                              selectedDates: selectedDates,
-                              isCustomBooking: widget.isCustomBooking,
-                              onNationalityChanged: widget.isCustomBooking ? _updateNationality : null,
-                              onTimeChanged: widget.isCustomBooking ? _updateTime : null,
-                              onVisitDurationChanged: widget.isCustomBooking ? _updateVisitDuration : null,
-                              discountPercentage: widget.isCustomBooking ? null : widget.package?.discountPercentage, // Add this line
-                            ),
+                                selectedNationality: selectedNationality,
+                                workerCount: workerCount,
+                                contractDuration: contractDuration,
+                                selectedTime: selectedTime,
+                                visitDuration: visitDuration,
+                                visitsPerWeek: visitsPerWeek,
+                                selectedDays: selectedDays,
+                                onContractDurationChanged:
+                                    _updateContractDuration,
+                                onWorkerCountChanged: _updateWorkerCount,
+                                onVisitsPerWeekChanged: (newVisitsPerWeek) {
+                                  _updateVisitsPerWeek(newVisitsPerWeek);
+                                  _updateSelectedDays([]);
+                                },
+                                onSelectedDaysChanged: _updateSelectedDays,
+                                onSelectDatePressed: _goToDateSelection,
+                                onDonePressed: _completePurchase,
+                                showBottomNavigation:
+                                    isReturningFromDateSelection &&
+                                        selectedDates.isNotEmpty,
+                                totalPrice: _calculateTotalPrice(),
+                                selectedDates: selectedDates,
+                                isCustomBooking: widget.isCustomBooking,
+                                onNationalityChanged: widget.isCustomBooking
+                                    ? _updateNationality
+                                    : null,
+                                onTimeChanged:
+                                    widget.isCustomBooking ? _updateTime : null,
+                                onVisitDurationChanged: widget.isCustomBooking
+                                    ? _updateVisitDuration
+                                    : null,
+                                discountPercentage: widget.isCustomBooking
+                                    ? null
+                                    : widget.package
+                                        ?.discountPercentage, // Add this line
+                              ),
                               DateSelectionStep(
                                 selectedDates: selectedDates,
                                 onDatesChanged: _updateSelectedDates,
-                                onNextPressed: selectedDates.isNotEmpty ? _returnFromDateSelection : null,
+                                onNextPressed: selectedDates.isNotEmpty
+                                    ? _returnFromDateSelection
+                                    : null,
                                 maxSelectableDates: workerCount,
                                 selectedDays: selectedDays,
                                 contractDuration: contractDuration,

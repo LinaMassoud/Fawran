@@ -25,10 +25,10 @@ final nationalitiesProvider = FutureProvider<List<Nationality>>((ref) async {
   if (response.statusCode == 200) {
     final List<dynamic> data = jsonDecode(response.body);
 
-    return data
-        .map((json) => Nationality.fromJson(json))
-        .toList();
+    return data.map((json) => Nationality.fromJson(json)).toList();
   } else {
     throw Exception('Failed to load nationalities');
   }
 });
+
+final selectedNationalityProvider = StateProvider<int?>((ref) => null);
