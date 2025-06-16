@@ -1,10 +1,11 @@
-import 'package:fawran/l10n/app_localizations.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 
 class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
@@ -20,6 +21,8 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+
+  
 
   @override
   void initState() {
@@ -46,7 +49,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      if (!mounted) return;
       locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
       setState(() => isLoading = false);
       return;
@@ -56,7 +58,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        if (!mounted) return;
         locationState.state = "تم رفض صلاحية الوصول إلى الموقع.";
         setState(() => isLoading = false);
         return;
@@ -64,7 +65,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
     }
 
     if (permission == LocationPermission.deniedForever) {
-      if (!mounted) return;
       locationState.state =
           "تم رفض الصلاحية بشكل دائم. الرجاء تعديل الإعدادات.";
       setState(() => isLoading = false);
@@ -76,6 +76,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
         desiredAccuracy: LocationAccuracy.high,
       );
 
+      // Get address from coordinates (Arabic locale)
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -87,8 +88,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       final address =
           "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
 
-      if (!mounted) return;
-      locationState.state = address;
+      locationState.state = "$address";
 
       setState(() {
         isLoading = false;
@@ -97,14 +97,13 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
       _controller.forward();
       await Future.delayed(const Duration(seconds: 2));
-
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
+       if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      }
     } catch (e) {
-      if (!mounted) return;
       locationState.state = "حدث خطأ أثناء جلب الموقع: $e";
       setState(() => isLoading = false);
     }
@@ -119,11 +118,11 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
   @override
   Widget build(BuildContext context) {
     final location = ref.watch(locationProvider);
-    final loc = AppLocalizations.of(context)!;
+        final loc = AppLocalizations.of(context)!;
+
 
     return Scaffold(
-      appBar: AppBar(
-          automaticallyImplyLeading: false, title: const Text("تحديد الموقع")),
+      appBar: AppBar( automaticallyImplyLeading: false,title: const Text("تحديد الموقع")),
       body: Center(
         child: isLoading
             ? Column(
@@ -132,7 +131,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
                   const CircularProgressIndicator(),
                   const SizedBox(height: 20),
                   Text(
-                    loc.fetching_location,
+                   loc.fetching_location ,
                     style: const TextStyle(fontSize: 18),
                     textAlign: TextAlign.center,
                   ),

@@ -1,27 +1,19 @@
-import 'dart:convert';
-
-import 'package:fawran/models/Nationality.dart';
-import 'package:fawran/providers/address_provider.dart';
-import 'package:fawran/providers/home_screen_provider.dart';
-import 'package:fawran/providers/nationality_provider.dart';
 import 'package:fawran/screens/choose_labor.dart';
 import 'package:fawran/screens/packages.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 
-
-class ServiceProvidersScreen extends ConsumerStatefulWidget {
+class ServiceProvidersScreen extends StatefulWidget {
   final String header;
 
   const ServiceProvidersScreen({super.key, required this.header});
+
 
   @override
   _ServiceProvidersScreenState createState() => _ServiceProvidersScreenState();
 }
 
-class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen> {
-  final Color headerColor = Color(0xFF112A5C);
+class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
+  final Color headerColor = Color(0xFF112A5C); // Dark blue
   String? selectedNationality;
 
   final List<String> nationalities = [
@@ -36,7 +28,6 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
   @override
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
-      final asyncNationalities = ref.watch(nationalitiesProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -122,30 +113,24 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
                 Text("Nationality", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-  decoration: InputDecoration(
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-  ),
-  hint: Text("Please select your preferred nationality"),
-  value: selectedNationality,
-  onChanged: (value) {
-    setState(() {
-      selectedNationality = value;
-    });
-  },
-  items: asyncNationalities.when(
-    data: (nationalityList) {
-      return nationalityList
-          .map((nationality) => DropdownMenuItem<String>(
-                value: nationality.name,
-                child: Text(nationality.name),
-              ))
-          .toList();
-    },
-    loading: () => [],
-    error: (err, _) => [],
-  ),
-),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  hint: Text("Please select your prefered nationality"),
+                  value: selectedNationality,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedNationality = value;
+                    });
+                  },
+                  items: nationalities
+                      .map((nationality) => DropdownMenuItem(
+                            value: nationality,
+                            child: Text(nationality),
+                          ))
+                      .toList(),
+                ),
                 SizedBox(height: 24),
 
                 // Choose Labor Button
@@ -233,7 +218,4 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
       ),
     );
   }
-
-
-
 }
