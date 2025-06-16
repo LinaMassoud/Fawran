@@ -10,7 +10,8 @@ class VerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
   final String userId;
 
-  const VerificationScreen({super.key, required this.phoneNumber, required this.userId});
+  const VerificationScreen(
+      {super.key, required this.phoneNumber, required this.userId});
 
   @override
   ConsumerState<VerificationScreen> createState() => _VerificationScreenState();
@@ -32,6 +33,8 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   void _startCountdown() {
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false; // Prevent setState if widget is gone
+
       if (_secondsRemaining > 0) {
         setState(() => _secondsRemaining--);
         return true;
@@ -40,45 +43,49 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     });
   }
 
-void _submitOtp() async {
-  final code = _otpControllers.map((c) => c.text).join();
-  if (code.length < 6) return;
+  void _submitOtp() async {
+     if (!mounted) return;
+    final code = _otpControllers.map((c) => c.text).join();
+    if (code.length < 6) return;
 
-  setState(() => _isVerifying = true);
+    setState(() => _isVerifying = true);
 
-  final apiService = ApiService();
-  final userId = ref.read(userIdProvider); // ✅ Read from provider
+    final apiService = ApiService();
+    final userId = ref.read(userIdProvider); // ✅ Read from provider
 
-  if (userId == null) {
+    if (userId == null) {
+      setState(() => _isVerifying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User ID not available')),
+      );
+      return;
+    }
+
+    final success = await apiService.verifyCode(
+      userid: userId.toString(),
+      otp: code, // ✅ use actual OTP entered
+    );
+
     setState(() => _isVerifying = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User ID not available')),
-    );
-    return;
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Verification successful!')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginScreen(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Verification failed. Please try again.')),
+      );
+    }
   }
-
-  final success = await apiService.verifyCode(
-    userid: userId.toString(),
-    otp: code, // ✅ use actual OTP entered
-  );
-
-  setState(() => _isVerifying = false);
-
-  if (!mounted) return;
-
-  if (success) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const LoginScreen(),
-      ),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Verification failed. Please try again.')),
-    );
-  }
-}
 
   void _onOtpChanged(int index, String value) {
     if (value.length == 1 && index < 5) {
@@ -100,10 +107,10 @@ void _submitOtp() async {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-             Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SignUpScreen()),
-    ); 
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SignUpScreen()),
+            );
           },
         ),
       ),
@@ -156,11 +163,13 @@ void _submitOtp() async {
             ),
             const SizedBox(height: 16),
             TextButton(
-              onPressed: _secondsRemaining == 0 ? () {
-                // TODO: Trigger resend
-                setState(() => _secondsRemaining = 60);
-                _startCountdown();
-              } : null,
+              onPressed: _secondsRemaining == 0
+                  ? () {
+                      // TODO: Trigger resend
+                      setState(() => _secondsRemaining = 60);
+                      _startCountdown();
+                    }
+                  : null,
               child: Text(_secondsRemaining == 0
                   ? loc.resendCode
                   : '${loc.resendIn} $_secondsRemaining s'),

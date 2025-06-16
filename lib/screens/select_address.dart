@@ -1,3 +1,4 @@
+import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/screens/combined.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,8 +35,11 @@ class _AddressSelectionScreenState
   }
 
   Future<void> fetchAddresses() async {
+    final userId = ref.read(userIdProvider);
+    if (userId != null) {}
     final url = Uri.parse(
-        'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/1');
+        'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/' +
+            userId.toString());
 
     try {
       final response = await http.get(url);
@@ -110,7 +114,8 @@ class _AddressSelectionScreenState
 
               // Step Info
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -188,9 +193,11 @@ class _AddressSelectionScreenState
   }
 
   void _addNewAddress() async {
+    final userId = ref.watch(userIdProvider);
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddNewAddressScreen()),
+      MaterialPageRoute(
+          builder: (context) => AddNewAddressScreen(user_id: userId)),
     );
 
     if (result != null && result is Map<String, dynamic>) {
@@ -203,7 +210,8 @@ class _AddressSelectionScreenState
       );
 
       setState(() {
-        addresses = addresses.map((a) => a.copyWith(isSelected: false)).toList();
+        addresses =
+            addresses.map((a) => a.copyWith(isSelected: false)).toList();
         addresses.add(newAddress);
         _selectedAddress = newAddress.addressId;
       });

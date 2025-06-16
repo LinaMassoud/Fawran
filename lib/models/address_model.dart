@@ -32,7 +32,7 @@ class AddressModel {
 class Address {
   final String cardText;
   final int addressId;
-  final String cityCode;
+  final int cityCode;
   final String districtCode;
   final bool isSelected; // NEW FIELD
 
@@ -48,7 +48,7 @@ class Address {
     return Address(
       cardText: json['card_text'] as String,
       addressId: json['address_id'] as int,
-      cityCode: json['city_code'] as String,
+      cityCode: int.parse(json['city_code']),
       districtCode: json['district_code'] as String,
       isSelected: false,
     );
@@ -67,7 +67,7 @@ class Address {
   Address copyWith({
     String? cardText,
     int? addressId,
-    String? cityCode,
+    int? cityCode,
     String? districtCode,
     bool? isSelected,
   }) {
@@ -80,6 +80,7 @@ class Address {
     );
   }
 }
+
 /// Model for district map response containing location and boundary data
 class DistrictMapResponse {
   final double latitude;
@@ -89,7 +90,7 @@ class DistrictMapResponse {
   final String districtsShift;
   final List<LatLng> polygonCoordinates;
   final Map<String, dynamic> geojson;
-  final String districtName;  // Changed from specialPlace
+  final String districtName; // Changed from specialPlace
 
   DistrictMapResponse({
     required this.latitude,
@@ -135,21 +136,21 @@ class DistrictMapResponse {
       districtsShift: json['districts_shift'] ?? '',
       polygonCoordinates: coordinates,
       geojson: geojsonMap,
-      districtName: json['district_name'] ?? '',  // Changed from special_place
+      districtName: json['district_name'] ?? '', // Changed from special_place
     );
   }
 }
 
 /// Model for city data
 class City {
-  final int cityCode;  // Changed from cityId
+  final int cityCode; // Changed from cityId
   final String cityName;
 
   City({required this.cityCode, required this.cityName});
 
   factory City.fromJson(Map<String, dynamic> json) {
     return City(
-      cityCode: json['city_code'],  // Changed from city_id
+      cityCode: json['city_code'], // Changed from city_id
       cityName: json['city_name'],
     );
   }
@@ -170,14 +171,15 @@ class CitiesResponse {
 
 /// Model for district data
 class District {
-  final String districtCode;  // Changed from int districtId to String districtCode
+  final String
+      districtCode; // Changed from int districtId to String districtCode
   final String districtName;
 
   District({required this.districtCode, required this.districtName});
 
   factory District.fromJson(Map<String, dynamic> json) {
     return District(
-      districtCode: json['district_code'],  // Changed from district_id
+      districtCode: json['district_code'], // Changed from district_id
       districtName: json['district_name'],
     );
   }
@@ -191,7 +193,8 @@ class DistrictsResponse {
 
   factory DistrictsResponse.fromJson(Map<String, dynamic> json) {
     var districtList = json['districts'] as List;
-    List<District> districts = districtList.map((district) => District.fromJson(district)).toList();
+    List<District> districts =
+        districtList.map((district) => District.fromJson(district)).toList();
     return DistrictsResponse(districts: districts);
   }
 }
