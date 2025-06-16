@@ -48,7 +48,7 @@ class Address {
     return Address(
       cardText: json['card_text'] as String,
       addressId: json['address_id'] as int,
-      cityCode: json['city_code'] as int,
+      cityCode: int.parse(json['city_code']),
       districtCode: json['district_code'] as String,
       isSelected: false,
     );

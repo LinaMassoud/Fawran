@@ -193,9 +193,11 @@ class _AddressSelectionScreenState
   }
 
   void _addNewAddress() async {
+    final userId = ref.watch(userIdProvider);
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddNewAddressScreen()),
+      MaterialPageRoute(
+          builder: (context) => AddNewAddressScreen(user_id: userId)),
     );
 
     if (result != null && result is Map<String, dynamic>) {
