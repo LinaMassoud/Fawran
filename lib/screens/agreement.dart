@@ -1,28 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';  // Import Riverpod
-import '../providers/package_provider.dart';  // Import the selected package provider
-import '../providers/labour_provider.dart';  // Import the selected laborer provider
+import 'package:flutter/rendering.dart';
 
-class ContractScreen extends ConsumerWidget {  // Use ConsumerWidget to access providers
+
+class ContractScreen extends StatelessWidget {
+   
   final String header;
 
-  const ContractScreen({super.key, required this.header});
+  const ContractScreen({super.key, required this.header}); 
+
+
+  final String driverName = "Benard Christine";
+  final String packageName = "Bangladesh 30 Day Package";
+  final int periodInDays = 30;
+  final double priceWithVAT = 2199.01;
+  final double finalPrice = 2199.01;
+  final double discountPrice = 2199.01;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Access the selected package from the provider
-    final selectedPackage = ref.watch(selectedPackageProvider);
-    // Access the selected laborer (driver) from the provider
-    final selectedLaborer = ref.watch(selectedLaborerProvider);
-
-    // Provide fallback values in case the provider is null
-    final driverName = selectedLaborer?.arabicName ?? "Unknown Driver";
-    final packageName = selectedPackage?.packageName ?? "Unknown Package";
-    final periodInDays = selectedPackage?.contractDays ?? 0;
-    final priceWithVAT = selectedPackage?.packagePriceWithVat ?? 0.0;
-    final finalPrice = selectedPackage?.contractAmount ?? 0.0;
-    final discountPrice = selectedPackage?.packagePriceWithVat ?? 0.0;
-
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Column(
@@ -78,7 +73,6 @@ class ContractScreen extends ConsumerWidget {  // Use ConsumerWidget to access p
                       Text('Next - Payment',
                           style: TextStyle(color: Colors.grey)),
                     ]),
-
                 Stack(
                   alignment: Alignment.center,
                   children: [
@@ -128,7 +122,7 @@ class ContractScreen extends ConsumerWidget {  // Use ConsumerWidget to access p
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 16)),
                         const Text("Private Driver"),
-                        const Text("Age 37"),  // Can be updated if available
+                        const Text("Age 37"),
                       ],
                     ),
                   ],

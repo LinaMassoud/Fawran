@@ -6,10 +6,8 @@ import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/serviceScreen.dart';
 import 'package:flutter/material.dart';
-import 'package:fawran/l10n/app_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/package_model.dart';
-import 'package:fawran/Fawran4Hours/fawran_services_display.dart';
 
 
 class HomeScreen extends ConsumerWidget {
@@ -20,9 +18,11 @@ class HomeScreen extends ConsumerWidget {
     final professionsAsync = ref.watch(professionsProvider);
     final loc = AppLocalizations.of(context)!;
     final examplePackage = PackageModel(
+  pricingId: 101,
   groupCode: "GRP001",
+  serviceId: 5,
   serviceShift: "Evening",
-  duration: "90", // duration in minutes
+  duration: 90, // duration in minutes
   noOfMonth: 3,
   hourPrice: 25.0,
   visitsWeekly: 2,
@@ -140,8 +140,7 @@ SizedBox(
     Navigator.push(
       context,
       MaterialPageRoute(
-         builder: (context) => FawranServicesScreen(
-          selectedPositionId: professions[index].positionId
+        builder: (context) => ServicesScreen(
         ),
       ),
     );
@@ -165,7 +164,7 @@ SizedBox(
                     color: Colors.orange,
                     borderRadius: BorderRadius.circular(12),
                     image: DecorationImage(
-                      image: AssetImage('assets/images/${profession.positionId}.png'),
+                      image: AssetImage('assets/images/${(index % 5) + 1}.png'),
                       fit: BoxFit.cover,
                     ),
                   ),

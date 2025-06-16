@@ -13,18 +13,16 @@ class ProfessionModel {
     required this.services,
   });
 
-factory ProfessionModel.fromJson(Map<String, dynamic> json) {
-  return ProfessionModel(
-    positionId: json['position_id'],
-    positionName: json['position_name'],
-    hasDomesticPackage: json['has_domestic_package'] == 'true',
-    services: (json['services'] as List<dynamic>?)
-            ?.map((serviceJson) => Service.fromJson(serviceJson))
-            .toList() ??
-        [],
-  );
-}
-
+  factory ProfessionModel.fromJson(Map<String, dynamic> json) {
+    return ProfessionModel(
+      positionId: json['position_id'],
+      positionName: json['position_name'],
+      hasDomesticPackage: json['has_domestic_package'] == 'true',
+      services: (json['services'] as List<dynamic>)
+          .map((serviceJson) => Service.fromJson(serviceJson))
+          .toList(),
+    );
+  }
 }
 
 class Service {
