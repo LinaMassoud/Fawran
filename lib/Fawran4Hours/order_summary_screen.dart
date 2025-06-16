@@ -121,9 +121,9 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                widget.bookingData.packageName,
+                                "Final Price",
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black87,
                                 ),
@@ -133,7 +133,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'SAR ${widget.bookingData.totalPrice.toStringAsFixed(0)}',
+                                  'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,

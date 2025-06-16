@@ -259,21 +259,7 @@ class AddressSelectionStep extends StatelessWidget {
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Edit address functionality')),
-                      );
-                    },
-                    child: Text(
-                      'Edit',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                  
                 ],
               ),
             ),
