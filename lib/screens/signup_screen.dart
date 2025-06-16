@@ -3,7 +3,7 @@ import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:fawran/l10n/app_localizations.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -23,6 +23,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+ late final ProviderSubscription _subscription;
 
   @override
 void initState() {
@@ -44,17 +45,18 @@ void initState() {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
 
-      ref.listen<AuthState>(authProvider, (previous, next) {
+ref.listen<AuthState>(authProvider, (previous, next) {
     if (next.isSignedUp) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => VerificationScreen(
             phoneNumber: _phoneController.text,
-            usernme: _userNameController.text,
+            userId: _userNameController.text,
           ),
         ),
       );

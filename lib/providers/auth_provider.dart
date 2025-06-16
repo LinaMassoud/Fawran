@@ -4,54 +4,73 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 
 final localeProvider = StateProvider<Locale>((ref) => const Locale('en'));
-
+final userIdProvider = StateProvider<int?>((ref) => null);
 
 class AuthState {
   final bool isLoading;
+  bool isVerified = true;
   final bool isSignedUp;
   final bool isLoggedIn;
   final String errorMessage;
-  final String? token; // Optional, if API returns a token
+  final String? token;
+  final String? refreshToken;
+  final int? userId;
 
   AuthState({
     required this.isLoading,
     required this.isSignedUp,
     required this.isLoggedIn,
     required this.errorMessage,
+    required this.isVerified,
     this.token,
+    this.refreshToken,
+    this.userId,
   });
 
   factory AuthState.initial() {
     return AuthState(
       isLoading: false,
+      isVerified: true,
       isSignedUp: false,
       isLoggedIn: false,
       errorMessage: '',
       token: null,
+      refreshToken: null,
+      userId: null,
     );
   }
 
-  AuthState copyWith({
-    bool? isLoading,
-    bool? isSignedUp,
-    bool? isLoggedIn,
-    String? errorMessage,
-    String? token,
-  }) {
+  AuthState copyWith(
+      {bool? isLoading,
+      bool? isSignedUp,
+      bool? isLoggedIn,
+      String? errorMessage,
+      String? token,
+      String? refreshToken,
+      int? userId,
+      bool? isVerified = true}) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       isSignedUp: isSignedUp ?? this.isSignedUp,
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       errorMessage: errorMessage ?? this.errorMessage,
       token: token ?? this.token,
+      refreshToken: refreshToken ?? this.refreshToken,
+      userId: userId ?? this.userId,
+      isVerified: isVerified ?? this.isVerified,
     );
   }
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final ApiService _apiService;
+  final Ref _ref;
 
-  AuthNotifier(this._apiService) : super(AuthState.initial());
+  AuthNotifier(this._ref, this._apiService) : super(AuthState.initial());
+
+  void _setUserId(int userId) {
+    _ref.read(userIdProvider.notifier).state = userId;
+  }
 
   Future<void> signUp({
     required String userName,
@@ -62,10 +81,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: '');
+    state =
+        state.copyWith(isLoading: true, errorMessage: '', isSignedUp: false);
 
-    bool success = await _apiService.signUp(
-      userName:userName,
+    final response = await _apiService.signUp(
+      userName: userName,
       firstName: firstName,
       middleName: middleName,
       lastName: lastName,
@@ -74,40 +94,95 @@ class AuthNotifier extends StateNotifier<AuthState> {
       password: password,
     );
 
-    if (success) {
+    if (response != null && response['error'] != null) {
+      state = state.copyWith(
+          isLoading: false, errorMessage: response['error'], isSignedUp: false);
+    } else if (response != null && response['error'] == null) {
       state = state.copyWith(isLoading: false, isSignedUp: true);
+      final userId = response['user_id'];
+      _setUserId(userId);
     } else {
-      state = state.copyWith(isLoading: false, errorMessage: 'Sign up failed. Please try again.');
+      state = state.copyWith(
+          isLoading: false, errorMessage: 'Sign up failed. Please try again.');
     }
   }
 
-Future<void> login({
-  required String phoneNumber,
-  required String password,
-}) async {
-  state = state.copyWith(isLoading: true, errorMessage: '');
+  Future<void> login({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    state =
+        state.copyWith(isLoading: true, errorMessage: '', isSignedUp: false);
 
-  final result = await _apiService.login(phoneNumber: phoneNumber, password: password);
+    final result =
+        await _apiService.login(phoneNumber: phoneNumber, password: password);
 
-  if (result != null && result['token'] != null) {
-    final token = result['token'];
-    // Optionally store token in secure storage
-    state = state.copyWith(
-      isLoading: false,
-      isLoggedIn: true,
-      token: token,
-    );
-  } else {
-    state = state.copyWith(
-      isLoading: false,
-      errorMessage: 'Login failed. Please check your credentials.',
-    );
+    if (result != null) {
+      // Check if the response contains an error message
+      if (result['error'] != null) {
+        String errorMessage = result['error'];
+
+        // Check if the error message contains 'not verified'
+        if (errorMessage.contains('not verified')) {
+          final userId = result['user_id'];
+          _setUserId(userId);
+
+          state = state.copyWith(
+            isLoading: false,
+            isLoggedIn: true,
+            isSignedUp: false,
+            isVerified: false,
+            errorMessage: errorMessage, // Set the exact error message here
+          );
+        } else {
+          // For other errors, simply show the error message
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: errorMessage,
+          );
+        }
+      }
+      // Check for a successful login
+      else if (result['token'] != null &&
+          result['refresh_token'] != null &&
+          result['user_id'] != null) {
+        final token = result['token'];
+        final refreshToken = result['refresh_token'];
+        final userId = result['user_id'];
+
+        _setUserId(userId);
+
+        // Optionally store token and refreshToken in secure storage
+        // await _secureStorage.write(key: 'token', value: token);
+        // await _secureStorage.write(key: 'refresh_token', value: refreshToken);
+
+        state = state.copyWith(
+          isLoading: false,
+          isLoggedIn: true,
+          isSignedUp: false,
+          token: token,
+          refreshToken: refreshToken,
+          userId: userId,
+          isVerified: true, // User is verified after login success
+        );
+      }
+      // If the response is unexpected (i.e., no token or refresh_token)
+      else {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Login failed. Please check your credentials.',
+        );
+      }
+    } else {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Login failed. Please try again.',
+      );
+    }
   }
-}
-
 }
 
 // Create a provider for AuthNotifier
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ApiService());
+  return AuthNotifier(ref, ApiService());
 });

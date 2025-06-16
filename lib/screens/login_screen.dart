@@ -1,7 +1,10 @@
+import 'package:fawran/models/user.dart';
+import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/location_screen.dart';
+import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:fawran/l10n/app_localizations.dart';
 
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
@@ -28,25 +31,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final authState = ref.watch(authProvider);
+    final userId = ref.read(userIdProvider);
     final locale = ref.watch(localeProvider);
     final isArabic = locale.languageCode == 'ar';
 
     ref.listen<AuthState>(authProvider, (prev, next) {
-      if (next.isLoggedIn) {
-        // Navigate to home screen
-       Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LocationScreen(),
-                            ),
-                          );
+      if (next.isLoggedIn && next.isVerified) {
+        // If the user is logged in and verified, navigate to the LocationScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LocationScreen(),
+          ),
+        );
+      } else if (next.isLoggedIn && !next.isVerified) {
+        // If the user is logged in but not verified, navigate to VerificationScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerificationScreen(
+              phoneNumber: _phoneController.text,
+              userId: 'userId', // You may want to pass the actual userId here
+            ),
+          ),
+        );
       } else if (next.errorMessage.isNotEmpty) {
+        // If there's an error (e.g., wrong credentials), show a SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage)),
         );
       }
     });
-
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
@@ -67,9 +82,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Switch(
                     value: !isArabic,
                     onChanged: (val) {
-                      final newLocale = val
-                          ? const Locale('en')
-                          : const Locale('ar');
+                      final newLocale =
+                          val ? const Locale('en') : const Locale('ar');
                       ref.read(localeProvider.notifier).state = newLocale;
                     },
                     activeTrackColor: Colors.orange,
