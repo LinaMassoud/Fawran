@@ -112,6 +112,26 @@ Future<bool> verifyCode({
     return false;
   }
 }
+ 
+  static Future<List<dynamic>> fetchProfessionsHourly() async {
+    try {
+      final url = '$_baseUrl/home/professions';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception('Failed to load professions. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading professions: $e');
+    }
+  }
 
   static Future<List<PackageModel>> fetchServicePackages({
     required int professionId,
@@ -372,17 +392,15 @@ Future<bool> verifyCode({
       throw Exception('Error loading African packages: $e');
     }
   }
-
-  
   Future<List<ProfessionModel>> fetchProfessions() async {
   final url = Uri.parse('$_baseUrl/home/professions');
- 
+
   try {
     final response = await http.get(
       url,
       headers: {'Content-Type': 'application/json'},
     );
- 
+
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       return data.map((json) => ProfessionModel.fromJson(json)).toList();

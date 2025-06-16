@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:fawran/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/package_model.dart';
-import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
+import 'package:fawran/Fawran4Hours/fawran_services_display.dart';
 
 
 class HomeScreen extends ConsumerWidget {
@@ -140,8 +140,8 @@ SizedBox(
     Navigator.push(
       context,
       MaterialPageRoute(
-         builder: (context) => CleaningServiceScreen(
-          professionId: professions[index].positionId
+         builder: (context) => FawranServicesScreen(
+          selectedPositionId: professions[index].positionId
         ),
       ),
     );
@@ -173,7 +173,7 @@ SizedBox(
                 SizedBox(height: 8),
                 Text(
                   profession.positionName,
-                  style: TextStyle(fontSize: 11),
+                  style: TextStyle(fontSize: 12),
                   textAlign: TextAlign.center,
                 ),
               ],
