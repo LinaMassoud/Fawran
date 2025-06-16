@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../models/package_model.dart';
 
 class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
   final Function(List<DateTime>) onDatesChanged;
   final VoidCallback? onNextPressed;
   final int maxSelectableDates;
-  final List<String> selectedDays;
-  final String contractDuration;
-  final double totalPrice;
-  final bool isCustomBooking;
-  final double pricePerVisit;
-  final PackageModel? package;
+  final List<String> selectedDays; // Days selected in service details
+  final String contractDuration; // Contract duration from service details
+  final double totalPrice; // Add this parameter
 
   const DateSelectionStep({
     Key? key,
@@ -22,10 +17,7 @@ class DateSelectionStep extends StatefulWidget {
     this.maxSelectableDates = 10,
     this.selectedDays = const [],
     this.contractDuration = '1 month',
-    required this.totalPrice,
-    this.isCustomBooking = false,
-    this.pricePerVisit = 0.0,
-    this.package,
+    required this.totalPrice, // Make this required
   }) : super(key: key);
 
   @override
@@ -33,82 +25,115 @@ class DateSelectionStep extends StatefulWidget {
 }
 
 class _DateSelectionStepState extends State<DateSelectionStep> {
-  late PageController _pageController;
-  late DateTime _currentMonth;
-  List<DateTime> _selectedDates = [];
-  DateTime? _contractStartDate;
-  DateTime? _contractEndDate;
-  DateTime? _userSelectedStartDate;
-  int _totalAllowedVisits = 0;
-  int _visitsPerWeekCount = 0;
-  Map<String, int> _weeklyVisitCounts = {}; // Track visits per week
-  bool _isSelectingStartDate = true;
+  late DateTime currentMonth;
+  late DateTime nextMonth;
+  DateTime? serviceStartingDate;
+  DateTime? serviceEndingDate;
+  List<DateTime> autoSelectedDates = [];
+  List<DateTime> availableStartDates = [];
+  bool showDateDropdown = false;
 
+  List<DateTime> futureMonths = [];
+  
   @override
-  void initState() {
-    super.initState();
-    _currentMonth = DateTime.now();
-    _pageController = PageController();
-    _selectedDates = List.from(widget.selectedDates);
-    _calculateContractDetails();
-    _updateWeeklyVisitCounts();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _calculateContractDetails() {
-    // Get duration from package or fallback to widget parameter
-    int durationInWeeks = 0;
-    String contractDuration = widget.package?.noOfMonth != null 
-        ? '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}'
-        : widget.contractDuration;
-    
-    if (contractDuration.toLowerCase().contains('month')) {
-      int months = int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-      durationInWeeks = months * 4; // Approximate weeks in months
-    } else if (contractDuration.toLowerCase().contains('week')) {
-      durationInWeeks = int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-    }
-
-    // Get visits per week from package or fallback to selected days
-    _visitsPerWeekCount = widget.package?.visitsWeekly ?? widget.selectedDays.length;
-
-    // Calculate total allowed visits
-    _totalAllowedVisits = durationInWeeks * _visitsPerWeekCount;
-
-    // Only set default dates if user hasn't selected a start date
-    if (_userSelectedStartDate == null) {
-      final today = DateTime.now();
-      _contractStartDate = DateTime(today.year, today.month, today.day);
-      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+void initState() {
+  super.initState();
+  final now = DateTime.now();
+  currentMonth = DateTime(now.year, now.month);
+  
+  // Generate next 12 months for scrolling
+  futureMonths = [];
+  for (int i = 0; i < 12; i++) {
+    DateTime month;
+    if (now.month + i > 12) {
+      month = DateTime(now.year + ((now.month + i - 1) ~/ 12), ((now.month + i - 1) % 12) + 1);
     } else {
-      _contractStartDate = _userSelectedStartDate;
-      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+      month = DateTime(now.year, now.month + i);
+    }
+    futureMonths.add(month);
+  }
+  
+  // Auto-select the latest available date
+  _initializeAutoSelection();
+}
+
+  void _initializeAutoSelection() {
+    if (widget.selectedDays.isNotEmpty) {
+      _generateAvailableStartDates();
+      if (availableStartDates.isNotEmpty) {
+        // Auto-select the latest (first) available date
+        serviceStartingDate = availableStartDates.first;
+        _calculateAutoSelectedDates();
+      }
     }
   }
 
-  void _updateWeeklyVisitCounts() {
-    _weeklyVisitCounts.clear();
-    for (DateTime date in _selectedDates) {
-      String weekKey = _getWeekKey(date);
-      _weeklyVisitCounts[weekKey] = (_weeklyVisitCounts[weekKey] ?? 0) + 1;
+  void _generateAvailableStartDates() {
+  availableStartDates = [];
+  final selectedWeekdays = widget.selectedDays.map(_dayNameToWeekday).toList();
+  
+  if (selectedWeekdays.isEmpty) return;
+  
+  // Get only the earliest weekday (lowest number) from selected days
+  final earliestWeekday = selectedWeekdays.reduce((a, b) => a < b ? a : b);
+  
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  
+  // Generate next 3 weeks of available dates for the earliest weekday only
+  for (int week = 0; week < 4; week++) { // Increased to 4 weeks for better options
+    DateTime weekStart = today.add(Duration(days: week * 7));
+    // Find the start of the week (Sunday = 0)
+    DateTime startOfWeek = weekStart.subtract(Duration(days: weekStart.weekday % 7));
+    
+    // Calculate target date for the earliest weekday
+    int daysToAdd = earliestWeekday == 7 ? 0 : earliestWeekday; // Sunday is 7 in our system, 0 in DateTime
+    DateTime targetDate = startOfWeek.add(Duration(days: daysToAdd));
+    
+    // Only add if it's not in the past, not Friday, and is valid
+    if (!targetDate.isBefore(today) && 
+        targetDate.weekday != 5 && // Not Friday
+        _isDateAllowed(targetDate)) {
+      availableStartDates.add(targetDate);
     }
   }
+  
+  // Sort dates chronologically
+  availableStartDates.sort();
+  
+  // Remove duplicates
+  availableStartDates = availableStartDates.toSet().toList();
+}
 
-  String _getWeekKey(DateTime date) {
-    // Get Monday of the week as the week identifier
-    DateTime monday = date.subtract(Duration(days: date.weekday - 1));
-    return DateFormat('yyyy-MM-dd').format(monday);
+  // Convert contract duration string to number of months and visits
+  Map<String, int> _getContractDetails() {
+  final duration = widget.contractDuration.toLowerCase();
+  int months = 1;
+  int totalVisits = 0;
+  
+  if (duration.contains('week')) {
+    final match = RegExp(r'(\d+)\s*week').firstMatch(duration);
+    final weeks = int.parse(match?.group(1) ?? '1');
+    months = (weeks / 4).ceil(); // Convert weeks to months (round up)
+    
+    // Fix: For weekly contracts, total visits = weeks * visits per week
+    final visitsPerWeek = _getVisitsPerWeek();
+    totalVisits = weeks * visitsPerWeek; // weeks * visits per week
+  } else if (duration.contains('month')) {
+    final match = RegExp(r'(\d+)\s*month').firstMatch(duration);
+    months = int.parse(match?.group(1) ?? '1');
+    
+    // Calculate total visits based on visits per week
+    final visitsPerWeek = _getVisitsPerWeek();
+    totalVisits = months * 4 * visitsPerWeek; // months * 4 weeks * visits per week
   }
+  
+  return {'months': months, 'totalVisits': totalVisits};
+}
 
-  bool _isWeekFull(DateTime date) {
-    String weekKey = _getWeekKey(date);
-    int currentWeekCount = _weeklyVisitCounts[weekKey] ?? 0;
-    return currentWeekCount >= _visitsPerWeekCount;
+  // Extract visits per week from the selected days
+  int _getVisitsPerWeek() {
+    return widget.selectedDays.length; // Number of selected days = visits per week
   }
 
   // Convert day names to weekday numbers (1 = Monday, 7 = Sunday)
@@ -125,568 +150,734 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     }
   }
 
-  void _selectDate(DateTime date) {
-    setState(() {
-      // If we're still selecting the start date
-      if (_isSelectingStartDate) {
-        _userSelectedStartDate = date;
-        _selectedDates.clear();
-        _selectedDates.add(date);
-        _isSelectingStartDate = false;
-        _calculateContractDetails(); // Recalculate with new start date
-        _updateWeeklyVisitCounts();
-        _showSnackBar('Start date selected. Now select your visit dates within the contract period.');
-        widget.onDatesChanged(_selectedDates);
-        return;
-      }
-
-      // Regular date selection for visits
-      if (_selectedDates.contains(date)) {
-        // Don't allow removing the start date
-        if (date == _userSelectedStartDate) {
-          _showSnackBar('Cannot remove start date. Tap "Reset" to choose a new start date.');
-          return;
-        }
-        _selectedDates.remove(date);
-      } else {
-        // Check if we've reached the total visit limit
-        if (_selectedDates.length >= _totalAllowedVisits) {
-          _showSnackBar('Maximum $_totalAllowedVisits visits allowed for this contract');
-          return;
-        }
-
-        // Check if the week is already full
-        if (_isWeekFull(date)) {
-          _showSnackBar('Maximum $_visitsPerWeekCount visits per week allowed');
-          return;
-        }
-
-        // Check if date matches selected days (for package bookings)
-        if (!widget.isCustomBooking && !_isDateAllowedForPackage(date)) {
-          String selectedDaysText = widget.selectedDays.isNotEmpty 
-              ? widget.selectedDays.join(', ')
-              : 'your selected days';
-          _showSnackBar('Please select dates that match $selectedDaysText');
-          return;
-        }
-
-        _selectedDates.add(date);
-      }
-      _selectedDates.sort();
-      _updateWeeklyVisitCounts();
-    });
-    widget.onDatesChanged(_selectedDates);
+  // Check if a date matches any of the selected weekdays and is not Friday
+  bool _isDateAllowed(DateTime date) {
+    // Always disable Fridays
+    if (date.weekday == 5) return false;
+    
+    if (widget.selectedDays.isEmpty) return false;
+    
+    final selectedWeekdays = widget.selectedDays.map(_dayNameToWeekday).toList();
+    return selectedWeekdays.contains(date.weekday);
   }
 
-  bool _isDateAllowedForPackage(DateTime date) {
-    // If it's a custom booking, allow any date
-    if (widget.isCustomBooking) return true;
+  void _calculateAutoSelectedDates() {
+    if (serviceStartingDate == null || widget.selectedDays.isEmpty) {
+      autoSelectedDates = [];
+      return;
+    }
+
+    autoSelectedDates = [];
+    final contractDetails = _getContractDetails();
+    final months = contractDetails['months']!;
+    final totalVisits = contractDetails['totalVisits']!;
+    final selectedWeekdays = widget.selectedDays.map(_dayNameToWeekday).toList();
     
-    // If we have selected days from the widget, use those
-    if (widget.selectedDays.isNotEmpty) {
-      final selectedWeekdays = widget.selectedDays.map(_dayNameToWeekday).toList();
-      return selectedWeekdays.contains(date.weekday);
+    // Calculate service ending date based on months
+    serviceEndingDate = DateTime(
+      serviceStartingDate!.year,
+      serviceStartingDate!.month + months,
+      serviceStartingDate!.day,
+    );
+    
+    // Generate dates for the entire contract period
+    DateTime currentDate = serviceStartingDate!;
+    int visitsGenerated = 0;
+    
+    // Generate visits week by week until we reach the total visits or end date
+    while (visitsGenerated < totalVisits && currentDate.isBefore(serviceEndingDate!)) {
+      // For each selected weekday in the current week
+      for (int weekday in selectedWeekdays) {
+        if (visitsGenerated >= totalVisits) break;
+        
+        // Find the date for this weekday in the current week
+        DateTime weekStart = DateTime(currentDate.year, currentDate.month, currentDate.day);
+        
+        // Calculate how many days to add to get to the target weekday
+        int daysToAdd = (weekday - weekStart.weekday) % 7;
+        DateTime targetDate = weekStart.add(Duration(days: daysToAdd));
+        
+        // If the target date is before the current date, move to next week
+        if (targetDate.isBefore(currentDate)) {
+          targetDate = targetDate.add(Duration(days: 7));
+        }
+        
+        // Only add if it's within the contract period and not Friday
+        if ((targetDate.isBefore(serviceEndingDate!) || targetDate.isAtSameMomentAs(serviceEndingDate!)) 
+            && targetDate.weekday != 5) { // Not Friday
+          autoSelectedDates.add(targetDate);
+          visitsGenerated++;
+        }
+      }
+      
+      // Move to next week
+      currentDate = currentDate.add(Duration(days: 7));
     }
     
-    // If we have a package but no selected days, allow any weekday for now
-    // This might need to be adjusted based on your business logic
-    return true;
+    // Sort the dates
+    autoSelectedDates.sort();
+    
+    // Update the service ending date to the last visit date if we have visits
+    if (autoSelectedDates.isNotEmpty) {
+      serviceEndingDate = autoSelectedDates.last;
+    }
+    
+    // Update parent component
+    widget.onDatesChanged(autoSelectedDates);
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.orange,
-        duration: Duration(seconds: 2),
-      ),
+  bool _isDateDisabled(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    // Disable if it's in the past
+    if (date.isBefore(today)) return true;
+    
+    // Always disable Fridays
+    if (date.weekday == 5) return true;
+    
+    // Disable if it's not one of the allowed weekdays
+    if (!_isDateAllowed(date)) return true;
+    
+    return false;
+  }
+
+  bool _isDateAutoSelected(DateTime date) {
+    return autoSelectedDates.any((selectedDate) => 
+      selectedDate.year == date.year &&
+      selectedDate.month == date.month &&
+      selectedDate.day == date.day
     );
   }
 
-  bool _isDateSelectable(DateTime date) {
-    final dateOnly = DateTime(date.year, date.month, date.day);
-    final today = DateTime.now();
-    final todayOnly = DateTime(today.year, today.month, today.day);
-    
-    // If selecting start date, only allow today or future dates
-    if (_isSelectingStartDate) {
-      return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
-    }
-    
-    // Check if date is within contract period
-    if (_contractStartDate != null && _contractEndDate != null) {
-      if (dateOnly.isBefore(_contractStartDate!) || dateOnly.isAfter(_contractEndDate!)) {
-        return false;
-      }
-    }
-
-    // Always disable Fridays
-    if (date.weekday == 5) return false;
-
-    // Check if date is already selected
-    if (_selectedDates.contains(date)) {
-      return true; // Allow deselection (except start date, handled in _selectDate)
-    }
-
-    // Check if we've reached the total visit limit
-    if (_selectedDates.length >= _totalAllowedVisits) {
-      return false;
-    }
-
-    // Check if the week is already full
-    if (_isWeekFull(date)) {
-      return false;
-    }
-
-    // For package bookings, check if date matches selected days
-    if (!widget.isCustomBooking && !_isDateAllowedForPackage(date)) {
-      return false;
-    }
-
-    return true;
+  bool _isServiceStartingDate(DateTime date) {
+    if (serviceStartingDate == null) return false;
+    return serviceStartingDate!.year == date.year &&
+           serviceStartingDate!.month == date.month &&
+           serviceStartingDate!.day == date.day;
   }
 
-  void _navigateToMonth(int monthOffset) {
+  void _selectStartingDate(DateTime date) {
+    if (_isDateDisabled(date)) return;
+    
     setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + monthOffset);
+      serviceStartingDate = date;
+      showDateDropdown = false; // Close dropdown after selection
+      _calculateAutoSelectedDates();
     });
-    
-    // Calculate the page index for the new month
-    final now = DateTime.now();
-    final targetMonth = DateTime(_currentMonth.year, _currentMonth.month);
-    final currentMonth = DateTime(now.year, now.month);
-    
-    int monthDifference = (targetMonth.year - currentMonth.year) * 12 + 
-                         (targetMonth.month - currentMonth.month);
-    
-    if (monthDifference >= 0 && monthDifference < 24) {
-      _pageController.animateToPage(
-        monthDifference,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
   }
 
-  Widget _buildCalendarGrid(DateTime month) {
-    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-    final firstDayOfMonth = DateTime(month.year, month.month, 1);
-    final startingWeekday = firstDayOfMonth.weekday % 7;
+  String _formatDate(DateTime date) {
+    final months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    return '${days[date.weekday % 7]} ${date.day} ${months[date.month]}';
+  }
 
-    List<Widget> dayWidgets = [];
-
-    // Add empty containers for days before the first day of the month
-    for (int i = 0; i < startingWeekday; i++) {
-      dayWidgets.add(Container());
-    }
-
-    // Add day widgets
-    for (int day = 1; day <= daysInMonth; day++) {
-      final date = DateTime(month.year, month.month, day);
-      final isSelected = _selectedDates.contains(date);
-      final isSelectable = _isDateSelectable(date);
-      final isWeekFull = _isWeekFull(date) && !isSelected;
-      final isOutsideContract = !_isSelectingStartDate && _contractStartDate != null && _contractEndDate != null &&
-          (date.isBefore(_contractStartDate!) || date.isAfter(_contractEndDate!));
-      final isStartDate = date == _userSelectedStartDate;
-
-      Color backgroundColor = Colors.transparent;
-      Color textColor = Colors.black;
-
-      if (isSelected) {
-        if (isStartDate) {
-          backgroundColor = Colors.white;
-          textColor = Colors.black;
-        } else {
-          backgroundColor = Color(0xFF1E3A8A);
-          textColor = Colors.white;
-        }
-      } else if (!isSelectable) {
-        backgroundColor = Colors.grey.withOpacity(0.1);
-        textColor = Colors.grey;
+  double _calculateTotalPrice() {
+    double total = 0;
+    for (DateTime date in autoSelectedDates) {
+      // Use the same pricing logic as before
+      final day = date.day;
+      if (day % 7 == 0 || day % 7 == 1) {
+        total += 125.0; // Weekend-like pricing
+      } else if (day % 5 == 0) {
+        total += 119.0; // Special pricing
+      } else {
+        total += 115.0; // Standard pricing
       }
+    }
+    return total;
+  }
 
-      dayWidgets.add(
-        GestureDetector(
-          onTap: isSelectable ? () => _selectDate(date) : null,
-          child: Container(
-            margin: EdgeInsets.all(1),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(6),
-              border: isSelected ? Border.all(color: Color(0xFF1E3A8A), width: 2) : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Day number - always shown
-                Text(
-                  day.toString(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: textColor,
-                  ),
-                ),
-                // Conditional content based on priority
-                if (isStartDate && !_isSelectingStartDate) ...[
-                  // Highest priority: Start date indicator
+  Widget _buildServiceDateInfo() {
+  final contractDetails = _getContractDetails();
+  final totalVisits = contractDetails['totalVisits'];
+  
+  return Container(
+    margin: EdgeInsets.only(bottom: 20),
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey[200]!),
+    ),
+    child: Column(
+      children: [
+        Text(
+          'Please select starting date',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(height: 8),
+        
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'START',
+                    'Service start date',
                     style: TextStyle(
-                      fontSize: 7,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      fontSize: 14,
+                      color: Color(0xFF00BCD4),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ] else if (isWeekFull && !isSelected && !_isSelectingStartDate) ...[
-                  // Second priority: Week full indicator
-                  Text(
-                    'Full',
-                    style: TextStyle(
-                      fontSize: 7,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ] else if (!widget.isCustomBooking && !_isDateAllowedForPackage(date) && !isOutsideContract && isSelectable) ...[
-                  // For package bookings: show if day doesn't match selected days
-                  Text(
-                    'N/A',
-                    style: TextStyle(
-                      fontSize: 7,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
+                  GestureDetector(
+                    onTap: () => _showDateSelectionDialog(),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              serviceStartingDate != null 
+                                ? '${serviceStartingDate!.day.toString().padLeft(2, '0')}/${serviceStartingDate!.month.toString().padLeft(2, '0')}/${serviceStartingDate!.year}'
+                                : 'Select date',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: serviceStartingDate != null ? Colors.black87 : Colors.grey[500],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.calendar_today,
+                            color: Color(0xFF00BCD4),
+                            size: 20,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return GridView.count(
-      crossAxisCount: 7,
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.0,
-      mainAxisSpacing: 1,
-      crossAxisSpacing: 1,
-      padding: EdgeInsets.zero,
-      children: dayWidgets,
-    );
-  }
-
-  Widget _buildMonthHeader(DateTime month) {
-    final now = DateTime.now();
-    final canNavigateLeft = month.isAfter(DateTime(now.year, now.month));
-    final canNavigateRight = month.isBefore(DateTime(now.year + 2, now.month));
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: canNavigateLeft ? () => _navigateToMonth(-1) : null,
-            icon: Icon(
-              Icons.chevron_left,
-              color: canNavigateLeft ? Colors.black : Colors.grey,
-              size: 28,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              DateFormat('MMMM yyyy').format(month),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
               ),
             ),
-          ),
-          IconButton(
-            onPressed: canNavigateRight ? () => _navigateToMonth(1) : null,
-            icon: Icon(
-              Icons.chevron_right,
-              color: canNavigateRight ? Colors.black : Colors.grey,
-              size: 28,
+            Container(
+              width: 1,
+              height: 40,
+              color: Colors.grey[300],
+              margin: EdgeInsets.symmetric(horizontal: 16),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthView(DateTime month) {
-    return Column(
-      children: [
-        _buildMonthHeader(month),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
-              return Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    day,
-                    textAlign: TextAlign.center,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Service end date',
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: Color(0xFF00BCD4),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _buildCalendarGrid(month),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContractInfo() {
-    String statusText = _isSelectingStartDate 
-        ? 'Please select your start date'
-        : 'Select visit dates within contract period';
-
-    // Get contract duration from package or fallback
-    String contractDurationText = widget.package?.noOfMonth != null 
-        ? '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}'
-        : widget.contractDuration;
-
-    // Get package name if available
-    String packageInfo = widget.package?.packageName ?? 'Custom Package';
-        
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  packageInfo,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-              ),
-              if (!_isSelectingStartDate)
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isSelectingStartDate = true;
-                      _userSelectedStartDate = null;
-                      _selectedDates.clear();
-                      _contractStartDate = null;
-                      _contractEndDate = null;
-                      _weeklyVisitCounts.clear();
-                      _calculateContractDetails();
-                    });
-                    widget.onDatesChanged(_selectedDates);
-                  },
-                  child: Text(
-                    'Reset',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blue.shade700,
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[50], // Slightly different background to show it's disabled
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            serviceEndingDate != null 
+                              ? '${serviceEndingDate!.day.toString().padLeft(2, '0')}/${serviceEndingDate!.month.toString().padLeft(2, '0')}/${serviceEndingDate!.year}'
+                              : '--/--/----',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: serviceEndingDate != null ? Colors.black87 : Colors.grey[500],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.calendar_today,
+                          color: Colors.grey[400], // Disabled color
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Text(
-            statusText,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: _isSelectingStartDate ? Colors.orange : Colors.blue.shade600,
-            ),
-          ),
-          Text(
-            'Duration: $contractDurationText • Visits: $_visitsPerWeekCount per week',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.blue.shade600,
-            ),
-          ),
-          if (widget.selectedDays.isNotEmpty)
-            Text(
-              'Selected Days: ${widget.selectedDays.join(', ')}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.blue.shade600,
-              ),
-            ),
-          if (widget.package != null) ...[
-            Text(
-              'Service: ${widget.package!.durationDisplay} • ${widget.package!.timeDisplay} • ${widget.package!.nationalityDisplay}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.blue.shade600,
+                ],
               ),
             ),
           ],
-          Text(
-            'Total Visits: $_totalAllowedVisits • Selected: ${_selectedDates.length}',
+        ),
+      ],
+    ),
+  );
+}
+
+void _showDateSelectionDialog() {
+  if (availableStartDates.isEmpty) return;
+  
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          constraints: BoxConstraints(maxHeight: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Choose Starting Date',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.grey[600],
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Select the first ${widget.selectedDays.first} of your service:',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 16),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: availableStartDates.take(8).map((date) {
+                      final isSelected = serviceStartingDate != null &&
+                          serviceStartingDate!.year == date.year &&
+                          serviceStartingDate!.month == date.month &&
+                          serviceStartingDate!.day == date.day;
+                      
+                      return GestureDetector(
+                        onTap: () {
+                          _selectStartingDate(date);
+                          Navigator.of(context).pop();
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          margin: EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected 
+                                ? Color(0xFF00BCD4).withOpacity(0.1)
+                                : Colors.grey[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected 
+                                  ? Color(0xFF00BCD4)
+                                  : Colors.grey[200]!,
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: isSelected 
+                                      ? Color(0xFF00BCD4)
+                                      : Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${date.day}',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? Colors.white : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _formatDate(date),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected 
+                                          ? Color(0xFF00BCD4)
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Spacer(),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Color(0xFF00BCD4),
+                                  size: 24,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+  Widget _buildCalendarGrid(DateTime month) {
+  final firstDay = DateTime(month.year, month.month, 1);
+  final lastDay = DateTime(month.year, month.month + 1, 0);
+  final firstWeekday = firstDay.weekday == 7 ? 0 : firstDay.weekday;
+  
+  List<Widget> dayWidgets = [];
+  
+  // Add empty spaces for days before the first day of month
+  for (int i = 0; i < firstWeekday; i++) {
+    dayWidgets.add(Container());
+  }
+  
+  // Add actual days
+  for (int day = 1; day <= lastDay.day; day++) {
+    final date = DateTime(month.year, month.month, day);
+    final isDisabled = _isDateDisabled(date);
+    final isAutoSelected = _isDateAutoSelected(date);
+    final isStartingDate = _isServiceStartingDate(date);
+    final isAllowed = _isDateAllowed(date);
+    final isFriday = date.weekday == 5;
+    
+    dayWidgets.add(
+      Container(
+        margin: EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: isStartingDate
+              ? Color(0xFF1E3A8A)
+              : isAutoSelected
+                  ? Color(0xFF1E3A8A).withOpacity(0.1)
+                  : Colors.transparent,
+          border: isAutoSelected && !isStartingDate
+              ? Border.all(color: Color(0xFF1E3A8A), width: 1)
+              : isStartingDate
+                  ? Border.all(color: Color(0xFF1E3A8A), width: 2)
+                  : null,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            '$day',
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.blue.shade600,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDisabled 
+                ? Colors.grey[400]
+                : isStartingDate
+                    ? Colors.white
+                    : isAutoSelected
+                        ? Color(0xFF1E3A8A)
+                        : Colors.grey[400],
             ),
           ),
-          if (_contractStartDate != null && _contractEndDate != null)
-            Text(
-              'Contract Period: ${DateFormat('MMM dd, yyyy').format(_contractStartDate!)} - ${DateFormat('MMM dd, yyyy').format(_contractEndDate!)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.blue.shade600,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
+  
+  return GridView.count(
+    crossAxisCount: 7,
+    shrinkWrap: true,
+    physics: NeverScrollableScrollPhysics(),
+    childAspectRatio: 1.0,
+    children: dayWidgets,
+  );
+}
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMonthSection(DateTime month) {
+    final monthNames = [
+      '', 'January', 'February', 'March', 'April', 'May', 
+      'June', 'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
     return Column(
       children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          alignment: Alignment.centerLeft,
+        // Month header
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
           child: Text(
-            'Select Date',
+            '${monthNames[month.month]} ${month.year}',
             style: TextStyle(
-              fontSize: 28,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
         ),
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
-              });
-            },
-            itemCount: 24,
-            itemBuilder: (context, index) {
-              final month = DateTime(DateTime.now().year, DateTime.now().month + index);
-              return _buildMonthView(month);
-            },
+        
+        // Day headers
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+                .map((day) => Container(
+                      width: 35,
+                      child: Text(
+                        day,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ))
+                .toList(),
           ),
         ),
+        
+        SizedBox(height: 8),
+        
+        // Calendar grid
         Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: Offset(0, -2),
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          height: 250,
+          child: _buildCalendarGrid(month),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: Column(
+        children: [
+          // Main content - Made fully scrollable
+          Expanded(
+            child: SingleChildScrollView(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20),
+                    
+                    Text(
+                      'Select Date',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    
+                    SizedBox(height: 8),
+                    
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Days Selected : ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                          ),
+                          
+                        ],
+                      ),
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
+                    // Days selection display (read-only)
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Wrap(
+                          spacing: 8,
+                          children: widget.selectedDays.map((day) => Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF1E3A8A),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              day,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          )).toList(),
+                        ),
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
+                    // Service date info with dropdown
+                    _buildServiceDateInfo(),
+                    
+                    // Calendar content
+                    Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // Show all future months in a scrollable list
+                        ...futureMonths.map((month) => Column(
+                          children: [
+                            _buildMonthSection(month),
+                            if (month != futureMonths.last) SizedBox(height: 20),
+                          ],
+                        )).toList(),
+                        
+                        SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                    
+                    SizedBox(height: 100), // Extra space for bottom navigation
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  shape: BoxShape.circle,
+          
+          // Bottom Navigation
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: Offset(0, -2),
                 ),
-                child: Center(
-                  child: Text(
-                    _selectedDates.length.toString(),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              ],
+            ),
+            child: SafeArea(
+              child: Row(
                 children: [
-                  Text(
-                    'Total',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                  // Total section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Total (${autoSelectedDates.length} visits)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'SAR${widget.totalPrice.toInt()}',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    widget.package?.formattedFinalPrice ?? 'SAR ${widget.totalPrice.toInt()}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
+                  
+                  Spacer(),
+                  
+                  // Next Button
+                  Expanded(
+                    flex: 2,
+                    child: GestureDetector(
+                      onTap: serviceStartingDate != null && widget.onNextPressed != null 
+                          ? widget.onNextPressed 
+                          : null,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: serviceStartingDate != null 
+                              ? Color(0xFF1E3A8A)
+                              : Colors.grey[400],
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Next',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              Spacer(),
-              Container(
-                width: 120,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _selectedDates.isNotEmpty && !_isSelectingStartDate && widget.onNextPressed != null
-                      ? widget.onNextPressed
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF1E3A8A),
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Next',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

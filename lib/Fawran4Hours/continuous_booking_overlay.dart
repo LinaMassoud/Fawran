@@ -15,7 +15,6 @@ import '../steps/service_details_step.dart';
 import '../steps/date_selection_step.dart';
 import '../widgets/booking_step_header.dart';
 import '../providers/address_provider.dart';
-import '../steps/custom_date_selection.dart';
 
 class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   final PackageModel? package; // Made optional
@@ -88,8 +87,7 @@ class _ContinuousBookingOverlayState extends ConsumerState<ContinuousBookingOver
   late PageController _pageController;
 
   int currentStep = 0;
-  // Modified: Dynamic total steps based on booking type
-int get totalSteps => 2; // Custom: Address, Service Details, Date Selection | Package: Address, Date Selection
+  final int totalSteps = 3; // Address, Service Details, Date Selection
   
   // Track if we're returning from date selection
   bool isReturningFromDateSelection = false;
@@ -109,7 +107,6 @@ int get totalSteps => 2; // Custom: Address, Service Details, Date Selection | P
   late String visitsPerWeek;
   late double hourPrice; // New field for custom booking
 
-double? _totalPriceFromServiceDetails;
   // Date Selection Data
   List<DateTime> selectedDates = [];
 
@@ -128,7 +125,7 @@ double? _totalPriceFromServiceDetails;
       visitsPerWeek = '1 visit weekly';
       selectedNationality = 'East Asia';
       selectedTime = 'Morning';
-      hourPrice = 32.0; // Default hourly rate
+      hourPrice = 25.0; // Default hourly rate
     } else {
       // Initialize from package (existing functionality)
       workerCount = widget.package!.noOfEmployee;
@@ -259,50 +256,37 @@ double? _totalPriceFromServiceDetails;
     });
   }
 
-  // Modified: Handle step navigation based on booking type
- void _nextStep() {
-  if (currentStep < totalSteps - 1) {
-    setState(() {
-      currentStep++;
-    });
-    
-    // Use the correct page index for navigation
-    int targetPageIndex = _getPageIndex();
-    
-    _pageController.animateToPage(
-      targetPageIndex,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  void _nextStep() {
+    if (currentStep < totalSteps - 1) {
+      setState(() {
+        currentStep++;
+        if (currentStep == 2) {
+          isReturningFromDateSelection = false;
+        }
+      });
+      _pageController.animateToPage(
+        currentStep,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
-}
 
   void _previousStep() {
-  if (currentStep > 0) {
-    setState(() {
-      currentStep--;
-      if (widget.isCustomBooking && currentStep == 1 && selectedDates.isNotEmpty) {
-        isReturningFromDateSelection = true;
-      }
-    });
-    
-    // Use the correct page index for navigation
-    int targetPageIndex = _getPageIndex();
-    
-    _pageController.animateToPage(
-      targetPageIndex,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    if (currentStep > 0) {
+      setState(() {
+        currentStep--;
+        if (currentStep == 1 && selectedDates.isNotEmpty) {
+          isReturningFromDateSelection = true;
+        }
+      });
+      _pageController.animateToPage(
+        currentStep,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
-}
-
-  // Helper method to get the correct page index for PageView
-  int _getPageIndex() {
-  // Both custom and package booking now have same structure: [Address(0), ServiceDetails/DateSelection(1)]
-  return currentStep;
-}
-
 
   void _selectAddress(int addressId) {
     final selectedAddress = addresses.firstWhere(
@@ -352,61 +336,36 @@ double? _totalPriceFromServiceDetails;
     setState(() {
       selectedNationality = newNationality;
     });
-    // Price doesn't directly depend on nationality, but trigger update for consistency
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
-    }
   }
 
   void _updateTime(String newTime) {
     setState(() {
       selectedTime = newTime;
     });
-    // Price doesn't directly depend on time slot, but trigger update for consistency
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
-    }
   }
 
   void _updateVisitDuration(String newVisitDuration) {
     setState(() {
       visitDuration = newVisitDuration;
     });
-    // Price depends on visit duration, recalculate
-    if (widget.isCustomBooking) {
-      print("calculatePricePerVisit recalculated in _updateVisitDuration");
-      _calculatePricePerVisit();
-    }
   }
 
   void _updateWorkerCount(int newCount) {
     setState(() {
       workerCount = newCount;
     });
-    // Price depends on worker count, recalculate
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
-    }
   }
 
   void _updateContractDuration(String newDuration) {
     setState(() {
       contractDuration = newDuration;
     });
-    // Price depends on contract duration, recalculate
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
-    }
   }
 
   void _updateVisitsPerWeek(String newVisitsPerWeek) {
     setState(() {
       visitsPerWeek = newVisitsPerWeek;
     });
-    // Price depends on visits per week, recalculate
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
-    }
   }
 
   void _updateSelectedDates(List<DateTime> dates) {
@@ -419,62 +378,55 @@ double? _totalPriceFromServiceDetails;
     });
   }
 
-  
+  void _goToDateSelection() {
+    setState(() {
+      currentStep = 2;
+      isReturningFromDateSelection = false;
+    });
+    _pageController.animateToPage(
+      currentStep,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
 
   void _returnFromDateSelection() {
     setState(() {
-      if (widget.isCustomBooking) {
-        currentStep = 1;
-        isReturningFromDateSelection = true;
-      } else {
-        currentStep = 0; // Return to address selection for package bookings
-      }
+      currentStep = 1;
+      isReturningFromDateSelection = true;
     });
     _pageController.animateToPage(
-      _getPageIndex(),
+      currentStep,
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
   }
 
   void _completePurchase() async {
-  final selectedAddress = ref.read(selectedAddressProvider);
-  
-  // Use the total price from ServiceDetailsStep for custom booking
-  final totalPrice = widget.isCustomBooking 
-    ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
-    : widget.package!.finalPrice;
-  
-  final originalPrice = widget.isCustomBooking 
-      ? _calculateOriginalPrice() 
-      : widget.package!.packagePrice ?? widget.package!.finalPrice;
-  
-  final bookingData = BookingData(
-    selectedDates: selectedDates,
-    totalPrice: totalPrice,
-    originalPrice: originalPrice,
-    selectedAddress: selectedAddress != null ? _extractLocationName(selectedAddress.cardText) : 'No Address',
-    workerCount: workerCount,
-    contractDuration: contractDuration,
-    visitsPerWeek: visitsPerWeek,
-    selectedNationality: selectedNationality,
-    packageName: widget.isCustomBooking ? 'Custom Service Package' : widget.package!.packageName,
-  );
-  
-  print("bookingData total price after _completePurchase = ${bookingData.totalPrice}");
-  await _animationController.reverse();
-  Navigator.pop(context);
+    final selectedAddress = ref.read(selectedAddressProvider);
+    
+    final totalPrice = _calculateTotalPrice();
+    final originalPrice = _calculateOriginalPrice();
+    
+    final bookingData = BookingData(
+      selectedDates: selectedDates,
+      totalPrice: totalPrice,
+      originalPrice: originalPrice,
+      selectedAddress: selectedAddress != null ? _extractLocationName(selectedAddress.cardText) : 'No Address',
+      workerCount: workerCount,
+      contractDuration: contractDuration,
+      visitsPerWeek: visitsPerWeek,
+      selectedNationality: selectedNationality,
+      packageName: widget.isCustomBooking ? 'Custom Service Package' : widget.package!.packageName,
+    );
 
-  if (widget.onBookingCompleted != null) {
-    widget.onBookingCompleted!(bookingData);
+    await _animationController.reverse();
+    Navigator.pop(context);
+
+    if (widget.onBookingCompleted != null) {
+      widget.onBookingCompleted!(bookingData);
+    }
   }
-}
-
-void _updateTotalPriceFromServiceDetails(double totalPrice) {
-  setState(() {
-    _totalPriceFromServiceDetails = totalPrice;
-  });
-}
 
   double _calculateTotalPrice() {
     print('=== PRICE CALCULATION DEBUG ===');
@@ -524,61 +476,6 @@ void _updateTotalPriceFromServiceDetails(double totalPrice) {
     print('=== END PRICE CALCULATION ===');
     return finalPrice;
   }
-  
-  double _calculatePricePerVisit() {
-    if (!widget.isCustomBooking) {
-      return 0.0; // Not applicable for package bookings
-    }
-
-    print('=== PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
-    
-    // Extract duration from visit duration string
-    double durationOfVisit = double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
-    print('Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
-    
-    // Extract contract duration and convert to weeks
-    int contractMonths = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
-    double contractDurationInWeeks;
-    
-    if (contractDuration.contains('week')) {
-      contractDurationInWeeks = contractMonths.toDouble();
-    } else if (contractDuration.contains('year')) {
-      contractDurationInWeeks = contractMonths * 52.0;
-    } else {
-      contractDurationInWeeks = contractMonths * 4.0; // months to weeks
-    }
-    
-    print('Contract Duration: $contractMonths ${contractDuration.contains('week') ? 'weeks' : contractDuration.contains('year') ? 'years' : 'months'} = $contractDurationInWeeks weeks');
-    
-    // Extract visits per week
-    int visitsPerWeekCount = int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1;
-    print('Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
-    print('Worker Count: $workerCount');
-    print('Hour Price: $hourPrice');
-    
-    // Calculate total contract price first
-    double totalContractPrice = hourPrice * durationOfVisit * contractDurationInWeeks * visitsPerWeekCount * workerCount;
-    print('Total Contract Price: $totalContractPrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
-    
-    // Calculate total number of visits in the contract
-    double totalVisits = contractDurationInWeeks * visitsPerWeekCount;
-    print('Total Visits in Contract: $totalVisits ($contractDurationInWeeks * $visitsPerWeekCount)');
-    
-    // Calculate base price per visit
-    double basePricePerVisit = totalContractPrice / totalVisits;
-    print('Base Price Per Visit: $basePricePerVisit ($totalContractPrice / $totalVisits)');
-    
-    // Apply fixed discount percentage for custom booking
-    double discountPercentage = 4.8913;
-    double discountAmount = (discountPercentage / 100) * basePricePerVisit;
-    double finalPricePerVisit = basePricePerVisit - discountAmount;
-    print('Discount Applied: $discountPercentage% = $discountAmount');
-    print('finalPricePerVisit: $finalPricePerVisit');
-    
-    print('=== END PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
-    
-    return finalPricePerVisit;
-  }
 
   double _calculateOriginalPrice() {
     print('=== ORIGINAL PRICE CALCULATION ===');
@@ -619,7 +516,6 @@ void _updateTotalPriceFromServiceDetails(double totalPrice) {
     }
     return widget.package!.finalPrice?.toDouble() ?? 0.0;
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -683,79 +579,71 @@ void _updateTotalPriceFromServiceDetails(double totalPrice) {
                     child: Column(
                       children: [
                         BookingStepHeader(
-                        currentStep: currentStep + 1,
-                        totalSteps: totalSteps,
-                        showBackButton: currentStep > 0,
-                        onBackPressed: _previousStep,
-                      ),
+                          showBackButton: (currentStep > 0 && !isReturningFromDateSelection) || currentStep == 2,
+                          onBackPressed: () {
+                            if (currentStep == 2) {
+                              _returnFromDateSelection();
+                            } else {
+                              _previousStep();
+                            }
+                          },
+                        ),
                         
                         Expanded(
-                        child: PageView(
-                          controller: _pageController,
-                          physics: NeverScrollableScrollPhysics(),
-                          children: [
-                            // Page 0: Address Selection (both custom and package)
-                            AddressSelectionStep(
-                              addresses: addresses,
-                              selectedAddress: selectedAddress,
-                              onAddressSelected: _selectAddress,
-                              onAddNewAddress: _addNewAddress,
-                              onNextPressed: _nextStep,
-                              price: _currentPrice,
-                              isLoading: isLoadingAddresses,
-                              error: addressError,
-                              onRetryPressed: _fetchAddresses,
+                          child: PageView(
+                            controller: _pageController,
+                            physics: NeverScrollableScrollPhysics(),
+                            children: [
+                              AddressSelectionStep(
+                                addresses: addresses,
+                                selectedAddress: selectedAddress,
+                                onAddressSelected: _selectAddress,
+                                onAddNewAddress: _addNewAddress,
+                                onNextPressed: _nextStep,
+                                price: _currentPrice,
+                                isLoading: isLoadingAddresses,
+                                error: addressError,
+                                onRetryPressed: _fetchAddresses,
+                                isCustomBooking: widget.isCustomBooking, // Add this line
+                              ),
+                              ServiceDetailsStep(
+                              selectedNationality: selectedNationality,
+                              workerCount: workerCount,
+                              contractDuration: contractDuration,
+                              selectedTime: selectedTime,
+                              visitDuration: visitDuration,
+                              visitsPerWeek: visitsPerWeek,
+                              selectedDays: selectedDays,
+                              onContractDurationChanged: _updateContractDuration,
+                              onWorkerCountChanged: _updateWorkerCount,
+                              onVisitsPerWeekChanged: (newVisitsPerWeek) {
+                                _updateVisitsPerWeek(newVisitsPerWeek);
+                                _updateSelectedDays([]);
+                              },
+                              onSelectedDaysChanged: _updateSelectedDays,
+                              onSelectDatePressed: _goToDateSelection,
+                              onDonePressed: _completePurchase,
+                              showBottomNavigation: isReturningFromDateSelection && selectedDates.isNotEmpty,
+                              totalPrice: _calculateTotalPrice(),
+                              selectedDates: selectedDates,
                               isCustomBooking: widget.isCustomBooking,
+                              onNationalityChanged: widget.isCustomBooking ? _updateNationality : null,
+                              onTimeChanged: widget.isCustomBooking ? _updateTime : null,
+                              onVisitDurationChanged: widget.isCustomBooking ? _updateVisitDuration : null,
+                              discountPercentage: widget.isCustomBooking ? null : widget.package?.discountPercentage, // Add this line
                             ),
-                            // Page 1: Service Details (custom booking) OR Date Selection (package booking)
-                            widget.isCustomBooking
-                                ? ServiceDetailsStep(
-            selectedNationality: selectedNationality,
-            workerCount: workerCount,
-            contractDuration: contractDuration,
-            selectedTime: selectedTime,
-            visitDuration: visitDuration,
-            visitsPerWeek: visitsPerWeek,
-            selectedDays: selectedDays,
-            onContractDurationChanged: _updateContractDuration,
-            onWorkerCountChanged: _updateWorkerCount,
-            onVisitsPerWeekChanged: (newVisitsPerWeek) {
-              _updateVisitsPerWeek(newVisitsPerWeek);
-              _updateSelectedDays([]);
-            },
-            onSelectedDaysChanged: _updateSelectedDays,
-            onSelectedDatesChanged: _updateSelectedDates, // This will trigger date selection within ServiceDetailsStep
-            onDonePressed: _completePurchase, // Final step completion
-            onNextPressed: null, // No next step after ServiceDetailsStep for custom booking
-            showBottomNavigation: true, // Always show bottom navigation for final step
-            totalPrice: _totalPriceFromServiceDetails ?? _calculateTotalPrice(),
-            selectedDates: selectedDates,
-            isCustomBooking: widget.isCustomBooking,
-            onNationalityChanged: _updateNationality,
-            onTimeChanged: _updateTime,
-            onVisitDurationChanged: _updateVisitDuration,
-            discountPercentage: null,
-            serviceId: widget.serviceId,
-            pricePerVisit: _calculatePricePerVisit(),
-            onTotalPriceChanged: _updateTotalPriceFromServiceDetails, // Add this callback// Add this callback
-          )
-                                : DateSelectionStep(
-                                    selectedDates: selectedDates,
-                                    onDatesChanged: _updateSelectedDates,
-                                    onNextPressed: selectedDates.isNotEmpty ? _completePurchase : null,
-                                    maxSelectableDates: workerCount,
-                                    selectedDays: selectedDays,
-                                    contractDuration: contractDuration,
-                                    totalPrice: widget.isCustomBooking ? _calculateTotalPrice() : widget.package!.finalPrice!.toDouble(),
-                                    isCustomBooking: widget.isCustomBooking,
-                                    pricePerVisit: widget.isCustomBooking ? _calculatePricePerVisit() : 0.0,
-                                    package: widget.package,
-                                  ),
-                            // Page 2: Date Selection (custom booking only)
-                            
-                          ],
+                              DateSelectionStep(
+                                selectedDates: selectedDates,
+                                onDatesChanged: _updateSelectedDates,
+                                onNextPressed: selectedDates.isNotEmpty ? _returnFromDateSelection : null,
+                                maxSelectableDates: workerCount,
+                                selectedDays: selectedDays,
+                                contractDuration: contractDuration,
+                                totalPrice: _calculateTotalPrice(),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                       ],
                     ),
                   ),
@@ -767,6 +655,4 @@ void _updateTotalPriceFromServiceDetails(double totalPrice) {
       },
     );
   }
-
-  
 }
