@@ -202,11 +202,11 @@ class _AddressSelectionScreenState
 
     if (result != null && result is Map<String, dynamic>) {
       final newAddress = Address(
+        cardText: result['fullAddress'] ??
+            '${result['province'] ?? ''}, ${result['city'] ?? ''}, ${result['district'] ?? ''}',
         addressId: DateTime.now().millisecondsSinceEpoch,
-        cardText: result['title'] ?? 'New Address',
-        cityCode: result['city'] ?? '',
-        districtCode: result['district'] ?? '',
-        isSelected: true,
+        cityCode: result['city'],
+        districtCode: result['districtCode'] ?? '',
       );
 
       setState(() {

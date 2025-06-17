@@ -8,8 +8,19 @@ import '../services/api_service.dart';
 import 'continuous_booking_overlay.dart';
 import 'order_summary_screen.dart';
 
+class Service {
+  final int id;
+  final String name;
 
+  Service({required this.id, required this.name});
 
+  factory Service.fromJson(Map<String, dynamic> json) {
+    return Service(
+      id: json['id'],
+      name: json['name'],
+    );
+  }
+}
 
 class CleaningServiceScreen extends StatefulWidget {
   final PackageModel? autoOpenPackage;
@@ -18,9 +29,9 @@ class CleaningServiceScreen extends StatefulWidget {
   final String serviceCode;
   final int serviceId;
   final int professionId;
-  
+
   const CleaningServiceScreen({
-    Key? key, 
+    Key? key,
     this.autoOpenPackage,
     this.autoOpenShift,
     this.serviceType = '', // Remove default, will be set dynamically
@@ -38,114 +49,180 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   final GlobalKey eastAsiaKey = const GlobalObjectKey("eastAsia");
   final GlobalKey africanKey = const GlobalObjectKey("african");
   final GlobalKey searchResultsKey = const GlobalObjectKey("searchResults");
-final GlobalKey eastAsiaSearchKey = const GlobalObjectKey("eastAsiaSearch");
-final GlobalKey africanSearchKey = const GlobalObjectKey("africanSearch");
+  final GlobalKey eastAsiaSearchKey = const GlobalObjectKey("eastAsiaSearch");
+  final GlobalKey africanSearchKey = const GlobalObjectKey("africanSearch");
 
   // Package lists for different groups and shifts
   List<PackageModel> eastAsiaPackages = [];
   List<PackageModel> africanPackages = [];
-  
+
   bool isEastAsiaLoading = true;
   bool isAfricanLoading = true;
   String? eastAsiaErrorMessage;
   String? africanErrorMessage;
-  
 
   bool isSearchActive = false;
-String searchQuery = '';
-TextEditingController searchController = TextEditingController();
-List<PackageModel> filteredEastAsiaPackages = [];
-List<PackageModel> filteredAfricanPackages = [];
+  String searchQuery = '';
+  TextEditingController searchController = TextEditingController();
+  List<PackageModel> filteredEastAsiaPackages = [];
+  List<PackageModel> filteredAfricanPackages = [];
   // Shift selection state
   int selectedEastAsiaShift = 1; // 1 = Morning, 2 = Evening
-  int selectedAfricanShift = 1;  // 1 = Morning, 2 = Evening
-  
+  int selectedAfricanShift = 1; // 1 = Morning, 2 = Evening
+
   // Booking state management
   BookingData? completedBooking;
   double totalSavings = 375.0; // This can be calculated based on discounts
   double originalPrice = 1497.0; // This can be calculated from package prices
 
-
-String dynamicServiceTitle = '';
+  String dynamicServiceTitle = '';
   List<String> servicePackTitles = [];
   bool isLoadingPackTitles = true;
+
+  List<Service> availableServices = [];
+  int? selectedServiceId;
+  String selectedServiceName = '';
+  bool isLoadingServices = true;
 // NEW: Dynamic data from API
   List<dynamic> availableShifts = [];
   List<dynamic> countryGroups = [];
   bool isLoadingShifts = true;
   bool isLoadingGroups = true;
-  String eastAsiaGroupName = 'East Asia Pack';
+  String eastAsiaGroupName = 'East Asia';
   String africanGroupName = 'African Pack';
 
- @override
-void initState() {
+  @override
+  void initState() {
     super.initState();
     _initializeData();
   }
-Future<void> _initializeData() async {
-  // Set dynamic service title based on serviceId
-  _setServiceTitle();
-  
-  await Future.wait([
-    _loadServiceShifts(),
-    _loadCountryGroups(),
-    _loadServicePackTitles(), // NEW: Load pack titles
-  ]);
-  
-  // After loading shifts and groups, fetch packages
-  fetchEastAsiaPackages();
-  fetchAfricanPackages();
-  
-  filteredEastAsiaPackages = eastAsiaPackages;
-  filteredAfricanPackages = africanPackages;
-  
-  _checkAndShowAutoOverlay();
-}
 
-void _setServiceTitle() {
-  switch (widget.serviceId) {
-    case 1:
-      dynamicServiceTitle = 'Fawran 4 Hours';
-      break;
-    case 21:
-      dynamicServiceTitle = 'Fawran 8 Hours';
-      break;
-    default:
-      dynamicServiceTitle = widget.serviceType.isNotEmpty ? widget.serviceType : 'Fawran Service';
+  Future<void> fetchServices() async {
+    try {
+      setState(() => isLoadingServices = true);
+
+      final response = await http.get(
+        Uri.parse(
+            'http://10.20.10.114:8080/ords/emdad/fawran/home/professions'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        // Find the selected position and extract its services
+        for (var position in data) {
+          if (position['position_id'] == widget.professionId) {
+            final List<dynamic> servicesList = position['services'] ?? [];
+            availableServices = servicesList
+                .map((service) => Service.fromJson(service))
+                .toList();
+
+            // Set default selection to the passed serviceId or first service
+            if (availableServices.isNotEmpty) {
+              selectedServiceId = widget.serviceId;
+              final selectedService = availableServices.firstWhere(
+                (service) => service.id == widget.serviceId,
+                orElse: () => availableServices.first,
+              );
+              selectedServiceName = selectedService.name;
+              // Update the title immediately after setting the selection
+              _setServiceTitle();
+            }
+            break;
+          }
+        }
+
+        setState(() => isLoadingServices = false);
+      } else {
+        setState(() => isLoadingServices = false);
+        print('Failed to load services: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() => isLoadingServices = false);
+      print('Error fetching services: $e');
+    }
   }
-}
+
+  Future<void> _initializeData() async {
+    // Set dynamic service title based on serviceId
+    _setServiceTitle();
+
+    await Future.wait([
+      fetchServices(), // Add this line
+      _loadServiceShifts(),
+      _loadCountryGroups(),
+      _loadServicePackTitles(),
+    ]);
+
+    // After loading shifts and groups, fetch packages
+    fetchEastAsiaPackages();
+    fetchAfricanPackages();
+
+    filteredEastAsiaPackages = eastAsiaPackages;
+    filteredAfricanPackages = africanPackages;
+
+    _checkAndShowAutoOverlay();
+  }
+
+  void _setServiceTitle() {
+    if (selectedServiceId != null && availableServices.isNotEmpty) {
+      final selectedService = availableServices.firstWhere(
+        (service) => service.id == selectedServiceId,
+        orElse: () => availableServices.first,
+      );
+      dynamicServiceTitle = selectedService.name;
+    } else {
+      // Fallback logic when services haven't loaded yet
+      switch (widget.serviceId) {
+        case 1:
+          dynamicServiceTitle = 'FAWRAN 4 Hours';
+          break;
+        case 21:
+          dynamicServiceTitle = 'FAWRAN 8 Hours';
+          break;
+        default:
+          dynamicServiceTitle = widget.serviceType.isNotEmpty
+              ? widget.serviceType
+              : 'Fawran Service';
+      }
+    }
+  }
 
 // 5. ADD NEW METHOD TO LOAD SERVICE PACK TITLES
-Future<void> _loadServicePackTitles() async {
-  try {
-    setState(() => isLoadingPackTitles = true);
-    
-    final groups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
-    
-    setState(() {
-      servicePackTitles = groups.map<String>((group) => group['group_name'].toString()).toList();
-      isLoadingPackTitles = false;
-    });
-  } catch (e) {
-    setState(() {
-      // Fallback to default titles if API fails
-      servicePackTitles = ['East Asia Pack', 'African Pack'];
-      isLoadingPackTitles = false;
-    });
-    print('Error loading service pack titles: $e');
-  }
-}
+  Future<void> _loadServicePackTitles() async {
+    try {
+      setState(() => isLoadingPackTitles = true);
 
-Future<void> _loadServiceShifts() async {
+      final groups =
+          await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+
+      setState(() {
+        servicePackTitles = groups
+            .map<String>((group) => group['group_name'].toString())
+            .toList();
+        isLoadingPackTitles = false;
+      });
+    } catch (e) {
+      setState(() {
+        // Fallback to default titles if API fails
+        servicePackTitles = ['East Asia Pack', 'African Pack'];
+        isLoadingPackTitles = false;
+      });
+      print('Error loading service pack titles: $e');
+    }
+  }
+
+  Future<void> _loadServiceShifts() async {
     try {
       setState(() => isLoadingShifts = true);
-      
-      final shifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
-      
+
+      final shifts = await ApiService.fetchServiceShifts(
+          serviceId: selectedServiceId ?? widget.serviceId);
+
       setState(() {
         availableShifts = shifts;
         isLoadingShifts = false;
-        
+
         // Set default shift to first available shift
         if (shifts.isNotEmpty) {
           selectedEastAsiaShift = shifts.first['id'];
@@ -162,18 +239,22 @@ Future<void> _loadServiceShifts() async {
   Future<void> _loadCountryGroups() async {
     try {
       setState(() => isLoadingGroups = true);
-      
-      final groups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
-      
+
+      final groups =
+          await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+
       setState(() {
         countryGroups = groups;
         isLoadingGroups = false;
-        
+
         // Update group names based on API response
         for (var group in groups) {
-          if (group['group_name'].toString().toUpperCase().contains('ASIAN')) {
+          if (group['group_name'].toString().toUpperCase().contains('ASIA')) {
             eastAsiaGroupName = group['group_name'];
-          } else if (group['group_name'].toString().toUpperCase().contains('AFRICAN')) {
+          } else if (group['group_name']
+              .toString()
+              .toUpperCase()
+              .contains('AFRICAN')) {
             africanGroupName = group['group_name'];
           }
         }
@@ -183,178 +264,205 @@ Future<void> _loadServiceShifts() async {
       print('Error loading country groups: $e');
     }
   }
-void _checkAndShowAutoOverlay() {
-  if (widget.autoOpenPackage != null) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ContinuousBookingOverlay.showAsOverlay(
-        context,
-        package: widget.autoOpenPackage!,
-        selectedShift: widget.autoOpenShift ?? 1,
-        serviceId: widget.serviceId, // Add serviceId
-        onBookingCompleted: _onBookingCompleted,
-      );
+
+  void _checkAndShowAutoOverlay() {
+    if (widget.autoOpenPackage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ContinuousBookingOverlay.showAsOverlay(
+          context,
+          package: widget.autoOpenPackage!,
+          selectedShift: widget.autoOpenShift ?? 1,
+          serviceId: widget.serviceId, // Add serviceId
+          onBookingCompleted: _onBookingCompleted,
+        );
+      });
+    }
+  }
+
+  void _filterPackages(String query) {
+    setState(() {
+      searchQuery = query.toLowerCase();
+
+      if (query.isEmpty) {
+        filteredEastAsiaPackages = eastAsiaPackages;
+        filteredAfricanPackages = africanPackages;
+      } else {
+        filteredEastAsiaPackages = eastAsiaPackages.where((package) {
+          return package.packageName.toLowerCase().contains(searchQuery) ||
+              package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
+              package.timeDisplay.toLowerCase().contains(searchQuery) ||
+              package.durationDisplay.toLowerCase().contains(searchQuery) ||
+              package.visitsWeekly.toString().contains(searchQuery) ||
+              'cleaning'.contains(searchQuery) ||
+              'visit'.contains(searchQuery) ||
+              'hours'.contains(searchQuery);
+        }).toList();
+
+        filteredAfricanPackages = africanPackages.where((package) {
+          return package.packageName.toLowerCase().contains(searchQuery) ||
+              package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
+              package.timeDisplay.toLowerCase().contains(searchQuery) ||
+              package.durationDisplay.toLowerCase().contains(searchQuery) ||
+              package.visitsWeekly.toString().contains(searchQuery) ||
+              'cleaning'.contains(searchQuery) ||
+              'visit'.contains(searchQuery) ||
+              'hours'.contains(searchQuery);
+        }).toList();
+
+        // Auto-scroll to search results after filtering
+        if (filteredEastAsiaPackages.isNotEmpty ||
+            filteredAfricanPackages.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToSearchResults();
+          });
+        }
+      }
     });
   }
-}
-  void _filterPackages(String query) {
-  setState(() {
-    searchQuery = query.toLowerCase();
-    
-    if (query.isEmpty) {
-      filteredEastAsiaPackages = eastAsiaPackages;
-      filteredAfricanPackages = africanPackages;
-    } else {
-      filteredEastAsiaPackages = eastAsiaPackages.where((package) {
-        return package.packageName.toLowerCase().contains(searchQuery) ||
-               package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
-               package.timeDisplay.toLowerCase().contains(searchQuery) ||
-               package.durationDisplay.toLowerCase().contains(searchQuery) ||
-               package.visitsWeekly.toString().contains(searchQuery) ||
-               'cleaning'.contains(searchQuery) ||
-               'visit'.contains(searchQuery) ||
-               'hours'.contains(searchQuery);
-      }).toList();
-      
-      filteredAfricanPackages = africanPackages.where((package) {
-        return package.packageName.toLowerCase().contains(searchQuery) ||
-               package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
-               package.timeDisplay.toLowerCase().contains(searchQuery) ||
-               package.durationDisplay.toLowerCase().contains(searchQuery) ||
-               package.visitsWeekly.toString().contains(searchQuery) ||
-               'cleaning'.contains(searchQuery) ||
-               'visit'.contains(searchQuery) ||
-               'hours'.contains(searchQuery);
-      }).toList();
-      
-      // Auto-scroll to search results after filtering
-      if (filteredEastAsiaPackages.isNotEmpty || filteredAfricanPackages.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToSearchResults();
-        });
+
+  void _scrollToSearchResults() {
+    GlobalKey? targetKey;
+
+    // Determine which section to scroll to based on search results
+    if (filteredEastAsiaPackages.isNotEmpty &&
+        filteredAfricanPackages.isNotEmpty) {
+      // Both have results, scroll to East Asia first
+      targetKey = eastAsiaSearchKey;
+    } else if (filteredEastAsiaPackages.isNotEmpty) {
+      // Only East Asia has results
+      targetKey = eastAsiaSearchKey;
+    } else if (filteredAfricanPackages.isNotEmpty) {
+      // Only African has results
+      targetKey = africanSearchKey;
+    }
+
+    // Scroll to the target section
+    if (targetKey != null) {
+      final context = targetKey.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+          alignment: 0.0, // Scroll to top of the section
+        );
       }
     }
-  });
-}
-
-void _scrollToSearchResults() {
-  GlobalKey? targetKey;
-  
-  // Determine which section to scroll to based on search results
-  if (filteredEastAsiaPackages.isNotEmpty && filteredAfricanPackages.isNotEmpty) {
-    // Both have results, scroll to East Asia first
-    targetKey = eastAsiaSearchKey;
-  } else if (filteredEastAsiaPackages.isNotEmpty) {
-    // Only East Asia has results
-    targetKey = eastAsiaSearchKey;
-  } else if (filteredAfricanPackages.isNotEmpty) {
-    // Only African has results
-    targetKey = africanSearchKey;
   }
-  
-  // Scroll to the target section
-  if (targetKey != null) {
-    final context = targetKey.currentContext;
-    if (context != null) {
-      Scrollable.ensureVisible(
-        context,
-        duration: Duration(milliseconds: 800),
-        curve: Curves.easeInOut,
-        alignment: 0.0, // Scroll to top of the section
+
+  void _toggleSearch() {
+    setState(() {
+      isSearchActive = !isSearchActive;
+      if (!isSearchActive) {
+        searchController.clear();
+        searchQuery = '';
+        filteredEastAsiaPackages = eastAsiaPackages;
+        filteredAfricanPackages = africanPackages;
+      } else {
+        filteredEastAsiaPackages = eastAsiaPackages;
+        filteredAfricanPackages = africanPackages;
+      }
+    });
+  }
+
+  void _onServiceChanged(int serviceId) {
+    setState(() {
+      selectedServiceId = serviceId;
+      selectedServiceName = availableServices
+          .firstWhere((service) => service.id == serviceId)
+          .name;
+      // Update the dynamic service title immediately
+      _setServiceTitle();
+    });
+
+    // Refresh shifts and packages when service changes
+    _loadServiceShifts().then((_) {
+      // After shifts are loaded, update the UI state and fetch packages
+      setState(() {
+        // The shift selections are already updated in _loadServiceShifts()
+        // but we need to trigger a rebuild to reflect the changes
+      });
+      fetchEastAsiaPackages();
+      fetchAfricanPackages();
+    });
+  }
+
+  Future<void> fetchEastAsiaPackages() async {
+    try {
+      print(
+          'Fetching East Asia packages with professionId: ${widget.professionId}, serviceId: ${selectedServiceId ?? widget.serviceId}');
+
+      setState(() {
+        isEastAsiaLoading = true;
+        eastAsiaErrorMessage = null;
+      });
+
+      final packages = await ApiService.fetchEastAsiaPackages(
+        professionId: widget.professionId,
+        serviceId:
+            selectedServiceId ?? widget.serviceId, // Use selectedServiceId
+        serviceShift: (selectedServiceId ?? widget.serviceId) == 1
+            ? selectedEastAsiaShift
+            : null,
       );
+
+      setState(() {
+        eastAsiaPackages = packages;
+        isEastAsiaLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching East Asia packages: $e');
+      setState(() {
+        eastAsiaErrorMessage = e.toString();
+        isEastAsiaLoading = false;
+      });
+    }
+
+    if (searchQuery.isEmpty) {
+      filteredEastAsiaPackages = eastAsiaPackages;
+    } else {
+      _filterPackages(searchQuery);
     }
   }
-}
-void _toggleSearch() {
-  setState(() {
-    isSearchActive = !isSearchActive;
-    if (!isSearchActive) {
-      searchController.clear();
-      searchQuery = '';
-      filteredEastAsiaPackages = eastAsiaPackages;
+
+// Update your fetchAfricanPackages method to use selectedServiceId
+  Future<void> fetchAfricanPackages() async {
+    try {
+      print(
+          'Fetching African packages with professionId: ${widget.professionId}, serviceId: ${selectedServiceId ?? widget.serviceId}');
+
+      setState(() {
+        isAfricanLoading = true;
+        africanErrorMessage = null;
+      });
+
+      final packages = await ApiService.fetchAfricanPackages(
+        professionId: widget.professionId,
+        serviceId:
+            selectedServiceId ?? widget.serviceId, // Use selectedServiceId
+        serviceShift: (selectedServiceId ?? widget.serviceId) == 1
+            ? selectedAfricanShift
+            : null,
+      );
+
+      setState(() {
+        africanPackages = packages;
+        isAfricanLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching African packages: $e');
+      setState(() {
+        africanErrorMessage = e.toString();
+        isAfricanLoading = false;
+      });
+    }
+
+    if (searchQuery.isEmpty) {
       filteredAfricanPackages = africanPackages;
     } else {
-      filteredEastAsiaPackages = eastAsiaPackages;
-      filteredAfricanPackages = africanPackages;
+      _filterPackages(searchQuery);
     }
-  });
-}
-Future<void> fetchEastAsiaPackages() async {
-  try {
-    print('Fetching East Asia packages with professionId: ${widget.professionId}, serviceId: ${widget.serviceId}');
-    
-    setState(() {
-      isEastAsiaLoading = true;
-      eastAsiaErrorMessage = null;
-    });
-
-    final packages = await ApiService.fetchEastAsiaPackages(
-      professionId: widget.professionId,
-      serviceId: widget.serviceId,
-      serviceShift: widget.serviceId == 1 ? selectedEastAsiaShift : null,
-    );
-
-    print('Received ${packages.length} East Asia packages');
-    for (var package in packages) {
-      print('Package: ${package.packageName}, Group: ${package.groupCode}, Shift: ${package.serviceShift}');
-    }
-
-    setState(() {
-      eastAsiaPackages = packages;
-      isEastAsiaLoading = false;
-    });
-  } catch (e) {
-    print('Error fetching East Asia packages: $e');
-    setState(() {
-      eastAsiaErrorMessage = e.toString();
-      isEastAsiaLoading = false;
-    });
   }
-  
-  if (searchQuery.isEmpty) {
-    filteredEastAsiaPackages = eastAsiaPackages;
-  } else {
-    _filterPackages(searchQuery);
-  }
-}
-
-Future<void> fetchAfricanPackages() async {
-  try {
-    print('Fetching African packages with professionId: ${widget.professionId}, serviceId: ${widget.serviceId}');
-    
-    setState(() {
-      isAfricanLoading = true;
-      africanErrorMessage = null;
-    });
-
-    final packages = await ApiService.fetchAfricanPackages(
-      professionId: widget.professionId,
-      serviceId: widget.serviceId,
-      serviceShift: widget.serviceId == 1 ? selectedAfricanShift : null,
-    );
-
-    print('Received ${packages.length} African packages');
-    for (var package in packages) {
-      print('Package: ${package.packageName}, Group: ${package.groupCode}, Shift: ${package.serviceShift}');
-    }
-
-    setState(() {
-      africanPackages = packages;
-      isAfricanLoading = false;
-    });
-  } catch (e) {
-    print('Error fetching African packages: $e');
-    setState(() {
-      africanErrorMessage = e.toString();
-      isAfricanLoading = false;
-    });
-  }
-  
-  if (searchQuery.isEmpty) {
-    filteredAfricanPackages = africanPackages;
-  } else {
-    _filterPackages(searchQuery);
-  }
-}
 
   void _onEastAsiaShiftChanged(int shift) {
     setState(() {
@@ -395,6 +503,93 @@ Future<void> fetchAfricanPackages() async {
     }
   }
 
+  Widget _buildServiceSelector() {
+    if (isLoadingServices) {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (availableServices.isEmpty) {
+      return SizedBox.shrink();
+    }
+
+    // Always show "Select Service" header when there are multiple services
+    if (availableServices.length > 1) {
+      return Container(
+        padding: EdgeInsets.symmetric(
+            horizontal: 1, vertical: 0), // Remove vertical padding
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Service',
+              style: TextStyle(
+                fontSize: 25, // Match the package section title size
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            SizedBox(height: 16), // Add consistent spacing
+
+            // HORIZONTAL ROW FOR RADIO BUTTONS
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: availableServices
+                    .map(
+                      (service) => Container(
+                        margin: EdgeInsets.only(
+                            right: 5), // Horizontal spacing between options
+                        child: GestureDetector(
+                          onTap: () => _onServiceChanged(service.id),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Radio<int>(
+                                value: service.id,
+                                groupValue: selectedServiceId,
+                                onChanged: (int? value) {
+                                  if (value != null) {
+                                    _onServiceChanged(value);
+                                  }
+                                },
+                                activeColor: Colors.purple,
+                              ),
+                              Text(
+                                service.name,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+
+            SizedBox(height: 24), // Add spacing before next section
+          ],
+        ),
+      );
+    }
+
+    // If only one service, return empty widget (no selector needed)
+    return SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -430,7 +625,7 @@ Future<void> fetchAfricanPackages() async {
                   ),
                 ),
                 title: Text(
-                  dynamicServiceTitle, // Use dynamic title
+                  "Hourly Services",
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20,
@@ -452,12 +647,10 @@ Future<void> fetchAfricanPackages() async {
                       ],
                     ),
                     child: IconButton(
-                        icon: Icon(
-                          isSearchActive ? Icons.close : Icons.search, 
-                          color: Colors.black
-                        ),
-                        onPressed: _toggleSearch,
-                      ),
+                      icon: Icon(isSearchActive ? Icons.close : Icons.search,
+                          color: Colors.black),
+                      onPressed: _toggleSearch,
+                    ),
                   ),
                   Container(
                     margin: EdgeInsets.only(right: 16, top: 10, bottom: 10),
@@ -494,10 +687,12 @@ Future<void> fetchAfricanPackages() async {
                         onChanged: _filterPackages,
                         decoration: InputDecoration(
                           hintText: 'Search packages, duration, visits...',
-                          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                          prefixIcon:
+                              Icon(Icons.search, color: Colors.grey[600]),
                           suffixIcon: searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: Icon(Icons.clear, color: Colors.grey[600]),
+                                  icon: Icon(Icons.clear,
+                                      color: Colors.grey[600]),
                                   onPressed: () {
                                     searchController.clear();
                                     _filterPackages('');
@@ -505,16 +700,17 @@ Future<void> fetchAfricanPackages() async {
                                 )
                               : null,
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                         ),
                       ),
                     ),
                   ),
                 ),
-                  if (isSearchActive && searchQuery.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: _buildSearchResultsHeader(),
-                    ),
+              if (isSearchActive && searchQuery.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildSearchResultsHeader(),
+                ),
               // Main content
               SliverToBoxAdapter(
                 child: Column(
@@ -593,130 +789,36 @@ Future<void> fetchAfricanPackages() async {
                         ],
                       ),
                     ),
-                    
-                    // Main content
+
+                    // Main content with consistent padding
                     Container(
-                      padding: EdgeInsets.all(20),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 20), // Consistent padding
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Service title and rating
+                          // Service selector (only shows when multiple services)
+                          _buildServiceSelector(),
+
+                          // Service title
                           Text(
-                            dynamicServiceTitle, // Use dynamic title
+                            dynamicServiceTitle,
                             style: TextStyle(
-                              fontSize: 32,
+                              fontSize: 25, // Match package section title size
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          
-                          
-                          // Plus membership banner and offers
-                          Container(
-                            height: 80,
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: [
-                                Container(
-                                  width: 280,
-                                  padding: EdgeInsets.all(16),
-                                  margin: EdgeInsets.only(right: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey[300]!),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.star, color: Colors.blue, size: 24),
-                                      SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Save 10% on every order',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              'Get Plus now',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(Icons.chevron_right, color: Colors.grey),
-                                    ],
-                                  ),
-                                ),
-                                _buildOfferCard('Special Weekend Deal', '20% OFF', Colors.green),
-                                _buildOfferCard('First Time User', '25% OFF', Colors.orange),
-                                _buildOfferCard('Monthly Package', '30% OFF', Colors.purple),
-                              ],
-                            ),
-                          ),
-                          
-                          
-                          _buildDesignCardButton(),
+                          SizedBox(height: 16), // Consistent spacing
 
-                          
-                          // Service packs (removed Evening pack)
-                          Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (servicePackTitles.length >= 1)
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _scrollToSection(eastAsiaKey),
-                                  child: _buildServicePack(
-                                    _formatPackName(servicePackTitles[0]),
-                                    'assets/images/east_asia_flags.png',
-                                    Colors.blue,
-                                  ),
-                                ),
-                              ),
-                            if (servicePackTitles.length >= 2) SizedBox(width: 15),
-                            if (servicePackTitles.length >= 2)
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _scrollToSection(africanKey),
-                                  child: _buildServicePack(
-                                    _formatPackName(servicePackTitles[1]),
-                                    'assets/images/african_flags.png',
-                                    Colors.green,
-                                  ),
-                                ),
-                              ),
-                            // Show loading if still loading pack titles
-                            if (isLoadingPackTitles)
-                              Expanded(
-                                child: Container(
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                ),
-                              ),
-                            SizedBox(width: 15), // Empty space to maintain layout
-                          ],
-                        ),
-                          SizedBox(height: 40),
-                          
-                          // East Asia Pack Section with Segmented Control
+                          // Design your card button
+                          _buildDesignCardButton(),
+                          SizedBox(
+                              height: 32), // Spacing before package sections
+
+                          // East Asia Pack Section
                           _buildPackageSection(
-                            sectionTitle: eastAsiaGroupName, // Use dynamic name
+                            sectionTitle: eastAsiaGroupName,
                             packages: eastAsiaPackages,
                             filteredPackages: filteredEastAsiaPackages,
                             isLoading: isEastAsiaLoading,
@@ -727,10 +829,10 @@ Future<void> fetchAfricanPackages() async {
                             searchKey: eastAsiaSearchKey,
                           ),
                           SizedBox(height: 40),
-                          
-                          // African Pack Section with Segmented Control
+
+                          // African Pack Section
                           _buildPackageSection(
-                            sectionTitle: africanGroupName, // Use dynamic name
+                            sectionTitle: africanGroupName,
                             packages: africanPackages,
                             filteredPackages: filteredAfricanPackages,
                             isLoading: isAfricanLoading,
@@ -740,7 +842,7 @@ Future<void> fetchAfricanPackages() async {
                             sectionKey: africanKey,
                             searchKey: africanSearchKey,
                           ),
-                          SizedBox(height: completedBooking != null ? 120 : 20), // Add bottom padding when order view is shown
+                          SizedBox(height: completedBooking != null ? 120 : 20),
                         ],
                       ),
                     ),
@@ -749,7 +851,7 @@ Future<void> fetchAfricanPackages() async {
               ),
             ],
           ),
-          
+
           // Bottom Order View - Show when booking is completed
           if (completedBooking != null)
             Positioned(
@@ -773,7 +875,8 @@ Future<void> fetchAfricanPackages() async {
                     // Congratulations banner
                     Container(
                       width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       color: Colors.green,
                       child: Row(
                         children: [
@@ -784,7 +887,7 @@ Future<void> fetchAfricanPackages() async {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'Congratulations! SAR${completedBooking!.discountAmount.toStringAsFixed(0)} saved so far!',
+                            'Congratulations! SAR${completedBooking!.discountAmount.toStringAsFixed(1)} saved so far!',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -794,7 +897,7 @@ Future<void> fetchAfricanPackages() async {
                         ],
                       ),
                     ),
-                    
+
                     // Price and View Order section
                     Container(
                       padding: EdgeInsets.all(16),
@@ -807,7 +910,7 @@ Future<void> fetchAfricanPackages() async {
                                 Row(
                                   children: [
                                     Text(
-                                      'SAR ${completedBooking!.totalPrice.toStringAsFixed(0)}',
+                                      'SAR ${completedBooking!.totalPrice}',
                                       style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
@@ -816,7 +919,7 @@ Future<void> fetchAfricanPackages() async {
                                     ),
                                     SizedBox(width: 8),
                                     Text(
-                                      'SAR ${completedBooking!.originalPrice.toStringAsFixed(0)}',
+                                      'SAR ${completedBooking!.originalPrice}',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey[600],
@@ -833,7 +936,8 @@ Future<void> fetchAfricanPackages() async {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.purple,
                               foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
                               ),
@@ -858,19 +962,19 @@ Future<void> fetchAfricanPackages() async {
     );
   }
 
-String _formatPackName(String packName) {
-  // Convert "East Asia Pack" to "East Asia\nPack" format
-  List<String> words = packName.split(' ');
-  if (words.length >= 2) {
-    // Take last word as second line, rest as first line
-    String lastWord = words.removeLast();
-    String firstLine = words.join(' ');
-    return '$firstLine\n$lastWord';
+  String _formatPackName(String packName) {
+    // Convert "East Asia Pack" to "East Asia\nPack" format
+    List<String> words = packName.split(' ');
+    if (words.length >= 2) {
+      // Take last word as second line, rest as first line
+      String lastWord = words.removeLast();
+      String firstLine = words.join(' ');
+      return '$firstLine\n$lastWord';
+    }
+    return packName;
   }
-  return packName;
-}
 
-Widget _buildShiftSelector(bool isEastAsia) {
+  Widget _buildShiftSelector(bool isEastAsia) {
     if (isLoadingShifts || availableShifts.isEmpty) {
       return Container(
         width: double.infinity,
@@ -880,16 +984,16 @@ Widget _buildShiftSelector(bool isEastAsia) {
           borderRadius: BorderRadius.circular(25),
         ),
         child: Center(
-          child: isLoadingShifts 
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Text(
-                'No shifts available',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
+          child: isLoadingShifts
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(
+                  'No shifts available',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
         ),
       );
     }
@@ -915,12 +1019,18 @@ Widget _buildShiftSelector(bool isEastAsia) {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              shift['service_shifts'].toString().toLowerCase().contains('morning') 
-                ? Icons.wb_sunny 
-                : Icons.nightlight_round,
-              color: shift['service_shifts'].toString().toLowerCase().contains('morning')
-                ? Colors.orange 
-                : Colors.indigo,
+              shift['service_shifts']
+                      .toString()
+                      .toLowerCase()
+                      .contains('morning')
+                  ? Icons.wb_sunny
+                  : Icons.nightlight_round,
+              color: shift['service_shifts']
+                      .toString()
+                      .toLowerCase()
+                      .contains('morning')
+                  ? Colors.orange
+                  : Colors.indigo,
               size: 20,
             ),
             SizedBox(width: 6),
@@ -938,9 +1048,11 @@ Widget _buildShiftSelector(bool isEastAsia) {
     }
 
     // Multiple shifts available - show selector
-    int selectedShift = isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
-    Function(int) onShiftChanged = isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
-    
+    int selectedShift =
+        isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
+    Function(int) onShiftChanged =
+        isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -952,7 +1064,7 @@ Widget _buildShiftSelector(bool isEastAsia) {
           final shiftId = shift['id'];
           final shiftName = shift['service_shifts'];
           final isSelected = selectedShift == shiftId;
-          
+
           return Expanded(
             child: GestureDetector(
               onTap: () => onShiftChanged(shiftId),
@@ -976,13 +1088,16 @@ Widget _buildShiftSelector(bool isEastAsia) {
                   children: [
                     Icon(
                       shiftName.toString().toLowerCase().contains('morning')
-                        ? Icons.wb_sunny
-                        : Icons.nightlight_round,
-                      color: isSelected 
-                        ? (shiftName.toString().toLowerCase().contains('morning') 
-                          ? Colors.orange 
-                          : Colors.indigo)
-                        : Colors.grey,
+                          ? Icons.wb_sunny
+                          : Icons.nightlight_round,
+                      color: isSelected
+                          ? (shiftName
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains('morning')
+                              ? Colors.orange
+                              : Colors.indigo)
+                          : Colors.grey,
                       size: 20,
                     ),
                     SizedBox(width: 6),
@@ -1003,24 +1118,26 @@ Widget _buildShiftSelector(bool isEastAsia) {
       ),
     );
   }
+
   Widget _buildSearchResultsHeader() {
-  if (!isSearchActive || searchQuery.isEmpty) return SizedBox.shrink();
-  
-  int totalResults = filteredEastAsiaPackages.length + filteredAfricanPackages.length;
-  
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    child: Text(
-      'Found $totalResults result${totalResults != 1 ? 's' : ''} for "$searchQuery"',
-      style: TextStyle(
-        fontSize: 16,
-        color: Colors.grey[600],
-        fontWeight: FontWeight.w500,
+    if (!isSearchActive || searchQuery.isEmpty) return SizedBox.shrink();
+
+    int totalResults =
+        filteredEastAsiaPackages.length + filteredAfricanPackages.length;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Text(
+        'Found $totalResults result${totalResults != 1 ? 's' : ''} for "$searchQuery"',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.grey[600],
+          fontWeight: FontWeight.w500,
+        ),
       ),
-    ),
-  );
-}
-  
+    );
+  }
+
   Widget _buildOfferCard(String title, String discount, Color color) {
     return Container(
       width: 200,
@@ -1071,7 +1188,7 @@ Widget _buildShiftSelector(bool isEastAsia) {
       ),
     );
   }
-  
+
   Widget _buildServicePack(String title, String imagePath, Color color) {
     return Container(
       height: 120,
@@ -1118,7 +1235,7 @@ Widget _buildShiftSelector(bool isEastAsia) {
       ),
     );
   }
-  
+
   Widget _buildServicePackWithIcon(String title, IconData icon, Color color) {
     return Container(
       height: 120,
@@ -1156,7 +1273,8 @@ Widget _buildShiftSelector(bool isEastAsia) {
       ),
     );
   }
-Widget _buildPackageSection({
+
+  Widget _buildPackageSection({
     required String sectionTitle,
     required List<PackageModel> packages,
     required List<PackageModel> filteredPackages,
@@ -1173,18 +1291,22 @@ Widget _buildPackageSection({
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Show section title only if there are results or no search is active
-          if (!isSearchActive || searchQuery.isEmpty || filteredPackages.isNotEmpty)
+          if (!isSearchActive ||
+              searchQuery.isEmpty ||
+              filteredPackages.isNotEmpty)
             Text(
               sectionTitle,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 25,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-          
+
           // Show search results count for this section
-          if (isSearchActive && searchQuery.isNotEmpty && filteredPackages.isNotEmpty)
+          if (isSearchActive &&
+              searchQuery.isNotEmpty &&
+              filteredPackages.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(top: 8, bottom: 8),
               child: Text(
@@ -1196,9 +1318,11 @@ Widget _buildPackageSection({
                 ),
               ),
             ),
-          
+
           // Show shift selector only if not searching or has results
-          if ((!isSearchActive || searchQuery.isEmpty || filteredPackages.isNotEmpty))
+          if ((!isSearchActive ||
+              searchQuery.isEmpty ||
+              filteredPackages.isNotEmpty))
             Column(
               children: [
                 SizedBox(height: 16),
@@ -1206,7 +1330,7 @@ Widget _buildPackageSection({
                 SizedBox(height: 20),
               ],
             ),
-          
+
           // Show loading, error, or packages
           if (isLoading)
             Center(child: CircularProgressIndicator())
@@ -1239,7 +1363,9 @@ Widget _buildPackageSection({
                 ],
               ),
             )
-          else if (isSearchActive && searchQuery.isNotEmpty && filteredPackages.isEmpty)
+          else if (isSearchActive &&
+              searchQuery.isNotEmpty &&
+              filteredPackages.isEmpty)
             Container(
               padding: EdgeInsets.all(20),
               child: Text(
@@ -1252,87 +1378,102 @@ Widget _buildPackageSection({
                 textAlign: TextAlign.center,
               ),
             )
-          else
-            ...filteredPackages.map((package) => Column(
-              children: [
-                _buildServiceCardFromAPI(package),
-                SizedBox(height: 20),
-              ],
-            )).toList(),
+          else if (filteredPackages.isNotEmpty)
+            // HORIZONTAL SCROLLING CONTAINER
+            Container(
+              height: 320, // Fixed height for horizontal scroll
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                itemCount: filteredPackages.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 280, // Fixed width for each card
+                    margin: EdgeInsets.only(right: 16),
+                    child: _buildCompactServiceCard(filteredPackages[index]),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
   }
-Widget _buildDesignCardButton() {
-  return GestureDetector(
-    onTap: () {
-      // Show custom booking overlay when tapped
-      ContinuousBookingOverlay.showAsCustomOverlay(
-        context,
-        serviceId: widget.serviceId,
-        onBookingCompleted: (BookingData bookingData) {
-          // For custom bookings, navigate directly to OrderSummaryScreen
-          // instead of showing the bottom order view
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OrderSummaryScreen(
-                bookingData: bookingData,
-                totalSavings: bookingData.discountAmount, // Use the actual discount from booking
-                originalPrice: bookingData.originalPrice, // Use the original price from booking
-              ),
-            ),
-          );
-        },
-      );
-    },
-    child: Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16),
-      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(
-              Icons.add,
-              color: Colors.black,
-              size: 16,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Design your card',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: Colors.grey[400],
-            size: 20,
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
-  Widget _buildServiceCardFromAPI(PackageModel package) {
+  Widget _buildDesignCardButton() {
+    return GestureDetector(
+      onTap: () {
+        // Show custom booking overlay when tapped
+        ContinuousBookingOverlay.showAsCustomOverlay(
+          context,
+          serviceId: selectedServiceId ??
+              widget
+                  .serviceId, // Use selectedServiceId instead of widget.serviceId
+          onBookingCompleted: (BookingData bookingData) {
+            // For custom bookings, navigate directly to OrderSummaryScreen
+            // instead of showing the bottom order view
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderSummaryScreen(
+                  bookingData: bookingData,
+                  totalSavings: bookingData
+                      .discountAmount, // Use the actual discount from booking
+                  originalPrice: bookingData
+                      .originalPrice, // Use the original price from booking
+                ),
+              ),
+            );
+          },
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16),
+        margin: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Icon(
+                Icons.add,
+                color: Colors.black,
+                size: 16,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Design your card',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey[400],
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactServiceCard(PackageModel package) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1348,9 +1489,9 @@ Widget _buildDesignCardButton() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Service image with discount badge
+          // Compact service image with discount badge
           Container(
-            height: 200,
+            height: 120, // Reduced height
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
@@ -1358,12 +1499,14 @@ Widget _buildDesignCardButton() {
               children: [
                 Container(
                   width: double.infinity,
-                  height: 200,
+                  height: 120,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(16)),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(16)),
                     child: Image.asset(
                       'assets/images/cleaning_service_card.jpg',
                       fit: BoxFit.cover,
@@ -1373,7 +1516,7 @@ Widget _buildDesignCardButton() {
                           child: Center(
                             child: Icon(
                               Icons.cleaning_services,
-                              size: 60,
+                              size: 40,
                               color: Colors.white.withOpacity(0.7),
                             ),
                           ),
@@ -1384,9 +1527,10 @@ Widget _buildDesignCardButton() {
                 ),
                 Container(
                   width: double.infinity,
-                  height: 200,
+                  height: 120,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(16)),
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -1398,41 +1542,21 @@ Widget _buildDesignCardButton() {
                   ),
                 ),
                 Positioned(
-                  top: 16,
-                  left: 16,
+                  top: 8,
+                  left: 8,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.green,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       'GET ${package.discountPercentage}% OFF',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 10,
                       ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: Text(
-                    package.packageName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 1),
-                          blurRadius: 3,
-                          color: Colors.black.withOpacity(0.5),
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -1440,106 +1564,95 @@ Widget _buildDesignCardButton() {
             ),
           ),
 
-          
-          // Service details
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${package.visitsWeekly} weekly visit: ${package.duration} Hours\nCleaning Visit',
+          // Compact service details
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Package name - truncated
+                  Text(
+                    package.packageName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 6),
+
+                  // Visit details
+                  Text(
+                    '${package.visitsWeekly} weekly visit: ${package.duration} Hours',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+
+                  // Price row
+                  Row(
+                    children: [
+                      Text(
+                        'SAR ${package.finalPrice}',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        // Pass the entire package object to address selection with callback
+                      SizedBox(width: 6),
+                      Text(
+                        'SAR ${package.packagePrice}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  Spacer(),
+
+                  // Add button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () {
                         ContinuousBookingOverlay.showAsOverlay(
-                          context, 
+                          context,
                           package: package,
                           selectedShift: selectedEastAsiaShift,
-                          serviceId: widget.serviceId, // Add serviceId
+                          serviceId: widget.serviceId,
                           onBookingCompleted: _onBookingCompleted,
                         );
                       },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.purple),
-                          borderRadius: BorderRadius.circular(20),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                        child: Text(
-                          'Add',
-                          style: TextStyle(
-                            color: Colors.purple,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Add',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      'Starts at SAR ${package.finalPrice.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'SAR ${package.packagePrice.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        decoration: TextDecoration.lineThrough,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  height: 1,
-                  color: Colors.grey[300],
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Book ${package.visitsWeekly} weekly cleaning visit from fawran ${package.duration} hours at discounted price.\nAvail first visit now with an option of customizing.\n\n'
-                  '• Duration: ${package.duration} hours\n'
-                  '• No of weeks: ${package.visitsWeekly * 4}\n'
-                  '• Number of employees: ${package.noOfEmployee}\n'
-                  '• VAT: ${package.vatPercentage}%',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    height: 1.5,
                   ),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'View details',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.purple,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -1557,9 +1670,10 @@ Widget _buildDesignCardButton() {
       );
     }
   }
+
   @override
-void dispose() {
-  searchController.dispose();
-  super.dispose();
-}
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 }

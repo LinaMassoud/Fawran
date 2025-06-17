@@ -1,38 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/package_model.dart';
 
-class DateSelectionStep extends StatefulWidget {
+class CustomDateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
   final Function(List<DateTime>) onDatesChanged;
+  final Function(double)? onTotalPriceChanged;
   final VoidCallback? onNextPressed;
-  final int maxSelectableDates;
-  final List<String> selectedDays;
-  final String contractDuration;
-  final double totalPrice;
-  final bool isCustomBooking;
   final double pricePerVisit;
-  final PackageModel? package;
+  final String contractDuration;
+  final String visitsPerWeek;
+  final int maxSelectableDates;
+  final bool showBottomNavigation; // Add this parameter
 
-  const DateSelectionStep({
+  const CustomDateSelectionStep({
     Key? key,
     required this.selectedDates,
     required this.onDatesChanged,
+    this.onTotalPriceChanged,
     this.onNextPressed,
-    this.maxSelectableDates = 10,
-    this.selectedDays = const [],
-    this.contractDuration = '1 month',
-    required this.totalPrice,
-    this.isCustomBooking = false,
-    this.pricePerVisit = 0.0,
-    this.package,
+    required this.pricePerVisit,
+    required this.contractDuration,
+    required this.visitsPerWeek,
+    required this.maxSelectableDates,
+    this.showBottomNavigation = true, // Default to true for backward compatibility
   }) : super(key: key);
 
   @override
-  _DateSelectionStepState createState() => _DateSelectionStepState();
+  State<CustomDateSelectionStep> createState() => _CustomDateSelectionStepState();
 }
 
-class _DateSelectionStepState extends State<DateSelectionStep> {
+class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   late PageController _pageController;
   late DateTime _currentMonth;
   List<DateTime> _selectedDates = [];
@@ -61,24 +58,17 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   }
 
   void _calculateContractDetails() {
-    // Get duration from package or fallback to widget parameter
+    // Parse contract duration
     int durationInWeeks = 0;
-    String contractDuration = widget.package?.noOfMonth != null
-        ? '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}'
-        : widget.contractDuration;
-
-    if (contractDuration.toLowerCase().contains('month')) {
-      int months =
-          int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+    if (widget.contractDuration.toLowerCase().contains('month')) {
+      int months = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
       durationInWeeks = months * 4; // Approximate weeks in months
-    } else if (contractDuration.toLowerCase().contains('week')) {
-      durationInWeeks =
-          int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+    } else if (widget.contractDuration.toLowerCase().contains('week')) {
+      durationInWeeks = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
     }
 
-    // Get visits per week from package or fallback to selected days
-    _visitsPerWeekCount =
-        widget.package?.visitsWeekly ?? widget.selectedDays.length;
+    // Parse visits per week
+    _visitsPerWeekCount = int.tryParse(widget.visitsPerWeek.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
 
     // Calculate total allowed visits
     _totalAllowedVisits = durationInWeeks * _visitsPerWeekCount;
@@ -87,12 +77,10 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     if (_userSelectedStartDate == null) {
       final today = DateTime.now();
       _contractStartDate = DateTime(today.year, today.month, today.day);
-      _contractEndDate =
-          _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
     } else {
       _contractStartDate = _userSelectedStartDate;
-      _contractEndDate =
-          _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
     }
   }
 
@@ -116,28 +104,6 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     return currentWeekCount >= _visitsPerWeekCount;
   }
 
-  // Convert day names to weekday numbers (1 = Monday, 7 = Sunday)
-  int _dayNameToWeekday(String dayName) {
-    switch (dayName.toLowerCase()) {
-      case 'monday':
-        return 1;
-      case 'tuesday':
-        return 2;
-      case 'wednesday':
-        return 3;
-      case 'thursday':
-        return 4;
-      case 'friday':
-        return 5;
-      case 'saturday':
-        return 6;
-      case 'sunday':
-        return 7;
-      default:
-        return 1;
-    }
-  }
-
   void _selectDate(DateTime date) {
     setState(() {
       // If we're still selecting the start date
@@ -148,8 +114,6 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
         _isSelectingStartDate = false;
         _calculateContractDetails(); // Recalculate with new start date
         _updateWeeklyVisitCounts();
-        _showSnackBar(
-            'Start date selected. Now select your visit dates within the contract period.');
         widget.onDatesChanged(_selectedDates);
         return;
       }
@@ -158,16 +122,14 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       if (_selectedDates.contains(date)) {
         // Don't allow removing the start date
         if (date == _userSelectedStartDate) {
-          _showSnackBar(
-              'Cannot remove start date. Tap "Reset" to choose a new start date.');
+          _showSnackBar('Cannot remove start date. Tap "Reset" to choose a new start date.');
           return;
         }
         _selectedDates.remove(date);
       } else {
         // Check if we've reached the total visit limit
         if (_selectedDates.length >= _totalAllowedVisits) {
-          _showSnackBar(
-              'Maximum $_totalAllowedVisits visits allowed for this contract');
+          _showSnackBar('Maximum $_totalAllowedVisits visits allowed for this contract');
           return;
         }
 
@@ -177,37 +139,16 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
           return;
         }
 
-        // Check if date matches selected days (for package bookings)
-        if (!widget.isCustomBooking && !_isDateAllowedForPackage(date)) {
-          String selectedDaysText = widget.selectedDays.isNotEmpty
-              ? widget.selectedDays.join(', ')
-              : 'your selected days';
-          _showSnackBar('Please select dates that match $selectedDaysText');
-          return;
-        }
-
         _selectedDates.add(date);
       }
       _selectedDates.sort();
       _updateWeeklyVisitCounts();
     });
     widget.onDatesChanged(_selectedDates);
+    if (widget.onTotalPriceChanged != null) {
+    double totalPrice = _selectedDates.length * widget.pricePerVisit;
+    widget.onTotalPriceChanged!(totalPrice);
   }
-
-  bool _isDateAllowedForPackage(DateTime date) {
-    // If it's a custom booking, allow any date
-    if (widget.isCustomBooking) return true;
-
-    // If we have selected days from the widget, use those
-    if (widget.selectedDays.isNotEmpty) {
-      final selectedWeekdays =
-          widget.selectedDays.map(_dayNameToWeekday).toList();
-      return selectedWeekdays.contains(date.weekday);
-    }
-
-    // If we have a package but no selected days, allow any weekday for now
-    // This might need to be adjusted based on your business logic
-    return true;
   }
 
   void _showSnackBar(String message) {
@@ -224,23 +165,18 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     final dateOnly = DateTime(date.year, date.month, date.day);
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
-
+    
     // If selecting start date, only allow today or future dates
     if (_isSelectingStartDate) {
-      return dateOnly.isAfter(todayOnly) ||
-          dateOnly.isAtSameMomentAs(todayOnly);
+      return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
     }
-
+    
     // Check if date is within contract period
     if (_contractStartDate != null && _contractEndDate != null) {
-      if (dateOnly.isBefore(_contractStartDate!) ||
-          dateOnly.isAfter(_contractEndDate!)) {
+      if (dateOnly.isBefore(_contractStartDate!) || dateOnly.isAfter(_contractEndDate!)) {
         return false;
       }
     }
-
-    // Always disable Fridays
-    if (date.weekday == 5) return false;
 
     // Check if date is already selected
     if (_selectedDates.contains(date)) {
@@ -257,28 +193,26 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       return false;
     }
 
-    // For package bookings, check if date matches selected days
-    if (!widget.isCustomBooking && !_isDateAllowedForPackage(date)) {
-      return false;
-    }
-
     return true;
+  }
+
+  String _formatPrice(double price) {
+    return 'SAR ${price.toStringAsFixed(0)}';
   }
 
   void _navigateToMonth(int monthOffset) {
     setState(() {
-      _currentMonth =
-          DateTime(_currentMonth.year, _currentMonth.month + monthOffset);
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + monthOffset);
     });
-
+    
     // Calculate the page index for the new month
     final now = DateTime.now();
     final targetMonth = DateTime(_currentMonth.year, _currentMonth.month);
     final currentMonth = DateTime(now.year, now.month);
-
-    int monthDifference = (targetMonth.year - currentMonth.year) * 12 +
-        (targetMonth.month - currentMonth.month);
-
+    
+    int monthDifference = (targetMonth.year - currentMonth.year) * 12 + 
+                         (targetMonth.month - currentMonth.month);
+    
     if (monthDifference >= 0 && monthDifference < 24) {
       _pageController.animateToPage(
         monthDifference,
@@ -306,23 +240,23 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       final isSelected = _selectedDates.contains(date);
       final isSelectable = _isDateSelectable(date);
       final isWeekFull = _isWeekFull(date) && !isSelected;
-      final isOutsideContract = !_isSelectingStartDate &&
-          _contractStartDate != null &&
-          _contractEndDate != null &&
-          (date.isBefore(_contractStartDate!) ||
-              date.isAfter(_contractEndDate!));
+      final isOutsideContract = !_isSelectingStartDate && _contractStartDate != null && _contractEndDate != null &&
+          (date.isBefore(_contractStartDate!) || date.isAfter(_contractEndDate!));
       final isStartDate = date == _userSelectedStartDate;
 
       Color backgroundColor = Colors.transparent;
       Color textColor = Colors.black;
+      Color priceColor = Colors.green;
 
       if (isSelected) {
         if (isStartDate) {
-          backgroundColor = Colors.white;
-          textColor = Colors.black;
-        } else {
           backgroundColor = Color(0xFF1E3A8A);
           textColor = Colors.white;
+          priceColor = Colors.white;
+        } else {
+          backgroundColor = Colors.orange;
+          textColor = Colors.white;
+          priceColor = Colors.white;
         }
       } else if (!isSelectable) {
         backgroundColor = Colors.grey.withOpacity(0.1);
@@ -333,25 +267,22 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
         GestureDetector(
           onTap: isSelectable ? () => _selectDate(date) : null,
           child: Container(
-            margin: EdgeInsets.all(1),
+            margin: EdgeInsets.all(1), // Reduced margin
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: BorderRadius.circular(6),
-              border: isSelected
-                  ? Border.all(color: Color(0xFF1E3A8A), width: 2)
-                  : null,
+              borderRadius: BorderRadius.circular(6), // Smaller border radius
+              border: isSelected ? Border.all(color: Color(0xFF1E3A8A), width: 1) : null, // Updated border color
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min, // Important: minimize column size
               children: [
                 // Day number - always shown
                 Text(
                   day.toString(),
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 14, // Reduced font size
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     color: textColor,
                   ),
                 ),
@@ -366,9 +297,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                       color: Colors.white,
                     ),
                   ),
-                ] else if (isWeekFull &&
-                    !isSelected &&
-                    !_isSelectingStartDate) ...[
+                ] else if (isWeekFull && !isSelected && !_isSelectingStartDate) ...[
                   // Second priority: Week full indicator
                   Text(
                     'Full',
@@ -378,17 +307,14 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                       color: Colors.grey,
                     ),
                   ),
-                ] else if (!widget.isCustomBooking &&
-                    !_isDateAllowedForPackage(date) &&
-                    !isOutsideContract &&
-                    isSelectable) ...[
-                  // For package bookings: show if day doesn't match selected days
+                ] else if (isSelectable && !isOutsideContract) ...[
+                  // Third priority: Price
                   Text(
-                    'N/A',
+                    _formatPrice(widget.pricePerVisit),
                     style: TextStyle(
-                      fontSize: 7,
+                      fontSize: 8, // Reduced font size
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey,
+                      color: priceColor,
                     ),
                   ),
                 ],
@@ -403,10 +329,10 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       crossAxisCount: 7,
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.0,
-      mainAxisSpacing: 1,
-      crossAxisSpacing: 1,
-      padding: EdgeInsets.zero,
+      childAspectRatio: 1.0, // Square cells
+      mainAxisSpacing: 1, // Reduced spacing
+      crossAxisSpacing: 1, // Reduced spacing
+      padding: EdgeInsets.zero, // Remove default padding
       children: dayWidgets,
     );
   }
@@ -417,7 +343,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     final canNavigateRight = month.isBefore(DateTime(now.year + 2, now.month));
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Reduced vertical padding
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -463,12 +389,12 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
               return Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                  padding: EdgeInsets.symmetric(vertical: 8), // Reduced padding
                   child: Text(
                     day,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 14, // Reduced font size
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
@@ -478,7 +404,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             }).toList(),
           ),
         ),
-        Expanded(
+        Expanded( // Use Expanded instead of fixed height
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: _buildCalendarGrid(month),
@@ -488,42 +414,36 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     );
   }
 
+  double _calculateTotalPrice() {
+    return _selectedDates.length * widget.pricePerVisit;
+  }
+
   Widget _buildContractInfo() {
-    String statusText = _isSelectingStartDate
+    String statusText = _isSelectingStartDate 
         ? 'Please select your start date'
         : 'Select visit dates within contract period';
-
-    // Get contract duration from package or fallback
-    String contractDurationText = widget.package?.noOfMonth != null
-        ? '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}'
-        : widget.contractDuration;
-
-    // Get package name if available
-    String packageInfo = widget.package?.packageName ?? 'Custom Package';
-
+        
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Color(0xFF1E3A8A).withOpacity(0.1), // Updated background color
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        border: Border.all(color: Color(0xFF1E3A8A).withOpacity(0.3)), // Updated border color
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min, // Important: minimize column size
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  packageInfo,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
+              Text(
+                'Contract Terms',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E3A8A), // Updated text color
                 ),
               ),
               if (!_isSelectingStartDate)
@@ -544,7 +464,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     'Reset',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.blue.shade700,
+                      color: Color(0xFF1E3A8A), // Updated text color
                     ),
                   ),
                 ),
@@ -556,39 +476,21 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color:
-                  _isSelectingStartDate ? Colors.orange : Colors.blue.shade600,
+              color: _isSelectingStartDate ? Colors.orange : Color(0xFF1E3A8A), // Updated text color
             ),
           ),
           Text(
-            'Duration: $contractDurationText • Visits: $_visitsPerWeekCount per week',
+            'Duration: ${widget.contractDuration} • Visits: $_visitsPerWeekCount per week',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.blue.shade600,
+              color: Color(0xFF1E3A8A), // Updated text color
             ),
           ),
-          if (widget.selectedDays.isNotEmpty)
-            Text(
-              'Selected Days: ${widget.selectedDays.join(', ')}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.blue.shade600,
-              ),
-            ),
-          if (widget.package != null) ...[
-            Text(
-              'Service: ${widget.package!.durationDisplay} • ${widget.package!.timeDisplay} • ${widget.package!.nationalityDisplay}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.blue.shade600,
-              ),
-            ),
-          ],
           Text(
             'Total Visits: $_totalAllowedVisits • Selected: ${_selectedDates.length}',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.blue.shade600,
+              color: Color(0xFF1E3A8A), // Updated text color
             ),
           ),
           if (_contractStartDate != null && _contractEndDate != null)
@@ -596,7 +498,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
               'Contract Period: ${DateFormat('MMM dd, yyyy').format(_contractStartDate!)} - ${DateFormat('MMM dd, yyyy').format(_contractEndDate!)}',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.blue.shade600,
+                color: Color(0xFF1E3A8A), // Updated text color
               ),
             ),
         ],
@@ -604,10 +506,12 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
+ @override
+Widget build(BuildContext context) {
+  return Column(
+    children: [
+      // Remove the title section when used as embedded component
+      if (widget.showBottomNavigation)
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           alignment: Alignment.centerLeft,
@@ -620,23 +524,28 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             ),
           ),
         ),
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentMonth =
-                    DateTime(DateTime.now().year, DateTime.now().month + index);
-              });
-            },
-            itemCount: 24,
-            itemBuilder: (context, index) {
-              final month =
-                  DateTime(DateTime.now().year, DateTime.now().month + index);
-              return _buildMonthView(month);
-            },
-          ),
+      
+      // Contract info (keep this for validation feedback)
+      _buildContractInfo(),
+      
+      Expanded(
+        child: PageView.builder(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
+            });
+          },
+          itemCount: 24,
+          itemBuilder: (context, index) {
+            final month = DateTime(DateTime.now().year, DateTime.now().month + index);
+            return _buildMonthView(month);
+          },
         ),
+      ),
+      
+      // Conditionally show bottom navigation
+      if (widget.showBottomNavigation)
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -682,8 +591,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     ),
                   ),
                   Text(
-                    widget.package?.formattedFinalPrice ??
-                        'SAR ${widget.totalPrice.toInt()}',
+                    _formatPrice(_calculateTotalPrice()),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -697,9 +605,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                 width: 120,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _selectedDates.isNotEmpty &&
-                          !_isSelectingStartDate &&
-                          widget.onNextPressed != null
+                  onPressed: _selectedDates.isNotEmpty && !_isSelectingStartDate && widget.onNextPressed != null
                       ? widget.onNextPressed
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -723,7 +629,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             ],
           ),
         ),
-      ],
-    );
-  }
+    ],
+  );
+}
 }
