@@ -128,7 +128,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
           (city) => city.cityName == city.cityName,
           orElse: () => City(cityCode: 0, cityName: ''),
         );
-        _selectedCityCode = selectedCityObj.cityCode;
+        _selectedCityCode = city.cityCode;
 
         if (_selectedCityCode != null && _selectedCityCode! > 0) {
           _fetchDistrictsFromAPI(city.cityCode!);
