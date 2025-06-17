@@ -61,7 +61,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  
+
                   // Service details card
                   Container(
                     padding: EdgeInsets.all(20),
@@ -82,7 +82,8 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded( // Wrap the Text with Expanded
+                            Expanded(
+                              // Wrap the Text with Expanded
                               child: Text(
                                 widget.bookingData.packageName,
                                 style: TextStyle(
@@ -90,40 +91,52 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87,
                                 ),
-                                overflow: TextOverflow.ellipsis, // Handle overflow gracefully
+                                overflow: TextOverflow
+                                    .ellipsis, // Handle overflow gracefully
                                 maxLines: 2, // Allow up to 2 lines if needed
                               ),
                             ),
                           ],
                         ),
                         SizedBox(height: 16),
-                        
+
                         // Service details rows
-                        _buildDetailRow('Start Date', _formatDate(widget.bookingData.selectedDates.isNotEmpty ? widget.bookingData.selectedDates.first : DateTime.now())),
-                         // Use actual nationality instead of 'East Asia'
+                        _buildDetailRow(
+                            'Start Date',
+                            _formatDate(
+                                widget.bookingData.selectedDates.isNotEmpty
+                                    ? widget.bookingData.selectedDates.first
+                                    : DateTime.now())),
+                        // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
-                        _buildDetailRow('Weekly visits', widget.bookingData.visitsPerWeek),
+                        _buildDetailRow(
+                            'Weekly visits', widget.bookingData.visitsPerWeek),
                         SizedBox(height: 16),
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
-                        _buildDetailRow('Nationality', widget.bookingData.selectedNationality), // Use actual nationality instead of 'East Asia'
+                        _buildDetailRow(
+                            'Nationality',
+                            widget.bookingData
+                                .selectedNationality), // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
-                        _buildDetailRow('Workers', '${widget.bookingData.workerCount}'),
+                        _buildDetailRow(
+                            'Workers', '${widget.bookingData.workerCount}'),
                         SizedBox(height: 12),
-                        _buildDetailRow('Contract Duration', widget.bookingData.contractDuration),
+                        _buildDetailRow('Contract Duration',
+                            widget.bookingData.contractDuration),
                         SizedBox(height: 16),
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
-                        
+
                         // Weekly visit section
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Text(
-                                widget.bookingData.packageName,
+                                "Final Price",
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black87,
                                 ),
@@ -133,14 +146,13 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'SAR ${widget.bookingData.totalPrice.toStringAsFixed(0)}',
+                                  'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87,
                                   ),
                                 ),
-                                
                               ],
                             ),
                           ],
@@ -149,7 +161,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ),
                   ),
                   SizedBox(height: 24),
-                  
+
                   // Contact info card
                   Container(
                     padding: EdgeInsets.all(20),
@@ -206,7 +218,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ),
                   ),
                   SizedBox(height: 24),
-                  
+
                   // Billing and payment section
                   Text(
                     'Billing and payment',
@@ -217,19 +229,22 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ),
                   ),
                   SizedBox(height: 8),
-                  
+
                   // Payment methods
                   Row(
                     children: [
-                      _buildPaymentLogo('assets/images/mada_logo.png', Colors.blue),
+                      _buildPaymentLogo(
+                          'assets/images/mada_logo.png', Colors.blue),
                       SizedBox(width: 8),
-                      _buildPaymentLogo('assets/images/visa_logo.png', Colors.blue),
+                      _buildPaymentLogo(
+                          'assets/images/visa_logo.png', Colors.blue),
                       SizedBox(width: 8),
-                      _buildPaymentLogo('assets/images/mastercard_logo.png', Colors.red),
+                      _buildPaymentLogo(
+                          'assets/images/mastercard_logo.png', Colors.red),
                     ],
                   ),
                   SizedBox(height: 24),
-                  
+
                   if (!_isPaymentSummaryExpanded) ...[
                     // Coupons and offers card
                     Container(
@@ -292,7 +307,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ),
                     SizedBox(height: 24),
                   ],
-                  
+
                   // Payment summary section
                   Text(
                     'Payment summary',
@@ -303,17 +318,20 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  
+
                   // Payment breakdown
-                  _buildPaymentRow('Item total', 'SAR ${(widget.originalPrice - 129).toStringAsFixed(0)}'),
+                  _buildPaymentRow('Item total',
+                      'SAR ${(widget.originalPrice - 129).toStringAsFixed(0)}'),
                   SizedBox(height: 12),
                   _buildPaymentRow('Taxes and Fee', 'SAR 129', isDotted: true),
                   SizedBox(height: 12),
-                  _buildPaymentRow('Pack discount', '-SAR ${widget.totalSavings.toStringAsFixed(0)}', isDiscount: true),
+                  _buildPaymentRow('Pack discount',
+                      '-SAR ${widget.totalSavings.toStringAsFixed(0)}',
+                      isDiscount: true),
                   SizedBox(height: 16),
                   Container(height: 1, color: Colors.black87),
                   SizedBox(height: 16),
-                  
+
                   // Total
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -337,7 +355,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ],
                   ),
                   SizedBox(height: 16),
-                  
+
                   // Savings banner
                   Container(
                     padding: EdgeInsets.all(12),
@@ -365,7 +383,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ),
                   ),
                   SizedBox(height: 24),
-                  
+
                   // Terms and conditions
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,7 +423,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
               ),
             ),
           ),
-          
+
           // Bottom section with dynamic address and proceed button
           Container(
             decoration: BoxDecoration(
@@ -441,7 +459,8 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                               ),
                             ),
                             Text(
-                              _getAddressDetails(widget.bookingData.selectedAddress),
+                              _getAddressDetails(
+                                  widget.bookingData.selectedAddress),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -460,7 +479,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   ),
                 ),
                 Container(height: 1, color: Colors.grey[300]),
-                
+
                 // Proceed to pay button
                 Container(
                   padding: EdgeInsets.all(16),
@@ -468,12 +487,15 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _agreeToTerms ? () {
-                        // Handle proceed to pay
-                        _showPaymentSuccess();
-                      } : null,
+                      onPressed: _agreeToTerms
+                          ? () {
+                              // Handle proceed to pay
+                              _showPaymentSuccess();
+                            }
+                          : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _agreeToTerms ? Colors.purple : Colors.grey[400],
+                        backgroundColor:
+                            _agreeToTerms ? Colors.purple : Colors.grey[400],
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
@@ -497,7 +519,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
       ),
     );
   }
-  
+
   Widget _buildDetailRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -520,7 +542,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
       ],
     );
   }
-  
+
   Widget _buildPaymentLogo(String imagePath, Color fallbackColor) {
     return Container(
       height: 32,
@@ -544,7 +566,9 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
               ),
               child: Center(
                 child: Text(
-                  imagePath.contains('mada') ? 'مدى' : (imagePath.contains('visa') ? 'VISA' : 'MC'),
+                  imagePath.contains('mada')
+                      ? 'مدى'
+                      : (imagePath.contains('visa') ? 'VISA' : 'MC'),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 8,
@@ -558,8 +582,9 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
       ),
     );
   }
-  
-  Widget _buildPaymentRow(String label, String amount, {bool isDotted = false, bool isDiscount = false}) {
+
+  Widget _buildPaymentRow(String label, String amount,
+      {bool isDotted = false, bool isDiscount = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -583,22 +608,34 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
       ],
     );
   }
-  
+
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
-    
+
     String day = date.day.toString();
     String suffix = 'th';
-    if (day.endsWith('1') && day != '11') suffix = 'st';
-    else if (day.endsWith('2') && day != '12') suffix = 'nd';
+    if (day.endsWith('1') && day != '11')
+      suffix = 'st';
+    else if (day.endsWith('2') && day != '12')
+      suffix = 'nd';
     else if (day.endsWith('3') && day != '13') suffix = 'rd';
-    
+
     return '${day}${suffix} ${months[date.month - 1]}\'${date.year.toString().substring(2)}';
   }
-  
+
   // Helper method to get address details based on selected address
   String _getAddressDetails(String selectedAddress) {
     // You can customize this based on your address structure
@@ -612,7 +649,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
         return 'Saudi Arabia'; // Default fallback
     }
   }
-  
+
   void _showPaymentSuccess() {
     showDialog(
       context: context,
