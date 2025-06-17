@@ -99,11 +99,14 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     return _availableCities;
   }
 
-  List<String> get _districts {
-    return _availableDistricts
-        .map((district) => district.districtName)
-        .toList();
-  }
+ List<District> get _districts {
+  final seenCodes = <String>{};
+  final uniqueDistricts = _availableDistricts.where((district) {
+    return seenCodes.add(district.districtCode);
+  }).toList();
+
+  return uniqueDistricts;
+}
 
   LatLng? get _districtLocation {
     // Since we're using API data now, return a default location or use district map data
@@ -128,7 +131,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
         _selectedCityCode = selectedCityObj.cityCode;
 
         if (_selectedCityCode != null && _selectedCityCode! > 0) {
-          _fetchDistrictsFromAPI(_selectedCityCode!);
+          _fetchDistrictsFromAPI(city.cityCode!);
         }
       } else {
         _selectedCityCode = null;
@@ -143,11 +146,8 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
       _selectedDistrict = value;
 
       if (value != null) {
-        final selectedDistrictObj = _availableDistricts.firstWhere(
-          (district) => district.districtName == value,
-          orElse: () => District(districtCode: '', districtName: ''),
-        );
-        _selectedDistrictCode = selectedDistrictObj.districtCode;
+       
+        _selectedDistrictCode = value;
 
         if (_selectedDistrictCode != null &&
             _selectedDistrictCode!.isNotEmpty) {
@@ -806,7 +806,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
         enabled: _selectedCity != null && !_isLoadingDistricts);
   }
 
-  Widget _buildDropdown(String hint, String? value, List<String> items,
+  Widget _buildDropdown(String hint, String? value, List<District> items,
       Function(String?) onChanged,
       {bool enabled = true}) {
     return Container(
@@ -827,11 +827,11 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
             ),
           ),
           value: value,
-          items: items.map((String item) {
+          items: items.map((District item) {
             return DropdownMenuItem<String>(
-              value: item,
+              value: item.districtCode,
               child: Text(
-                item,
+                item.districtName,
                 style: TextStyle(
                   fontSize: 16,
                   color: enabled ? Colors.black : Colors.grey[400],
