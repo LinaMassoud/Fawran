@@ -52,10 +52,11 @@ class _AddressSelectionScreenState
         setState(() {
           addresses = fetchedAddresses;
           if (addresses.isNotEmpty) {
-            _selectedAddress = addresses.first.addressId;
-            ref.read(selectedAddressProvider.notifier).state = addresses.first;
+           // _selectedAddress = addresses.first.addressId;
+           // ref.read(selectedAddressProvider.notifier).state = addresses.first;
           }
         });
+
       } else {
         print('Failed to load addresses: ${response.statusCode}');
       }

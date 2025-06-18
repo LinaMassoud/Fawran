@@ -1,3 +1,4 @@
+import 'package:fawran/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -165,6 +166,7 @@ class _ContinuousBookingOverlayState
   // Fetch addresses from API
   Future<void> _fetchAddresses() async {
     try {
+      final userId = ref.read(userIdProvider);
       setState(() {
         isLoadingAddresses = true;
         addressError = null;
@@ -172,7 +174,7 @@ class _ContinuousBookingOverlayState
 
       final response = await http.get(
         Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/23'),
+            'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/'+userId.toString()),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -663,6 +665,7 @@ class _ContinuousBookingOverlayState
   @override
   Widget build(BuildContext context) {
     final selectedAddress = ref.watch(selectedAddressProvider);
+    final userId = ref.read(userIdProvider);
 
     return AnimatedBuilder(
       animation: _slideAnimation,
