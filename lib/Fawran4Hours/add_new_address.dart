@@ -76,24 +76,39 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   String? _selectedDistrictCode;
 
   @override
-  void initState() {
-    super.initState();
-    // Get serviceId from package, with fallback to default value
-    int serviceId = widget.serviceId ?? 1;
-    _fetchCitiesFromAPI(serviceId);
-  }
+void initState() {
+  super.initState();
+  // Get serviceId from package, with fallback to default value
+  int serviceId = widget.serviceId ?? 1;
+  _fetchCitiesFromAPI(serviceId);
+  
+  // Add listeners to text controllers
+  _addressTitleController.addListener(_onFieldChanged);
+  _streetNameController.addListener(_onFieldChanged);
+  _houseNumberController.addListener(_onFieldChanged);
+  _apartmentNumberController.addListener(_onFieldChanged);
+  _fullAddressController.addListener(_onFieldChanged);
+  _notesController.addListener(_onFieldChanged);
+}
 
   @override
-  void dispose() {
-    _addressTitleController.dispose();
-    _streetNameController.dispose();
-    _buildingNumberController.dispose();
-    _houseNumberController.dispose(); // Add this
-    _apartmentNumberController.dispose(); // Add this
-    _fullAddressController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
+void dispose() {
+  _addressTitleController.removeListener(_onFieldChanged);
+  _streetNameController.removeListener(_onFieldChanged);
+  _houseNumberController.removeListener(_onFieldChanged);
+  _apartmentNumberController.removeListener(_onFieldChanged);
+  _fullAddressController.removeListener(_onFieldChanged);
+  _notesController.removeListener(_onFieldChanged);
+  
+  _addressTitleController.dispose();
+  _streetNameController.dispose();
+  _buildingNumberController.dispose();
+  _houseNumberController.dispose();
+  _apartmentNumberController.dispose();
+  _fullAddressController.dispose();
+  _notesController.dispose();
+  super.dispose();
+}
 
   List<City> get _cities {
     return _availableCities;
@@ -475,37 +490,74 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
   // Now update your main widget's _openMapSelector method to use this new dialog:
   Future<void> _openMapSelector() async {
-    if (!_isDistrictCompleted) return;
+  if (!_isDistrictCompleted) return;
 
-    LatLng initialLocation;
+  LatLng initialLocation;
 
-    // Use district map data if available, otherwise fallback to default
-    if (_districtMapData != null) {
-      initialLocation =
-          LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
-    } else {
-      initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
-    }
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => MapSelectorDialog(
-        initialLocation: initialLocation,
-        boundaryCoordinates:
-            _districtMapData?.polygonCoordinates, // Pass boundary coordinates
-        onLocationSelected: (LatLng selectedLocation) async {
-          setState(() {
-            _selectedLocation = selectedLocation;
-            _hasUserMovedPin = true;
-            _isLocationConfirmed = false;
-          });
-
-          await _handleLocationSelection(selectedLocation);
-        },
-      ),
-    );
+  // First priority: Use previously selected location if exists
+  if (_selectedLocation != null) {
+    initialLocation = _selectedLocation!;
   }
+  // Second priority: Use district map data if available
+  else if (_districtMapData != null) {
+    initialLocation = LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
+  }
+  // Fallback: Use default location
+  else {
+    initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
+  }
+
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) => MapSelectorDialog(
+      initialLocation: initialLocation,
+      boundaryCoordinates: _districtMapData?.polygonCoordinates,
+      onLocationSelected: (LatLng selectedLocation) async {
+        setState(() {
+          _selectedLocation = selectedLocation;
+          _hasUserMovedPin = true;
+          _isLocationConfirmed = false;
+        });
+
+        await _handleLocationSelection(selectedLocation);
+      },
+    ),
+  );
+}
+
+
+void _onFieldChanged() {
+  setState(() {
+    // This will trigger a rebuild and update the save button state
+  });
+}
+
+
+bool _areAllFieldsValid() {
+  // Check basic required fields
+  if (_addressTitleController.text.trim().isEmpty ||
+      _selectedHouseType == null ||
+      _streetNameController.text.trim().isEmpty ||
+      _houseNumberController.text.trim().isEmpty ||
+      _fullAddressController.text.trim().isEmpty ||
+      _selectedLocation == null ||
+      _selectedCity == null ||
+      _selectedDistrictCode == null ||
+      _selectedDistrictCode!.isEmpty) {
+    return false;
+  }
+
+  // Check apartment-specific fields if house type is Apartment
+  if (_selectedHouseType == 'Apartment') {
+    if (_selectedFloorNumber == null ||
+        _apartmentNumberController.text.trim().isEmpty) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 // Add this new method to handle location selection and geocoding:
   Future<void> _handleLocationSelection(LatLng selectedLocation) async {
@@ -625,63 +677,10 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   void _saveAddress() {
-    if (_addressTitleController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please provide an address title')),
-      );
-      return;
-    }
 
-    if (_selectedHouseType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a house type')),
-      );
-      return;
-    }
-
-    // Validate house number
-    if (_houseNumberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(_selectedHouseType == 'Villa'
-                ? 'Please enter house number'
-                : 'Please enter building number')),
-      );
-      return;
-    }
-
-    // Validate apartment-specific fields
-    if (_selectedHouseType == 'Apartment') {
-      if (_selectedFloorNumber == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please select floor number for apartment')),
-        );
-        return;
-      }
-      if (_apartmentNumberController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please enter apartment number')),
-        );
-        return;
-      }
-    }
-
-    if (_selectedLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a location on the map')),
-      );
-      return;
-    }
-
-    if (_selectedDistrictCode == null || _selectedDistrictCode!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a district')),
-      );
-      return;
-    }
-
-    _createAddressAPI();
-  }
+  // All validations passed, proceed with API call
+  _createAddressAPI();
+}
 
   Widget _buildStepIndicator(
       int stepNumber, String title, bool isCompleted, bool isActive) {
@@ -891,101 +890,106 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   Widget _buildHouseTypeDropdown({bool enabled = true}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: enabled ? Colors.white : Colors.grey[100],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          hint: Text(
-            'Select house type',
-            style: TextStyle(
-              color: enabled ? Colors.grey[600] : Colors.grey[400],
-              fontSize: 16,
-            ),
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        hint: Text(
+          'Select house type',
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
           ),
-          value: _selectedHouseType,
-          items: _houseTypes.map((String type) {
-            return DropdownMenuItem<String>(
-              value: type,
-              child: Text(
-                type,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: enabled ? Colors.black : Colors.grey[400],
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: enabled
-              ? (String? value) {
-                  setState(() {
-                    _selectedHouseType = value;
-                    // Clear apartment-specific fields when switching to Villa
-                    if (value == 'Villa') {
-                      _selectedFloorNumber = null;
-                      _apartmentNumberController.clear();
-                    }
-                  });
-                }
-              : null,
-          icon: Icon(Icons.keyboard_arrow_down,
-              color: enabled ? Colors.grey[600] : Colors.grey[400]),
-          isExpanded: true,
         ),
+        value: _selectedHouseType,
+        items: _houseTypes.map((String type) {
+          return DropdownMenuItem<String>(
+            value: type,
+            child: Text(
+              type,
+              style: TextStyle(
+                fontSize: 16,
+                color: enabled ? Colors.black : Colors.grey[400],
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: enabled
+            ? (String? value) {
+                setState(() {
+                  _selectedHouseType = value;
+                  // Clear apartment-specific fields when switching to Villa
+                  if (value == 'Villa') {
+                    _selectedFloorNumber = null;
+                    _apartmentNumberController.clear();
+                  }
+                  // Trigger validation update
+                  _onFieldChanged();
+                });
+              }
+            : null,
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildFloorDropdown({bool enabled = true}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: enabled ? Colors.white : Colors.grey[100],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          hint: Text(
-            'Select floor',
-            style: TextStyle(
-              color: enabled ? Colors.grey[600] : Colors.grey[400],
-              fontSize: 16,
-            ),
+// 5. Update the floor dropdown onChanged to trigger validation
+Widget _buildFloorDropdown({bool enabled = true}) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<int>(
+        hint: Text(
+          'Select floor',
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
           ),
-          value: _selectedFloorNumber,
-          items: _floorNumbers.map((int floor) {
-            return DropdownMenuItem<int>(
-              value: floor,
-              child: Text(
-                'Floor $floor',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: enabled ? Colors.black : Colors.grey[400],
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: enabled
-              ? (int? value) {
-                  setState(() {
-                    _selectedFloorNumber = value;
-                  });
-                }
-              : null,
-          icon: Icon(Icons.keyboard_arrow_down,
-              color: enabled ? Colors.grey[600] : Colors.grey[400]),
-          isExpanded: true,
         ),
+        value: _selectedFloorNumber,
+        items: _floorNumbers.map((int floor) {
+          return DropdownMenuItem<int>(
+            value: floor,
+            child: Text(
+              'Floor $floor',
+              style: TextStyle(
+                fontSize: 16,
+                color: enabled ? Colors.black : Colors.grey[400],
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: enabled
+            ? (int? value) {
+                setState(() {
+                  _selectedFloorNumber = value;
+                  // Trigger validation update
+                  _onFieldChanged();
+                });
+              }
+            : null,
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTextField(String hint, TextEditingController controller,
       {int maxLines = 1, bool enabled = true}) {
@@ -1291,33 +1295,33 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
             // Bottom Button
             Container(
-              padding: EdgeInsets.all(20),
-              color: Colors.white,
-              child: GestureDetector(
-                onTap: _canProceedToDetails ? _saveAddress : null,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: _canProceedToDetails
-                        ? Color(0xFF1E3A8A)
-                        : Colors.grey[400],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'SAVE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
+            padding: EdgeInsets.all(20),
+            color: Colors.white,
+            child: GestureDetector(
+              onTap: (_canProceedToDetails && _areAllFieldsValid()) ? _saveAddress : null,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: (_canProceedToDetails && _areAllFieldsValid())
+                      ? Color(0xFF1E3A8A)
+                      : Colors.grey[400],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    'SAVE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
               ),
             ),
+          ),
           ],
         ),
       ),

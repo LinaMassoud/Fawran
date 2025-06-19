@@ -269,6 +269,46 @@ Future<bool> verifyCode({
     }
   }
 
+
+
+static Future<Map<String, dynamic>?> calculatePackagePrice({
+  required int serviceId,
+  required int duration,
+  required String groupCode,
+  required int numberOfWeeks,
+  required int numberOfVisits,
+  required int shiftId,
+  required int numberOfWorkers,
+}) async {
+  try {
+    final url = '$_baseUrl/calculate-package-price';
+    
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'service_id': serviceId,
+        'duration': duration,
+        'group_code': groupCode,
+        'number_of_weeks': numberOfWeeks,
+        'number_of_visits': numberOfVisits,
+        'shift_id': shiftId,
+        'number_of_workers': numberOfWorkers,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to calculate price. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error calculating package price: $e');
+  }
+}
+
+
+
   @Deprecated("Old")
   static Future<List<PackageModel>> fetchPackages({
     required int serviceId,
