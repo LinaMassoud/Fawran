@@ -91,6 +91,13 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
   List<DateTime> _internalSelectedDates = [];
   double _calculatedTotalPrice = 0.0;
 
+  double _apiPricePerVisit = 0.0;
+double _apiTotalPrice = 0.0;
+bool _isCalculatingPrice = false;
+
+double _apiFinalPricePerVisit = 0.0; // Price per visit with VAT
+double _vatAmount = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -145,6 +152,223 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
     }
   }
 
+
+
+Future<void> _calculatePriceFromAPI() async {
+  print('🔍 DEBUG: Starting _calculatePriceFromAPI calculation');
+  
+  // Check if all required fields are selected
+  print('🔍 DEBUG: Checking required fields:');
+  print('  - selectedNationality: "${widget.selectedNationality}" (isEmpty: ${widget.selectedNationality.isEmpty})');
+  print('  - contractDuration: "${widget.contractDuration}" (isEmpty: ${widget.contractDuration.isEmpty})');
+  print('  - selectedTime: "${widget.selectedTime}" (isEmpty: ${widget.selectedTime.isEmpty})');
+  print('  - visitDuration: "${widget.visitDuration}" (isEmpty: ${widget.visitDuration.isEmpty})');
+  print('  - visitsPerWeek: "${widget.visitsPerWeek}" (isEmpty: ${widget.visitsPerWeek.isEmpty})');
+  print('  - workerCount: ${widget.workerCount} (is <= 0: ${widget.workerCount <= 0})');
+  
+  if (widget.selectedNationality.isEmpty ||
+      widget.contractDuration.isEmpty ||
+      widget.selectedTime.isEmpty ||
+      widget.visitDuration.isEmpty ||
+      widget.visitsPerWeek.isEmpty ||
+      widget.workerCount <= 0) {
+    print('❌ DEBUG: Missing required fields, exiting calculation');
+    return;
+  }
+
+  print('✅ DEBUG: All required fields are present, proceeding with calculation');
+  
+  setState(() {
+    _isCalculatingPrice = true;
+  });
+  print('🔄 DEBUG: Set _isCalculatingPrice to true');
+
+  try {
+    // Extract duration from visit duration string (e.g., "4 hours" -> 4)
+    print('🔍 DEBUG: Extracting duration from visitDuration: "${widget.visitDuration}"');
+    final durationMatch = RegExp(r'(\d+)').firstMatch(widget.visitDuration);
+    final duration = durationMatch != null ? int.parse(durationMatch.group(1)!) : 4;
+    print('🔍 DEBUG: Extracted duration: $duration hours (match found: ${durationMatch != null})');
+
+    // Extract number of weeks from contract duration
+    print('🔍 DEBUG: Processing contract duration: "${widget.contractDuration}"');
+    int numberOfWeeks = 0;
+    if (widget.contractDuration.toLowerCase().contains('week')) {
+      numberOfWeeks = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+      print('🔍 DEBUG: Contract contains "week", extracted: $numberOfWeeks weeks');
+    } else if (widget.contractDuration.toLowerCase().contains('month')) {
+      int months = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+      numberOfWeeks = months * 4;
+      print('🔍 DEBUG: Contract contains "month", extracted: $months months = $numberOfWeeks weeks');
+    } else if (widget.contractDuration.toLowerCase().contains('year')) {
+      int years = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+      numberOfWeeks = years * 52;
+      print('🔍 DEBUG: Contract contains "year", extracted: $years years = $numberOfWeeks weeks');
+    }
+    print('🔍 DEBUG: Final numberOfWeeks: $numberOfWeeks');
+
+    // Extract number of visits per week
+    print('🔍 DEBUG: Extracting visits per week from: "${widget.visitsPerWeek}"');
+    final visitsMatch = RegExp(r'(\d+)').firstMatch(widget.visitsPerWeek);
+    final numberOfVisits = visitsMatch != null ? int.parse(visitsMatch.group(1)!) : 1;
+    print('🔍 DEBUG: Extracted numberOfVisits: $numberOfVisits (match found: ${visitsMatch != null})');
+
+    // Get group code from nationality
+    print('🔍 DEBUG: Fetching group code for nationality: "${widget.selectedNationality}"');
+    String groupCode = '2'; // Default fallback
+    print('🔍 DEBUG: Default groupCode set to: $groupCode');
+    
+    try {
+      print('🌐 DEBUG: Calling ApiService.fetchCountryGroups with serviceId: ${widget.serviceId}');
+      final countryGroups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+      print('🔍 DEBUG: Received ${countryGroups.length} country groups from API');
+      
+      final matchingGroup = countryGroups.firstWhere(
+        (group) {
+          final groupName = group['group_name']?.toString().toLowerCase();
+          final selectedNat = widget.selectedNationality.toLowerCase();
+          print('🔍 DEBUG: Comparing group_name "$groupName" with selected "$selectedNat"');
+          return groupName == selectedNat;
+        },
+        orElse: () {
+          print('🔍 DEBUG: No matching group found, using default');
+          return {'group_code': '2'};
+        },
+      );
+      groupCode = matchingGroup['group_code'].toString();
+      print('✅ DEBUG: Final groupCode: $groupCode');
+    } catch (e) {
+      print('❌ DEBUG: Error fetching group code: $e');
+      print('🔍 DEBUG: Using default groupCode: $groupCode');
+    }
+
+    // Get shift ID from selected time
+    print('🔍 DEBUG: Fetching shift ID for selected time: "${widget.selectedTime}"');
+    int shiftId = 1; // Default fallback
+    print('🔍 DEBUG: Default shiftId set to: $shiftId');
+    
+    try {
+      print('🌐 DEBUG: Calling ApiService.fetchServiceShifts with serviceId: ${widget.serviceId}');
+      final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
+      print('🔍 DEBUG: Received ${serviceShifts.length} service shifts from API');
+      
+      final matchingShift = serviceShifts.firstWhere(
+        (shift) {
+          final serviceShifts = shift['service_shifts']?.toString().toLowerCase();
+          final selectedTime = widget.selectedTime.toLowerCase();
+          print('🔍 DEBUG: Comparing service_shifts "$serviceShifts" with selected "$selectedTime"');
+          return serviceShifts == selectedTime;
+        },
+        orElse: () {
+          print('🔍 DEBUG: No matching shift found, using default');
+          return {'shift_id': 1};
+        },
+      );
+      shiftId = int.parse(matchingShift['id'].toString());
+      print('✅ DEBUG: Final shiftId: $shiftId');
+    } catch (e) {
+      print('❌ DEBUG: Error fetching shift ID: $e');
+      print('🔍 DEBUG: Using default shiftId: $shiftId');
+    }
+
+    // Call the calculate price API
+    print('🌐 DEBUG: Calling ApiService.calculatePackagePrice with parameters:');
+    print('  - serviceId: ${widget.serviceId}');
+    print('  - duration: $duration');
+    print('  - groupCode: $groupCode');
+    print('  - numberOfWeeks: $numberOfWeeks');
+    print('  - numberOfVisits: $numberOfVisits');
+    print('  - shiftId: $shiftId');
+    print('  - numberOfWorkers: ${widget.workerCount}');
+    
+    final response = await ApiService.calculatePackagePrice(
+      serviceId: widget.serviceId,
+      duration: duration,
+      groupCode: groupCode,
+      numberOfWeeks: numberOfWeeks,
+      numberOfVisits: numberOfVisits,
+      shiftId: shiftId,
+      numberOfWorkers: widget.workerCount,
+    );
+
+    print('🔍 DEBUG: API response received: $response');
+    print('🔍 DEBUG: Response is null: ${response == null}');
+
+    if (response != null) {
+      final pricePerVisit = response['price_per_visit']?.toDouble() ?? 0.0;
+      final totalPrice = response['total_price']?.toDouble() ?? 0.0;
+      final finalPrice = response['final_price']?.toDouble() ?? 0.0; // Price with VAT
+      
+      print('🔍 DEBUG: Extracted from response:');
+      print('  - price_per_visit: $pricePerVisit (without VAT)');
+      print('  - total_price: $totalPrice (without VAT)');
+      print('  - final_price: $finalPrice (with VAT)');
+      
+      // Calculate VAT amount and final price per visit
+      final vatAmount = finalPrice - totalPrice;
+      final finalPricePerVisit = finalPrice; // This is already the price with VAT per visit
+      
+      print('🔍 DEBUG: Calculated VAT values:');
+      print('  - VAT amount per visit: $vatAmount');
+      print('  - Final price per visit (with VAT): $finalPricePerVisit');
+      
+      setState(() {
+        _apiPricePerVisit = pricePerVisit; // Without VAT
+        _apiTotalPrice = totalPrice; // Without VAT
+        _apiFinalPricePerVisit = finalPricePerVisit; // With VAT
+        _vatAmount = vatAmount; // VAT amount per visit
+        _isCalculatingPrice = false;
+      });
+      
+      print('✅ DEBUG: Updated state with new prices');
+      print('🔄 DEBUG: Set _isCalculatingPrice to false');
+
+      // Update parent with the new price per visit if callback is available
+      print('🔍 DEBUG: Checking callback and selected dates:');
+      print('  - onTotalPriceChanged is null: ${widget.onTotalPriceChanged == null}');
+      print('  - _internalSelectedDates.length: ${_internalSelectedDates.length}');
+      
+      if (widget.onTotalPriceChanged != null && _internalSelectedDates.isNotEmpty) {
+        // Use final price per visit (with VAT) for calculation
+        double calculatedTotal = _internalSelectedDates.length * _apiFinalPricePerVisit;
+        print('🔍 DEBUG: Calculated total with VAT: ${_internalSelectedDates.length} dates × $_apiFinalPricePerVisit = $calculatedTotal');
+        
+        widget.onTotalPriceChanged!(calculatedTotal);
+        print('✅ DEBUG: Called onTotalPriceChanged callback with: $calculatedTotal');
+        
+        setState(() {
+          _calculatedTotalPrice = calculatedTotal;
+        });
+        print('✅ DEBUG: Updated _calculatedTotalPrice to: $calculatedTotal');
+      } else {
+        print('⏭️ DEBUG: Skipping callback - either callback is null or no dates selected');
+      }
+    } else {
+      print('❌ DEBUG: API returned null response, throwing exception');
+      throw Exception('API returned null response');
+    }
+  } catch (e) {
+    print('❌ DEBUG: Exception caught in _calculatePriceFromAPI: $e');
+    print('🔍 DEBUG: Exception type: ${e.runtimeType}');
+    
+    setState(() {
+      _isCalculatingPrice = false;
+      // Fallback to widget's pricePerVisit if API fails
+      _apiPricePerVisit = widget.pricePerVisit;
+      _apiFinalPricePerVisit = widget.pricePerVisit; // Assume no VAT in fallback
+      _vatAmount = 0.0;
+    });
+    
+    print('🔄 DEBUG: Set _isCalculatingPrice to false');
+    print('🔄 DEBUG: Fallback to widget.pricePerVisit: ${widget.pricePerVisit}');
+    print('✅ DEBUG: Updated prices to fallback values');
+  }
+  
+  print('🏁 DEBUG: _calculatePriceFromAPI method completed');
+}
+
+
+
   void _resetCalendarSelection() {
     setState(() {
       _internalSelectedDates.clear();
@@ -159,39 +383,38 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
   }
 
   void _onDateSelectionComplete(List<DateTime> dates) {
-    setState(() {
-      _internalSelectedDates = dates;
-      // Only calculate price if dates are actually selected
-      _calculatedTotalPrice =
-          dates.isNotEmpty ? dates.length * widget.pricePerVisit : 0.0;
-      _showCalendar = false;
-    });
+  setState(() {
+    _internalSelectedDates = dates;
+    // Use API final price per visit (with VAT) instead of widget.pricePerVisit
+    double priceToUse = _apiFinalPricePerVisit > 0 ? _apiFinalPricePerVisit : widget.pricePerVisit;
+    _calculatedTotalPrice = dates.isNotEmpty ? dates.length * priceToUse : 0.0;
+    _showCalendar = false;
+  });
 
-    // Convert dates to day names for the callback
-    List<String> dayNames =
-        dates.map((d) => DateFormat('EEEE').format(d)).toList();
+  // Convert dates to day names for the callback
+  List<String> dayNames = dates.map((d) => DateFormat('EEEE').format(d)).toList();
 
-    // Update parent component with selected days
-    widget.onSelectedDaysChanged(dayNames);
+  // Update parent component with selected days
+  widget.onSelectedDaysChanged(dayNames);
 
-    // Add this callback for selected dates
-    if (widget.onSelectedDatesChanged != null) {
-      widget.onSelectedDatesChanged!(dates);
-    }
-
-    // Also update parent with total price if callback is available
-    if (widget.onTotalPriceChanged != null) {
-      widget.onTotalPriceChanged!(_calculatedTotalPrice);
-    }
-
-    // Force rebuild to show bottom navigation immediately when dates are selected
-    if (dates.isNotEmpty) {
-      setState(() {
-        // This additional setState ensures the bottom navigation appears
-        // as soon as the first date is selected
-      });
-    }
+  // Add this callback for selected dates
+  if (widget.onSelectedDatesChanged != null) {
+    widget.onSelectedDatesChanged!(dates);
   }
+
+  // Also update parent with total price if callback is available
+  if (widget.onTotalPriceChanged != null) {
+    widget.onTotalPriceChanged!(_calculatedTotalPrice);
+  }
+
+  // Force rebuild to show bottom navigation immediately when dates are selected
+  if (dates.isNotEmpty) {
+    setState(() {
+      // This additional setState ensures the bottom navigation appears
+      // as soon as the first date is selected
+    });
+  }
+}
 
 // Add this method to build the Select Date field
   Widget _buildSelectDateField() {
@@ -303,17 +526,14 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                         onDatesChanged: (dates) {
                           setState(() {
                             _internalSelectedDates = dates;
-                            // Only calculate price if dates are actually selected
-                            _calculatedTotalPrice = dates.isNotEmpty
-                                ? dates.length * widget.pricePerVisit
-                                : 0.0;
+                            // The price calculation is now handled inside the CustomDateSelectionStep
+                            // and communicated back via onTotalPriceChanged callback
                           });
 
                           // Convert dates to day names and update parent
-                          List<String> dayNames = dates
-                              .map((d) => DateFormat('EEEE').format(d))
-                              .toList();
+                          List<String> dayNames = dates.map((d) => DateFormat('EEEE').format(d)).toList();
                           widget.onSelectedDaysChanged(dayNames);
+                          
                           // Add this callback for selected dates
                           if (widget.onSelectedDatesChanged != null) {
                             widget.onSelectedDatesChanged!(dates);
@@ -321,9 +541,9 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                         },
                         onTotalPriceChanged: (price) {
                           setState(() {
-                            // Only update if we have selected dates, otherwise keep it 0
-                            _calculatedTotalPrice =
-                                _internalSelectedDates.isNotEmpty ? price : 0.0;
+                            // Now this callback will be called whenever dates change
+                            // with the correct price calculation
+                            _calculatedTotalPrice = price;
                           });
 
                           // Update parent with total price if callback is available
@@ -332,11 +552,12 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                           }
                         },
                         onNextPressed: null,
-                        pricePerVisit: widget.pricePerVisit,
+                        pricePerVisit: _apiPricePerVisit > 0 ? _apiPricePerVisit : widget.pricePerVisit,
                         contractDuration: widget.contractDuration,
                         visitsPerWeek: widget.visitsPerWeek,
                         maxSelectableDates: _getMaxSelectableDates(),
                         showBottomNavigation: false,
+                        vatAmount: _vatAmount,
                       ),
                     ),
                   )
@@ -366,26 +587,44 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
 
 // Add this method to calculate max selectable dates
   int _getMaxSelectableDates() {
-    // Parse contract duration
-    int durationInWeeks = 0;
-    if (widget.contractDuration.toLowerCase().contains('month')) {
-      int months = int.tryParse(
-              widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
-          1;
-      durationInWeeks = months * 4;
-    } else if (widget.contractDuration.toLowerCase().contains('week')) {
-      durationInWeeks = int.tryParse(
-              widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
-          1;
-    }
-
-    // Parse visits per week
-    int visitsPerWeekCount =
-        int.tryParse(widget.visitsPerWeek.replaceAll(RegExp(r'[^0-9]'), '')) ??
-            1;
-
-    return durationInWeeks * visitsPerWeekCount;
+  // Parse contract duration
+  int durationInWeeks = 0;
+  if (widget.contractDuration.toLowerCase().contains('year')) {
+    int years = int.tryParse(
+            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        1;
+    durationInWeeks = years * 52; // 52 weeks in a year
+  } else if (widget.contractDuration.toLowerCase().contains('month')) {
+    int months = int.tryParse(
+            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        1;
+    durationInWeeks = months * 4;
+  } else if (widget.contractDuration.toLowerCase().contains('week')) {
+    durationInWeeks = int.tryParse(
+            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        1;
+  } else {
+    // Fallback: assume weeks
+    durationInWeeks = int.tryParse(
+            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        1;
   }
+
+  // Parse visits per week
+  int visitsPerWeekCount =
+      int.tryParse(widget.visitsPerWeek.replaceAll(RegExp(r'[^0-9]'), '')) ??
+          1;
+
+  // For 1 year contracts, we might want to limit the max selectable dates
+  // to prevent performance issues with the calendar
+  int maxDates = durationInWeeks * visitsPerWeekCount;
+  
+  // Optional: Add a reasonable limit for very long contracts
+  // Uncomment the line below if you want to limit to 365 dates maximum
+  // maxDates = maxDates > 365 ? 365 : maxDates;
+  
+  return maxDates;
+}
 
   Future<void> _loadCountryGroups() async {
     setState(() {
@@ -766,6 +1005,7 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
         (value) {
           // Call the callback
           widget.onVisitDurationChanged!(value);
+          _calculatePriceFromAPI();
         },
         customTitle: 'Select Visit Duration',
         isLoading: isLoadingVisitDurations,
@@ -860,6 +1100,7 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                   onTap: () {
                     widget.onWorkerCountChanged(i);
                     _resetCalendarSelection();
+                    _calculatePriceFromAPI();
                     // Recalculate total price if dates are selected
                     if (_internalSelectedDates.isNotEmpty &&
                         widget.onTotalPriceChanged != null) {
@@ -1012,6 +1253,7 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                         // Call the callback if available
                         if (widget.onNationalityChanged != null) {
                           widget.onNationalityChanged!(value);
+                          _calculatePriceFromAPI();
                         }
                       },
                       isEnabled: widget.isCustomBooking &&
@@ -1029,6 +1271,9 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                       (value) {
                         widget.onContractDurationChanged(value);
                         _resetCalendarSelection(); // Add this line
+                        if (widget.isCustomBooking) {
+                          _calculatePriceFromAPI();
+                        }
                       },
                       customTitle: 'Select Contract Duration',
                     ),
@@ -1041,6 +1286,8 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                         // Call the callback if available
                         if (widget.onTimeChanged != null) {
                           widget.onTimeChanged!(value);
+                          _resetCalendarSelection();
+                          _calculatePriceFromAPI();
                         }
                       },
                       isEnabled: widget.isCustomBooking &&
@@ -1057,7 +1304,8 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
                       visitFrequencies,
                       (value) {
                         widget.onVisitsPerWeekChanged(value);
-                        _resetCalendarSelection(); // Add this line
+                        _resetCalendarSelection();
+                        _calculatePriceFromAPI(); // Add this line
                       },
                       customTitle: 'Select Visits Per Week',
                     ),

@@ -15,6 +15,7 @@ import '../steps/service_details_step.dart';
 import '../steps/date_selection_step.dart';
 import '../widgets/booking_step_header.dart';
 import '../providers/address_provider.dart';
+import '../providers/auth_provider.dart';
 
 class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   final PackageModel? package; // Made optional
@@ -164,54 +165,66 @@ class _ContinuousBookingOverlayState
 
   // Fetch addresses from API
   Future<void> _fetchAddresses() async {
-    try {
+  try {
+    setState(() {
+      isLoadingAddresses = true;
+      addressError = null;
+    });
+
+    // Get userId from the provider instead of hardcoding
+    final userId = ref.read(userIdProvider);
+    
+    // Check if userId is available
+    if (userId == null) {
       setState(() {
-        isLoadingAddresses = true;
-        addressError = null;
+        addressError = 'User not authenticated. Please log in again.';
+        isLoadingAddresses = false;
       });
+      return;
+    }
 
-      final response = await http.get(
-        Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/23'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
+    final response = await http.get(
+      Uri.parse(
+          'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/$userId'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
 
-        setState(() {
-          addresses = data.map((addressData) {
-            return Address(
-              cardText: addressData['card_text']?.toString() ?? 'Address',
-              addressId: addressData['address_id'] ?? 0,
-              cityCode: int.parse(addressData['city_code']),
-              districtCode: addressData['district_code']?.toString() ?? '',
-            );
-          }).toList();
-
-          if (addresses.isNotEmpty &&
-              ref.read(selectedAddressProvider) == null) {
-            ref.read(selectedAddressProvider.notifier).state = addresses.first;
-          }
-
-          isLoadingAddresses = false;
-        });
-      } else {
-        setState(() {
-          addressError =
-              'Failed to load addresses. Status: ${response.statusCode}';
-          isLoadingAddresses = false;
-        });
-      }
-    } catch (e) {
       setState(() {
-        addressError = 'Error loading addresses: $e';
+        addresses = data.map((addressData) {
+          return Address(
+            cardText: addressData['card_text']?.toString() ?? 'Address',
+            addressId: addressData['address_id'] ?? 0,
+            cityCode: int.parse(addressData['city_code']),
+            districtCode: addressData['district_code']?.toString() ?? '',
+          );
+        }).toList();
+
+        if (addresses.isNotEmpty &&
+            ref.read(selectedAddressProvider) == null) {
+          ref.read(selectedAddressProvider.notifier).state = addresses.first;
+        }
+
+        isLoadingAddresses = false;
+      });
+    } else {
+      setState(() {
+        addressError =
+            'Failed to load addresses. Status: ${response.statusCode}';
         isLoadingAddresses = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      addressError = 'Error loading addresses: $e';
+      isLoadingAddresses = false;
+    });
   }
+}
 
   String _extractLocationName(String? cardText) {
     if (cardText == null || cardText.isEmpty) {

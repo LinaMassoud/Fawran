@@ -10,19 +10,24 @@ class CustomDateSelectionStep extends StatefulWidget {
   final String contractDuration;
   final String visitsPerWeek;
   final int maxSelectableDates;
-  final bool showBottomNavigation; // Add this parameter
-
+  final bool showBottomNavigation;
+  
+  final double vatAmount;
+  final double priceWithoutVat;
+  
   const CustomDateSelectionStep({
     Key? key,
     required this.selectedDates,
     required this.onDatesChanged,
     this.onTotalPriceChanged,
     this.onNextPressed,
+    this.vatAmount = 0.0,
+    this.priceWithoutVat = 0.0,
     required this.pricePerVisit,
     required this.contractDuration,
     required this.visitsPerWeek,
     required this.maxSelectableDates,
-    this.showBottomNavigation = true, // Default to true for backward compatibility
+    this.showBottomNavigation = true,
   }) : super(key: key);
 
   @override
@@ -38,7 +43,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   DateTime? _userSelectedStartDate;
   int _totalAllowedVisits = 0;
   int _visitsPerWeekCount = 0;
-  Map<String, int> _weeklyVisitCounts = {}; // Track visits per week
+  Map<String, int> _weeklyVisitCounts = {};
   bool _isSelectingStartDate = true;
 
   @override
@@ -52,6 +57,24 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   }
 
   @override
+  void didUpdateWidget(CustomDateSelectionStep oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync with parent's selected dates if they changed externally
+    if (widget.selectedDates != oldWidget.selectedDates) {
+      setState(() {
+        _selectedDates = List.from(widget.selectedDates);
+        _updateWeeklyVisitCounts();
+      });
+    }
+    
+    // Recalculate if price or VAT changed
+    if (widget.pricePerVisit != oldWidget.pricePerVisit || 
+        widget.vatAmount != oldWidget.vatAmount) {
+      _notifyPriceChange();
+    }
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
@@ -60,10 +83,15 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   void _calculateContractDetails() {
     // Parse contract duration
     int durationInWeeks = 0;
-    if (widget.contractDuration.toLowerCase().contains('month')) {
+    String duration = widget.contractDuration.toLowerCase();
+    
+    if (duration.contains('year')) {
+      int years = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+      durationInWeeks = years * 52;
+    } else if (duration.contains('month')) {
       int months = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-      durationInWeeks = months * 4; // Approximate weeks in months
-    } else if (widget.contractDuration.toLowerCase().contains('week')) {
+      durationInWeeks = months * 4;
+    } else if (duration.contains('week')) {
       durationInWeeks = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
     }
 
@@ -93,7 +121,6 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   }
 
   String _getWeekKey(DateTime date) {
-    // Get Monday of the week as the week identifier
     DateTime monday = date.subtract(Duration(days: date.weekday - 1));
     return DateFormat('yyyy-MM-dd').format(monday);
   }
@@ -104,6 +131,17 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     return currentWeekCount >= _visitsPerWeekCount;
   }
 
+  void _notifyPriceChange() {
+    if (widget.onTotalPriceChanged != null) {
+      // Use the same calculation as _calculateTotalPrice() to ensure consistency
+      double totalPrice = _calculateTotalPrice();
+      // Use WidgetsBinding to ensure this runs after the current build cycle
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onTotalPriceChanged!(totalPrice);
+      });
+    }
+  }
+
   void _selectDate(DateTime date) {
     setState(() {
       // If we're still selecting the start date
@@ -112,9 +150,10 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
         _selectedDates.clear();
         _selectedDates.add(date);
         _isSelectingStartDate = false;
-        _calculateContractDetails(); // Recalculate with new start date
+        _calculateContractDetails();
         _updateWeeklyVisitCounts();
         widget.onDatesChanged(_selectedDates);
+        _notifyPriceChange();
         return;
       }
 
@@ -144,11 +183,12 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
       _selectedDates.sort();
       _updateWeeklyVisitCounts();
     });
+    
+    // Always notify parent of date changes
     widget.onDatesChanged(_selectedDates);
-    if (widget.onTotalPriceChanged != null) {
-    double totalPrice = _selectedDates.length * widget.pricePerVisit;
-    widget.onTotalPriceChanged!(totalPrice);
-  }
+    
+    // Always notify parent of price changes
+    _notifyPriceChange();
   }
 
   void _showSnackBar(String message) {
@@ -180,7 +220,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
 
     // Check if date is already selected
     if (_selectedDates.contains(date)) {
-      return true; // Allow deselection (except start date, handled in _selectDate)
+      return true;
     }
 
     // Check if we've reached the total visit limit
@@ -205,7 +245,6 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + monthOffset);
     });
     
-    // Calculate the page index for the new month
     final now = DateTime.now();
     final targetMonth = DateTime(_currentMonth.year, _currentMonth.month);
     final currentMonth = DateTime(now.year, now.month);
@@ -213,7 +252,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     int monthDifference = (targetMonth.year - currentMonth.year) * 12 + 
                          (targetMonth.month - currentMonth.month);
     
-    if (monthDifference >= 0 && monthDifference < 24) {
+    if (monthDifference >= 0 && monthDifference < 60) {
       _pageController.animateToPage(
         monthDifference,
         duration: Duration(milliseconds: 300),
@@ -267,28 +306,25 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
         GestureDetector(
           onTap: isSelectable ? () => _selectDate(date) : null,
           child: Container(
-            margin: EdgeInsets.all(1), // Reduced margin
+            margin: EdgeInsets.all(1),
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: BorderRadius.circular(6), // Smaller border radius
-              border: isSelected ? Border.all(color: Color(0xFF1E3A8A), width: 1) : null, // Updated border color
+              borderRadius: BorderRadius.circular(6),
+              border: isSelected ? Border.all(color: Color(0xFF1E3A8A), width: 1) : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min, // Important: minimize column size
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Day number - always shown
                 Text(
                   day.toString(),
                   style: TextStyle(
-                    fontSize: 14, // Reduced font size
+                    fontSize: 14,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     color: textColor,
                   ),
                 ),
-                // Conditional content based on priority
                 if (isStartDate && !_isSelectingStartDate) ...[
-                  // Highest priority: Start date indicator
                   Text(
                     'START',
                     style: TextStyle(
@@ -298,7 +334,6 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
                     ),
                   ),
                 ] else if (isWeekFull && !isSelected && !_isSelectingStartDate) ...[
-                  // Second priority: Week full indicator
                   Text(
                     'Full',
                     style: TextStyle(
@@ -308,11 +343,10 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
                     ),
                   ),
                 ] else if (isSelectable && !isOutsideContract) ...[
-                  // Third priority: Price
                   Text(
                     _formatPrice(widget.pricePerVisit),
                     style: TextStyle(
-                      fontSize: 8, // Reduced font size
+                      fontSize: 8,
                       fontWeight: FontWeight.w500,
                       color: priceColor,
                     ),
@@ -329,10 +363,10 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
       crossAxisCount: 7,
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.0, // Square cells
-      mainAxisSpacing: 1, // Reduced spacing
-      crossAxisSpacing: 1, // Reduced spacing
-      padding: EdgeInsets.zero, // Remove default padding
+      childAspectRatio: 1.0,
+      mainAxisSpacing: 1,
+      crossAxisSpacing: 1,
+      padding: EdgeInsets.zero,
       children: dayWidgets,
     );
   }
@@ -340,10 +374,10 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   Widget _buildMonthHeader(DateTime month) {
     final now = DateTime.now();
     final canNavigateLeft = month.isAfter(DateTime(now.year, now.month));
-    final canNavigateRight = month.isBefore(DateTime(now.year + 2, now.month));
+    final canNavigateRight = month.isBefore(DateTime(now.year + 5, now.month));
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Reduced vertical padding
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -389,12 +423,12 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
             children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
               return Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 8), // Reduced padding
+                  padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     day,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 14, // Reduced font size
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
@@ -404,7 +438,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
             }).toList(),
           ),
         ),
-        Expanded( // Use Expanded instead of fixed height
+        Expanded(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: _buildCalendarGrid(month),
@@ -415,7 +449,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   }
 
   double _calculateTotalPrice() {
-    return _selectedDates.length * widget.pricePerVisit;
+    return (_selectedDates.length * widget.pricePerVisit) + widget.vatAmount;
   }
 
   Widget _buildContractInfo() {
@@ -427,13 +461,13 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Color(0xFF1E3A8A).withOpacity(0.1), // Updated background color
+        color: Color(0xFF1E3A8A).withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0xFF1E3A8A).withOpacity(0.3)), // Updated border color
+        border: Border.all(color: Color(0xFF1E3A8A).withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // Important: minimize column size
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -443,7 +477,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E3A8A), // Updated text color
+                  color: Color(0xFF1E3A8A),
                 ),
               ),
               if (!_isSelectingStartDate)
@@ -459,12 +493,13 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
                       _calculateContractDetails();
                     });
                     widget.onDatesChanged(_selectedDates);
+                    _notifyPriceChange();
                   },
                   child: Text(
                     'Reset',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF1E3A8A), // Updated text color
+                      color: Color(0xFF1E3A8A),
                     ),
                   ),
                 ),
@@ -476,21 +511,21 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: _isSelectingStartDate ? Colors.orange : Color(0xFF1E3A8A), // Updated text color
+              color: _isSelectingStartDate ? Colors.orange : Color(0xFF1E3A8A),
             ),
           ),
           Text(
             'Duration: ${widget.contractDuration} • Visits: $_visitsPerWeekCount per week',
             style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF1E3A8A), // Updated text color
+              color: Color(0xFF1E3A8A),
             ),
           ),
           Text(
             'Total Visits: $_totalAllowedVisits • Selected: ${_selectedDates.length}',
             style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF1E3A8A), // Updated text color
+              color: Color(0xFF1E3A8A),
             ),
           ),
           if (_contractStartDate != null && _contractEndDate != null)
@@ -498,7 +533,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
               'Contract Period: ${DateFormat('MMM dd, yyyy').format(_contractStartDate!)} - ${DateFormat('MMM dd, yyyy').format(_contractEndDate!)}',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF1E3A8A), // Updated text color
+                color: Color(0xFF1E3A8A),
               ),
             ),
         ],
@@ -506,130 +541,127 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     );
   }
 
- @override
-Widget build(BuildContext context) {
-  return Column(
-    children: [
-      // Remove the title section when used as embedded component
-      if (widget.showBottomNavigation)
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Select Date',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (widget.showBottomNavigation)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Select Date',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
           ),
-        ),
-      
-      // Contract info (keep this for validation feedback)
-      _buildContractInfo(),
-      
-      Expanded(
-        child: PageView.builder(
-          controller: _pageController,
-          onPageChanged: (index) {
-            setState(() {
-              _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
-            });
-          },
-          itemCount: 24,
-          itemBuilder: (context, index) {
-            final month = DateTime(DateTime.now().year, DateTime.now().month + index);
-            return _buildMonthView(month);
-          },
-        ),
-      ),
-      
-      // Conditionally show bottom navigation
-      if (widget.showBottomNavigation)
-        Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    _selectedDates.length.toString(),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Total',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  Text(
-                    _formatPrice(_calculateTotalPrice()),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ],
-              ),
-              Spacer(),
-              Container(
-                width: 120,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _selectedDates.isNotEmpty && !_isSelectingStartDate && widget.onNextPressed != null
-                      ? widget.onNextPressed
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF1E3A8A),
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Next',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+        
+        _buildContractInfo(),
+        
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
+              });
+            },
+            itemCount: 60,
+            itemBuilder: (context, index) {
+              final month = DateTime(DateTime.now().year, DateTime.now().month + index);
+              return _buildMonthView(month);
+            },
           ),
         ),
-    ],
-  );
-}
+        
+        if (widget.showBottomNavigation)
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      _selectedDates.length.toString(),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Total',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    Text(
+                      _formatPrice(_calculateTotalPrice()),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+                Spacer(),
+                Container(
+                  width: 120,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _selectedDates.isNotEmpty && !_isSelectingStartDate && widget.onNextPressed != null
+                        ? widget.onNextPressed
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF1E3A8A),
+                      disabledBackgroundColor: Colors.grey.shade300,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Next',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
 }
