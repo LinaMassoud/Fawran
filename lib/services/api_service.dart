@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'package:fawran/models/ProffesionModel.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/package_model.dart';
 
 class ApiService {
   static const String _baseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran';
   static const String packagesBaseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran/service/packages';
-  
+    final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+    static final FlutterSecureStorage _secureStorage2 = FlutterSecureStorage();
+
+
   // Sign up API
   Future<Map<String, dynamic>?> signUp({
     required String userName,
@@ -47,30 +51,39 @@ class ApiService {
 
   // Login API
   Future<Map<String, dynamic>?> login({
-    required String phoneNumber,
-    required String password,
-  }) async {
-    final url = Uri.parse('$_baseUrl/login');
+  required String phoneNumber,
+  required String password,
+}) async {
+  final url = Uri.parse('$_baseUrl/login');
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'phone_number': phoneNumber,
-          'password': password,
-        }),
-      );
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'phone_number': phoneNumber,
+        'password': password,
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        return null;
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+ 
+      // Save token to secure storage if it exists
+      final token = responseData['token'];
+      if (token != null) {
+        await _secureStorage.write(key: 'token', value: token);
       }
-    } catch (ex) {
+
+      return responseData;
+    } else {
       return null;
     }
+  } catch (ex) {
+    return null;
   }
+}
+
 
   // OTP Verification API
 
@@ -117,11 +130,11 @@ Future<bool> verifyCode({
     try {
       final url = '$_baseUrl/home/professions';
       
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
-      
+    final token = await _secureStorage2.read(key: 'token');
+final response = await http.get(
+  Uri.parse(url),
+  headers: {'Content-Type': 'application/json', 'token': token ?? ''},
+);
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
         return decodedData;
@@ -140,10 +153,11 @@ Future<bool> verifyCode({
     try {
       final url = '$_baseUrl/service_packages/$professionId/$serviceId';
       
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
+       final token = await _secureStorage2.read(key: 'token');
+final response = await http.get(
+  Uri.parse(url),
+  headers: {'Content-Type': 'application/json', 'token': token ?? ''},
+);
 
       if (response.statusCode == 200) {
         String jsonString = response.body;
@@ -191,10 +205,11 @@ Future<bool> verifyCode({
     try {
       final url = '$_baseUrl/country_groups/$serviceId';
       
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
+        final token = await _secureStorage2.read(key: 'token');
+final response = await http.get(
+  Uri.parse(url),
+  headers: {'Content-Type': 'application/json', 'token': token ?? ''},
+);
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
@@ -212,10 +227,11 @@ Future<bool> verifyCode({
     try {
       final url = '$_baseUrl/service_shifts/$serviceId';
       
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
+        final token = await _secureStorage2.read(key: 'token');
+final response = await http.get(
+  Uri.parse(url),
+  headers: {'Content-Type': 'application/json', 'token': token ?? ''},
+);
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
@@ -282,10 +298,12 @@ static Future<Map<String, dynamic>?> calculatePackagePrice({
 }) async {
   try {
     final url = '$_baseUrl/calculate-package-price';
+        final token = await _secureStorage2.read(key: 'token');
+
     
     final response = await http.post(
       Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json','token':token??''},
       body: json.encode({
         'service_id': serviceId,
         'duration': duration,
@@ -434,11 +452,12 @@ static Future<Map<String, dynamic>?> calculatePackagePrice({
   }
   Future<List<ProfessionModel>> fetchProfessions() async {
   final url = Uri.parse('$_baseUrl/home/professions');
+     final token = await _secureStorage.read(key: 'token');
 
   try {
     final response = await http.get(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json','token':token??''},
     );
 
     if (response.statusCode == 200) {
@@ -457,11 +476,12 @@ Future<List<dynamic>> fetchNationalities({
   required String cityCode,
 }) async {
   final url = Uri.parse('$_baseUrl/nationalities/$professionId/$cityCode');
+    final token = await _secureStorage2.read(key: 'token');
 
   try {
     final response = await http.get(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json','token':token??''},
     );
 
     if (response.statusCode == 200) {
