@@ -1,6 +1,9 @@
 import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
 import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
+import 'package:fawran/screens/AuthCheckingScreen.dart';
+import 'package:fawran/screens/bookings.dart';
 import 'package:fawran/screens/home_screen.dart';
+import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/userProfile.dart';
@@ -42,11 +45,13 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
-      initialRoute: '/login',
+      home: const AuthCheckScreen(),
       routes: {
         // '/login' key routes to LoginScreen widget
         '/login': (context) => const LoginScreen(),
-        '/profile':(context) => const UserProfileScreen()
+        '/profile': (context) => const UserProfileScreen(),
+        '/bookings': (context) => const BookingsScreen(),
+        '/location': (context) => const LocationScreen()
         // '/profile' key routes to UserProfileScreen widget
       },
     );

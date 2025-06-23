@@ -433,7 +433,13 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Icon(Icons.home, color: Colors.black),
               Icon(Icons.search, color: Colors.grey),
-              Icon(Icons.favorite, color: Colors.grey),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                      context, '/bookings'); // Navigate to profile
+                },
+                child: Icon(Icons.calendar_month, color: Colors.grey),
+              ),
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(
