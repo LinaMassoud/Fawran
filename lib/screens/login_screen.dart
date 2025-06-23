@@ -19,6 +19,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _passwordVisible = false;
 
   bool _phoneEmpty = false;
   bool _passwordEmpty = false;
@@ -156,7 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // Password
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: !_passwordVisible,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.lock),
                         labelText: loc.password,
@@ -168,8 +169,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ? errorBorder
                             : inputBorder,
                         errorText: _passwordEmpty && _submitted
-                            ? loc.password + ' ' + loc.requiredField
+                            ? '${loc.password} ${loc.requiredField}'
                             : null,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _passwordVisible = !_passwordVisible;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -213,6 +226,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Center(
                       child: TextButton(
                         onPressed: () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(

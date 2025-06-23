@@ -27,7 +27,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final nameRegex =
       RegExp(r'^[a-zA-Z0-9]+$'); // For userName (only alphanumerics)
   final nameOnlyRegex = RegExp(r'^[a-zA-Z]+$'); // For names (only letters)
-
+  final phoneRegex = RegExp(r'^\+?[0-9\s\-\(\)]{7,15}$');
   @override
   void initState() {
     super.initState();
@@ -129,9 +129,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 label: loc.phoneNumber,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                validator: (val) => val == null || val.isEmpty
-                    ? '${loc.phoneNumber} is required'
-                    : null,
+                validator: (val) {
+                  if (val == null || val.isEmpty)
+                    return '${loc.phoneNumber} is required';
+                  if (!phoneRegex.hasMatch(val))
+                    return ' enter valid ${loc.phoneNumber} ';
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
               _buildTextField(
