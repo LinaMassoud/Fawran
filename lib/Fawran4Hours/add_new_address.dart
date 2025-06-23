@@ -132,60 +132,76 @@ void dispose() {
   }
 
   void _onCityChanged(City? city) {
-    setState(() {
-      _selectedCity = city;
-      _selectedDistrict = null;
-      _selectedDistrictCode = null;
-      _availableDistricts.clear();
+  setState(() {
+    _selectedCity = city;
+    _selectedDistrict = null;
+    _selectedDistrictCode = null;
+    _availableDistricts.clear();
+    
+    // Clear map-related data when city changes
+    _districtMapData = null;
+    _selectedLocation = null;
+    _isMapCompleted = false;
+    _hasUserMovedPin = false;
+    _isLocationConfirmed = false;
 
-      if (city != null) {
-        final selectedCityObj = _availableCities.firstWhere(
-          (city) => city.cityName == city.cityName,
-          orElse: () => City(cityCode: 0, cityName: ''),
-        );
-        _selectedCityCode = city.cityCode;
+    if (city != null) {
+      final selectedCityObj = _availableCities.firstWhere(
+        (city) => city.cityName == city.cityName,
+        orElse: () => City(cityCode: 0, cityName: ''),
+      );
+      _selectedCityCode = city.cityCode;
 
-        if (_selectedCityCode != null && _selectedCityCode! > 0) {
-          _fetchDistrictsFromAPI(city.cityCode!);
-        }
-      } else {
-        _selectedCityCode = null;
+      if (_selectedCityCode != null && _selectedCityCode! > 0) {
+        _fetchDistrictsFromAPI(city.cityCode!);
       }
+    } else {
+      _selectedCityCode = null;
+    }
 
-      _checkDistrictCompletion();
-    });
-  }
+    _checkDistrictCompletion();
+  });
+}
 
   void _onDistrictChanged(String? value) {
-    setState(() {
-      _selectedDistrict = value;
+  setState(() {
+    _selectedDistrict = value;
+    
+    // Clear map-related data when district changes
+    _selectedLocation = null;
+    _isMapCompleted = false;
+    _hasUserMovedPin = false;
+    _isLocationConfirmed = false;
 
-      if (value != null) {
-       
-        _selectedDistrictCode = value;
+    if (value != null) {
+      _selectedDistrictCode = value;
 
-        if (_selectedDistrictCode != null &&
-            _selectedDistrictCode!.isNotEmpty) {
-          _fetchDistrictMapData(_selectedDistrictCode!);
-        }
-      } else {
-        _selectedDistrictCode = null;
-        _districtMapData = null;
+      if (_selectedDistrictCode != null &&
+          _selectedDistrictCode!.isNotEmpty) {
+        _fetchDistrictMapData(_selectedDistrictCode!);
       }
+    } else {
+      _selectedDistrictCode = null;
+      _districtMapData = null;
+    }
 
-      _checkDistrictCompletion();
-    });
-  }
+    _checkDistrictCompletion();
+  });
+}
+
 
   void _checkDistrictCompletion() {
-    setState(() {
-      _isDistrictCompleted = _selectedCity != null && _selectedDistrict != null;
-      if (_isDistrictCompleted && _currentStep == 1) {
-        _currentStep = 2;
-      }
-      _updateCanProceedToDetails();
-    });
-  }
+  setState(() {
+    _isDistrictCompleted = _selectedCity != null && _selectedDistrict != null;
+    if (_isDistrictCompleted && _currentStep == 1) {
+      _currentStep = 2;
+    } else if (!_isDistrictCompleted && _currentStep > 1) {
+      // Reset to step 1 if district is no longer completed
+      _currentStep = 1;
+    }
+    _updateCanProceedToDetails();
+  });
+}
 
   void _onMapCompleted() {
     setState(() {
@@ -198,10 +214,18 @@ void dispose() {
   }
 
   void _updateCanProceedToDetails() {
-    setState(() {
-      _canProceedToDetails = _isDistrictCompleted && _isMapCompleted;
-    });
-  }
+  setState(() {
+    _canProceedToDetails = _isDistrictCompleted && _isMapCompleted;
+    if (!_canProceedToDetails && _currentStep > 2) {
+      // Reset to appropriate step if conditions are no longer met
+      if (_isDistrictCompleted && !_isMapCompleted) {
+        _currentStep = 2;
+      } else if (!_isDistrictCompleted) {
+        _currentStep = 1;
+      }
+    }
+  });
+}
 
   Future<void> _createAddressAPI() async {
     if (_selectedLocation == null || _selectedDistrictCode == null) {

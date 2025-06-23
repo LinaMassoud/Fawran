@@ -3,6 +3,8 @@ import 'package:fawran/models/ProffesionModel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/package_model.dart';
+import 'dart:io'; // for SocketException
+import 'dart:async'; // for TimeoutException
 
 class ApiService {
   static const String _baseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran';
@@ -242,6 +244,39 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error loading country groups: $e');
+    }
+  }
+
+  static Future<List<dynamic>> fetchServices(
+      {required int professionId}) async {
+    try {
+      final url = '$_baseUrl/home/professions';
+
+      final token = await _secureStorage2.read(key: 'token');
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        // Find the selected position and extract its services
+        for (var position in data) {
+          if (position['position_id'] == professionId) {
+            final List<dynamic> servicesList = position['services'] ?? [];
+            return servicesList;
+          }
+        }
+
+        // If profession not found, return empty list
+        return [];
+      } else {
+        throw Exception(
+            'Failed to load services. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching services: $e');
     }
   }
 

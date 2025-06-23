@@ -370,17 +370,25 @@ Future<void> _calculatePriceFromAPI() async {
 
 
   void _resetCalendarSelection() {
-    setState(() {
-      _internalSelectedDates.clear();
-      _calculatedTotalPrice = 0.0; // Explicitly set to 0
-      _showCalendar = false;
-    });
+  setState(() {
+    _internalSelectedDates.clear();
+    _calculatedTotalPrice = 0.0;
+    _showCalendar = false;
+  });
 
-    // Call the total price callback to update parent
-    if (widget.onTotalPriceChanged != null) {
-      widget.onTotalPriceChanged!(0.0);
-    }
+  // Call the total price callback to update parent
+  if (widget.onTotalPriceChanged != null) {
+    widget.onTotalPriceChanged!(0.0);
   }
+  
+  // Also reset the parent's selected days
+  widget.onSelectedDaysChanged([]);
+  
+  // Reset selected dates in parent if callback exists
+  if (widget.onSelectedDatesChanged != null) {
+    widget.onSelectedDatesChanged!([]);
+  }
+}
 
   void _onDateSelectionComplete(List<DateTime> dates) {
   setState(() {
@@ -569,21 +577,34 @@ Future<void> _calculatePriceFromAPI() async {
   }
 
   bool _isValidDateSelection() {
-    // Check if required fields are selected
-    if (widget.contractDuration.isEmpty || widget.visitsPerWeek.isEmpty) {
-      return false;
-    }
-
-    // Check if dates are actually selected (not just initialized)
-    if (_internalSelectedDates.isEmpty) {
-      return false;
-    }
-
-    // Validate date count matches expected visits
-    int expectedVisits = _getMaxSelectableDates();
-    return _internalSelectedDates.length <= expectedVisits &&
-        _calculatedTotalPrice > 0;
+  // Check if all required fields are selected
+  if (widget.contractDuration.isEmpty || 
+      widget.visitsPerWeek.isEmpty ||
+      widget.selectedNationality.isEmpty ||
+      widget.selectedTime.isEmpty ||
+      widget.visitDuration.isEmpty ||
+      widget.workerCount <= 0) {
+    return false;
   }
+
+  // Check if dates are actually selected
+  if (_internalSelectedDates.isEmpty) {
+    return false;
+  }
+
+  // Calculate the expected total number of visits
+  int expectedTotalVisits = _getMaxSelectableDates();
+  
+  // Validate that the user has selected exactly the expected number of dates
+  bool hasCorrectDateCount = _internalSelectedDates.length == expectedTotalVisits;
+  
+  // Also ensure the total price is calculated
+  bool hasTotalPrice = _calculatedTotalPrice > 0;
+  
+  return hasCorrectDateCount && hasTotalPrice;
+}
+
+
 
 // Add this method to calculate max selectable dates
   int _getMaxSelectableDates() {
@@ -808,192 +829,194 @@ Future<void> _calculatePriceFromAPI() async {
   }
 
   Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String) onChanged, {
-    bool isEnabled = true,
-    String? customTitle,
-    bool isLoading = false,
-  }) {
-    // Check if value is empty or not in options
-    bool hasValidValue = value.isNotEmpty && options.contains(value);
+  String label,
+  String value,
+  List<String> options,
+  Function(String) onChanged, {
+  bool isEnabled = true,
+  String? customTitle,
+  bool isLoading = false,
+}) {
+  // Check if value is empty or not in options
+  bool hasValidValue = value.isNotEmpty && options.contains(value);
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 15),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
+  return Container(
+    margin: EdgeInsets.only(bottom: 15),
+    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: Colors.white,
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
             ),
           ),
-          if (isEnabled)
-            GestureDetector(
-              onTap: isLoading
-                  ? null
-                  : () => _showCustomDropdown(
-                      context, options, value, onChanged, customTitle),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isLoading)
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
-                      ),
+        ),
+        if (isEnabled)
+          GestureDetector(
+            onTap: isLoading
+                ? null
+                : () => _showCustomDropdown(
+                    context, options, value, onChanged, customTitle),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLoading)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
                     ),
-                  if (!isLoading)
-                    Text(
-                      hasValidValue ? value : 'Select',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: hasValidValue ? Colors.black : Colors.grey[500],
-                        fontWeight:
-                            hasValidValue ? FontWeight.w600 : FontWeight.w400,
-                      ),
+                  ),
+                if (!isLoading)
+                  Text(
+                    hasValidValue ? value : 'Select',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: hasValidValue ? Colors.black : Colors.grey[500],
+                      fontWeight:
+                          hasValidValue ? FontWeight.w600 : FontWeight.w400,
                     ),
-                  if (!isLoading) SizedBox(width: 4),
-                  if (!isLoading)
-                    Icon(Icons.keyboard_arrow_down,
-                        color: Colors.grey[600], size: 20),
-                ],
-              ),
-            )
-          else
-            Text(
-              hasValidValue ? value : 'Not selected',
-              style: TextStyle(
-                fontSize: 16,
-                color: hasValidValue ? Colors.black : Colors.grey[500],
-                fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
-              ),
+                  ),
+                if (!isLoading) SizedBox(width: 4),
+                if (!isLoading)
+                  Icon(Icons.keyboard_arrow_down,
+                      color: Colors.grey[600], size: 20),
+              ],
             ),
-        ],
-      ),
-    );
-  }
+          )
+        else
+          Text(
+            hasValidValue ? value : 'Select', // Changed from 'Not selected' to 'Select'
+            style: TextStyle(
+              fontSize: 16,
+              color: hasValidValue ? Colors.black : Colors.grey[500],
+              fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+      ],
+    ),
+  );
+}
 
   void _showCustomDropdown(
-    BuildContext context,
-    List<String> options,
-    String currentValue,
-    Function(String) onChanged,
-    String? customTitle,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
+  BuildContext context,
+  List<String> options,
+  String currentValue,
+  Function(String) onChanged,
+  String? customTitle,
+) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.6,
+    ),
+    builder: (BuildContext context) {
+      return Container(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
-              SizedBox(height: 20),
+            ),
+            SizedBox(height: 20),
 
-              // Title
-              Text(
-                customTitle ?? 'Select Option',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
+            // Title
+            Text(
+              customTitle ?? 'Select Option',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
               ),
-              SizedBox(height: 10),
+            ),
+            SizedBox(height: 10),
 
-              Divider(color: Colors.grey[200]),
+            Divider(color: Colors.grey[200]),
 
-              // Scrollable options
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: options.length,
-                  itemBuilder: (context, index) {
-                    final option = options[index];
-                    // Only show as selected if currentValue is not empty and matches
-                    final isSelected =
-                        currentValue.isNotEmpty && option == currentValue;
+            // Scrollable options
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options[index];
+                  final isSelected = currentValue.isNotEmpty && option == currentValue;
 
-                    return InkWell(
-                      onTap: () {
-                        onChanged(option);
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Color(0xFF1E3A8A).withOpacity(0.1)
-                              : Colors.transparent,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                option,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: isSelected
-                                      ? Color(0xFF1E3A8A)
-                                      : Colors.black87,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                ),
+                  return InkWell(
+                    onTap: () async {  // Make this async
+                      Navigator.pop(context);
+                      
+                      // Call the onChanged callback and handle if it's async
+                      final result = onChanged(option);
+                      if (result is Future) {
+                        await result;
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Color(0xFF1E3A8A).withOpacity(0.1)
+                            : Colors.transparent,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              option,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isSelected
+                                    ? Color(0xFF1E3A8A)
+                                    : Colors.black87,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
                               ),
                             ),
-                            if (isSelected)
-                              Icon(
-                                Icons.check,
-                                color: Color(0xFF1E3A8A),
-                                size: 20,
-                              ),
-                          ],
-                        ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check,
+                              color: Color(0xFF1E3A8A),
+                              size: 20,
+                            ),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildVisitDurationField() {
     if (widget.isCustomBooking && widget.onVisitDurationChanged != null) {
@@ -1299,16 +1322,22 @@ Future<void> _calculatePriceFromAPI() async {
                     _buildVisitDurationField(),
 
                     _buildDropdownField(
-                      'Visits week number',
-                      widget.visitsPerWeek,
-                      visitFrequencies,
-                      (value) {
-                        widget.onVisitsPerWeekChanged(value);
-                        _resetCalendarSelection();
-                        _calculatePriceFromAPI(); // Add this line
-                      },
-                      customTitle: 'Select Visits Per Week',
-                    ),
+                    'Visits week number',
+                    widget.visitsPerWeek,
+                    visitFrequencies,
+                    (value) async {  // Make this async
+                      widget.onVisitsPerWeekChanged(value);
+                      _resetCalendarSelection();
+                      
+                      // Wait a frame for the widget to update its state
+                      await Future.delayed(Duration(milliseconds: 100));
+                      
+                      if (widget.isCustomBooking) {
+                        await _calculatePriceFromAPI(); // Make this await
+                      }
+                    },
+                    customTitle: 'Select Visits Per Week',
+                  ),
 
                     // Day Selection Widget - Auto-navigates when complete
                     _buildSelectDateField(),
@@ -1362,7 +1391,7 @@ Future<void> _calculatePriceFromAPI() async {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Total',
+                        'Total (Inclusive of VAT)',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
