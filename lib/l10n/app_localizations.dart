@@ -268,6 +268,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save up to 15%\nwhen you order now'**
   String get offer;
+
+  /// No description provided for @requiredField.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get requiredField;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

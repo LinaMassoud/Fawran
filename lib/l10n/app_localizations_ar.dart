@@ -94,4 +94,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get offer => 'وفر حتى 15%/nاطلب الان';
+
+  @override
+  String get requiredField => 'هذا الحقل مطلوب';
 }
