@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-
 class ServiceProvidersScreen extends ConsumerStatefulWidget {
   final String header;
 
@@ -20,7 +19,8 @@ class ServiceProvidersScreen extends ConsumerStatefulWidget {
   _ServiceProvidersScreenState createState() => _ServiceProvidersScreenState();
 }
 
-class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen> {
+class _ServiceProvidersScreenState
+    extends ConsumerState<ServiceProvidersScreen> {
   final Color headerColor = Color(0xFF112A5C);
   String? selectedNationality;
 
@@ -31,12 +31,11 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
     'Pakistani',
     'Nepali',
   ];
-  
 
   @override
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
-      final asyncNationalities = ref.watch(nationalitiesProvider);
+    final asyncNationalities = ref.watch(nationalitiesProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -87,8 +86,11 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Service Providers", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text("Next - Package", style: TextStyle(color: Colors.grey.shade600)),
+                    Text("Service Providers",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text("Next - Package",
+                        style: TextStyle(color: Colors.grey.shade600)),
                   ],
                 ),
                 Stack(
@@ -104,7 +106,9 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
                         backgroundColor: Colors.grey.shade300,
                       ),
                     ),
-                    Text("2 of 5", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    Text("2 of 5",
+                        style: TextStyle(
+                            fontSize: 10, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],
@@ -117,53 +121,63 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("1", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text("1",
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 SizedBox(height: 4),
-                Text("Nationality", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text("Nationality",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-  decoration: InputDecoration(
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-  ),
-  hint: Text("Please select your preferred nationality"),
-  value: selectedNationality,
-  onChanged: (value) {
-    setState(() {
-      selectedNationality = value;
-    });
-  },
-  items: asyncNationalities.when(
-    data: (nationalityList) {
-      return nationalityList
-          .map((nationality) => DropdownMenuItem<String>(
-                value: nationality.name,
-                child: Text(nationality.name),
-              ))
-          .toList();
-    },
-    loading: () => [],
-    error: (err, _) => [],
-  ),
-),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  hint: Text("Please select your preferred nationality"),
+                  value: selectedNationality,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedNationality = value;
+                    });
+                  },
+                  items: asyncNationalities.when(
+                    data: (nationalityList) {
+                      return nationalityList
+                          .map((nationality) => DropdownMenuItem<String>(
+                                value: nationality?.name,
+                                child: Text(nationality?.name ?? ''),
+                              ))
+                          .toList();
+                    },
+                    loading: () => [],
+                    error: (err, _) => [],
+                  ),
+                ),
                 SizedBox(height: 24),
 
                 // Choose Labor Button
-                Text("2", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text("2",
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 SizedBox(height: 4),
-                Text("Choose Labor", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text("Choose Labor",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: () {
                     // Open labor selection logic here
 
-                      Navigator.push(
-            context,
-           
-        MaterialPageRoute(
-                              builder: (context) =>  PermanentPrivateDriverScreen(header:widget.header),
-                            ),
-          );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PermanentPrivateDriverScreen(header: widget.header),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: headerColor,
@@ -174,7 +188,8 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
                   ),
                   child: Text(
                     "Select Labor",
-                    style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
               ],
@@ -199,7 +214,9 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text("Back", style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white)),
+                    child: Text("Back",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
                 ),
                 SizedBox(width: 16),
@@ -207,14 +224,13 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
                   child: ElevatedButton(
                     onPressed: () {
                       // Navigate to next screen
-                              Navigator.push(
-            context,
-           
-        MaterialPageRoute(
-                              builder: (context) =>  PackageSelectionScreen(header:widget.header),
-                            ),
-          );
-                      
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              PackageSelectionScreen(header: widget.header),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: headerColor,
@@ -223,7 +239,9 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text("Next", style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white)),
+                    child: Text("Next",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
                 ),
               ],
@@ -233,7 +251,4 @@ class _ServiceProvidersScreenState extends ConsumerState<ServiceProvidersScreen>
       ),
     );
   }
-
-
-
 }

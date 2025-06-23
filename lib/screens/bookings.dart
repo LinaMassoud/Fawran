@@ -1,36 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class BookingsScreen extends StatelessWidget {
+class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
 
-  // Sample static bookings list
-  final List<Map<String, dynamic>> bookings = const [
-    {
-      "laborSource": "company",
-      "driver": "Ahmed Ali",
-      "nationality": "Bangladeshi",
-      "packageName": "Standard Package",
-      "contractDays": 5,
-      "packagePriceWithVat": 499.99,
-      "pickupOption": "delivery",
-      "date": "2025-06-23"
-    },
-    {
-      "laborSource": "app",
-      "driver": "Fatima Noor",
-      "nationality": "Filipino",
-      "packageName": "Premium Package",
-      "contractDays": 10,
-      "packagePriceWithVat": 899.50,
-      "pickupOption": "pickup",
-      "date": "2025-06-20"
-    },
-  ];
+  @override
+  State<BookingsScreen> createState() => _BookingsScreenState();
+}
+
+class _BookingsScreenState extends State<BookingsScreen> {
+  final _storage = FlutterSecureStorage();
+
+  List<Map<String, dynamic>> _contracts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchContracts();
+  }
+
+  Future<void> _fetchContracts() async {
+    try {
+      final token = await _storage.read(key: 'token') ?? '';
+      final userId = await _storage.read(key: 'user_id') ?? '';
+
+      if (token == null || userId == null) {
+        throw Exception("Missing token or customer ID in SharedPreferences");
+      }
+
+      final url = Uri.parse(
+        "http://10.20.10.114:8080/ords/emdad/fawran/domestic/contracts/$userId",
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          "token": token,
+          "Accept": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _contracts = data.cast<Map<String, dynamic>>();
+          _isLoading = false;
+        });
+      } else {
+        throw Exception("Failed to load contracts: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching contracts: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   Widget _infoRow(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "$title: ",
@@ -45,44 +79,42 @@ class BookingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Bookings"),
-      ),
-      body: ListView.builder(
-        itemCount: bookings.length,
-        itemBuilder: (context, index) {
-          final booking = bookings[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (booking["laborSource"] == "company")
-                    _infoRow("Labor Source", "From Company")
-                  else
-                    _infoRow("Driver", booking["driver"] ?? ""),
-                  if (booking["laborSource"] == "app")
-                    _infoRow("Nationality", booking["nationality"] ?? ""),
-                  _infoRow("Package", booking["packageName"] ?? ""),
-                  _infoRow("Days", booking["contractDays"].toString()),
-                  _infoRow("Price",
-                      "${booking["packagePriceWithVat"].toStringAsFixed(2)} Riyal"),
-                  _infoRow(
-                      "Pickup/Delivery",
-                      booking["pickupOption"] == "pickup"
-                          ? "Pick up yourself"
-                          : booking["pickupOption"] == "delivery"
-                              ? "Delivery to home"
-                              : "Not selected"),
-                  _infoRow("Date", booking["date"]),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+      appBar: AppBar(title: const Text("My Bookings")),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _contracts.isEmpty
+              ? const Center(child: Text("No contracts found."))
+              : ListView.builder(
+                  itemCount: _contracts.length,
+                  itemBuilder: (context, index) {
+                    final booking = _contracts[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _infoRow(
+                                "Contract ID", booking["contract_id"] ?? ""),
+                            _infoRow("Nationality",
+                                booking["nationality_name"] ?? ""),
+                            _infoRow(
+                                "Profession", booking["profession_name"] ?? ""),
+                            _infoRow("Package", booking["package_name"] ?? ""),
+                            _infoRow("Days", booking["period_days"].toString()),
+                            _infoRow(
+                                "Price", "${booking["final_price"]} Riyal"),
+                            _infoRow("Delivery",
+                                "${booking["delivery_charges"]} Riyal"),
+                            _infoRow("Status", booking["status"] ?? ""),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }
