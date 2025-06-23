@@ -434,7 +434,13 @@ class HomeScreen extends ConsumerWidget {
               Icon(Icons.home, color: Colors.black),
               Icon(Icons.search, color: Colors.grey),
               Icon(Icons.favorite, color: Colors.grey),
-              Icon(Icons.person, color: Colors.grey),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                      context, '/profile'); // Navigate to profile
+                },
+                child: Icon(Icons.person, color: Colors.grey),
+              ),
             ],
           ),
         ),

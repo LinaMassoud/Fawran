@@ -26,14 +26,14 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
   bool deliveryAvailable = false;
   bool loadingDeliveryCheck = false;
 
-  static const String _checkAvailabilityUrl = 'http://your.api.url/check-availability';
+  static const String _checkAvailabilityUrl =
+      'http://your.api.url/check-availability';
 
   @override
   Widget build(BuildContext context) {
     final nationalityAsync = ref.watch(nationalitiesProvider);
     final packagesAsync = ref.watch(packageProvider);
     final laborersAsync = ref.watch(laborersProvider);
-
 
     return Scaffold(
       appBar: AppBar(
@@ -89,8 +89,10 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
 
                     return Card(
                       color: selected ? Colors.blue[50] : Colors.white,
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -101,7 +103,9 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                                 Expanded(
                                   child: Text(
                                     pkg.packageName,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 Radio<int>(
@@ -109,16 +113,22 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                                   groupValue: selectedPackageIndex,
                                   onChanged: (v) {
                                     setState(() => selectedPackageIndex = v);
-                                    ref.read(selectedPackageProvider.notifier).state = pkg;
+                                    ref
+                                        .read(selectedPackageProvider.notifier)
+                                        .state = pkg;
                                   },
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            _packageDetailRow("Duration (days)", "${pkg.contractDays}"),
-                            _packageDetailRow("Price (with VAT)", "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
-                            _packageDetailRow("Final Contract Price", "${pkg.contractAmount.toStringAsFixed(2)} Riyal"),
-                            _packageDetailRow("Discounted Price", "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
+                            _packageDetailRow(
+                                "Duration (days)", "${pkg.contractDays}"),
+                            _packageDetailRow("Price (with VAT)",
+                                "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
+                            _packageDetailRow("Final Contract Price",
+                                "${pkg.contractAmount.toStringAsFixed(2)} Riyal"),
+                            _packageDetailRow("Discounted Price",
+                                "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
                           ],
                         ),
                       ),
@@ -147,9 +157,11 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                         // If "company" selected, clear labor selection because it's automatic
                         if (v == "company") {
                           selectedLaborId = null;
-                          ref.read(selectedLaborerProvider.notifier).state = null;
+                          ref.read(selectedLaborerProvider.notifier).state =
+                              null;
                         }
                       });
+                      checkCarAvailability();
                     },
                   ),
                   RadioListTile<String>(
@@ -159,12 +171,13 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                     onChanged: (v) {
                       setState(() {
                         selectedLaborSource = v;
-                         if (v == "company") {
-      selectedLaborId = null;
-      ref.read(selectedLaborerProvider.notifier).state = null;
-    }
+                        if (v == "company") {
+                          selectedLaborId = null;
+                          ref.read(selectedLaborerProvider.notifier).state =
+                              null;
+                        }
                       });
-                       checkCarAvailability();
+                      checkCarAvailability();
                     },
                   ),
                 ],
@@ -181,11 +194,13 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                     if (drivers.isEmpty) {
                       return Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0, vertical: 48),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.groups_outlined, size: 64, color: Colors.grey[400]),
+                              Icon(Icons.groups_outlined,
+                                  size: 64, color: Colors.grey[400]),
                               const SizedBox(height: 16),
                               Text(
                                 "No Available Laborers",
@@ -219,13 +234,17 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                         final sel = selectedLaborId == d.personId;
                         return Card(
                           color: sel ? Colors.blue[50] : Colors.white,
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: ListTile(
                             leading: CircleAvatar(
                               radius: 24,
-                              backgroundImage: (d.imageUrl != null && d.imageUrl!.isNotEmpty)
+                              backgroundImage: (d.imageUrl != null &&
+                                      d.imageUrl!.isNotEmpty)
                                   ? NetworkImage(d.imageUrl!)
-                                  : const AssetImage('assets/images/default_avatar.jpg') as ImageProvider,
+                                  : const AssetImage(
+                                          'assets/images/default_avatar.jpg')
+                                      as ImageProvider,
                             ),
                             title: Text(d.employeeName),
                             subtitle: Text("Nationality: ${d.nationality}"),
@@ -234,28 +253,33 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                               groupValue: selectedLaborId,
                               onChanged: (v) {
                                 setState(() => selectedLaborId = v);
-                                ref.read(selectedLaborerProvider.notifier).state = d;
+                                ref
+                                    .read(selectedLaborerProvider.notifier)
+                                    .state = d;
                                 checkCarAvailability();
                               },
                             ),
-                            
                           ),
                         );
                       },
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('Error: $e')),
                 )
               else
                 disabledStepCard("Please select a package first"),
 
             // STEP 5: PICKUP OR DELIVERY (NEW)
-            if ((selectedLaborSource == "company") || (selectedLaborSource == "app" && selectedLaborId != null))
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
               sectionHeader("Step 5: Pickup or Delivery"),
-            if ((selectedLaborSource == "company") || (selectedLaborSource == "app" && selectedLaborId != null))
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: loadingDeliveryCheck
                     ? const Center(child: CircularProgressIndicator())
                     : Column(
@@ -293,9 +317,11 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
               ),
 
             // STEP 6: AGREEMENT
-            if ((selectedLaborSource == "company") || (selectedLaborSource == "app" && selectedLaborId != null))
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
               sectionHeader("Step 6: Agreement"),
-            if ((selectedLaborSource == "company") || (selectedLaborSource == "app" && selectedLaborId != null))
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
               Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Padding(
@@ -307,10 +333,14 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                         _infoRow("Labor Source", "From Company")
                       else
                         _infoRow(
-                            'Driver', ref.read(selectedLaborerProvider)?.arabicName ?? ''),
+                            'Driver',
+                            ref.read(selectedLaborerProvider)?.arabicName ??
+                                ''),
                       if (selectedLaborSource == "app")
-                        _infoRow('Nationality',
-                            ref.read(selectedLaborerProvider)?.nationality ?? ''),
+                        _infoRow(
+                            'Nationality',
+                            ref.read(selectedLaborerProvider)?.nationality ??
+                                ''),
                       _infoRow('Package',
                           ref.read(selectedPackageProvider)?.packageName ?? ''),
                       _infoRow('Days',
@@ -328,15 +358,15 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                   ),
                 ),
               )
-            else
-              if (selectedLaborSource == null)
-                disabledStepCard("Please select labor source first")
-              else if (selectedLaborSource == "app" && selectedLaborId == null)
-                disabledStepCard("Please select a laborer first"),
+            else if (selectedLaborSource == null)
+              disabledStepCard("Please select labor source first")
+            else if (selectedLaborSource == "app" && selectedLaborId == null)
+              disabledStepCard("Please select a laborer first"),
 
             // SUBMIT BUTTON
             if (((selectedLaborSource == "company") ||
-                    (selectedLaborSource == "app" && selectedLaborId != null)) &&
+                    (selectedLaborSource == "app" &&
+                        selectedLaborId != null)) &&
                 pickupOption != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -353,7 +383,8 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: const Text("SUBMIT ORDER",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -379,7 +410,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
   }
 
   Future<void> checkCarAvailability() async {
-          final selectedAddress = ref.watch(selectedAddressProvider);
+    final selectedAddress = ref.watch(selectedAddressProvider);
     setState(() {
       loadingDeliveryCheck = true;
       deliveryAvailable = false;
@@ -388,18 +419,22 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
 
     try {
       // Example POST or GET depending on your API design
-      final response = await http.post(Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/available-cars'),body:{
-        'city_code':selectedAddress?.cityCode,
-        "num_of_workers": 1,
-  "required_shift": "Morning",
-        
-        "required_days": "Sunday"  
-
-      });
+      final response = await http.post(
+        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/available-cars'),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "city_code": selectedAddress?.cityCode,
+          "num_of_workers": 2,
+          "required_shift": "Morning",
+          "required_days": "Sunday,Monday,Wednesday"
+        }),
+      );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         // Assuming API returns: { "car_available": true/false }
-        bool available = data.length>0;
+        bool available = data.length > 0;
         setState(() {
           deliveryAvailable = available;
         });
@@ -422,7 +457,8 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
   Widget sectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      child: Text(title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -453,7 +489,8 @@ Widget _packageDetailRow(String title, String value) {
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
       children: [
-        Expanded(child: Text(title, style: const TextStyle(color: Colors.grey))),
+        Expanded(
+            child: Text(title, style: const TextStyle(color: Colors.grey))),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     ),
@@ -468,7 +505,8 @@ Widget _infoRow(String label, String value) {
       children: [
         SizedBox(
           width: 100,
-          child: Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold)),
+          child: Text('$label:',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
         ),
         Expanded(child: Text(value)),
       ],
