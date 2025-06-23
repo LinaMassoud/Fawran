@@ -1,5 +1,6 @@
 //cleaning_service_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/booking_model.dart';
@@ -51,7 +52,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   final GlobalKey searchResultsKey = const GlobalObjectKey("searchResults");
   final GlobalKey eastAsiaSearchKey = const GlobalObjectKey("eastAsiaSearch");
   final GlobalKey africanSearchKey = const GlobalObjectKey("africanSearch");
-
+  final _storage = FlutterSecureStorage();
   // Package lists for different groups and shifts
   List<PackageModel> eastAsiaPackages = [];
   List<PackageModel> africanPackages = [];
@@ -99,12 +100,13 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
 
   Future<void> fetchServices() async {
     try {
+      final token = await _storage.read(key: 'token') ?? '';
       setState(() => isLoadingServices = true);
 
       final response = await http.get(
-        Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/home/professions'),
-      );
+          Uri.parse(
+              'http://10.20.10.114:8080/ords/emdad/fawran/home/professions'),
+          headers: {'token': token});
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);

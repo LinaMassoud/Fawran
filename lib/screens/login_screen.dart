@@ -227,7 +227,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: TextButton(
                         onPressed: () {
                           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
+                          ref.read(authProvider.notifier).clearStateError();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
