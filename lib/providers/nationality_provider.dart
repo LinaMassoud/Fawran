@@ -6,7 +6,7 @@ import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-final nationalitiesProvider = FutureProvider<List<Nationality>>((ref) async {
+final nationalitiesProvider = FutureProvider<List<Nationality?>>((ref) async {
   final selectedProfession = ref.watch(selectedProfessionProvider);
   final selectedAddress = ref.watch(selectedAddressProvider);
 

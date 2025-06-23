@@ -1,8 +1,13 @@
+import 'package:fawran/providers/address_provider.dart';
+import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../providers/nationality_provider.dart';
 import '../providers/labour_provider.dart';
 import '../providers/package_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CombinedOrderScreen extends ConsumerStatefulWidget {
   final String header;
@@ -18,12 +23,82 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
   int? selectedNationality;
   int? selectedPackageIndex;
   int? selectedLaborId;
+  String? selectedLaborSource; // "company" or "app"
+  String? pickupOption; // "pickup" or "delivery"
+  bool deliveryAvailable = false;
+  bool loadingDeliveryCheck = false;
 
   @override
   Widget build(BuildContext context) {
     final nationalityAsync = ref.watch(nationalitiesProvider);
     final packagesAsync = ref.watch(packageProvider);
     final laborersAsync = ref.watch(laborersProvider);
+    final _storage = FlutterSecureStorage();
+
+    final selectedProfession = ref.watch(selectedProfessionProvider);
+
+    Future<void> submitOrder() async {
+      final token = await _storage.read(key: 'token') ?? '';
+      final userId = await _storage.read(key: 'user_id') ?? '';
+
+      final selectedPackage = ref.read(selectedPackageProvider);
+      final selectedNationalityData = ref
+          .read(nationalitiesProvider)
+          .asData
+          ?.value
+          .firstWhere((n) => n?.id == selectedNationality);
+      final customerId = 1; // Replace with actual customer ID if available
+
+      if (selectedPackage == null || selectedNationalityData == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Missing required data.")),
+        );
+        return;
+      }
+
+      final double deliveryCharge = pickupOption == "delivery" ? 50.0 : 0.0;
+      final double amountToPay =
+          selectedPackage.packagePriceWithVat + deliveryCharge;
+
+      final Map<String, dynamic> requestBody = {
+        "customer_id": userId,
+        "profession_id": selectedProfession?.positionId,
+        "profession_name": selectedProfession?.positionName,
+        "nationality_id": selectedNationalityData.id,
+        "nationality": selectedNationalityData.name,
+        "package_id": selectedPackage.packageId,
+        "package_name": selectedPackage.packageName,
+        "period_days": selectedPackage.contractDays,
+        "tax_rate": 15.0,
+        "final_price": selectedPackage.packagePriceWithVat,
+        "delivery_charge": deliveryCharge,
+        "amount_to_pay": amountToPay,
+      };
+
+      try {
+        final response = await http.post(
+          Uri.parse(
+              'http://10.20.10.114:8080/ords/emdad/fawran/domestic/contract/create'),
+          headers: {"Content-Type": "application/json", 'token': token},
+          body: jsonEncode(requestBody),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Order submitted successfully!")),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Submission failed: ${response.body}")),
+          );
+        }
+        Navigator.pushReplacementNamed(context, '/bookings');
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error submitting order: $e")),
+        );
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -49,8 +124,8 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                   },
                   items: list
                       .map((n) => DropdownMenuItem<int>(
-                            value: n.id,
-                            child: Text(n.name),
+                            value: n?.id,
+                            child: Text(n?.name ?? ''),
                           ))
                       .toList(),
                 ),
@@ -64,7 +139,8 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                 ),
               ),
             ),
-            // STEP 2: PACKAGE
+
+            // STEP 2: CHOOSE PACKAGE
             sectionHeader("Step 2: Choose Package"),
             if (selectedNationality != null)
               packagesAsync.when(
@@ -130,86 +206,187 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
             else
               disabledStepCard("Please select a nationality first"),
 
-            // STEP 3: LABOR
-            sectionHeader("Step 3: Choose Driver"),
-            if (selectedPackageIndex != null)
-            laborersAsync.when(
-  data: (drivers) {
-    if (drivers.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.groups_outlined, size: 64, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              Text(
-                "No Available Laborers",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
-                ),
+            // STEP 3: CHOOSE LABOR SOURCE (NEW)
+            sectionHeader("Step 3: Choose Labor Source"),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  RadioListTile<String>(
+                    title: const Text("From Company"),
+                    value: "company",
+                    groupValue: selectedLaborSource,
+                    onChanged: (v) {
+                      setState(() {
+                        selectedLaborSource = v;
+                        // If "company" selected, clear labor selection because it's automatic
+                        if (v == "company") {
+                          selectedLaborId = null;
+                          ref.read(selectedLaborerProvider.notifier).state =
+                              null;
+                        }
+                      });
+                      checkCarAvailability();
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("From App"),
+                    value: "app",
+                    groupValue: selectedLaborSource,
+                    onChanged: (v) {
+                      setState(() {
+                        selectedLaborSource = v;
+                        if (v == "company") {
+                          selectedLaborId = null;
+                          ref.read(selectedLaborerProvider.notifier).state =
+                              null;
+                        }
+                      });
+                      checkCarAvailability();
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                "There are currently no laborers available. Please check back later.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[500],
-                ),
+            ),
+
+            // STEP 4: CHOOSE LABOR (only if source = app)
+            if (selectedLaborSource == "app")
+              sectionHeader("Step 4: Choose Driver"),
+            if (selectedLaborSource == "app")
+              if (selectedPackageIndex != null)
+                laborersAsync.when(
+                  data: (drivers) {
+                    if (drivers.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0, vertical: 48),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.groups_outlined,
+                                  size: 64, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
+                              Text(
+                                "No Available Laborers",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "There are currently no laborers available. Please check back later.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: drivers.length,
+                      itemBuilder: (c, i) {
+                        final d = drivers[i];
+                        final sel = selectedLaborId == d.personId;
+                        return Card(
+                          color: sel ? Colors.blue[50] : Colors.white,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              radius: 24,
+                              backgroundImage: (d.imageUrl != null &&
+                                      d.imageUrl!.isNotEmpty)
+                                  ? NetworkImage(d.imageUrl!)
+                                  : const AssetImage(
+                                          'assets/images/default_avatar.jpg')
+                                      as ImageProvider,
+                            ),
+                            title: Text(d.employeeName),
+                            subtitle: Text("Nationality: ${d.nationality}"),
+                            trailing: Radio<int>(
+                              value: d.personId,
+                              groupValue: selectedLaborId,
+                              onChanged: (v) {
+                                setState(() => selectedLaborId = v);
+                                ref
+                                    .read(selectedLaborerProvider.notifier)
+                                    .state = d;
+                                checkCarAvailability();
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                )
+              else
+                disabledStepCard("Please select a package first"),
+
+            // STEP 5: PICKUP OR DELIVERY (NEW)
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
+              sectionHeader("Step 5: Pickup or Delivery"),
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: loadingDeliveryCheck
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                        children: [
+                          RadioListTile<String>(
+                            title: const Text("Pick up laborer yourself"),
+                            value: "pickup",
+                            groupValue: pickupOption,
+                            onChanged: (val) {
+                              setState(() {
+                                pickupOption = val;
+                              });
+                            },
+                          ),
+                          RadioListTile<String>(
+                            title: const Text("Deliver laborer to home"),
+                            value: "delivery",
+                            groupValue: pickupOption,
+                            onChanged: deliveryAvailable
+                                ? (val) {
+                                    setState(() {
+                                      pickupOption = val;
+                                    });
+                                  }
+                                : null,
+                            subtitle: !deliveryAvailable
+                                ? const Text(
+                                    "Delivery option is not available currently.",
+                                    style: TextStyle(color: Colors.red),
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
               ),
-            ],
-          ),
-        ),
-      );
-    }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: drivers.length,
-      itemBuilder: (c, i) {
-        final d = drivers[i];
-        final sel = selectedLaborId == d.personId;
-        return Card(
-          color: sel ? Colors.blue[50] : Colors.white,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              radius: 24,
-              backgroundImage: (d.imageUrl != null && d.imageUrl!.isNotEmpty)
-                  ? NetworkImage(d.imageUrl!)
-                  : const AssetImage('assets/images/default_avatar.jpg')
-                      as ImageProvider,
-            ),
-            title: Text(d.employeeName),
-            subtitle: Text("Nationality: ${d.nationality}"),
-            trailing: Radio<int>(
-              value: d.personId,
-              groupValue: selectedLaborId,
-              onChanged: (v) {
-                setState(() => selectedLaborId = v);
-                ref.read(selectedLaborerProvider.notifier).state = d;
-              },
-            ),
-          ),
-        );
-      },
-    );
-  },
-  loading: () => const Center(child: CircularProgressIndicator()),
-  error: (e, _) => Center(child: Text('Error: $e')),
-)
-
-            else
-              disabledStepCard("Please select a package first"),
-
-            // STEP 4: AGREEMENT
-            sectionHeader("Step 4: Agreement"),
-            if (selectedLaborId != null)
+            // STEP 6: AGREEMENT
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
+              sectionHeader("Step 6: Agreement"),
+            if ((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null))
               Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Padding(
@@ -217,25 +394,45 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _infoRow('Driver',
-                          ref.read(selectedLaborerProvider)?.arabicName ?? ''),
-                      const SizedBox(height: 8),
-                      _infoRow('Nationality',
-                          ref.read(selectedLaborerProvider)?.nationality ?? ''),
+                      if (selectedLaborSource == "company")
+                        _infoRow("Labor Source", "From Company")
+                      else
+                        _infoRow(
+                            'Driver',
+                            ref.read(selectedLaborerProvider)?.arabicName ??
+                                ''),
+                      if (selectedLaborSource == "app")
+                        _infoRow(
+                            'Nationality',
+                            ref.read(selectedLaborerProvider)?.nationality ??
+                                ''),
                       _infoRow('Package',
                           ref.read(selectedPackageProvider)?.packageName ?? ''),
                       _infoRow('Days',
                           '${ref.read(selectedPackageProvider)?.contractDays ?? ''}'),
                       _infoRow('Price',
                           '${ref.read(selectedPackageProvider)?.packagePriceWithVat.toStringAsFixed(2) ?? ''} Riyal'),
+                      _infoRow(
+                          'Pickup/Delivery',
+                          pickupOption == "pickup"
+                              ? "Pick up yourself"
+                              : pickupOption == "delivery"
+                                  ? "Delivery to home"
+                                  : "Not selected"),
                     ],
                   ),
                 ),
               )
-            else
-              disabledStepCard("Please select a driver first"),
+            else if (selectedLaborSource == null)
+              disabledStepCard("Please select labor source first")
+            else if (selectedLaborSource == "app" && selectedLaborId == null)
+              disabledStepCard("Please select a laborer first"),
 
-            if (selectedLaborId != null)
+            // SUBMIT BUTTON
+            if (((selectedLaborSource == "company") ||
+                    (selectedLaborSource == "app" &&
+                        selectedLaborId != null)) &&
+                pickupOption != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: SizedBox(
@@ -244,6 +441,8 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Order Submitted")));
+                      // TODO: Add order submission logic here
+                      submitOrder();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[900],
@@ -259,6 +458,66 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant CombinedOrderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Whenever labor source or labor selection changes, check delivery availability
+    if ((selectedLaborSource == "company") ||
+        (selectedLaborSource == "app" && selectedLaborId != null)) {
+      checkCarAvailability();
+    } else {
+      setState(() {
+        deliveryAvailable = false;
+        pickupOption = null;
+      });
+    }
+  }
+
+  Future<void> checkCarAvailability() async {
+    final selectedAddress = ref.watch(selectedAddressProvider);
+    setState(() {
+      loadingDeliveryCheck = true;
+      deliveryAvailable = false;
+      pickupOption = null;
+    });
+
+    try {
+      // Example POST or GET depending on your API design
+      final response = await http.post(
+        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/available-cars'),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "city_code": selectedAddress?.cityCode,
+          "num_of_workers": 2,
+          "required_shift": "Morning",
+          "required_days": "Sunday,Monday,Wednesday"
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Assuming API returns: { "car_available": true/false }
+        bool available = data.length > 0;
+        setState(() {
+          deliveryAvailable = available;
+        });
+      } else {
+        setState(() {
+          deliveryAvailable = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        deliveryAvailable = false;
+      });
+    } finally {
+      setState(() {
+        loadingDeliveryCheck = false;
+      });
+    }
   }
 
   Widget sectionHeader(String title) {
@@ -312,14 +571,10 @@ Widget _infoRow(String label, String value) {
       children: [
         SizedBox(
           width: 100,
-          child: Text(
-            '$label:',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          child: Text('$label:',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
         ),
-        Expanded(
-          child: Text(value),
-        ),
+        Expanded(child: Text(value)),
       ],
     ),
   );

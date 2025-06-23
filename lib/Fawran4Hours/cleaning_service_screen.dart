@@ -1,5 +1,6 @@
 //cleaning_service_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/booking_model.dart';
@@ -51,7 +52,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   final GlobalKey searchResultsKey = const GlobalObjectKey("searchResults");
   final GlobalKey eastAsiaSearchKey = const GlobalObjectKey("eastAsiaSearch");
   final GlobalKey africanSearchKey = const GlobalObjectKey("africanSearch");
-
+  final _storage = FlutterSecureStorage();
   // Package lists for different groups and shifts
   List<PackageModel> eastAsiaPackages = [];
   List<PackageModel> africanPackages = [];
@@ -98,35 +99,34 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   }
 
   Future<void> fetchServices() async {
-  try {
-    setState(() => isLoadingServices = true);
+    try {
+      setState(() => isLoadingServices = true);
 
-    final List<dynamic> servicesList = await ApiService.fetchServices(
-      professionId: widget.professionId,
-    );
-
-    availableServices = servicesList
-        .map((service) => Service.fromJson(service))
-        .toList();
-
-    // Set default selection to the passed serviceId or first service
-    if (availableServices.isNotEmpty) {
-      selectedServiceId = widget.serviceId;
-      final selectedService = availableServices.firstWhere(
-        (service) => service.id == widget.serviceId,
-        orElse: () => availableServices.first,
+      final List<dynamic> servicesList = await ApiService.fetchServices(
+        professionId: widget.professionId,
       );
-      selectedServiceName = selectedService.name;
-      // Update the title immediately after setting the selection
-      _setServiceTitle();
-    }
 
-    setState(() => isLoadingServices = false);
-  } catch (e) {
-    setState(() => isLoadingServices = false);
-    print('Error fetching services: $e');
+      availableServices =
+          servicesList.map((service) => Service.fromJson(service)).toList();
+
+      // Set default selection to the passed serviceId or first service
+      if (availableServices.isNotEmpty) {
+        selectedServiceId = widget.serviceId;
+        final selectedService = availableServices.firstWhere(
+          (service) => service.id == widget.serviceId,
+          orElse: () => availableServices.first,
+        );
+        selectedServiceName = selectedService.name;
+        // Update the title immediately after setting the selection
+        _setServiceTitle();
+      }
+
+      setState(() => isLoadingServices = false);
+    } catch (e) {
+      setState(() => isLoadingServices = false);
+      print('Error fetching services: $e');
+    }
   }
-}
 
   Future<void> _initializeData() async {
     // Set dynamic service title based on serviceId
@@ -463,12 +463,11 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
     fetchAfricanPackages();
   }
 
-
-void _onPaymentSuccess() {
-  setState(() {
-    completedBooking = null; // This will hide the bottom order view
-  });
-}
+  void _onPaymentSuccess() {
+    setState(() {
+      completedBooking = null; // This will hide the bottom order view
+    });
+  }
 
   // Handle booking completion
   void _onBookingCompleted(BookingData bookingData) {
@@ -481,20 +480,20 @@ void _onPaymentSuccess() {
 
   // Handle view order button
   void _viewOrder() {
-  if (completedBooking != null) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OrderSummaryScreen(
-          bookingData: completedBooking!,
-          totalSavings: totalSavings,
-          originalPrice: originalPrice,
-          onPaymentSuccess: _onPaymentSuccess, // Add this callback
+    if (completedBooking != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderSummaryScreen(
+            bookingData: completedBooking!,
+            totalSavings: totalSavings,
+            originalPrice: originalPrice,
+            onPaymentSuccess: _onPaymentSuccess, // Add this callback
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
 
   Widget _buildServiceSelector() {
     if (isLoadingServices) {
@@ -1412,9 +1411,9 @@ void _onPaymentSuccess() {
                   bookingData: bookingData,
                   totalSavings: bookingData
                       .discountAmount, // Use the actual discount from booking
-                  originalPrice: bookingData
-                      .originalPrice,
-                  onPaymentSuccess: _onPaymentSuccess, // Use the original price from booking
+                  originalPrice: bookingData.originalPrice,
+                  onPaymentSuccess:
+                      _onPaymentSuccess, // Use the original price from booking
                 ),
               ),
             );

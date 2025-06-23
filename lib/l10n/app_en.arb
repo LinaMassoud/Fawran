@@ -31,7 +31,9 @@
 
   "fetching_location" : "fetching your location...",
   "currentLocation" : "📍 currentLocation:",
-   "offer":  "Save up to 15%\nwhen you order now"
+   "offer":  "Save up to 15%\nwhen you order now",
+     "requiredField":"This field is required"   
+
 
 
 
