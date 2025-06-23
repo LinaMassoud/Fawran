@@ -1,6 +1,8 @@
 import 'package:fawran/providers/address_provider.dart';
+import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../providers/nationality_provider.dart';
 import '../providers/labour_provider.dart';
 import '../providers/package_provider.dart';
@@ -26,14 +28,77 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
   bool deliveryAvailable = false;
   bool loadingDeliveryCheck = false;
 
-  static const String _checkAvailabilityUrl =
-      'http://your.api.url/check-availability';
-
   @override
   Widget build(BuildContext context) {
     final nationalityAsync = ref.watch(nationalitiesProvider);
     final packagesAsync = ref.watch(packageProvider);
     final laborersAsync = ref.watch(laborersProvider);
+    final _storage = FlutterSecureStorage();
+
+    final selectedProfession = ref.watch(selectedProfessionProvider);
+
+    Future<void> submitOrder() async {
+      final token = await _storage.read(key: 'token') ?? '';
+      final userId = await _storage.read(key: 'user_id') ?? '';
+
+      final selectedPackage = ref.read(selectedPackageProvider);
+      final selectedNationalityData = ref
+          .read(nationalitiesProvider)
+          .asData
+          ?.value
+          .firstWhere((n) => n?.id == selectedNationality);
+      final customerId = 1; // Replace with actual customer ID if available
+
+      if (selectedPackage == null || selectedNationalityData == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Missing required data.")),
+        );
+        return;
+      }
+
+      final double deliveryCharge = pickupOption == "delivery" ? 50.0 : 0.0;
+      final double amountToPay =
+          selectedPackage.packagePriceWithVat + deliveryCharge;
+
+      final Map<String, dynamic> requestBody = {
+        "customer_id": userId,
+        "profession_id": selectedProfession?.positionId,
+        "profession_name": selectedProfession?.positionName,
+        "nationality_id": selectedNationalityData.id,
+        "nationality": selectedNationalityData.name,
+        "package_id": selectedPackage.packageId,
+        "package_name": selectedPackage.packageName,
+        "period_days": selectedPackage.contractDays,
+        "tax_rate": 15.0,
+        "final_price": selectedPackage.packagePriceWithVat,
+        "delivery_charge": deliveryCharge,
+        "amount_to_pay": amountToPay,
+      };
+
+      try {
+        final response = await http.post(
+          Uri.parse(
+              'http://10.20.10.114:8080/ords/emdad/fawran/domestic/contract/create'),
+          headers: {"Content-Type": "application/json", 'token': token},
+          body: jsonEncode(requestBody),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Order submitted successfully!")),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Submission failed: ${response.body}")),
+          );
+        }
+        Navigator.pushReplacementNamed(context, '/bookings');
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error submitting order: $e")),
+        );
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -59,8 +124,8 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                   },
                   items: list
                       .map((n) => DropdownMenuItem<int>(
-                            value: n.id,
-                            child: Text(n.name),
+                            value: n?.id,
+                            child: Text(n?.name ?? ''),
                           ))
                       .toList(),
                 ),
@@ -377,6 +442,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Order Submitted")));
                       // TODO: Add order submission logic here
+                      submitOrder();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[900],
