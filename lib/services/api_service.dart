@@ -58,85 +58,31 @@ class ApiService {
   required String password,
 }) async {
   final url = Uri.parse('$_baseUrl/login');
-  
-  // Debug: Log function entry
-  print('🔐 [LOGIN] Starting login process');
-  print('📱 [LOGIN] Phone number: ${phoneNumber.replaceRange(3, phoneNumber.length - 2, '*' * (phoneNumber.length - 5))}'); // Mask phone number for security
-  print('🌐 [LOGIN] Request URL: $url');
 
   try {
-    // Debug: Log request details
-    final requestBody = {
-      'phone_number': phoneNumber,
-      'password': password,
-    };
-    print('📤 [LOGIN] Request headers: Content-Type: application/json');
-    print('📤 [LOGIN] Request body prepared (password masked)');
-    
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(requestBody),
+      body: json.encode({
+        'phone_number': phoneNumber,
+        'password': password,
+      }),
     );
 
-    // Debug: Log response details
-    print('📥 [LOGIN] Response status code: ${response.statusCode}');
-    print('📥 [LOGIN] Response headers: ${response.headers}');
-    print('📥 [LOGIN] Response body length: ${response.body.length} characters');
-
     if (response.statusCode == 200) {
-      print('✅ [LOGIN] Login successful');
-      
       final responseData = json.decode(response.body);
-      print('📄 [LOGIN] Response data keys: ${responseData.keys.toList()}');
- 
+
       // Save token to secure storage if it exists
       final token = responseData['token'];
       if (token != null) {
-        print('🔑 [LOGIN] Token received, saving to secure storage');
-        print('🔑 [LOGIN] Token length: ${token.toString().length} characters');
         await _secureStorage.write(key: 'token', value: token);
-        print('✅ [LOGIN] Token saved successfully');
-      } else {
-        print('⚠️ [LOGIN] No token found in response');
       }
 
-      print('✅ [LOGIN] Login process completed successfully');
       return responseData;
     } else {
-      // Debug: Log error response details
-      print('❌ [LOGIN] Login failed with status code: ${response.statusCode}');
-      print('❌ [LOGIN] Error response body: ${response.body}');
-      
-      // Try to parse error message if response body contains JSON
-      try {
-        final errorData = json.decode(response.body);
-        print('❌ [LOGIN] Parsed error data: $errorData');
-        if (errorData['message'] != null) {
-          print('❌ [LOGIN] Error message: ${errorData['message']}');
-        }
-      } catch (e) {
-        print('❌ [LOGIN] Could not parse error response as JSON: $e');
-      }
-      
       return null;
     }
   } catch (ex) {
-    // Debug: Log exception details
-    print('💥 [LOGIN] Exception occurred: ${ex.runtimeType}');
-    print('💥 [LOGIN] Exception message: $ex');
-    print('💥 [LOGIN] Stack trace:');
-    print(StackTrace.current);
-    
-    // Check for specific exception types
-    if (ex is SocketException) {
-      print('🌐 [LOGIN] Network error - check internet connection');
-    } else if (ex is TimeoutException) {
-      print('⏰ [LOGIN] Request timeout - server might be slow');
-    } else if (ex is FormatException) {
-      print('📄 [LOGIN] JSON parsing error - invalid response format');
-    }
-    
     return null;
   }
 }

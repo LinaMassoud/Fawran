@@ -6,12 +6,14 @@ class OrderSummaryScreen extends StatefulWidget {
   final BookingData bookingData;
   final double totalSavings;
   final double originalPrice;
+  final VoidCallback? onPaymentSuccess; // Added callback
 
   const OrderSummaryScreen({
     Key? key,
     required this.bookingData,
     required this.totalSavings,
     required this.originalPrice,
+    this.onPaymentSuccess, // Added callback parameter
   }) : super(key: key);
 
   @override
@@ -162,63 +164,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   ),
                   SizedBox(height: 24),
 
-                  // Contact info card
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.phone, color: Colors.black54, size: 24),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Name,',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                '+966-567453612',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            // Handle change contact
-                          },
-                          child: Text(
-                            'Change',
-                            style: TextStyle(
-                              color: Colors.purple,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24),
-
                   // Billing and payment section
                   Text(
                     'Billing and payment',
@@ -234,13 +179,13 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   Row(
                     children: [
                       _buildPaymentLogo(
-                          'assets/images/mada_logo.png', Colors.blue),
+                          'assets/images/Mada-Logo.png', Colors.blue),
                       SizedBox(width: 8),
                       _buildPaymentLogo(
-                          'assets/images/visa_logo.png', Colors.blue),
+                          'assets/images/visa-logo.png', Colors.blue),
                       SizedBox(width: 8),
                       _buildPaymentLogo(
-                          'assets/images/mastercard_logo.png', Colors.red),
+                          'assets/images/mastercard.png', Colors.red),
                     ],
                   ),
                   SizedBox(height: 24),
@@ -288,14 +233,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                               ),
                             ),
                           ),
-                          Text(
-                            '1 offer',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.purple,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          
                           SizedBox(width: 8),
                           Icon(
                             Icons.chevron_right,
@@ -321,12 +259,10 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
 
                   // Payment breakdown
                   _buildPaymentRow('Item total',
-                      'SAR ${(widget.originalPrice - 129).toStringAsFixed(0)}'),
-                  SizedBox(height: 12),
-                  _buildPaymentRow('Taxes and Fee', 'SAR 129', isDotted: true),
+                      'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(0)}'),
                   SizedBox(height: 12),
                   _buildPaymentRow('Pack discount',
-                      '-SAR ${widget.totalSavings.toStringAsFixed(0)}',
+                      '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)}',
                       isDiscount: true),
                   SizedBox(height: 16),
                   Container(height: 1, color: Colors.black87),
@@ -372,7 +308,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Yay! You have saved SAR ${widget.totalSavings.toStringAsFixed(0)} on final bill',
+                          'Yay! You have saved SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} on final bill',
                           style: TextStyle(
                             color: Colors.green[700],
                             fontWeight: FontWeight.w600,
@@ -468,12 +404,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                             ),
                           ],
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.edit, color: Colors.black54),
-                        onPressed: () {
-                          // Handle edit address
-                        },
                       ),
                     ],
                   ),
@@ -700,6 +630,11 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   onPressed: () {
                     Navigator.of(context).pop(); // Close dialog
                     Navigator.of(context).pop(); // Go back to main screen
+                    
+                    // Call the callback to notify parent about successful payment
+                    if (widget.onPaymentSuccess != null) {
+                      widget.onPaymentSuccess!();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,

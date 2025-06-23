@@ -463,6 +463,13 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
     fetchAfricanPackages();
   }
 
+
+void _onPaymentSuccess() {
+  setState(() {
+    completedBooking = null; // This will hide the bottom order view
+  });
+}
+
   // Handle booking completion
   void _onBookingCompleted(BookingData bookingData) {
     setState(() {
@@ -474,19 +481,20 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
 
   // Handle view order button
   void _viewOrder() {
-    if (completedBooking != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OrderSummaryScreen(
-            bookingData: completedBooking!,
-            totalSavings: totalSavings,
-            originalPrice: originalPrice,
-          ),
+  if (completedBooking != null) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderSummaryScreen(
+          bookingData: completedBooking!,
+          totalSavings: totalSavings,
+          originalPrice: originalPrice,
+          onPaymentSuccess: _onPaymentSuccess, // Add this callback
         ),
-      );
-    }
+      ),
+    );
   }
+}
 
   Widget _buildServiceSelector() {
     if (isLoadingServices) {
@@ -907,7 +915,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                                       'SAR ${completedBooking!.originalPrice}',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: Colors.grey[800],
                                         decoration: TextDecoration.lineThrough,
                                       ),
                                     ),
@@ -922,7 +930,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                               backgroundColor: Colors.purple,
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 12),
+                                  horizontal: 25, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
                               ),
@@ -1405,7 +1413,8 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                   totalSavings: bookingData
                       .discountAmount, // Use the actual discount from booking
                   originalPrice: bookingData
-                      .originalPrice, // Use the original price from booking
+                      .originalPrice,
+                  onPaymentSuccess: _onPaymentSuccess, // Use the original price from booking
                 ),
               ),
             );
