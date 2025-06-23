@@ -78,6 +78,7 @@ class ApiService {
           'first_name': responseData['first_name'],
           'middle_name': responseData['middle_name'],
           'last_name': responseData['last_name'],
+          'username': responseData['username'],
         };
 
         for (var entry in fieldsToStore.entries) {

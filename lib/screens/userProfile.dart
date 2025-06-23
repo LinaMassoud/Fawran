@@ -19,6 +19,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   TextEditingController _middleNameController = TextEditingController();
   TextEditingController _lastNameController = TextEditingController();
   String phoneNumber = '';
+  String userName = '';
 
   @override
   void initState() {
@@ -31,6 +32,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _middleNameController.text = await _storage.read(key: 'middle_name') ?? '';
     _lastNameController.text = await _storage.read(key: 'last_name') ?? '';
     phoneNumber = await _storage.read(key: 'phone_number') ?? '';
+    userName = await _storage.read(key: 'username') ?? '';
     setState(() {});
   }
 
@@ -42,10 +44,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           'http://10.20.10.114:8080/ords/emdad/fawran/user/profile/update'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'token': token ?? '',
       },
       body: json.encode({
-        'username': 'TEST',
+        'username': userName,
         'first_name': _firstNameController.text,
         'middle_name': _middleNameController.text,
         'last_name': _lastNameController.text,
@@ -53,6 +55,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
 
     if (response.statusCode == 200) {
+      await _storage.write(key: 'first_name', value: _firstNameController.text);
+      await _storage.write(
+          key: 'middle_name', value: _middleNameController.text);
+      await _storage.write(key: 'last_name', value: _lastNameController.text);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Profile updated successfully')),
       );
