@@ -23,14 +23,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
- late final ProviderSubscription _subscription;
+  late final ProviderSubscription _subscription;
+  final nameRegex =
+      RegExp(r'^[a-zA-Z0-9]+$'); // For userName (only alphanumerics)
+  final nameOnlyRegex = RegExp(r'^[a-zA-Z]+$'); // For names (only letters)
 
   @override
-void initState() {
-  super.initState();
-
-
-}
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -45,23 +46,21 @@ void initState() {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
-
-ref.listen<AuthState>(authProvider, (previous, next) {
-    if (next.isSignedUp) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => VerificationScreen(
-            phoneNumber: _phoneController.text,
-            userId: _userNameController.text,
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.isSignedUp) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VerificationScreen(
+              phoneNumber: _phoneController.text,
+              userId: _userNameController.text,
+            ),
           ),
-        ),
-      );
-    }
-  });
+        );
+      }
+    });
     final authState = ref.watch(authProvider);
     final loc = AppLocalizations.of(context)!;
 
@@ -73,37 +72,56 @@ ref.listen<AuthState>(authProvider, (previous, next) {
           key: _formKey,
           child: Column(
             children: [
-               _buildTextField(
+              _buildTextField(
                 controller: _userNameController,
                 label: loc.username,
                 icon: Icons.person,
-                validator: (val) =>
-                    val == null || val.isEmpty ? '${loc.firstName} is required' : null,
+                validator: (val) {
+                  if (val == null || val.isEmpty)
+                    return '${loc.username} is required';
+                  if (!nameRegex.hasMatch(val))
+                    return '${loc.username} must not contain special characters';
+                  return null;
+                },
               ),
-                            const SizedBox(height: 10),
-
+              const SizedBox(height: 10),
               _buildTextField(
                 controller: _firstNameController,
                 label: loc.firstName,
                 icon: Icons.person,
-                validator: (val) =>
-                    val == null || val.isEmpty ? '${loc.firstName} is required' : null,
+                validator: (val) {
+                  if (val == null || val.isEmpty)
+                    return '${loc.firstName} is required';
+                  if (!nameOnlyRegex.hasMatch(val))
+                    return '${loc.firstName} must not contain special characters';
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
               _buildTextField(
                 controller: _middleNameController,
                 label: loc.middleName,
                 icon: Icons.person,
-                validator: (val) =>
-                    val == null || val.isEmpty ? '${loc.middleName} is required' : null,
+                validator: (val) {
+                  if (val == null || val.isEmpty)
+                    return '${loc.middleName} is required';
+                  if (!nameOnlyRegex.hasMatch(val))
+                    return '${loc.middleName} must not contain special characters';
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
               _buildTextField(
                 controller: _lastNameController,
                 label: loc.lastName,
                 icon: Icons.person,
-                validator: (val) =>
-                    val == null || val.isEmpty ? '${loc.lastName} is required' : null,
+                validator: (val) {
+                  if (val == null || val.isEmpty)
+                    return '${loc.lastName} is required';
+                  if (!nameOnlyRegex.hasMatch(val))
+                    return '${loc.lastName} must not contain special characters';
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
               _buildTextField(
@@ -111,8 +129,9 @@ ref.listen<AuthState>(authProvider, (previous, next) {
                 label: loc.phoneNumber,
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                validator: (val) =>
-                    val == null || val.isEmpty ? '${loc.phoneNumber} is required' : null,
+                validator: (val) => val == null || val.isEmpty
+                    ? '${loc.phoneNumber} is required'
+                    : null,
               ),
               const SizedBox(height: 10),
               _buildTextField(
@@ -121,7 +140,8 @@ ref.listen<AuthState>(authProvider, (previous, next) {
                 icon: Icons.email,
                 keyboardType: TextInputType.emailAddress,
                 validator: (val) {
-                  if (val == null || val.isEmpty) return '${loc.email} is required';
+                  if (val == null || val.isEmpty)
+                    return '${loc.email} is required';
                   final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
                   return emailRegex.hasMatch(val) ? null : 'Invalid email';
                 },
@@ -162,7 +182,6 @@ ref.listen<AuthState>(authProvider, (previous, next) {
                                 password: _passwordController.text,
                               );
                         }
-                                         
                       },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
@@ -181,12 +200,12 @@ ref.listen<AuthState>(authProvider, (previous, next) {
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () {
-                    Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
-                            ),
-                          );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LoginScreen(),
+                    ),
+                  );
                 },
                 child: Text(loc.alreadyHaveAccount),
               ),

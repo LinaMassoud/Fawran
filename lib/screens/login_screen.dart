@@ -20,6 +20,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  bool _phoneEmpty = false;
+  bool _passwordEmpty = false;
+  bool _submitted = false;
+
   @override
   void dispose() {
     _phoneController.dispose();
@@ -27,44 +31,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  void _handleLogin() {
+    setState(() {
+      _submitted = true;
+      _phoneEmpty = _phoneController.text.trim().isEmpty;
+      _passwordEmpty = _passwordController.text.trim().isEmpty;
+    });
+
+    if (!_phoneEmpty && !_passwordEmpty) {
+      ref.read(authProvider.notifier).login(
+            phoneNumber: _phoneController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final authState = ref.watch(authProvider);
-    final userId = ref.read(userIdProvider);
     final locale = ref.watch(localeProvider);
     final isArabic = locale.languageCode == 'ar';
 
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next.isLoggedIn && next.isVerified) {
-        // If the user is logged in and verified, navigate to the LocationScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => LocationScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => LocationScreen()),
         );
       } else if (next.isLoggedIn && !next.isVerified) {
-        // If the user is logged in but not verified, navigate to VerificationScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => VerificationScreen(
               phoneNumber: _phoneController.text,
-              userId: 'userId', // You may want to pass the actual userId here
+              userId: 'userId',
             ),
           ),
         );
       } else if (next.errorMessage.isNotEmpty) {
-        // If there's an error (e.g., wrong credentials), show a SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage)),
         );
       }
     });
+
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
+    );
+
+    final errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Colors.red, width: 1.5),
     );
 
     return Scaffold(
@@ -121,8 +140,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         prefixIcon: const Icon(Icons.phone),
                         labelText: loc.phoneNumber,
                         border: inputBorder,
-                        enabledBorder: inputBorder,
-                        focusedBorder: inputBorder,
+                        enabledBorder: _phoneEmpty && _submitted
+                            ? errorBorder
+                            : inputBorder,
+                        focusedBorder: _phoneEmpty && _submitted
+                            ? errorBorder
+                            : inputBorder,
+                        errorText: _phoneEmpty && _submitted
+                            ? loc.phoneNumber + ' ' + loc.requiredField
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -135,8 +161,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         prefixIcon: const Icon(Icons.lock),
                         labelText: loc.password,
                         border: inputBorder,
-                        enabledBorder: inputBorder,
-                        focusedBorder: inputBorder,
+                        enabledBorder: _passwordEmpty && _submitted
+                            ? errorBorder
+                            : inputBorder,
+                        focusedBorder: _passwordEmpty && _submitted
+                            ? errorBorder
+                            : inputBorder,
+                        errorText: _passwordEmpty && _submitted
+                            ? loc.password + ' ' + loc.requiredField
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -159,18 +192,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     SizedBox(
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: authState.isLoading
-                            ? null
-                            : () {
-                                final phone = _phoneController.text.trim();
-                                final password =
-                                    _passwordController.text.trim();
-
-                                ref.read(authProvider.notifier).login(
-                                      phoneNumber: phone,
-                                      password: password,
-                                    );
-                              },
+                        onPressed: authState.isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           textStyle: const TextStyle(fontSize: 16),
                           backgroundColor: Colors.orange,
