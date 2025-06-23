@@ -98,50 +98,35 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   }
 
   Future<void> fetchServices() async {
-    try {
-      setState(() => isLoadingServices = true);
+  try {
+    setState(() => isLoadingServices = true);
 
-      final response = await http.get(
-        Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/home/professions'),
+    final List<dynamic> servicesList = await ApiService.fetchServices(
+      professionId: widget.professionId,
+    );
+
+    availableServices = servicesList
+        .map((service) => Service.fromJson(service))
+        .toList();
+
+    // Set default selection to the passed serviceId or first service
+    if (availableServices.isNotEmpty) {
+      selectedServiceId = widget.serviceId;
+      final selectedService = availableServices.firstWhere(
+        (service) => service.id == widget.serviceId,
+        orElse: () => availableServices.first,
       );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-
-        // Find the selected position and extract its services
-        for (var position in data) {
-          if (position['position_id'] == widget.professionId) {
-            final List<dynamic> servicesList = position['services'] ?? [];
-            availableServices = servicesList
-                .map((service) => Service.fromJson(service))
-                .toList();
-
-            // Set default selection to the passed serviceId or first service
-            if (availableServices.isNotEmpty) {
-              selectedServiceId = widget.serviceId;
-              final selectedService = availableServices.firstWhere(
-                (service) => service.id == widget.serviceId,
-                orElse: () => availableServices.first,
-              );
-              selectedServiceName = selectedService.name;
-              // Update the title immediately after setting the selection
-              _setServiceTitle();
-            }
-            break;
-          }
-        }
-
-        setState(() => isLoadingServices = false);
-      } else {
-        setState(() => isLoadingServices = false);
-        print('Failed to load services: ${response.statusCode}');
-      }
-    } catch (e) {
-      setState(() => isLoadingServices = false);
-      print('Error fetching services: $e');
+      selectedServiceName = selectedService.name;
+      // Update the title immediately after setting the selection
+      _setServiceTitle();
     }
+
+    setState(() => isLoadingServices = false);
+  } catch (e) {
+    setState(() => isLoadingServices = false);
+    print('Error fetching services: $e');
   }
+}
 
   Future<void> _initializeData() async {
     // Set dynamic service title based on serviceId

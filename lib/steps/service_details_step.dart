@@ -808,86 +808,86 @@ Future<void> _calculatePriceFromAPI() async {
   }
 
   Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String) onChanged, {
-    bool isEnabled = true,
-    String? customTitle,
-    bool isLoading = false,
-  }) {
-    // Check if value is empty or not in options
-    bool hasValidValue = value.isNotEmpty && options.contains(value);
+  String label,
+  String value,
+  List<String> options,
+  Function(String) onChanged, {
+  bool isEnabled = true,
+  String? customTitle,
+  bool isLoading = false,
+}) {
+  // Check if value is empty or not in options
+  bool hasValidValue = value.isNotEmpty && options.contains(value);
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 15),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
+  return Container(
+    margin: EdgeInsets.only(bottom: 15),
+    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: Colors.white,
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
             ),
           ),
-          if (isEnabled)
-            GestureDetector(
-              onTap: isLoading
-                  ? null
-                  : () => _showCustomDropdown(
-                      context, options, value, onChanged, customTitle),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isLoading)
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
-                      ),
+        ),
+        if (isEnabled)
+          GestureDetector(
+            onTap: isLoading
+                ? null
+                : () => _showCustomDropdown(
+                    context, options, value, onChanged, customTitle),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLoading)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
                     ),
-                  if (!isLoading)
-                    Text(
-                      hasValidValue ? value : 'Select',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: hasValidValue ? Colors.black : Colors.grey[500],
-                        fontWeight:
-                            hasValidValue ? FontWeight.w600 : FontWeight.w400,
-                      ),
+                  ),
+                if (!isLoading)
+                  Text(
+                    hasValidValue ? value : 'Select',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: hasValidValue ? Colors.black : Colors.grey[500],
+                      fontWeight:
+                          hasValidValue ? FontWeight.w600 : FontWeight.w400,
                     ),
-                  if (!isLoading) SizedBox(width: 4),
-                  if (!isLoading)
-                    Icon(Icons.keyboard_arrow_down,
-                        color: Colors.grey[600], size: 20),
-                ],
-              ),
-            )
-          else
-            Text(
-              hasValidValue ? value : 'Not selected',
-              style: TextStyle(
-                fontSize: 16,
-                color: hasValidValue ? Colors.black : Colors.grey[500],
-                fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
-              ),
+                  ),
+                if (!isLoading) SizedBox(width: 4),
+                if (!isLoading)
+                  Icon(Icons.keyboard_arrow_down,
+                      color: Colors.grey[600], size: 20),
+              ],
             ),
-        ],
-      ),
-    );
-  }
+          )
+        else
+          Text(
+            hasValidValue ? value : 'Select', // Changed from 'Not selected' to 'Select'
+            style: TextStyle(
+              fontSize: 16,
+              color: hasValidValue ? Colors.black : Colors.grey[500],
+              fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+      ],
+    ),
+  );
+}
 
   void _showCustomDropdown(
     BuildContext context,

@@ -124,13 +124,13 @@ class _ContinuousBookingOverlayState
 
     // Initialize service details values based on whether it's custom or package booking
     if (widget.isCustomBooking) {
-      // Default values for custom booking
-      workerCount = 1;
-      contractDuration = '1 month';
-      visitDuration = '4 hours';
-      visitsPerWeek = '1 visit weekly';
-      selectedNationality = 'East Asia';
-      selectedTime = 'Morning';
+      // Default values for custom booking - set to null/empty for placeholders
+      workerCount = 1; // Keep this as it's handled by number selection
+      contractDuration = ''; // Empty string for placeholder
+      visitDuration = ''; // Empty string for placeholder
+      visitsPerWeek = ''; // Empty string for placeholder
+      selectedNationality = ''; // Empty string for placeholder
+      selectedTime = ''; // Empty string for placeholder
       hourPrice = 32.0; // Default hourly rate
     } else {
       // Initialize from package (existing functionality)
@@ -504,167 +504,158 @@ class _ContinuousBookingOverlayState
   }
 
   double _calculateTotalPrice() {
-    print('=== PRICE CALCULATION DEBUG ===');
+  print('=== PRICE CALCULATION DEBUG ===');
 
-    double durationOfVisit =
-        double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
-    print(
-        'Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
+  // Handle empty strings by using defaults for calculation
+  double durationOfVisit = visitDuration.isEmpty ? 4.0 : 
+      (double.tryParse(visitDuration.split(' ')[0]) ?? 4.0);
+  print('Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
 
-    int contractMonths = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
-    double contractDurationInWeeks = contractMonths * 4.0;
-    print(
-        'Contract Duration: $contractMonths months = $contractDurationInWeeks weeks (from string: "$contractDuration")');
+  int contractMonths = contractDuration.isEmpty ? 1 : 
+      (int.tryParse(contractDuration.split(' ')[0]) ?? 1);
+  double contractDurationInWeeks = contractMonths * 4.0;
+  print('Contract Duration: $contractMonths months = $contractDurationInWeeks weeks (from string: "$contractDuration")');
 
-    int visitsPerWeekCount = int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1;
-    print(
-        'Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
-    print('Worker Count: $workerCount');
-    print('Hour Price: $hourPrice');
+  int visitsPerWeekCount = visitsPerWeek.isEmpty ? 1 : 
+      (int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1);
+  print('Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
+  print('Worker Count: $workerCount');
+  print('Hour Price: $hourPrice');
 
-    double basePrice = hourPrice *
-        durationOfVisit *
-        contractDurationInWeeks *
-        visitsPerWeekCount *
-        workerCount;
-    print(
-        'Base Total Price: $basePrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
+  // Rest of the calculation remains the same...
+  double basePrice = hourPrice *
+      durationOfVisit *
+      contractDurationInWeeks *
+      visitsPerWeekCount *
+      workerCount;
+  print('Base Total Price: $basePrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
 
-    double priceAfterDiscount;
-    if (!widget.isCustomBooking &&
-        widget.package!.discountPercentage != null &&
-        widget.package!.discountPercentage! > 0) {
-      double discountAmount =
-          (widget.package!.discountPercentage! / 100) * basePrice;
-      priceAfterDiscount = basePrice - discountAmount;
-      print(
-          'Discount Applied: ${widget.package!.discountPercentage}% = $discountAmount');
-    } else {
-      priceAfterDiscount = basePrice;
-      print('No Discount Applied');
-    }
-
-    double finalPrice;
-    if (!widget.isCustomBooking &&
-        widget.package!.vatPercentage != null &&
-        widget.package!.vatPercentage! > 0) {
-      double vatAmount =
-          (widget.package!.vatPercentage! / 100) * priceAfterDiscount;
-      finalPrice = priceAfterDiscount + vatAmount;
-      print('VAT Applied: ${widget.package!.vatPercentage}% = $vatAmount');
-    } else {
-      // Apply default VAT for custom booking (15% is common in Saudi Arabia)
-      double vatAmount = (15.0 / 100) * priceAfterDiscount;
-      finalPrice = priceAfterDiscount + vatAmount;
-      print('Default VAT Applied: 15% = $vatAmount');
-    }
-
-    print('Final Price: $finalPrice');
-    print('=== END PRICE CALCULATION ===');
-    return finalPrice;
+  double priceAfterDiscount;
+  if (!widget.isCustomBooking &&
+      widget.package!.discountPercentage != null &&
+      widget.package!.discountPercentage! > 0) {
+    double discountAmount =
+        (widget.package!.discountPercentage! / 100) * basePrice;
+    priceAfterDiscount = basePrice - discountAmount;
+    print('Discount Applied: ${widget.package!.discountPercentage}% = $discountAmount');
+  } else {
+    priceAfterDiscount = basePrice;
+    print('No Discount Applied');
   }
 
-  double _calculatePricePerVisit() {
-    if (!widget.isCustomBooking) {
-      return 0.0; // Not applicable for package bookings
-    }
-
-    print('=== PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
-
-    // Extract duration from visit duration string
-    double durationOfVisit =
-        double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
-    print(
-        'Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
-
-    // Extract contract duration and convert to weeks
-    int contractMonths = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
-    double contractDurationInWeeks;
-
-    if (contractDuration.contains('week')) {
-      contractDurationInWeeks = contractMonths.toDouble();
-    } else if (contractDuration.contains('year')) {
-      contractDurationInWeeks = contractMonths * 52.0;
-    } else {
-      contractDurationInWeeks = contractMonths * 4.0; // months to weeks
-    }
-
-    print(
-        'Contract Duration: $contractMonths ${contractDuration.contains('week') ? 'weeks' : contractDuration.contains('year') ? 'years' : 'months'} = $contractDurationInWeeks weeks');
-
-    // Extract visits per week
-    int visitsPerWeekCount = int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1;
-    print(
-        'Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
-    print('Worker Count: $workerCount');
-    print('Hour Price: $hourPrice');
-
-    // Calculate total contract price first
-    double totalContractPrice = hourPrice *
-        durationOfVisit *
-        contractDurationInWeeks *
-        visitsPerWeekCount *
-        workerCount;
-    print(
-        'Total Contract Price: $totalContractPrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
-
-    // Calculate total number of visits in the contract
-    double totalVisits = contractDurationInWeeks * visitsPerWeekCount;
-    print(
-        'Total Visits in Contract: $totalVisits ($contractDurationInWeeks * $visitsPerWeekCount)');
-
-    // Calculate base price per visit
-    double basePricePerVisit = totalContractPrice / totalVisits;
-    print(
-        'Base Price Per Visit: $basePricePerVisit ($totalContractPrice / $totalVisits)');
-
-    // Apply fixed discount percentage for custom booking
-    double discountPercentage = 4.8913;
-    double discountAmount = (discountPercentage / 100) * basePricePerVisit;
-    double finalPricePerVisit = basePricePerVisit - discountAmount;
-    print('Discount Applied: $discountPercentage% = $discountAmount');
-    print('finalPricePerVisit: $finalPricePerVisit');
-
-    print('=== END PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
-
-    return finalPricePerVisit;
+  double finalPrice;
+  if (!widget.isCustomBooking &&
+      widget.package!.vatPercentage != null &&
+      widget.package!.vatPercentage! > 0) {
+    double vatAmount =
+        (widget.package!.vatPercentage! / 100) * priceAfterDiscount;
+    finalPrice = priceAfterDiscount + vatAmount;
+    print('VAT Applied: ${widget.package!.vatPercentage}% = $vatAmount');
+  } else {
+    double vatAmount = (15.0 / 100) * priceAfterDiscount;
+    finalPrice = priceAfterDiscount + vatAmount;
+    print('Default VAT Applied: 15% = $vatAmount');
   }
 
-  double _calculateOriginalPrice() {
-    print('=== ORIGINAL PRICE CALCULATION ===');
+  print('Final Price: $finalPrice');
+  print('=== END PRICE CALCULATION ===');
+  return finalPrice;
+}
 
-    double durationOfVisit =
-        double.tryParse(visitDuration.split(' ')[0]) ?? 4.0;
-    int contractMonths = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
-    double contractDurationInWeeks = contractMonths * 4.0;
-    int visitsPerWeekCount = int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1;
-
-    double basePrice = hourPrice *
-        durationOfVisit *
-        contractDurationInWeeks *
-        visitsPerWeekCount *
-        workerCount;
-
-    print('Base Price: $basePrice');
-
-    double originalPrice;
-    if (!widget.isCustomBooking &&
-        widget.package!.vatPercentage != null &&
-        widget.package!.vatPercentage! > 0) {
-      double vatAmount = (widget.package!.vatPercentage! / 100) * basePrice;
-      originalPrice = basePrice + vatAmount;
-      print('VAT Applied: ${widget.package!.vatPercentage}% = $vatAmount');
-    } else {
-      // Apply default VAT for custom booking
-      double vatAmount = (15.0 / 100) * basePrice;
-      originalPrice = basePrice + vatAmount;
-      print('Default VAT Applied: 15% = $vatAmount');
-    }
-
-    print('Original Price: $originalPrice');
-    print('=== END ORIGINAL PRICE CALCULATION ===');
-    return originalPrice;
+double _calculatePricePerVisit() {
+  if (!widget.isCustomBooking) {
+    return 0.0;
   }
+
+  print('=== PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
+
+  // Handle empty strings by using defaults for calculation
+  double durationOfVisit = visitDuration.isEmpty ? 4.0 : 
+      (double.tryParse(visitDuration.split(' ')[0]) ?? 4.0);
+  print('Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
+
+  int contractMonths = contractDuration.isEmpty ? 1 : 
+      (int.tryParse(contractDuration.split(' ')[0]) ?? 1);
+  double contractDurationInWeeks;
+
+  if (contractDuration.contains('week')) {
+    contractDurationInWeeks = contractMonths.toDouble();
+  } else if (contractDuration.contains('year')) {
+    contractDurationInWeeks = contractMonths * 52.0;
+  } else {
+    contractDurationInWeeks = contractMonths * 4.0;
+  }
+
+  print('Contract Duration: $contractMonths ${contractDuration.contains('week') ? 'weeks' : contractDuration.contains('year') ? 'years' : 'months'} = $contractDurationInWeeks weeks');
+
+  int visitsPerWeekCount = visitsPerWeek.isEmpty ? 1 : 
+      (int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1);
+  print('Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
+  print('Worker Count: $workerCount');
+  print('Hour Price: $hourPrice');
+
+  // Rest of the calculation remains the same...
+  double totalContractPrice = hourPrice *
+      durationOfVisit *
+      contractDurationInWeeks *
+      visitsPerWeekCount *
+      workerCount;
+  print('Total Contract Price: $totalContractPrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
+
+  double totalVisits = contractDurationInWeeks * visitsPerWeekCount;
+  print('Total Visits in Contract: $totalVisits ($contractDurationInWeeks * $visitsPerWeekCount)');
+
+  double basePricePerVisit = totalContractPrice / totalVisits;
+  print('Base Price Per Visit: $basePricePerVisit ($totalContractPrice / $totalVisits)');
+
+  double discountPercentage = 4.8913;
+  double discountAmount = (discountPercentage / 100) * basePricePerVisit;
+  double finalPricePerVisit = basePricePerVisit - discountAmount;
+  print('Discount Applied: $discountPercentage% = $discountAmount');
+  print('finalPricePerVisit: $finalPricePerVisit');
+
+  print('=== END PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
+
+  return finalPricePerVisit;
+}
+
+double _calculateOriginalPrice() {
+  print('=== ORIGINAL PRICE CALCULATION ===');
+
+  // Handle empty strings by using defaults for calculation
+  double durationOfVisit = visitDuration.isEmpty ? 4.0 : 
+      (double.tryParse(visitDuration.split(' ')[0]) ?? 4.0);
+  int contractMonths = contractDuration.isEmpty ? 1 : 
+      (int.tryParse(contractDuration.split(' ')[0]) ?? 1);
+  double contractDurationInWeeks = contractMonths * 4.0;
+  int visitsPerWeekCount = visitsPerWeek.isEmpty ? 1 : 
+      (int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1);
+
+  double basePrice = hourPrice *
+      durationOfVisit *
+      contractDurationInWeeks *
+      visitsPerWeekCount *
+      workerCount;
+
+  print('Base Price: $basePrice');
+
+  double originalPrice;
+  if (!widget.isCustomBooking &&
+      widget.package!.vatPercentage != null &&
+      widget.package!.vatPercentage! > 0) {
+    double vatAmount = (widget.package!.vatPercentage! / 100) * basePrice;
+    originalPrice = basePrice + vatAmount;
+    print('VAT Applied: ${widget.package!.vatPercentage}% = $vatAmount');
+  } else {
+    double vatAmount = (15.0 / 100) * basePrice;
+    originalPrice = basePrice + vatAmount;
+    print('Default VAT Applied: 15% = $vatAmount');
+  }
+
+  print('Original Price: $originalPrice');
+  print('=== END ORIGINAL PRICE CALCULATION ===');
+  return originalPrice;
+}
 
   double get _currentPrice {
     if (widget.isCustomBooking) {
