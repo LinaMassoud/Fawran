@@ -68,7 +68,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._ref, this._apiService) : super(AuthState.initial());
 
-  void _setUserId(int userId) {
+  void _setUserId(int? userId) {
     _ref.read(userIdProvider.notifier).state = userId;
   }
 
@@ -179,6 +179,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
         errorMessage: 'Login failed. Please try again.',
       );
     }
+  }
+
+  void logout() {
+    _setUserId(null);
+    state = AuthState.initial();
+  }
+
+  clearStateError() {
+    state = state.copyWith(errorMessage: '');
   }
 }
 
