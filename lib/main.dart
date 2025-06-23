@@ -45,7 +45,7 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
-      home: const AuthCheckScreen(),
+      home: const LoginScreen(),
       routes: {
         // '/login' key routes to LoginScreen widget
         '/login': (context) => const LoginScreen(),
