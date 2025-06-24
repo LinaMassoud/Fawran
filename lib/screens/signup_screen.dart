@@ -24,6 +24,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   late final ProviderSubscription _subscription;
+  bool _showPassword = false;
+bool _showConfirmPassword = false;
   final nameRegex =
       RegExp(r'^[a-zA-Z0-9]+$'); // For userName (only alphanumerics)
   final nameOnlyRegex = RegExp(r'^[a-zA-Z]+$'); // For names (only letters)
@@ -152,25 +154,38 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ),
               const SizedBox(height: 10),
               _buildTextField(
-                controller: _passwordController,
-                label: loc.password,
-                icon: Icons.lock,
-                obscureText: true,
-                validator: (val) => val != null && val.length >= 6
-                    ? null
-                    : 'Password must be at least 6 characters',
-              ),
-              const SizedBox(height: 10),
-              _buildTextField(
-                controller: _confirmPasswordController,
-                label: loc.confirmPassword,
-                icon: Icons.lock,
-                obscureText: true,
-                validator: (val) => val == _passwordController.text
-                    ? null
-                    : 'Passwords do not match',
-              ),
-              const SizedBox(height: 20),
+  controller: _passwordController,
+  label: loc.password,
+  icon: Icons.lock,
+  validator: (val) => val != null && val.length >= 6
+      ? null
+      : 'Password must be at least 6 characters',
+  isObscured: !_showPassword,
+  toggleVisibility: () {
+    setState(() {
+      _showPassword = !_showPassword;
+    });
+  },
+),
+
+const SizedBox(height: 10),
+
+_buildTextField(
+  controller: _confirmPasswordController,
+  label: loc.confirmPassword,
+  icon: Icons.lock,
+  validator: (val) => val == _passwordController.text
+      ? null
+      : 'Passwords do not match',
+  isObscured: !_showConfirmPassword,
+  toggleVisibility: () {
+    setState(() {
+      _showConfirmPassword = !_showConfirmPassword;
+    });
+  },
+),
+
+             const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: authState.isLoading
                     ? null
@@ -219,25 +234,38 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
     );
   }
-
   Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        prefixIcon: Icon(icon),
-      ),
-    );
-  }
+  required TextEditingController controller,
+  required String label,
+  required IconData icon,
+  bool obscureText = false,
+  TextInputType? keyboardType,
+  String? Function(String?)? validator,
+  VoidCallback? toggleVisibility,
+  bool? isObscured,
+}) {
+  return TextFormField(
+    controller: controller,
+    obscureText: isObscured ?? obscureText,
+    keyboardType: keyboardType,
+    validator: validator,
+    decoration: InputDecoration(
+      labelText: label,
+      border: const OutlineInputBorder(),
+      prefixIcon: Icon(icon),
+      suffixIcon: toggleVisibility != null
+          ? IconButton(
+              icon: Icon(
+                (isObscured ?? obscureText)
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+              ),
+              onPressed: toggleVisibility,
+            )
+          : null,
+    ),
+  );
+}
+
+
 }
