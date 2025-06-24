@@ -8,9 +8,11 @@ class CustomDateSelectionStep extends StatefulWidget {
   final VoidCallback? onNextPressed;
   final double pricePerVisit;
   final String contractDuration;
+  final int workerCount;
   final String visitsPerWeek;
   final int maxSelectableDates;
   final bool showBottomNavigation;
+  final int professionId;
   
   final double vatAmount;
   final double priceWithoutVat;
@@ -25,9 +27,11 @@ class CustomDateSelectionStep extends StatefulWidget {
     this.priceWithoutVat = 0.0,
     required this.pricePerVisit,
     required this.contractDuration,
+    required this.workerCount,
     required this.visitsPerWeek,
     required this.maxSelectableDates,
     this.showBottomNavigation = true,
+    required this.professionId,
   }) : super(key: key);
 
   @override
@@ -80,6 +84,31 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     super.dispose();
   }
 
+  // Check if a date is Friday (weekday 5)
+  bool _isFriday(DateTime date) {
+    return date.weekday == DateTime.friday;
+  }
+
+  // Get the number of working days (excluding Fridays) in a week
+  int _getWorkingDaysPerWeek() {
+    return 6; // 7 days - 1 Friday = 6 working days
+  }
+
+  // Calculate available working days in the contract period
+  int _getAvailableWorkingDaysInPeriod(DateTime startDate, DateTime endDate) {
+    int totalDays = 0;
+    DateTime current = startDate;
+    
+    while (current.isBefore(endDate) || current.isAtSameMomentAs(endDate)) {
+      if (!_isFriday(current)) {
+        totalDays++;
+      }
+      current = current.add(Duration(days: 1));
+    }
+    
+    return totalDays;
+  }
+
   void _calculateContractDetails() {
     // Parse contract duration
     int durationInWeeks = 0;
@@ -95,16 +124,28 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
       durationInWeeks = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
     }
 
-    // Parse visits per week
+    // Parse visits per week (excluding Fridays)
     _visitsPerWeekCount = int.tryParse(widget.visitsPerWeek.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+    
+    // Ensure visits per week doesn't exceed working days (6 days max)
+    if (_visitsPerWeekCount > _getWorkingDaysPerWeek()) {
+      _visitsPerWeekCount = _getWorkingDaysPerWeek();
+    }
 
-    // Calculate total allowed visits
+    // Calculate total allowed visits based on working days only
     _totalAllowedVisits = durationInWeeks * _visitsPerWeekCount;
 
     // Only set default dates if user hasn't selected a start date
     if (_userSelectedStartDate == null) {
       final today = DateTime.now();
-      _contractStartDate = DateTime(today.year, today.month, today.day);
+      DateTime proposedStartDate = DateTime(today.year, today.month, today.day);
+      
+      // If today is Friday, move to the next working day (Saturday)
+      while (_isFriday(proposedStartDate)) {
+        proposedStartDate = proposedStartDate.add(Duration(days: 1));
+      }
+      
+      _contractStartDate = proposedStartDate;
       _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
     } else {
       _contractStartDate = _userSelectedStartDate;
@@ -146,6 +187,12 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     setState(() {
       // If we're still selecting the start date
       if (_isSelectingStartDate) {
+        // Don't allow Friday as start date
+        if (_isFriday(date)) {
+          _showSnackBar('Friday is a holiday and cannot be selected');
+          return;
+        }
+        
         _userSelectedStartDate = date;
         _selectedDates.clear();
         _selectedDates.add(date);
@@ -157,13 +204,30 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
         return;
       }
 
+      // If clicking on the start date, allow user to change it
+      if (date == _userSelectedStartDate) {
+        setState(() {
+          _isSelectingStartDate = true;
+          _userSelectedStartDate = null;
+          _selectedDates.clear();
+          _contractStartDate = null;
+          _contractEndDate = null;
+          _weeklyVisitCounts.clear();
+          _calculateContractDetails();
+        });
+        widget.onDatesChanged(_selectedDates);
+        _notifyPriceChange();
+        return;
+      }
+
+      // Don't allow selecting Fridays for regular visits
+      if (_isFriday(date)) {
+        _showSnackBar('Friday is a holiday and cannot be selected');
+        return;
+      }
+
       // Regular date selection for visits
       if (_selectedDates.contains(date)) {
-        // Don't allow removing the start date
-        if (date == _userSelectedStartDate) {
-          _showSnackBar('Cannot remove start date. Tap "Reset" to choose a new start date.');
-          return;
-        }
         _selectedDates.remove(date);
       } else {
         // Check if we've reached the total visit limit
@@ -206,9 +270,19 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
     
-    // If selecting start date, only allow today or future dates
+    // Never allow selecting Fridays
+    if (_isFriday(date)) {
+      return false;
+    }
+    
+    // If selecting start date, only allow today or future dates (excluding Fridays)
     if (_isSelectingStartDate) {
       return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
+    }
+    
+    // Always allow clicking on the start date to change it (if it's not Friday)
+    if (date == _userSelectedStartDate) {
+      return true;
     }
     
     // Check if date is within contract period
@@ -282,16 +356,22 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
       final isOutsideContract = !_isSelectingStartDate && _contractStartDate != null && _contractEndDate != null &&
           (date.isBefore(_contractStartDate!) || date.isAfter(_contractEndDate!));
       final isStartDate = date == _userSelectedStartDate;
+      final isFridayHoliday = _isFriday(date);
 
       Color backgroundColor = Colors.transparent;
       Color textColor = Colors.black;
       Color priceColor = Colors.green;
+      String? overlayText;
 
-      if (isSelected) {
+      if (isFridayHoliday) {
+        backgroundColor = Colors.grey.withOpacity(0.1);
+        textColor = Colors.grey;
+      } else if (isSelected) {
         if (isStartDate) {
           backgroundColor = Color(0xFF1E3A8A);
           textColor = Colors.white;
           priceColor = Colors.white;
+          overlayText = 'START\n(tap to change)';
         } else {
           backgroundColor = Colors.orange;
           textColor = Colors.white;
@@ -334,14 +414,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
                     ),
                   ),
                 ] else if (isWeekFull && !isSelected && !_isSelectingStartDate) ...[
-                  Text(
-                    'Full',
-                    style: TextStyle(
-                      fontSize: 7,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  
                 ] else if (isSelectable && !isOutsideContract) ...[
                   Text(
                     _formatPrice(widget.pricePerVisit),
@@ -430,7 +503,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: day == 'F' ? Colors.grey : Colors.black, // Grey out Friday header
                     ),
                   ),
                 ),
@@ -455,7 +528,12 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   Widget _buildContractInfo() {
     String statusText = _isSelectingStartDate 
         ? 'Please select your start date'
-        : 'Select visit dates within contract period';
+        : 'Select visit dates within contract period (excluding Fridays)';
+        
+    int availableWorkingDays = 0;
+    if (_contractStartDate != null && _contractEndDate != null) {
+      availableWorkingDays = _getAvailableWorkingDaysInPeriod(_contractStartDate!, _contractEndDate!);
+    }
         
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -514,21 +592,22 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
               color: _isSelectingStartDate ? Colors.orange : Color(0xFF1E3A8A),
             ),
           ),
+          
           Text(
-            'Duration: ${widget.contractDuration} • Visits: $_visitsPerWeekCount per week',
+            'Duration: ${widget.contractDuration} • Working Days: ${_getWorkingDaysPerWeek()} per week (excluding Fridays)',
             style: TextStyle(
               fontSize: 12,
               color: Color(0xFF1E3A8A),
             ),
           ),
           Text(
-            'Total Visits: $_totalAllowedVisits • Selected: ${_selectedDates.length}',
+            'Visits: $_visitsPerWeekCount per week • Total: $_totalAllowedVisits • Selected: ${_selectedDates.length}',
             style: TextStyle(
               fontSize: 12,
               color: Color(0xFF1E3A8A),
             ),
           ),
-          if (_contractStartDate != null && _contractEndDate != null)
+          if (_contractStartDate != null && _contractEndDate != null) ...[
             Text(
               'Contract Period: ${DateFormat('MMM dd, yyyy').format(_contractStartDate!)} - ${DateFormat('MMM dd, yyyy').format(_contractEndDate!)}',
               style: TextStyle(
@@ -536,6 +615,8 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
                 color: Color(0xFF1E3A8A),
               ),
             ),
+            
+          ],
         ],
       ),
     );

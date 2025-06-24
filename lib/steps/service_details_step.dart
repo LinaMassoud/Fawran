@@ -25,6 +25,7 @@ class ServiceDetailsStep extends StatefulWidget {
   final List<DateTime> selectedDates;
   final double? discountPercentage;
   final int serviceId; // Add this line
+  final int professionId;
   final double pricePerVisit;
 
   // New parameters for custom booking support
@@ -61,6 +62,7 @@ class ServiceDetailsStep extends StatefulWidget {
     this.onVisitDurationChanged,
     this.discountPercentage,
     required this.serviceId,
+    required this.professionId,
     this.pricePerVisit = 0.0,
     this.onTotalPriceChanged, // Add this line
   }) : super(key: key);
@@ -566,6 +568,8 @@ Future<void> _calculatePriceFromAPI() async {
                         maxSelectableDates: _getMaxSelectableDates(),
                         showBottomNavigation: false,
                         vatAmount: _vatAmount,
+                        professionId: widget.professionId,
+                        workerCount: widget.workerCount,
                       ),
                     ),
                   )

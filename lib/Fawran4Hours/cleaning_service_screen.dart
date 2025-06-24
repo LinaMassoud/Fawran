@@ -38,7 +38,7 @@ class CleaningServiceScreen extends StatefulWidget {
     this.serviceType = '', // Remove default, will be set dynamically
     this.serviceCode = '',
     this.serviceId = 1,
-    this.professionId = 251,
+    this.professionId = 7,
   }) : super(key: key);
 
   @override
@@ -99,79 +99,125 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   }
 
   Future<void> fetchServices() async {
-    try {
-      setState(() => isLoadingServices = true);
+  try {
+    setState(() => isLoadingServices = true);
 
-      final List<dynamic> servicesList = await ApiService.fetchServices(
-        professionId: widget.professionId,
-      );
+    final List<dynamic> servicesList = await ApiService.fetchServices(
+      professionId: widget.professionId,
+    );
 
-      availableServices =
-          servicesList.map((service) => Service.fromJson(service)).toList();
-
-      // Set default selection to the passed serviceId or first service
+    setState(() {
+      availableServices = servicesList.map((service) => Service.fromJson(service)).toList();
+      
+      // FIXED: Always ensure a service is selected
       if (availableServices.isNotEmpty) {
-        selectedServiceId = widget.serviceId;
-        final selectedService = availableServices.firstWhere(
+        // Try to match widget.serviceId first, then fall back to first service
+        final matchingService = availableServices.firstWhere(
           (service) => service.id == widget.serviceId,
           orElse: () => availableServices.first,
         );
-        selectedServiceName = selectedService.name;
-        // Update the title immediately after setting the selection
+        
+        selectedServiceId = matchingService.id;
+        selectedServiceName = matchingService.name;
+        
+        // Update the title immediately
         _setServiceTitle();
       }
-
-      setState(() => isLoadingServices = false);
-    } catch (e) {
-      setState(() => isLoadingServices = false);
-      print('Error fetching services: $e');
-    }
+      
+      isLoadingServices = false;
+    });
+  } catch (e) {
+    setState(() {
+      isLoadingServices = false;
+      
+      // FIXED: Set fallback values even when API fails
+      if (availableServices.isEmpty) {
+        // Create fallback services based on widget parameters
+        availableServices = [
+          Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
+        ];
+        selectedServiceId = widget.serviceId;
+        selectedServiceName = widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service';
+        _setServiceTitle();
+      }
+    });
+    print('Error fetching services: $e');
   }
+}
+
+Future<void> reloadServices() async {
+  setState(() {
+    isLoadingServices = true;
+    // Don't clear existing services immediately to avoid UI flicker
+  });
+  
+  await fetchServices();
+  
+  // Reload related data after services are updated
+  await _loadServiceShifts();
+  fetchEastAsiaPackages();
+  fetchAfricanPackages();
+}
 
   Future<void> _initializeData() async {
-    // Set dynamic service title based on serviceId
-    _setServiceTitle();
+  // Set dynamic service title based on serviceId
+  _setServiceTitle();
 
-    await Future.wait([
-      fetchServices(), // Add this line
-      _loadServiceShifts(),
-      _loadCountryGroups(),
-      _loadServicePackTitles(),
-    ]);
+  // CHANGED: Load services FIRST before other operations
+  await fetchServices();
+  
+  // Then load other data in parallel
+  await Future.wait([
+    _loadServiceShifts(),
+    _loadCountryGroups(),
+    _loadServicePackTitles(),
+  ]);
 
-    // After loading shifts and groups, fetch packages
-    fetchEastAsiaPackages();
-    fetchAfricanPackages();
+  // After loading shifts and groups, fetch packages
+  fetchEastAsiaPackages();
+  fetchAfricanPackages();
 
-    filteredEastAsiaPackages = eastAsiaPackages;
-    filteredAfricanPackages = africanPackages;
+  filteredEastAsiaPackages = eastAsiaPackages;
+  filteredAfricanPackages = africanPackages;
 
-    _checkAndShowAutoOverlay();
-  }
+  _checkAndShowAutoOverlay();
+}
 
   void _setServiceTitle() {
-    if (selectedServiceId != null && availableServices.isNotEmpty) {
-      final selectedService = availableServices.firstWhere(
-        (service) => service.id == selectedServiceId,
-        orElse: () => availableServices.first,
-      );
+  if (selectedServiceId != null && availableServices.isNotEmpty) {
+    final selectedService = availableServices.firstWhere(
+      (service) => service.id == selectedServiceId,
+      orElse: () => availableServices.first,
+    );
+    setState(() {
       dynamicServiceTitle = selectedService.name;
-    } else {
-      // Fallback logic when services haven't loaded yet
-      switch (widget.serviceId) {
-        case 1:
-          dynamicServiceTitle = 'FAWRAN 4 Hours';
-          break;
-        case 21:
-          dynamicServiceTitle = 'FAWRAN 8 Hours';
-          break;
-        default:
-          dynamicServiceTitle = widget.serviceType.isNotEmpty
-              ? widget.serviceType
-              : 'Fawran Service';
-      }
+    });
+  } else {
+    // FIXED: Better fallback logic
+    String fallbackTitle;
+    switch (widget.serviceId) {
+      case 1:
+        fallbackTitle = 'FAWRAN 4 Hours';
+        break;
+      case 21:
+        fallbackTitle = 'FAWRAN 8 Hours';
+        break;
+      default:
+        fallbackTitle = widget.serviceType.isNotEmpty
+            ? widget.serviceType
+            : 'Fawran Service';
+    }
+    
+    setState(() {
+      dynamicServiceTitle = fallbackTitle;
+    });
+    
+    // FIXED: Ensure selectedServiceId is set
+    if (selectedServiceId == null) {
+      selectedServiceId = widget.serviceId;
     }
   }
+}
 
 // 5. ADD NEW METHOD TO LOAD SERVICE PACK TITLES
   Future<void> _loadServicePackTitles() async {
@@ -258,6 +304,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
           package: widget.autoOpenPackage!,
           selectedShift: widget.autoOpenShift ?? 1,
           serviceId: widget.serviceId, // Add serviceId
+          professionId: widget.professionId,
           onBookingCompleted: _onBookingCompleted,
         );
       });
@@ -351,26 +398,29 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   }
 
   void _onServiceChanged(int serviceId) {
-    setState(() {
-      selectedServiceId = serviceId;
-      selectedServiceName = availableServices
-          .firstWhere((service) => service.id == serviceId)
-          .name;
-      // Update the dynamic service title immediately
-      _setServiceTitle();
-    });
+  // FIXED: Add null check and ensure the service exists
+  final selectedService = availableServices.firstWhere(
+    (service) => service.id == serviceId,
+    orElse: () => availableServices.isNotEmpty ? availableServices.first : Service(id: widget.serviceId, name: widget.serviceType),
+  );
 
-    // Refresh shifts and packages when service changes
-    _loadServiceShifts().then((_) {
-      // After shifts are loaded, update the UI state and fetch packages
-      setState(() {
-        // The shift selections are already updated in _loadServiceShifts()
-        // but we need to trigger a rebuild to reflect the changes
-      });
-      fetchEastAsiaPackages();
-      fetchAfricanPackages();
+  setState(() {
+    selectedServiceId = serviceId;
+    selectedServiceName = selectedService.name;
+    // Update the dynamic service title immediately
+    _setServiceTitle();
+  });
+
+  // Refresh shifts and packages when service changes
+  _loadServiceShifts().then((_) {
+    // After shifts are loaded, update the UI state and fetch packages
+    setState(() {
+      // Force rebuild to ensure radio buttons remain visible
     });
-  }
+    fetchEastAsiaPackages();
+    fetchAfricanPackages();
+  });
+}
 
   Future<void> fetchEastAsiaPackages() async {
     try {
@@ -489,6 +539,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
             totalSavings: totalSavings,
             originalPrice: originalPrice,
             onPaymentSuccess: _onPaymentSuccess, // Add this callback
+            customBooking: false,
           ),
         ),
       );
@@ -496,91 +547,174 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   }
 
   Widget _buildServiceSelector() {
-    if (isLoadingServices) {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-
-    if (availableServices.isEmpty) {
-      return SizedBox.shrink();
-    }
-
-    // Always show "Select Service" header when there are multiple services
-    if (availableServices.length > 1) {
-      return Container(
-        padding: EdgeInsets.symmetric(
-            horizontal: 1, vertical: 0), // Remove vertical padding
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Select Service',
-              style: TextStyle(
-                fontSize: 25, // Match the package section title size
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+  // FIXED: Always show loading state properly
+  if (isLoadingServices && availableServices.isEmpty) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select Service',
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-            SizedBox(height: 16), // Add consistent spacing
+          ),
+          SizedBox(height: 16),
+          Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
 
-            // HORIZONTAL ROW FOR RADIO BUTTONS
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: availableServices
-                    .map(
-                      (service) => Container(
-                        margin: EdgeInsets.only(
-                            right: 5), // Horizontal spacing between options
-                        child: GestureDetector(
-                          onTap: () => _onServiceChanged(service.id),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Radio<int>(
-                                value: service.id,
-                                groupValue: selectedServiceId,
-                                onChanged: (int? value) {
-                                  if (value != null) {
-                                    _onServiceChanged(value);
-                                  }
-                                },
-                                activeColor: Colors.purple,
+  // FIXED: Always ensure selectedServiceId is not null
+  if (selectedServiceId == null && availableServices.isNotEmpty) {
+    selectedServiceId = availableServices.first.id;
+    selectedServiceName = availableServices.first.name;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setServiceTitle();
+    });
+  }
+
+  // FIXED: Show selector even with one service during loading
+  if (availableServices.isEmpty) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select Service',
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 16),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'Loading services...',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ),
+          SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // FIXED: Show selector for multiple services OR during loading
+  if (availableServices.length > 1 || isLoadingServices) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select Service',
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 16),
+
+          // HORIZONTAL ROW FOR RADIO BUTTONS
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: availableServices
+                  .map(
+                    (service) => Container(
+                      margin: EdgeInsets.only(right: 5),
+                      child: GestureDetector(
+                        onTap: () => _onServiceChanged(service.id),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Radio<int>(
+                              value: service.id,
+                              groupValue: selectedServiceId ?? service.id, // FIXED: Prevent null
+                              onChanged: (int? value) {
+                                if (value != null) {
+                                  _onServiceChanged(value);
+                                }
+                              },
+                              activeColor: Colors.purple,
+                            ),
+                            Text(
+                              service.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
                               ),
-                              Text(
-                                service.name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    )
-                    .toList(),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+
+          // FIXED: Add refresh button if services failed to load
+          if (availableServices.length == 1 && isLoadingServices == false)
+            Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: TextButton.icon(
+                onPressed: reloadServices,
+                icon: Icon(Icons.refresh, size: 16),
+                label: Text('Refresh Services'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.purple,
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
               ),
             ),
 
-            SizedBox(height: 24), // Add spacing before next section
-          ],
-        ),
-      );
-    }
-
-    // If only one service, return empty widget (no selector needed)
-    return SizedBox.shrink();
+          SizedBox(height: 24),
+        ],
+      ),
+    );
   }
+
+  // If only one service and not loading, return empty widget
+  return SizedBox.shrink();
+}
+
+
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  
+  // FIXED: Reload services when screen becomes active
+  if (ModalRoute.of(context)?.isCurrent == true) {
+    // Only reload if services are empty or if we haven't loaded yet
+    if (availableServices.isEmpty || selectedServiceId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        reloadServices();
+      });
+    }
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1401,6 +1535,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
           serviceId: selectedServiceId ??
               widget
                   .serviceId, // Use selectedServiceId instead of widget.serviceId
+          professionId: widget.professionId,
           onBookingCompleted: (BookingData bookingData) {
             // For custom bookings, navigate directly to OrderSummaryScreen
             // instead of showing the bottom order view
@@ -1414,6 +1549,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                   originalPrice: bookingData.originalPrice,
                   onPaymentSuccess:
                       _onPaymentSuccess, // Use the original price from booking
+                  customBooking: true,
                 ),
               ),
             );
@@ -1624,6 +1760,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
                           package: package,
                           selectedShift: selectedEastAsiaShift,
                           serviceId: widget.serviceId,
+                          professionId: widget.professionId,
                           onBookingCompleted: _onBookingCompleted,
                         );
                       },

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../models/package_model.dart';
 import 'dart:io'; // for SocketException
 import 'dart:async'; // for TimeoutException
+import 'package:intl/intl.dart';
 
 class ApiService {
   static const String _baseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran';
@@ -383,6 +384,101 @@ class ApiService {
       throw Exception('Error calculating package price: $e');
     }
   }
+
+
+  static Future<Map<String, dynamic>?> validateWorkersHourly({
+  required int positionId,
+  required String nationalityId,
+  required int numWorkers,
+  required DateTime startDate,
+  required DateTime endDate,
+}) async {
+  print('🔍 [validateWorkersHourly] Starting validation...');
+  print('📊 [validateWorkersHourly] Input parameters:');
+  print('   - positionId: $positionId');
+  print('   - nationalityId: $nationalityId');
+  print('   - numWorkers: $numWorkers');
+  print('   - startDate: ${DateFormat('yyyy-MM-dd').format(startDate)}');
+  print('   - endDate: ${DateFormat('yyyy-MM-dd').format(endDate)}');
+  
+  try {
+    final url = '$_baseUrl/validate-workers';
+    print('🌐 [validateWorkersHourly] API URL: $url');
+    
+    final token = await _secureStorage2.read(key: 'token');
+    print('🔐 [validateWorkersHourly] Token retrieved: ${token != null ? 'Yes (${token.length} chars)' : 'No'}');
+    
+
+    final requestBody = {
+      "position_id": positionId,
+      "sector_type": "H", // Always H for Hourly services
+      "nationality_id": nationalityId,
+      "num_workers": numWorkers,
+      "start_date": DateFormat('yyyy-MM-dd').format(startDate),
+      "end_date": DateFormat('yyyy-MM-dd').format(endDate),
+    };
+    
+    print('📦 [validateWorkersHourly] Request body:');
+    print('   ${json.encode(requestBody)}');
+    
+    print('🚀 [validateWorkersHourly] Sending POST request...');
+    final stopwatch = Stopwatch()..start();
+    
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'token': token ?? '',
+      },
+      body: json.encode(requestBody),
+    ).timeout(Duration(seconds: 30));
+    
+    stopwatch.stop();
+    print('⏱️ [validateWorkersHourly] Request completed in ${stopwatch.elapsedMilliseconds}ms');
+    print('📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
+    print('📡 [validateWorkersHourly] Response headers: ${response.headers}');
+    print('📡 [validateWorkersHourly] Response body length: ${response.body.length} chars');
+    
+    
+
+    if (response.statusCode == 200) {
+      print('✅ [validateWorkersHourly] Request successful');
+      final responseData = json.decode(response.body);
+      print('🎯 [validateWorkersHourly] Parsed response data type: ${responseData.runtimeType}');
+      print('📋 [validateWorkersHourly] Response data intially: $responseData');
+      
+      if (responseData is Map<String, dynamic>) {
+        print('📋 [validateWorkersHourly] Response data: $responseData');
+        print('📋 [validateWorkersHourly] Response keys: ${responseData.keys.toList()}');
+        print('✅ [validateWorkersHourly] Validation completed successfully');
+        return responseData;
+      } else {
+        print('⚠️ [validateWorkersHourly] Unexpected response data type: ${responseData.runtimeType}');
+        return responseData as Map<String, dynamic>?;
+      }
+    } else {
+      print('❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
+      print('❌ [validateWorkersHourly] Error response body: ${response.body}');
+      throw Exception('Failed to validate workers. Status code: ${response.statusCode}');
+    }
+  } on SocketException catch (e) {
+    print('🌐 [validateWorkersHourly] SocketException caught: $e');
+    print('❌ [validateWorkersHourly] No internet connection');
+    throw Exception('No internet connection');
+  } on TimeoutException catch (e) {
+    print('⏰ [validateWorkersHourly] TimeoutException caught: $e');
+    print('❌ [validateWorkersHourly] Request timeout after 30 seconds');
+    throw Exception('Request timeout');
+  } on FormatException catch (e) {
+    print('📄 [validateWorkersHourly] FormatException caught: $e');
+    print('❌ [validateWorkersHourly] Failed to parse JSON response');
+    throw Exception('Invalid JSON response: $e');
+  } catch (e, stackTrace) {
+    print('💥 [validateWorkersHourly] Unexpected error caught: $e');
+    print('📚 [validateWorkersHourly] Stack trace: $stackTrace');
+    throw Exception('Error validating workers: $e');
+  }
+}
 
   @Deprecated("Old")
   static Future<List<PackageModel>> fetchPackages({

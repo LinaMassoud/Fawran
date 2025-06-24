@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'continuous_booking_overlay.dart';
 import '../models/booking_model.dart';
+import '../screens/bookings.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
   final BookingData bookingData;
   final double totalSavings;
   final double originalPrice;
   final VoidCallback? onPaymentSuccess; // Added callback
+  final bool customBooking;
 
   const OrderSummaryScreen({
     Key? key,
@@ -14,6 +16,7 @@ class OrderSummaryScreen extends StatefulWidget {
     required this.totalSavings,
     required this.originalPrice,
     this.onPaymentSuccess, // Added callback parameter
+    this.customBooking = false,
   }) : super(key: key);
 
   @override
@@ -246,29 +249,59 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     SizedBox(height: 24),
                   ],
 
-                  // Payment summary section
-                  Text(
-                    'Payment summary',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  // Payment summary section - Hidden for custom bookings
+                  if (!widget.customBooking) ...[
+                    Text(
+                      'Payment summary',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 16),
+                    SizedBox(height: 16),
 
-                  // Payment breakdown
-                  _buildPaymentRow('Item total',
-                      'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(0)}'),
-                  SizedBox(height: 12),
-                  _buildPaymentRow('Pack discount',
-                      '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)}',
-                      isDiscount: true),
-                  SizedBox(height: 16),
-                  Container(height: 1, color: Colors.black87),
-                  SizedBox(height: 16),
+                    // Payment breakdown
+                    _buildPaymentRow('Item total',
+                        'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(0)}'),
+                    SizedBox(height: 12),
+                    _buildPaymentRow('Pack discount',
+                        '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)}',
+                        isDiscount: true),
+                    SizedBox(height: 16),
+                    Container(height: 1, color: Colors.black87),
+                    SizedBox(height: 16),
 
-                  // Total
+                    // Savings banner
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.local_offer,
+                            color: Colors.green,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Yay! You have saved SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} on final bill',
+                            style: TextStyle(
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                  ],
+
+                  // Total - Always shown
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -291,34 +324,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     ],
                   ),
                   SizedBox(height: 16),
-
-                  // Savings banner
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.local_offer,
-                          color: Colors.green,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Yay! You have saved SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} on final bill',
-                          style: TextStyle(
-                            color: Colors.green[700],
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24),
 
                   // Terms and conditions
                   Row(
@@ -581,81 +586,87 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   }
 
   void _showPaymentSuccess() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 40,
-                ),
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
               ),
-              SizedBox(height: 24),
-              Text(
-                'Payment Successful!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+              child: Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
               ),
-              SizedBox(height: 12),
-              Text(
-                'Your cleaning service has been booked successfully. You will receive a confirmation shortly.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+            ),
+            SizedBox(height: 24),
+            Text(
+              'Payment Successful!',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
-              SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
-                    Navigator.of(context).pop(); // Go back to main screen
-                    
-                    // Call the callback to notify parent about successful payment
-                    if (widget.onPaymentSuccess != null) {
-                      widget.onPaymentSuccess!();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Your cleaning service has been booked successfully. You will receive a confirmation shortly.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  
+                  // Call the callback to notify parent about successful payment
+                  if (widget.onPaymentSuccess != null) {
+                    widget.onPaymentSuccess!();
+                  }
+                  
+                  // Navigate to BookingsScreen
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => BookingsScreen(),
                     ),
-                  ),
-                  child: Text(
-                    'Done',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
                   ),
                 ),
+                child: Text(
+                  'Done',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 }

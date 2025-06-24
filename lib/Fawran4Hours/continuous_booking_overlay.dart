@@ -21,6 +21,7 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   final PackageModel? package; // Made optional
   final int? selectedShift; // Made optional
   final int serviceId;
+  final int professionId;
   final Function(BookingData)? onBookingCompleted;
   final bool isCustomBooking; // New parameter to indicate custom booking
 
@@ -29,6 +30,7 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
     this.package, // Optional
     this.selectedShift, // Optional
     required this.serviceId,
+    required this.professionId,
     this.onBookingCompleted,
     this.isCustomBooking = false, // Default to false for backward compatibility
   }) : super(key: key);
@@ -43,6 +45,7 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
     required PackageModel package,
     required int selectedShift,
     required int serviceId,
+    required int professionId,
     Function(BookingData)? onBookingCompleted,
   }) {
     showModalBottomSheet(
@@ -54,7 +57,9 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
       builder: (context) => ContinuousBookingOverlay(
         package: package,
         selectedShift: selectedShift,
+        professionId: professionId,
         serviceId: serviceId,
+        
         onBookingCompleted: onBookingCompleted,
         isCustomBooking: false,
       ),
@@ -65,6 +70,7 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   static void showAsCustomOverlay(
     BuildContext context, {
     required int serviceId,
+    required int professionId,
     Function(BookingData)? onBookingCompleted,
   }) {
     showModalBottomSheet(
@@ -75,6 +81,7 @@ class ContinuousBookingOverlay extends ConsumerStatefulWidget {
       enableDrag: false,
       builder: (context) => ContinuousBookingOverlay(
         serviceId: serviceId,
+        professionId: professionId,
         onBookingCompleted: onBookingCompleted,
         isCustomBooking: true,
       ),
@@ -753,46 +760,36 @@ double _calculateOriginalPrice() {
                               // Page 1: Service Details (custom booking) OR Date Selection (package booking)
                               widget.isCustomBooking
                                   ? ServiceDetailsStep(
-                                      selectedNationality: selectedNationality,
-                                      workerCount: workerCount,
-                                      contractDuration: contractDuration,
-                                      selectedTime: selectedTime,
-                                      visitDuration: visitDuration,
-                                      visitsPerWeek: visitsPerWeek,
-                                      selectedDays: selectedDays,
-                                      onContractDurationChanged:
-                                          _updateContractDuration,
-                                      onWorkerCountChanged: _updateWorkerCount,
-                                      onVisitsPerWeekChanged:
-                                          (newVisitsPerWeek) {
-                                        _updateVisitsPerWeek(newVisitsPerWeek);
-                                        _updateSelectedDays([]);
-                                      },
-                                      onSelectedDaysChanged:
-                                          _updateSelectedDays,
-                                      onSelectedDatesChanged:
-                                          _updateSelectedDates, // This will trigger date selection within ServiceDetailsStep
-                                      onDonePressed:
-                                          _completePurchase, // Final step completion
-                                      onNextPressed:
-                                          null, // No next step after ServiceDetailsStep for custom booking
-                                      showBottomNavigation:
-                                          true, // Always show bottom navigation for final step
-                                      totalPrice:
-                                          _totalPriceFromServiceDetails ??
-                                              _calculateTotalPrice(),
-                                      selectedDates: selectedDates,
-                                      isCustomBooking: widget.isCustomBooking,
-                                      onNationalityChanged: _updateNationality,
-                                      onTimeChanged: _updateTime,
-                                      onVisitDurationChanged:
-                                          _updateVisitDuration,
-                                      discountPercentage: null,
-                                      serviceId: widget.serviceId,
-                                      pricePerVisit: _calculatePricePerVisit(),
-                                      onTotalPriceChanged:
-                                          _updateTotalPriceFromServiceDetails, // Add this callback// Add this callback
-                                    )
+                                  selectedNationality: selectedNationality,
+                                  workerCount: workerCount,
+                                  contractDuration: contractDuration,
+                                  selectedTime: selectedTime,
+                                  visitDuration: visitDuration,
+                                  visitsPerWeek: visitsPerWeek,
+                                  selectedDays: selectedDays,
+                                  onContractDurationChanged: _updateContractDuration,
+                                  onWorkerCountChanged: _updateWorkerCount,
+                                  onVisitsPerWeekChanged: (newVisitsPerWeek) {
+                                    _updateVisitsPerWeek(newVisitsPerWeek);
+                                    _updateSelectedDays([]);
+                                  },
+                                  onSelectedDaysChanged: _updateSelectedDays,
+                                  onSelectedDatesChanged: _updateSelectedDates,
+                                  onDonePressed: _completePurchase,
+                                  onNextPressed: null,
+                                  showBottomNavigation: true,
+                                  totalPrice: _totalPriceFromServiceDetails ?? _calculateTotalPrice(),
+                                  selectedDates: selectedDates,
+                                  isCustomBooking: widget.isCustomBooking,
+                                  onNationalityChanged: _updateNationality,
+                                  onTimeChanged: _updateTime,
+                                  onVisitDurationChanged: _updateVisitDuration,
+                                  discountPercentage: null,
+                                  serviceId: widget.serviceId,
+                                  professionId: widget.professionId, // Add this line
+                                  pricePerVisit: _calculatePricePerVisit(),
+                                  onTotalPriceChanged: _updateTotalPriceFromServiceDetails,
+                                )
                                   : DateSelectionStep(
                                       selectedDates: selectedDates,
                                       onDatesChanged: _updateSelectedDates,
@@ -801,6 +798,7 @@ double _calculateOriginalPrice() {
                                           : null,
                                       maxSelectableDates: workerCount,
                                       selectedDays: selectedDays,
+                                      workerCount: workerCount,
                                       contractDuration: contractDuration,
                                       totalPrice: widget.isCustomBooking
                                           ? _calculateTotalPrice()
@@ -811,6 +809,7 @@ double _calculateOriginalPrice() {
                                           ? _calculatePricePerVisit()
                                           : 0.0,
                                       package: widget.package,
+                                      professionId: widget.professionId,
                                     ),
                               // Page 2: Date Selection (custom booking only)
                             ],
