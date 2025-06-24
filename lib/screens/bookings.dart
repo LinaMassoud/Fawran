@@ -39,39 +39,48 @@ class _BookingsScreenState extends State<BookingsScreen> {
     });
   }
 
-  Future<void> _fetchPermanentContracts() async {
-    try {
-      final token = await _storage.read(key: 'token') ?? '';
-      final userId = await _storage.read(key: 'user_id') ?? '';
+ Future<void> _fetchPermanentContracts() async {
+  try {
+    final token = await _storage.read(key: 'token') ?? '';
+    final userId = await _storage.read(key: 'user_id') ?? '';
 
-      if (token.isEmpty || userId.isEmpty) {
-        throw Exception("Missing token or customer ID in storage");
-      }
-
-      final url = Uri.parse(
-        "http://10.20.10.114:8080/ords/emdad/fawran/domestic/contracts/$userId",
-      );
-
-      final response = await http.get(
-        url,
-        headers: {
-          "token": token,
-          "Accept": "application/json",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          _permanentContracts = data.cast<Map<String, dynamic>>();
-        });
-      } else {
-        throw Exception("Failed to load permanent contracts: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error fetching permanent contracts: $e");
+    if (token.isEmpty || userId.isEmpty) {
+      throw Exception("Missing token or customer ID in storage");
     }
+
+    final url = Uri.parse(
+      "http://10.20.10.114:8080/ords/emdad/fawran/domestic/contracts/$userId",
+    );
+
+    final response = await http.get(
+      url,
+      headers: {
+        "token": token,
+        "Accept": "application/json",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      String rawJson = response.body;
+
+      // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
+      rawJson = rawJson.replaceAllMapped(
+        RegExp(r'"price_before_vat"\s*:\s*,'),
+        (match) => '"price_before_vat": null,',
+      );
+
+      final List<dynamic> data = json.decode(rawJson);
+
+      setState(() {
+        _permanentContracts = data.cast<Map<String, dynamic>>();
+      });
+    } else {
+      throw Exception("Failed to load permanent contracts: ${response.statusCode}");
+    }
+  } catch (e) {
+    print("Error fetching permanent contracts: $e");
   }
+}
 
   Future<void> _fetchHourlyContracts() async {
     try {
