@@ -9,10 +9,12 @@ class DateSelectionStep extends StatefulWidget {
   final int maxSelectableDates;
   final List<String> selectedDays;
   final String contractDuration;
+  final int workerCount;
   final double totalPrice;
   final bool isCustomBooking;
   final double pricePerVisit;
   final PackageModel? package;
+  final int professionId; 
 
   const DateSelectionStep({
     Key? key,
@@ -21,11 +23,13 @@ class DateSelectionStep extends StatefulWidget {
     this.onNextPressed,
     this.maxSelectableDates = 10,
     this.selectedDays = const [],
+    required this.workerCount,
     this.contractDuration = '1 month',
     required this.totalPrice,
     this.isCustomBooking = false,
     this.pricePerVisit = 0.0,
     this.package,
+    required this.professionId,
   }) : super(key: key);
 
   @override
@@ -148,20 +152,18 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
         _isSelectingStartDate = false;
         _calculateContractDetails(); // Recalculate with new start date
         _updateWeeklyVisitCounts();
-        _showSnackBar(
-            'Start date selected. Now select your visit dates within the contract period.');
         widget.onDatesChanged(_selectedDates);
+        return;
+      }
+
+      // If user clicks on the current start date, allow them to change it
+      if (date == _userSelectedStartDate) {
+        _resetToStartDateSelection();
         return;
       }
 
       // Regular date selection for visits
       if (_selectedDates.contains(date)) {
-        // Don't allow removing the start date
-        if (date == _userSelectedStartDate) {
-          _showSnackBar(
-              'Cannot remove start date. Tap "Reset" to choose a new start date.');
-          return;
-        }
         _selectedDates.remove(date);
       } else {
         // Check if we've reached the total visit limit
@@ -192,6 +194,47 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       _updateWeeklyVisitCounts();
     });
     widget.onDatesChanged(_selectedDates);
+  }
+
+  void _showStartDateChangeDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Change Start Date'),
+          content: Text(
+            'Do you want to change your start date? This will reset all your selected visit dates.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resetToStartDateSelection();
+              },
+              child: Text('Change Start Date'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _resetToStartDateSelection() {
+    setState(() {
+      _isSelectingStartDate = true;
+      _userSelectedStartDate = null;
+      _selectedDates.clear();
+      _contractStartDate = null;
+      _contractEndDate = null;
+      _weeklyVisitCounts.clear();
+      _calculateContractDetails();
+    });
+    widget.onDatesChanged(_selectedDates);
+    _showSnackBar('Please select a new start date');
   }
 
   bool _isDateAllowedForPackage(DateTime date) {
@@ -231,6 +274,11 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
           dateOnly.isAtSameMomentAs(todayOnly);
     }
 
+    // Start date is always selectable (for changing)
+    if (date == _userSelectedStartDate) {
+      return true;
+    }
+
     // Check if date is within contract period
     if (_contractStartDate != null && _contractEndDate != null) {
       if (dateOnly.isBefore(_contractStartDate!) ||
@@ -244,7 +292,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
 
     // Check if date is already selected
     if (_selectedDates.contains(date)) {
-      return true; // Allow deselection (except start date, handled in _selectDate)
+      return true; // Allow deselection
     }
 
     // Check if we've reached the total visit limit
@@ -318,8 +366,8 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
 
       if (isSelected) {
         if (isStartDate) {
-          backgroundColor = Colors.white;
-          textColor = Colors.black;
+          backgroundColor = Colors.green.shade100;
+          textColor = Colors.green.shade800;
         } else {
           backgroundColor = Color(0xFF1E3A8A);
           textColor = Colors.white;
@@ -338,7 +386,10 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
               color: backgroundColor,
               borderRadius: BorderRadius.circular(6),
               border: isSelected
-                  ? Border.all(color: Color(0xFF1E3A8A), width: 2)
+                  ? Border.all(
+                      color: isStartDate ? Colors.green : Color(0xFF1E3A8A), 
+                      width: 2
+                    )
                   : null,
             ),
             child: Column(
@@ -363,21 +414,14 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     style: TextStyle(
                       fontSize: 7,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Colors.green.shade800,
                     ),
                   ),
                 ] else if (isWeekFull &&
                     !isSelected &&
                     !_isSelectingStartDate) ...[
                   // Second priority: Week full indicator
-                  Text(
-                    'Full',
-                    style: TextStyle(
-                      fontSize: 7,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  
                 ] else if (!widget.isCustomBooking &&
                     !_isDateAllowedForPackage(date) &&
                     !isOutsideContract &&
@@ -491,7 +535,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   Widget _buildContractInfo() {
     String statusText = _isSelectingStartDate
         ? 'Please select your start date'
-        : 'Select visit dates within contract period';
+        : 'Select visit dates within contract period (tap START date to change)';
 
     // Get contract duration from package or fallback
     String contractDurationText = widget.package?.noOfMonth != null
@@ -528,18 +572,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
               ),
               if (!_isSelectingStartDate)
                 TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isSelectingStartDate = true;
-                      _userSelectedStartDate = null;
-                      _selectedDates.clear();
-                      _contractStartDate = null;
-                      _contractEndDate = null;
-                      _weeklyVisitCounts.clear();
-                      _calculateContractDetails();
-                    });
-                    widget.onDatesChanged(_selectedDates);
-                  },
+                  onPressed: _resetToStartDateSelection,
                   child: Text(
                     'Reset',
                     style: TextStyle(
