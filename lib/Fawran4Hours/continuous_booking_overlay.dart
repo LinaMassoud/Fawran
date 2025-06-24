@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'cleaning_service_screen.dart'; // PackageModel
 import 'add_new_address.dart';
 
+import '../services/api_service.dart';
 // Import modularized components
 import '../models/address_model.dart';
 import '../models/booking_model.dart';
@@ -178,8 +179,10 @@ class _ContinuousBookingOverlayState
       addressError = null;
     });
 
-    // Get userId from the provider instead of hardcoding
+    // Get userId from the provider
     final userId = ref.read(userIdProvider);
+
+    print('userId in _fetchAddresses =');
     
     // Check if userId is available
     if (userId == null) {
@@ -190,41 +193,26 @@ class _ContinuousBookingOverlayState
       return;
     }
 
-    final response = await http.get(
-      Uri.parse(
-          'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/$userId'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    );
+    // Use the API service method
+    final data = await ApiService.fetchCustomerAddresses(userId: userId);
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+    setState(() {
+      addresses = data.map((addressData) {
+        return Address(
+          cardText: addressData['card_text']?.toString() ?? 'Address',
+          addressId: addressData['address_id'] ?? 0,
+          cityCode: int.parse(addressData['city_code']),
+          districtCode: addressData['district_code']?.toString() ?? '',
+        );
+      }).toList();
 
-      setState(() {
-        addresses = data.map((addressData) {
-          return Address(
-            cardText: addressData['card_text']?.toString() ?? 'Address',
-            addressId: addressData['address_id'] ?? 0,
-            cityCode: int.parse(addressData['city_code']),
-            districtCode: addressData['district_code']?.toString() ?? '',
-          );
-        }).toList();
+      if (addresses.isNotEmpty &&
+          ref.read(selectedAddressProvider) == null) {
+        ref.read(selectedAddressProvider.notifier).state = addresses.first;
+      }
 
-        if (addresses.isNotEmpty &&
-            ref.read(selectedAddressProvider) == null) {
-          ref.read(selectedAddressProvider.notifier).state = addresses.first;
-        }
-
-        isLoadingAddresses = false;
-      });
-    } else {
-      setState(() {
-        addressError =
-            'Failed to load addresses. Status: ${response.statusCode}';
-        isLoadingAddresses = false;
-      });
-    }
+      isLoadingAddresses = false;
+    });
   } catch (e) {
     setState(() {
       addressError = 'Error loading addresses: $e';
@@ -344,12 +332,14 @@ class _ContinuousBookingOverlayState
   }
 
   void _addNewAddress() async {
+    final userId = ref.read(userIdProvider);
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddNewAddressScreen(
           package: widget.package,
           serviceId: widget.serviceId,
+          user_id: userId,
         ),
       ),
     );

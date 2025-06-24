@@ -57,6 +57,9 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   List<PackageModel> eastAsiaPackages = [];
   List<PackageModel> africanPackages = [];
 
+  List<Service> lastKnownServices = []; // Cache for fallback
+bool hasTriedFetchingServices = false;
+
   bool isEastAsiaLoading = true;
   bool isAfricanLoading = true;
   String? eastAsiaErrorMessage;
@@ -109,9 +112,13 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
     setState(() {
       availableServices = servicesList.map((service) => Service.fromJson(service)).toList();
       
-      // FIXED: Always ensure a service is selected
+      // FIXED: Cache successful results
       if (availableServices.isNotEmpty) {
-        // Try to match widget.serviceId first, then fall back to first service
+        lastKnownServices = List.from(availableServices);
+      }
+      
+      // Always ensure a service is selected
+      if (availableServices.isNotEmpty) {
         final matchingService = availableServices.firstWhere(
           (service) => service.id == widget.serviceId,
           orElse: () => availableServices.first,
@@ -119,25 +126,39 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
         
         selectedServiceId = matchingService.id;
         selectedServiceName = matchingService.name;
-        
-        // Update the title immediately
         _setServiceTitle();
       }
       
       isLoadingServices = false;
+      hasTriedFetchingServices = true;
     });
   } catch (e) {
     setState(() {
       isLoadingServices = false;
+      hasTriedFetchingServices = true;
       
-      // FIXED: Set fallback values even when API fails
+      // FIXED: Use cached services as fallback
+      if (availableServices.isEmpty && lastKnownServices.isNotEmpty) {
+        availableServices = List.from(lastKnownServices);
+        print('Using cached services as fallback');
+      }
+      
+      // If still empty, create fallback services
       if (availableServices.isEmpty) {
-        // Create fallback services based on widget parameters
         availableServices = [
           Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
         ];
-        selectedServiceId = widget.serviceId;
-        selectedServiceName = widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service';
+        print('Created fallback service');
+      }
+      
+      // Ensure selection
+      if (selectedServiceId == null) {
+        final matchingService = availableServices.firstWhere(
+          (service) => service.id == widget.serviceId,
+          orElse: () => availableServices.first,
+        );
+        selectedServiceId = matchingService.id;
+        selectedServiceName = matchingService.name;
         _setServiceTitle();
       }
     });
@@ -146,17 +167,61 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
 }
 
 Future<void> reloadServices() async {
-  setState(() {
-    isLoadingServices = true;
-    // Don't clear existing services immediately to avoid UI flicker
-  });
-  
-  await fetchServices();
-  
-  // Reload related data after services are updated
-  await _loadServiceShifts();
-  fetchEastAsiaPackages();
-  fetchAfricanPackages();
+  // FIXED: Don't clear services or set loading immediately
+  try {
+    final List<dynamic> servicesList = await ApiService.fetchServices(
+      professionId: widget.professionId,
+    );
+
+    setState(() {
+      // Only update if we got valid results
+      if (servicesList.isNotEmpty) {
+        availableServices = servicesList.map((service) => Service.fromJson(service)).toList();
+        lastKnownServices = List.from(availableServices); // Update cache
+        
+        // Try to maintain current selection
+        final currentSelection = availableServices.firstWhere(
+          (service) => service.id == selectedServiceId,
+          orElse: () => availableServices.first,
+        );
+        
+        selectedServiceId = currentSelection.id;
+        selectedServiceName = currentSelection.name;
+        _setServiceTitle();
+      }
+      
+      isLoadingServices = false;
+    });
+    
+    // Reload related data after services are updated
+    await _loadServiceShifts();
+    fetchEastAsiaPackages();
+    fetchAfricanPackages();
+    
+  } catch (e) {
+    setState(() {
+      isLoadingServices = false;
+      
+      // FIXED: Ensure services are never empty
+      if (availableServices.isEmpty) {
+        if (lastKnownServices.isNotEmpty) {
+          availableServices = List.from(lastKnownServices);
+        } else {
+          availableServices = [
+            Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
+          ];
+        }
+        
+        // Ensure selection
+        if (selectedServiceId == null) {
+          selectedServiceId = availableServices.first.id;
+          selectedServiceName = availableServices.first.name;
+          _setServiceTitle();
+        }
+      }
+    });
+    print('Error reloading services: $e');
+  }
 }
 
   Future<void> _initializeData() async {
@@ -546,9 +611,19 @@ Future<void> reloadServices() async {
     }
   }
 
-  Widget _buildServiceSelector() {
-  // FIXED: Always show loading state properly
-  if (isLoadingServices && availableServices.isEmpty) {
+ Widget _buildServiceSelector() {
+  // FIXED: Always ensure we have services to display
+  if (availableServices.isEmpty && lastKnownServices.isNotEmpty) {
+    availableServices = List.from(lastKnownServices);
+    if (selectedServiceId == null && availableServices.isNotEmpty) {
+      selectedServiceId = availableServices.first.id;
+      selectedServiceName = availableServices.first.name;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _setServiceTitle());
+    }
+  }
+
+  // Show loading only if we haven't tried fetching and have no services
+  if (isLoadingServices && availableServices.isEmpty && !hasTriedFetchingServices) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -576,50 +651,15 @@ Future<void> reloadServices() async {
     );
   }
 
-  // FIXED: Always ensure selectedServiceId is not null
+  // FIXED: Always ensure selectedServiceId is set
   if (selectedServiceId == null && availableServices.isNotEmpty) {
     selectedServiceId = availableServices.first.id;
     selectedServiceName = availableServices.first.name;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setServiceTitle();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setServiceTitle());
   }
 
-  // FIXED: Show selector even with one service during loading
-  if (availableServices.isEmpty) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Select Service',
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 16),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              'Loading services...',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ),
-          SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  // FIXED: Show selector for multiple services OR during loading
-  if (availableServices.length > 1 || isLoadingServices) {
+  // FIXED: Always show selector if we have any services
+  if (availableServices.isNotEmpty) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
       child: Column(
@@ -635,7 +675,7 @@ Future<void> reloadServices() async {
           ),
           SizedBox(height: 16),
 
-          // HORIZONTAL ROW FOR RADIO BUTTONS
+          // HORIZONTAL ROW FOR RADIO BUTTONS - Always visible when services exist
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -650,7 +690,7 @@ Future<void> reloadServices() async {
                           children: [
                             Radio<int>(
                               value: service.id,
-                              groupValue: selectedServiceId ?? service.id, // FIXED: Prevent null
+                              groupValue: selectedServiceId ?? service.id,
                               onChanged: (int? value) {
                                 if (value != null) {
                                   _onServiceChanged(value);
@@ -675,14 +715,14 @@ Future<void> reloadServices() async {
             ),
           ),
 
-          // FIXED: Add refresh button if services failed to load
-          if (availableServices.length == 1 && isLoadingServices == false)
+          // Show refresh button if needed
+          if (availableServices.length == 1 || isLoadingServices)
             Padding(
               padding: EdgeInsets.only(top: 8),
               child: TextButton.icon(
-                onPressed: reloadServices,
+                onPressed: isLoadingServices ? null : reloadServices,
                 icon: Icon(Icons.refresh, size: 16),
-                label: Text('Refresh Services'),
+                label: Text(isLoadingServices ? 'Loading...' : 'Refresh Services'),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.purple,
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -696,8 +736,70 @@ Future<void> reloadServices() async {
     );
   }
 
-  // If only one service and not loading, return empty widget
-  return SizedBox.shrink();
+  // Last resort fallback - should rarely be reached
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Select Service',
+          style: TextStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        SizedBox(height: 16),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Text(
+                'No services available',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              Spacer(),
+              TextButton(
+                onPressed: fetchServices,
+                child: Text('Retry'),
+                style: TextButton.styleFrom(foregroundColor: Colors.purple),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 24),
+      ],
+    ),
+  );
+}
+
+
+
+void _ensureServicesAvailable() {
+  if (availableServices.isEmpty) {
+    if (lastKnownServices.isNotEmpty) {
+      setState(() {
+        availableServices = List.from(lastKnownServices);
+      });
+    } else {
+      setState(() {
+        availableServices = [
+          Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
+        ];
+      });
+    }
+    
+    if (selectedServiceId == null) {
+      selectedServiceId = availableServices.first.id;
+      selectedServiceName = availableServices.first.name;
+      _setServiceTitle();
+    }
+  }
 }
 
 
@@ -705,12 +807,14 @@ Future<void> reloadServices() async {
 void didChangeDependencies() {
   super.didChangeDependencies();
   
-  // FIXED: Reload services when screen becomes active
+  // FIXED: Always ensure services are available when screen becomes active
   if (ModalRoute.of(context)?.isCurrent == true) {
-    // Only reload if services are empty or if we haven't loaded yet
-    if (availableServices.isEmpty || selectedServiceId == null) {
+    _ensureServicesAvailable();
+    
+    // Only reload if we haven't tried fetching yet or services are truly empty
+    if (!hasTriedFetchingServices || (availableServices.isEmpty && lastKnownServices.isEmpty)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        reloadServices();
+        fetchServices();
       });
     }
   }
@@ -1264,57 +1368,6 @@ void didChangeDependencies() {
     );
   }
 
-  Widget _buildOfferCard(String title, String discount, Color color) {
-    return Container(
-      width: 200,
-      padding: EdgeInsets.all(16),
-      margin: EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  discount,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildServicePack(String title, String imagePath, Color color) {
     return Container(
       height: 120,
@@ -1728,7 +1781,7 @@ void didChangeDependencies() {
                   Row(
                     children: [
                       Text(
-                        'SAR ${package.finalPrice}',
+                        'SAR ${package.finalPrice.round()}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -1737,7 +1790,7 @@ void didChangeDependencies() {
                       ),
                       SizedBox(width: 6),
                       Text(
-                        'SAR ${package.packagePrice}',
+                        'SAR ${package.packagePrice.round()}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
