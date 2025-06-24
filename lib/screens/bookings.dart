@@ -223,11 +223,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
       if (status is int) {
         switch (status) {
           case 0:
-            return "Pending";
+            return "Not confirmed";
           case 1:
-            return "Active";
+            return "Confirmed";
           case 2:
-            return "Completed";
+            return "paid";
           case 3:
             return "Cancelled";
           default:
