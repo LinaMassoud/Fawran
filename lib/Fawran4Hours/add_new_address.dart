@@ -76,52 +76,52 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   String? _selectedDistrictCode;
 
   @override
-void initState() {
-  super.initState();
-  // Get serviceId from package, with fallback to default value
-  int serviceId = widget.serviceId ?? 1;
-  _fetchCitiesFromAPI(serviceId);
-  
-  // Add listeners to text controllers
-  _addressTitleController.addListener(_onFieldChanged);
-  _streetNameController.addListener(_onFieldChanged);
-  _houseNumberController.addListener(_onFieldChanged);
-  _apartmentNumberController.addListener(_onFieldChanged);
-  _fullAddressController.addListener(_onFieldChanged);
-  _notesController.addListener(_onFieldChanged);
-}
+  void initState() {
+    super.initState();
+    // Get serviceId from package, with fallback to default value
+    int serviceId = widget.serviceId ?? 1;
+    _fetchCitiesFromAPI(serviceId);
+
+    // Add listeners to text controllers
+    _addressTitleController.addListener(_onFieldChanged);
+    _streetNameController.addListener(_onFieldChanged);
+    _houseNumberController.addListener(_onFieldChanged);
+    _apartmentNumberController.addListener(_onFieldChanged);
+    _fullAddressController.addListener(_onFieldChanged);
+    _notesController.addListener(_onFieldChanged);
+  }
 
   @override
-void dispose() {
-  _addressTitleController.removeListener(_onFieldChanged);
-  _streetNameController.removeListener(_onFieldChanged);
-  _houseNumberController.removeListener(_onFieldChanged);
-  _apartmentNumberController.removeListener(_onFieldChanged);
-  _fullAddressController.removeListener(_onFieldChanged);
-  _notesController.removeListener(_onFieldChanged);
-  
-  _addressTitleController.dispose();
-  _streetNameController.dispose();
-  _buildingNumberController.dispose();
-  _houseNumberController.dispose();
-  _apartmentNumberController.dispose();
-  _fullAddressController.dispose();
-  _notesController.dispose();
-  super.dispose();
-}
+  void dispose() {
+    _addressTitleController.removeListener(_onFieldChanged);
+    _streetNameController.removeListener(_onFieldChanged);
+    _houseNumberController.removeListener(_onFieldChanged);
+    _apartmentNumberController.removeListener(_onFieldChanged);
+    _fullAddressController.removeListener(_onFieldChanged);
+    _notesController.removeListener(_onFieldChanged);
+
+    _addressTitleController.dispose();
+    _streetNameController.dispose();
+    _buildingNumberController.dispose();
+    _houseNumberController.dispose();
+    _apartmentNumberController.dispose();
+    _fullAddressController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
 
   List<City> get _cities {
     return _availableCities;
   }
 
- List<District> get _districts {
-  final seenCodes = <String>{};
-  final uniqueDistricts = _availableDistricts.where((district) {
-    return seenCodes.add(district.districtCode);
-  }).toList();
+  List<District> get _districts {
+    final seenCodes = <String>{};
+    final uniqueDistricts = _availableDistricts.where((district) {
+      return seenCodes.add(district.districtCode);
+    }).toList();
 
-  return uniqueDistricts;
-}
+    return uniqueDistricts;
+  }
 
   LatLng? get _districtLocation {
     // Since we're using API data now, return a default location or use district map data
@@ -132,76 +132,75 @@ void dispose() {
   }
 
   void _onCityChanged(City? city) {
-  setState(() {
-    _selectedCity = city;
-    _selectedDistrict = null;
-    _selectedDistrictCode = null;
-    _availableDistricts.clear();
-    
-    // Clear map-related data when city changes
-    _districtMapData = null;
-    _selectedLocation = null;
-    _isMapCompleted = false;
-    _hasUserMovedPin = false;
-    _isLocationConfirmed = false;
+    setState(() {
+      _selectedCity = city;
+      _selectedDistrict = null;
+      _selectedDistrictCode = null;
+      _availableDistricts.clear();
 
-    if (city != null) {
-      final selectedCityObj = _availableCities.firstWhere(
-        (city) => city.cityName == city.cityName,
-        orElse: () => City(cityCode: 0, cityName: ''),
-      );
-      _selectedCityCode = city.cityCode;
+      // Clear map-related data when city changes
+      _districtMapData = null;
+      _selectedLocation = null;
+      _isMapCompleted = false;
+      _hasUserMovedPin = false;
+      _isLocationConfirmed = false;
 
-      if (_selectedCityCode != null && _selectedCityCode! > 0) {
-        _fetchDistrictsFromAPI(city.cityCode!);
+      if (city != null) {
+        final selectedCityObj = _availableCities.firstWhere(
+          (city) => city.cityName == city.cityName,
+          orElse: () => City(cityCode: 0, cityName: ''),
+        );
+        _selectedCityCode = city.cityCode;
+
+        if (_selectedCityCode != null && _selectedCityCode! > 0) {
+          _fetchDistrictsFromAPI(city.cityCode!);
+        }
+      } else {
+        _selectedCityCode = null;
       }
-    } else {
-      _selectedCityCode = null;
-    }
 
-    _checkDistrictCompletion();
-  });
-}
+      _checkDistrictCompletion();
+    });
+  }
 
   void _onDistrictChanged(String? value) {
-  setState(() {
-    _selectedDistrict = value;
-    
-    // Clear map-related data when district changes
-    _selectedLocation = null;
-    _isMapCompleted = false;
-    _hasUserMovedPin = false;
-    _isLocationConfirmed = false;
+    setState(() {
+      _selectedDistrict = value;
 
-    if (value != null) {
-      _selectedDistrictCode = value;
+      // Clear map-related data when district changes
+      _selectedLocation = null;
+      _isMapCompleted = false;
+      _hasUserMovedPin = false;
+      _isLocationConfirmed = false;
 
-      if (_selectedDistrictCode != null &&
-          _selectedDistrictCode!.isNotEmpty) {
-        _fetchDistrictMapData(_selectedDistrictCode!);
+      if (value != null) {
+        _selectedDistrictCode = value;
+
+        if (_selectedDistrictCode != null &&
+            _selectedDistrictCode!.isNotEmpty) {
+          _fetchDistrictMapData(_selectedDistrictCode!);
+        }
+      } else {
+        _selectedDistrictCode = null;
+        _districtMapData = null;
       }
-    } else {
-      _selectedDistrictCode = null;
-      _districtMapData = null;
-    }
 
-    _checkDistrictCompletion();
-  });
-}
-
+      _checkDistrictCompletion();
+    });
+  }
 
   void _checkDistrictCompletion() {
-  setState(() {
-    _isDistrictCompleted = _selectedCity != null && _selectedDistrict != null;
-    if (_isDistrictCompleted && _currentStep == 1) {
-      _currentStep = 2;
-    } else if (!_isDistrictCompleted && _currentStep > 1) {
-      // Reset to step 1 if district is no longer completed
-      _currentStep = 1;
-    }
-    _updateCanProceedToDetails();
-  });
-}
+    setState(() {
+      _isDistrictCompleted = _selectedCity != null && _selectedDistrict != null;
+      if (_isDistrictCompleted && _currentStep == 1) {
+        _currentStep = 2;
+      } else if (!_isDistrictCompleted && _currentStep > 1) {
+        // Reset to step 1 if district is no longer completed
+        _currentStep = 1;
+      }
+      _updateCanProceedToDetails();
+    });
+  }
 
   void _onMapCompleted() {
     setState(() {
@@ -214,18 +213,18 @@ void dispose() {
   }
 
   void _updateCanProceedToDetails() {
-  setState(() {
-    _canProceedToDetails = _isDistrictCompleted && _isMapCompleted;
-    if (!_canProceedToDetails && _currentStep > 2) {
-      // Reset to appropriate step if conditions are no longer met
-      if (_isDistrictCompleted && !_isMapCompleted) {
-        _currentStep = 2;
-      } else if (!_isDistrictCompleted) {
-        _currentStep = 1;
+    setState(() {
+      _canProceedToDetails = _isDistrictCompleted && _isMapCompleted;
+      if (!_canProceedToDetails && _currentStep > 2) {
+        // Reset to appropriate step if conditions are no longer met
+        if (_isDistrictCompleted && !_isMapCompleted) {
+          _currentStep = 2;
+        } else if (!_isDistrictCompleted) {
+          _currentStep = 1;
+        }
       }
-    }
-  });
-}
+    });
+  }
 
   Future<void> _createAddressAPI() async {
     if (_selectedLocation == null || _selectedDistrictCode == null) {
@@ -357,8 +356,17 @@ void dispose() {
           },
           'api_response': json.decode(response.body), // Include API response
         };
+        final displayAddress = {
+          'city': _selectedCity?.cityName,
+          'district':
+              _districts.firstWhere((d) => d.districtCode == _selectedDistrict),
+          'fullAddress': _fullAddressController.text
+        };
 
-        Navigator.pop(context, newAddress);
+        Navigator.pop(context, {
+          'newAddress': newAddress,
+          'displayAddress': displayAddress,
+        });
       } else {
         // Error - Handle HTML error responses
         String errorMessage = 'Failed to create address. Please try again.';
@@ -514,74 +522,73 @@ void dispose() {
 
   // Now update your main widget's _openMapSelector method to use this new dialog:
   Future<void> _openMapSelector() async {
-  if (!_isDistrictCompleted) return;
+    if (!_isDistrictCompleted) return;
 
-  LatLng initialLocation;
+    LatLng initialLocation;
 
-  // First priority: Use previously selected location if exists
-  if (_selectedLocation != null) {
-    initialLocation = _selectedLocation!;
-  }
-  // Second priority: Use district map data if available
-  else if (_districtMapData != null) {
-    initialLocation = LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
-  }
-  // Fallback: Use default location
-  else {
-    initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
-  }
+    // First priority: Use previously selected location if exists
+    if (_selectedLocation != null) {
+      initialLocation = _selectedLocation!;
+    }
+    // Second priority: Use district map data if available
+    else if (_districtMapData != null) {
+      initialLocation =
+          LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
+    }
+    // Fallback: Use default location
+    else {
+      initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
+    }
 
-  await showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) => MapSelectorDialog(
-      initialLocation: initialLocation,
-      boundaryCoordinates: _districtMapData?.polygonCoordinates,
-      onLocationSelected: (LatLng selectedLocation) async {
-        setState(() {
-          _selectedLocation = selectedLocation;
-          _hasUserMovedPin = true;
-          _isLocationConfirmed = false;
-        });
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => MapSelectorDialog(
+        initialLocation: initialLocation,
+        boundaryCoordinates: _districtMapData?.polygonCoordinates,
+        onLocationSelected: (LatLng selectedLocation) async {
+          setState(() {
+            _selectedLocation = selectedLocation;
+            _hasUserMovedPin = true;
+            _isLocationConfirmed = false;
+          });
 
-        await _handleLocationSelection(selectedLocation);
-      },
-    ),
-  );
-}
-
-
-void _onFieldChanged() {
-  setState(() {
-    // This will trigger a rebuild and update the save button state
-  });
-}
-
-
-bool _areAllFieldsValid() {
-  // Check basic required fields
-  if (_addressTitleController.text.trim().isEmpty ||
-      _selectedHouseType == null ||
-      _streetNameController.text.trim().isEmpty ||
-      _houseNumberController.text.trim().isEmpty ||
-      _fullAddressController.text.trim().isEmpty ||
-      _selectedLocation == null ||
-      _selectedCity == null ||
-      _selectedDistrictCode == null ||
-      _selectedDistrictCode!.isEmpty) {
-    return false;
+          await _handleLocationSelection(selectedLocation);
+        },
+      ),
+    );
   }
 
-  // Check apartment-specific fields if house type is Apartment
-  if (_selectedHouseType == 'Apartment') {
-    if (_selectedFloorNumber == null ||
-        _apartmentNumberController.text.trim().isEmpty) {
+  void _onFieldChanged() {
+    setState(() {
+      // This will trigger a rebuild and update the save button state
+    });
+  }
+
+  bool _areAllFieldsValid() {
+    // Check basic required fields
+    if (_addressTitleController.text.trim().isEmpty ||
+        _selectedHouseType == null ||
+        _streetNameController.text.trim().isEmpty ||
+        _houseNumberController.text.trim().isEmpty ||
+        _fullAddressController.text.trim().isEmpty ||
+        _selectedLocation == null ||
+        _selectedCity == null ||
+        _selectedDistrictCode == null ||
+        _selectedDistrictCode!.isEmpty) {
       return false;
     }
-  }
 
-  return true;
-}
+    // Check apartment-specific fields if house type is Apartment
+    if (_selectedHouseType == 'Apartment') {
+      if (_selectedFloorNumber == null ||
+          _apartmentNumberController.text.trim().isEmpty) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
 // Add this new method to handle location selection and geocoding:
   Future<void> _handleLocationSelection(LatLng selectedLocation) async {
@@ -701,10 +708,9 @@ bool _areAllFieldsValid() {
   }
 
   void _saveAddress() {
-
-  // All validations passed, proceed with API call
-  _createAddressAPI();
-}
+    // All validations passed, proceed with API call
+    _createAddressAPI();
+  }
 
   Widget _buildStepIndicator(
       int stepNumber, String title, bool isCompleted, bool isActive) {
@@ -914,106 +920,106 @@ bool _areAllFieldsValid() {
   }
 
   Widget _buildHouseTypeDropdown({bool enabled = true}) {
-  return Container(
-    width: double.infinity,
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey[300]!, width: 1.5),
-      borderRadius: BorderRadius.circular(12),
-      color: enabled ? Colors.white : Colors.grey[100],
-    ),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        hint: Text(
-          'Select house type',
-          style: TextStyle(
-            color: enabled ? Colors.grey[600] : Colors.grey[400],
-            fontSize: 16,
-          ),
-        ),
-        value: _selectedHouseType,
-        items: _houseTypes.map((String type) {
-          return DropdownMenuItem<String>(
-            value: type,
-            child: Text(
-              type,
-              style: TextStyle(
-                fontSize: 16,
-                color: enabled ? Colors.black : Colors.grey[400],
-              ),
-            ),
-          );
-        }).toList(),
-        onChanged: enabled
-            ? (String? value) {
-                setState(() {
-                  _selectedHouseType = value;
-                  // Clear apartment-specific fields when switching to Villa
-                  if (value == 'Villa') {
-                    _selectedFloorNumber = null;
-                    _apartmentNumberController.clear();
-                  }
-                  // Trigger validation update
-                  _onFieldChanged();
-                });
-              }
-            : null,
-        icon: Icon(Icons.keyboard_arrow_down,
-            color: enabled ? Colors.grey[600] : Colors.grey[400]),
-        isExpanded: true,
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        color: enabled ? Colors.white : Colors.grey[100],
       ),
-    ),
-  );
-}
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          hint: Text(
+            'Select house type',
+            style: TextStyle(
+              color: enabled ? Colors.grey[600] : Colors.grey[400],
+              fontSize: 16,
+            ),
+          ),
+          value: _selectedHouseType,
+          items: _houseTypes.map((String type) {
+            return DropdownMenuItem<String>(
+              value: type,
+              child: Text(
+                type,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: enabled ? Colors.black : Colors.grey[400],
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: enabled
+              ? (String? value) {
+                  setState(() {
+                    _selectedHouseType = value;
+                    // Clear apartment-specific fields when switching to Villa
+                    if (value == 'Villa') {
+                      _selectedFloorNumber = null;
+                      _apartmentNumberController.clear();
+                    }
+                    // Trigger validation update
+                    _onFieldChanged();
+                  });
+                }
+              : null,
+          icon: Icon(Icons.keyboard_arrow_down,
+              color: enabled ? Colors.grey[600] : Colors.grey[400]),
+          isExpanded: true,
+        ),
+      ),
+    );
+  }
 
 // 5. Update the floor dropdown onChanged to trigger validation
-Widget _buildFloorDropdown({bool enabled = true}) {
-  return Container(
-    width: double.infinity,
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey[300]!, width: 1.5),
-      borderRadius: BorderRadius.circular(12),
-      color: enabled ? Colors.white : Colors.grey[100],
-    ),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<int>(
-        hint: Text(
-          'Select floor',
-          style: TextStyle(
-            color: enabled ? Colors.grey[600] : Colors.grey[400],
-            fontSize: 16,
-          ),
-        ),
-        value: _selectedFloorNumber,
-        items: _floorNumbers.map((int floor) {
-          return DropdownMenuItem<int>(
-            value: floor,
-            child: Text(
-              'Floor $floor',
-              style: TextStyle(
-                fontSize: 16,
-                color: enabled ? Colors.black : Colors.grey[400],
-              ),
-            ),
-          );
-        }).toList(),
-        onChanged: enabled
-            ? (int? value) {
-                setState(() {
-                  _selectedFloorNumber = value;
-                  // Trigger validation update
-                  _onFieldChanged();
-                });
-              }
-            : null,
-        icon: Icon(Icons.keyboard_arrow_down,
-            color: enabled ? Colors.grey[600] : Colors.grey[400]),
-        isExpanded: true,
+  Widget _buildFloorDropdown({bool enabled = true}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        color: enabled ? Colors.white : Colors.grey[100],
       ),
-    ),
-  );
-}
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          hint: Text(
+            'Select floor',
+            style: TextStyle(
+              color: enabled ? Colors.grey[600] : Colors.grey[400],
+              fontSize: 16,
+            ),
+          ),
+          value: _selectedFloorNumber,
+          items: _floorNumbers.map((int floor) {
+            return DropdownMenuItem<int>(
+              value: floor,
+              child: Text(
+                'Floor $floor',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: enabled ? Colors.black : Colors.grey[400],
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: enabled
+              ? (int? value) {
+                  setState(() {
+                    _selectedFloorNumber = value;
+                    // Trigger validation update
+                    _onFieldChanged();
+                  });
+                }
+              : null,
+          icon: Icon(Icons.keyboard_arrow_down,
+              color: enabled ? Colors.grey[600] : Colors.grey[400]),
+          isExpanded: true,
+        ),
+      ),
+    );
+  }
 
   Widget _buildTextField(String hint, TextEditingController controller,
       {int maxLines = 1, bool enabled = true}) {
@@ -1319,33 +1325,35 @@ Widget _buildFloorDropdown({bool enabled = true}) {
 
             // Bottom Button
             Container(
-            padding: EdgeInsets.all(20),
-            color: Colors.white,
-            child: GestureDetector(
-              onTap: (_canProceedToDetails && _areAllFieldsValid()) ? _saveAddress : null,
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: (_canProceedToDetails && _areAllFieldsValid())
-                      ? Color(0xFF1E3A8A)
-                      : Colors.grey[400],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    'SAVE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+              padding: EdgeInsets.all(20),
+              color: Colors.white,
+              child: GestureDetector(
+                onTap: (_canProceedToDetails && _areAllFieldsValid())
+                    ? _saveAddress
+                    : null,
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: (_canProceedToDetails && _areAllFieldsValid())
+                        ? Color(0xFF1E3A8A)
+                        : Colors.grey[400],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'SAVE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
           ],
         ),
       ),

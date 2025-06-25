@@ -39,48 +39,49 @@ class _BookingsScreenState extends State<BookingsScreen> {
     });
   }
 
- Future<void> _fetchPermanentContracts() async {
-  try {
-    final token = await _storage.read(key: 'token') ?? '';
-    final userId = await _storage.read(key: 'user_id') ?? '';
+  Future<void> _fetchPermanentContracts() async {
+    try {
+      final token = await _storage.read(key: 'token') ?? '';
+      final userId = await _storage.read(key: 'user_id') ?? '';
 
-    if (token.isEmpty || userId.isEmpty) {
-      throw Exception("Missing token or customer ID in storage");
-    }
+      if (token.isEmpty || userId.isEmpty) {
+        throw Exception("Missing token or customer ID in storage");
+      }
 
-    final url = Uri.parse(
-      "http://10.20.10.114:8080/ords/emdad/fawran/domestic/contracts/$userId",
-    );
-
-    final response = await http.get(
-      url,
-      headers: {
-        "token": token,
-        "Accept": "application/json",
-      },
-    );
-
-    if (response.statusCode == 200) {
-      String rawJson = response.body;
-
-      // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
-      rawJson = rawJson.replaceAllMapped(
-        RegExp(r'"price_before_vat"\s*:\s*,'),
-        (match) => '"price_before_vat": null,',
+      final url = Uri.parse(
+        "http://10.20.10.114:8080/ords/emdad/fawran/domestic/contracts/$userId",
       );
 
-      final List<dynamic> data = json.decode(rawJson);
+      final response = await http.get(
+        url,
+        headers: {
+          "token": token,
+          "Accept": "application/json",
+        },
+      );
 
-      setState(() {
-        _permanentContracts = data.cast<Map<String, dynamic>>();
-      });
-    } else {
-      throw Exception("Failed to load permanent contracts: ${response.statusCode}");
+      if (response.statusCode == 200) {
+        String rawJson = response.body;
+
+        // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
+        rawJson = rawJson.replaceAllMapped(
+          RegExp(r'"price_before_vat"\s*:\s*,'),
+          (match) => '"price_before_vat": null,',
+        );
+
+        final List<dynamic> data = json.decode(rawJson);
+
+        setState(() {
+          _permanentContracts = data.cast<Map<String, dynamic>>();
+        });
+      } else {
+        throw Exception(
+            "Failed to load permanent contracts: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching permanent contracts: $e");
     }
-  } catch (e) {
-    print("Error fetching permanent contracts: $e");
   }
-}
 
   Future<void> _fetchHourlyContracts() async {
     try {
@@ -88,7 +89,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
       final userId = await _storage.read(key: 'user_id') ?? '';
 
       print("=== HOURLY CONTRACTS DEBUG ===");
-      print("Token: ${token.isNotEmpty ? 'Present (${token.length} chars)' : 'Missing'}");
+      print(
+          "Token: ${token.isNotEmpty ? 'Present (${token.length} chars)' : 'Missing'}");
       print("User ID: $userId");
 
       if (token.isEmpty || userId.isEmpty) {
@@ -120,7 +122,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
           final List<dynamic> data = json.decode(response.body);
           print("Parsed Data Type: ${data.runtimeType}");
           print("Number of hourly contracts: ${data.length}");
-          
+
           // Print each contract with its structure
           for (int i = 0; i < data.length; i++) {
             print("--- Hourly Contract $i ---");
@@ -135,11 +137,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
               print("Contract Data: ${data[i]}");
             }
           }
-          
+
           setState(() {
             _hourlyContracts = data.cast<Map<String, dynamic>>();
           });
-          print("Successfully stored ${_hourlyContracts.length} hourly contracts");
+          print(
+              "Successfully stored ${_hourlyContracts.length} hourly contracts");
         } catch (jsonError) {
           print("JSON Parsing Error: $jsonError");
           print("Attempting to parse as single object...");
@@ -158,7 +161,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
         print("Status Code: ${response.statusCode}");
         print("Reason Phrase: ${response.reasonPhrase}");
         print("Error Response Body: ${response.body}");
-        throw Exception("Failed to load hourly contracts: ${response.statusCode}");
+        throw Exception(
+            "Failed to load hourly contracts: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching hourly contracts: $e");
@@ -216,7 +220,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             _infoRow("Profession", booking["profession_name"] ?? ""),
             _infoRow("Package", booking["package_name"] ?? ""),
             _infoRow("Days", booking["period_days"].toString()),
-            _infoRow("Price", "${booking["price_before_vat"]} Riyal"),
+            _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
             _infoRow("Delivery", "150 Riyal"),
             _infoRow("Status", booking["status"] ?? "success"),
           ],
@@ -289,7 +293,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.green.shade100,
                     borderRadius: BorderRadius.circular(12),
@@ -304,7 +309,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: getStatusColor(booking["status"]).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -321,7 +327,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            _infoRow("Service Contract ID", booking["service_contract_id"]?.toString() ?? ""),
+            _infoRow("Service Contract ID",
+                booking["service_contract_id"]?.toString() ?? ""),
             _infoRow("Contract ID", booking["contract_id"]?.toString() ?? ""),
             _infoRow("Customer", booking["customer_display"] ?? ""),
             _infoRow("Service ID", booking["service_id"]?.toString() ?? ""),
@@ -400,7 +407,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               child: Builder(
                 builder: (context) {
                   final filteredContracts = _getFilteredContracts();
-                  
+
                   if (filteredContracts.isEmpty) {
                     return const Center(
                       child: Column(

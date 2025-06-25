@@ -1,15 +1,13 @@
+import 'package:fawran/models/address_model.dart';
+import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/screens/combined.dart';
+import 'package:fawran/steps/address_selection_step.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:fawran/Fawran4Hours/add_new_address.dart';
-import 'package:fawran/models/address_model.dart';
-import 'package:fawran/providers/address_provider.dart';
-import 'package:fawran/screens/service_provider.dart';
-import 'package:fawran/steps/address_selection_step.dart';
 
 class AddressSelectionScreen extends ConsumerStatefulWidget {
   final String header;
@@ -36,31 +34,33 @@ class _AddressSelectionScreenState
 
   Future<void> fetchAddresses() async {
     final userId = ref.read(userIdProvider);
-    if (userId != null) {}
-    final url = Uri.parse(
-        'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/' +
-            userId.toString());
+    if (userId != null) {
+      final url = Uri.parse(
+          'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/' +
+              userId.toString());
 
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(response.body);
+      try {
+        final response = await http.get(url);
+        if (response.statusCode == 200) {
+          final List<dynamic> jsonData = json.decode(response.body);
 
-        final List<Address> fetchedAddresses =
-            jsonData.map((item) => Address.fromJson(item)).toList();
+          final List<Address> fetchedAddresses =
+              jsonData.map((item) => Address.fromJson(item)).toList();
 
-        setState(() {
-          addresses = fetchedAddresses;
-          if (addresses.isNotEmpty) {
-            _selectedAddress = addresses.first.addressId;
-            ref.read(selectedAddressProvider.notifier).state = addresses.first;
-          }
-        });
-      } else {
-        print('Failed to load addresses: ${response.statusCode}');
+          setState(() {
+            addresses = fetchedAddresses;
+            if (addresses.isNotEmpty) {
+              _selectedAddress = addresses.first.addressId;
+              ref.read(selectedAddressProvider.notifier).state =
+                  addresses.first;
+            }
+          });
+        } else {
+          print('Failed to load addresses: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Error fetching addresses: $e');
       }
-    } catch (e) {
-      print('Error fetching addresses: $e');
     }
   }
 
@@ -129,24 +129,24 @@ class _AddressSelectionScreenState
                             style: TextStyle(color: Colors.grey.shade600)),
                       ],
                     ),
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          height: 40,
-                          width: 40,
-                          child: CircularProgressIndicator(
-                            value: 0.2,
-                            strokeWidth: 4,
-                            color: Colors.green,
-                            backgroundColor: Colors.grey.shade300,
-                          ),
-                        ),
-                        const Text("1 of 5",
-                            style: TextStyle(
-                                fontSize: 10, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                    // Stack(
+                    //   alignment: Alignment.center,
+                    //   children: [
+                    //     SizedBox(
+                    //       height: 40,
+                    //       width: 40,
+                    //       child: CircularProgressIndicator(
+                    //         value: 0.2,
+                    //         strokeWidth: 4,
+                    //         color: Colors.green,
+                    //         backgroundColor: Colors.grey.shade300,
+                    //       ),
+                    //     ),
+                    //     const Text("1 of 5",
+                    //         style: TextStyle(
+                    //             fontSize: 10, fontWeight: FontWeight.bold)),
+                    //   ],
+                    // ),
                   ],
                 ),
               ),
@@ -199,14 +199,16 @@ class _AddressSelectionScreenState
       MaterialPageRoute(
           builder: (context) => AddNewAddressScreen(user_id: userId)),
     );
+    final add = result["newAddress"];
+    final displayAdd = result["displayAddress"];
 
-    if (result != null && result is Map<String, dynamic>) {
+    if (add != null && add is Map<String, dynamic>) {
       final newAddress = Address(
-        cardText: result['fullAddress'] ??
-            '${result['province'] ?? ''}, ${result['city'] ?? ''}, ${result['district'] ?? ''}',
+        cardText:
+            '${displayAdd['city'] ?? ''}- ${displayAdd['district'].districtName ?? ''}-${add['fullAddress']} ',
         addressId: DateTime.now().millisecondsSinceEpoch,
-        cityCode: result['city'],
-        districtCode: result['districtCode'] ?? '',
+        cityCode: add['city'],
+        districtCode: add['districtCode'] ?? '',
       );
 
       setState(() {
