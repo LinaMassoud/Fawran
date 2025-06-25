@@ -1192,6 +1192,266 @@ void didChangeDependencies() {
     );
   }
 
+
+void _showPackageDetailsOverlay(PackageModel package) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (BuildContext context) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 8, vertical: 60), // Reduced horizontal margin for more width
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with close button
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Package Details',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(Icons.close, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Package image with discount badge - Made smaller
+              Container(
+                height: 140, // Reduced from 200 to 140
+                margin: EdgeInsets.symmetric(horizontal: 16),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/images/cleaning_service_card.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.brown[100],
+                              child: Center(
+                                child: Icon(
+                                  Icons.cleaning_services,
+                                  size: 50, // Reduced from 60 to 50
+                                  color: Colors.white.withOpacity(0.7),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: double.infinity,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.1),
+                            Colors.black.withOpacity(0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'GET ${package.discountPercentage}% OFF',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Package details
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Package name
+                    Text(
+                      package.packageName,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    
+                    // Package details grid
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildDetailRow('No of Employee', package.noOfEmployee.toString()),
+                          SizedBox(height: 8),
+                          _buildDetailRow('Duration', '${package.duration} Hours'),
+                          SizedBox(height: 8),
+                          _buildDetailRow('Weekly Visits', '${package.visitsWeekly}'),
+                          SizedBox(height: 8),
+                          _buildDetailRow('Schedule', package.timeDisplay),
+                        ],
+                      ),
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
+                    // Price section - outside of grid
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total Price:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              'SAR ${package.finalPrice.round()}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'SAR ${package.packagePrice.round()}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600],
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    
+                    SizedBox(height: 20),
+                    
+                    // Add to cart button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Close overlay first
+                          ContinuousBookingOverlay.showAsOverlay(
+                            context,
+                            package: package,
+                            selectedShift: selectedEastAsiaShift,
+                            serviceId: widget.serviceId,
+                            professionId: widget.professionId,
+                            onBookingCompleted: _onBookingCompleted,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: Text(
+                          'Add',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+// Helper method for detail rows - improved alignment
+Widget _buildDetailRow(String label, String value) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label + ':',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey[700],
+        ),
+      ),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
+        ),
+      ),
+    ],
+  );
+}
+
   String _formatPackName(String packName) {
     // Convert "East Asia Pack" to "East Asia\nPack" format
     List<String> words = packName.split(' ');
@@ -1656,7 +1916,9 @@ void didChangeDependencies() {
   }
 
   Widget _buildCompactServiceCard(PackageModel package) {
-    return Container(
+  return GestureDetector(
+    onTap: () => _showPackageDetailsOverlay(package), // Add this line
+    child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -1802,34 +2064,37 @@ void didChangeDependencies() {
 
                   Spacer(),
 
-                  // Add button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 36,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        ContinuousBookingOverlay.showAsOverlay(
-                          context,
-                          package: package,
-                          selectedShift: selectedEastAsiaShift,
-                          serviceId: widget.serviceId,
-                          professionId: widget.professionId,
-                          onBookingCompleted: _onBookingCompleted,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                  // Add button - wrapped with GestureDetector to prevent parent tap
+                  GestureDetector(
+                    onTap: () {}, // Empty onTap to prevent parent tap
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 36,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          ContinuousBookingOverlay.showAsOverlay(
+                            context,
+                            package: package,
+                            selectedShift: selectedEastAsiaShift,
+                            serviceId: widget.serviceId,
+                            professionId: widget.professionId,
+                            onBookingCompleted: _onBookingCompleted,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Add',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                        child: Text(
+                          'Add',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -1840,8 +2105,9 @@ void didChangeDependencies() {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _scrollToSection(GlobalKey key) {
     final context = key.currentContext;

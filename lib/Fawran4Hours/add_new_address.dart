@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/package_model.dart';
 import '../models/address_model.dart';
+import '../services/api_service.dart';
 
 class AddNewAddressScreen extends StatefulWidget {
   final PackageModel? package;
@@ -227,298 +228,218 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   Future<void> _createAddressAPI() async {
-    if (_selectedLocation == null || _selectedDistrictCode == null) {
+  if (_selectedLocation == null || _selectedDistrictCode == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text('Missing required location or district information')),
+    );
+    return;
+  }
+
+  // Validate house type selection
+  if (_selectedHouseType == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please select a house type')),
+    );
+    return;
+  }
+
+  // Validate apartment-specific fields if house type is Apartment
+  if (_selectedHouseType == 'Apartment') {
+    if (_selectedFloorNumber == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Floor number is required for apartments')),
+      );
+      return;
+    }
+    if (_apartmentNumberController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Missing required location or district information')),
+            content: Text('Apartment number is required for apartments')),
       );
       return;
     }
+  }
 
-    // Validate house type selection
-    if (_selectedHouseType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a house type')),
+  // Show loading indicator
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return Center(
+        child: CircularProgressIndicator(),
       );
-      return;
-    }
+    },
+  );
 
-    // Validate apartment-specific fields if house type is Apartment
-    if (_selectedHouseType == 'Apartment') {
-      if (_selectedFloorNumber == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Floor number is required for apartments')),
-        );
-        return;
-      }
-      if (_apartmentNumberController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Apartment number is required for apartments')),
-        );
-        return;
-      }
-    }
+  try {
+    // Create map URL
+    String mapUrl =
+        'https://maps.google.com/?q=${_selectedLocation!.latitude},${_selectedLocation!.longitude}';
 
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Center(
-          child: CircularProgressIndicator(),
-        );
-      },
+    // Determine house type value (1 for Villa, 2 for Apartment)
+    int houseTypeValue = _selectedHouseType == 'Villa' ? 1 : 2;
+
+    // Parse building/house number
+    int buildingNumber = int.tryParse(_houseNumberController.text) ?? 0;
+
+    // Call API service
+    final result = await ApiService.createAddress(
+      buildingName: _addressTitleController.text.isNotEmpty
+          ? _addressTitleController.text
+          : '',
+      buildingNumber: buildingNumber,
+      cityCode: _selectedCityCode?.toString() ?? '',
+      districtId: _selectedDistrictCode?.toString() ?? '',
+      houseType: houseTypeValue,
+      createdBy: 1,
+      customerId: widget.user_id ?? 0,
+      mapUrl: mapUrl,
+      latitude: _selectedLocation!.latitude,
+      longitude: _selectedLocation!.longitude,
+      apartmentNumber: _selectedHouseType == 'Apartment'
+          ? int.tryParse(_apartmentNumberController.text)
+          : null,
+      floorNumber: _selectedHouseType == 'Apartment'
+          ? _selectedFloorNumber
+          : null,
     );
 
-    try {
-      // Create map URL
-      String mapUrl =
-          'https://maps.google.com/?q=${_selectedLocation!.latitude},${_selectedLocation!.longitude}';
+    // Hide loading indicator
+    Navigator.of(context).pop();
 
-      // Determine house type value (1 for Villa, 2 for Apartment)
-      int houseTypeValue = _selectedHouseType == 'Villa' ? 1 : 2;
-
-      // Parse building/house number
-      int? buildingNumber;
-      if (_houseNumberController.text.isNotEmpty) {
-        buildingNumber = int.tryParse(_houseNumberController.text);
-      }
-
-      // Prepare request body - Fix data types to match API expectations
-      Map<String, dynamic> requestBody = {
-        'building_name': _addressTitleController.text.isNotEmpty
-            ? _addressTitleController.text
-            : '',
-        'building_number': buildingNumber ?? 0,
-        'city_code': _selectedCityCode?.toString() ?? '', // Keep as string
-        'district_id':
-            _selectedDistrictCode?.toString() ?? '', // Keep as string
-        'house_type': houseTypeValue,
-        'created_by': 1, // Keep as int
-        'customer_id': widget.user_id, // Change from string to int
-        'map_url': mapUrl,
-        'latitude': _selectedLocation!.latitude,
-        'longitude': _selectedLocation!.longitude,
-      };
-
-      // Add apartment-specific fields only if house type is Apartment
-      if (_selectedHouseType == 'Apartment') {
-        requestBody['apartment_number'] =
-            int.tryParse(_apartmentNumberController.text) ?? 0;
-        requestBody['floor_number'] = _selectedFloorNumber ?? 0;
-      }
-      // Note: Don't add apartment_number and floor_number for Villa type at all
-
-      print(
-          'Sending POST request with body: ${json.encode(requestBody)}'); // Debug print
-
-      final response = await http.post(
-        Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json', // Add Accept header
-        },
-        body: json.encode(requestBody),
-      );
-
-      // Hide loading indicator
-      Navigator.of(context).pop();
-
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Success
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Address created successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Return the created address data to previous screen
-        final newAddress = {
-          'title': _addressTitleController.text,
-          'streetName': _streetNameController.text,
-          'houseNumber': _houseNumberController.text,
-          'apartmentNumber': _apartmentNumberController.text,
-          'floorNumber': _selectedFloorNumber?.toString() ?? '',
-          'houseType': _selectedHouseType,
-          'fullAddress': _fullAddressController.text,
-          'notes': _notesController.text,
-          'city': _selectedCity?.cityCode,
-          'district': _selectedDistrict,
-          'coordinates': {
-            'latitude': _selectedLocation!.latitude,
-            'longitude': _selectedLocation!.longitude,
-          },
-          'api_response': json.decode(response.body), // Include API response
-        };
-        final displayAddress = {
-          'city': _selectedCity?.cityName,
-          'district':
-              _districts.firstWhere((d) => d.districtCode == _selectedDistrict),
-          'fullAddress': _fullAddressController.text
-        };
-
-        Navigator.pop(context, {
-          'newAddress': newAddress,
-          'displayAddress': displayAddress,
-        });
-      } else {
-        // Error - Handle HTML error responses
-        String errorMessage = 'Failed to create address. Please try again.';
-
-        // Check if response is HTML (like the 555 error you're getting)
-        if (response.body.contains('<!DOCTYPE html>') ||
-            response.body.contains('<html>')) {
-          errorMessage =
-              'Server error occurred. Please check your network connection and try again.';
-        } else {
-          try {
-            final errorData = json.decode(response.body);
-            errorMessage = errorData['message'] ?? errorMessage;
-          } catch (e) {
-            // Keep default error message
-          }
-        }
-
-        print(
-            'API Error: ${response.statusCode} - ${response.body}'); // Debug print
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$errorMessage (${response.statusCode})'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      // Hide loading indicator if still showing
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-
-      print('Exception creating address: $e'); // Debug print
+    if (result['success']) {
+      // Success
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              'Network error. Please check your connection and try again.'),
+          content: Text(result['message']),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Return the created address data to previous screen
+      final newAddress = {
+        'title': _addressTitleController.text,
+        'streetName': _streetNameController.text,
+        'houseNumber': _houseNumberController.text,
+        'apartmentNumber': _apartmentNumberController.text,
+        'floorNumber': _selectedFloorNumber?.toString() ?? '',
+        'houseType': _selectedHouseType,
+        'fullAddress': _fullAddressController.text,
+        'notes': _notesController.text,
+        'city': _selectedCity?.cityCode,
+        'district': _selectedDistrict,
+        'coordinates': {
+          'latitude': _selectedLocation!.latitude,
+          'longitude': _selectedLocation!.longitude,
+        },
+        'api_response': result['data'],
+      };
+      final displayAddress = {
+        'city': _selectedCity?.cityName,
+        'district':
+            _districts.firstWhere((d) => d.districtCode == _selectedDistrict),
+        'fullAddress': _fullAddressController.text
+      };
+
+      Navigator.pop(context, {
+        'newAddress': newAddress,
+        'displayAddress': displayAddress,
+      });
+    } else {
+      // Error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']),
           backgroundColor: Colors.red,
         ),
       );
     }
+  } catch (e) {
+    // Hide loading indicator if still showing
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    }
+
+    print('Exception creating address: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            'Network error. Please check your connection and try again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
 ////hene
   Future<void> _fetchDistrictMapData(String districtCode) async {
+  setState(() {
+    _isLoadingDistrictMap = true;
+  });
+
+  try {
+    final districtMapResponse = await ApiService.fetchDistrictMapData(districtCode);
     setState(() {
-      _isLoadingDistrictMap = true;
+      _districtMapData = districtMapResponse;
+      _isLoadingDistrictMap = false;
     });
-
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/districts/info/$districtCode'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        final districtMapResponse =
-            DistrictMapResponse.fromJson(json.decode(response.body));
-        setState(() {
-          _districtMapData = districtMapResponse;
-          _isLoadingDistrictMap = false;
-        });
-      } else {
-        throw Exception('Failed to load district map data');
-      }
-    } catch (e) {
-      print('Error fetching district map data: $e');
-      setState(() {
-        _isLoadingDistrictMap = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Failed to load district map data. Please try again.')),
-      );
-    }
+  } catch (e) {
+    print('Error fetching district map data: $e');
+    setState(() {
+      _isLoadingDistrictMap = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content:
+              Text('Failed to load district map data. Please try again.')),
+    );
   }
+}
 
   Future<void> _fetchCitiesFromAPI(int serviceId) async {
+  setState(() {
+    _isLoadingCities = true;
+  });
+
+  try {
+    final cities = await ApiService.fetchCities(serviceId);
     setState(() {
-      _isLoadingCities = true;
+      _availableCities = cities;
+      _isLoadingCities = false;
     });
-
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/service_cities/$serviceId'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        // Parse the direct array response
-        List<dynamic> citiesJson = json.decode(response.body);
-        List<City> cities =
-            citiesJson.map((city) => City.fromJson(city)).toList();
-
-        setState(() {
-          _availableCities = cities;
-          _isLoadingCities = false;
-        });
-      } else {
-        throw Exception('Failed to load cities');
-      }
-    } catch (e) {
-      print('Error fetching cities: $e');
-      setState(() {
-        _isLoadingCities = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load cities. Please try again.')),
-      );
-    }
+  } catch (e) {
+    print('Error fetching cities: $e');
+    setState(() {
+      _isLoadingCities = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load cities. Please try again.')),
+    );
   }
+}
 
   Future<void> _fetchDistrictsFromAPI(int cityCode) async {
+  setState(() {
+    _isLoadingDistricts = true;
+  });
+
+  try {
+    final districts = await ApiService.fetchDistricts(cityCode);
     setState(() {
-      _isLoadingDistricts = true;
+      _availableDistricts = districts;
+      _isLoadingDistricts = false;
     });
-
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'http://10.20.10.114:8080/ords/emdad/fawran/districts/$cityCode'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        // Parse the direct array response
-        List<dynamic> districtsJson = json.decode(response.body);
-        List<District> districts = districtsJson
-            .map((district) => District.fromJson(district))
-            .toList();
-
-        setState(() {
-          _availableDistricts = districts;
-          _isLoadingDistricts = false;
-        });
-      } else {
-        throw Exception('Failed to load districts');
-      }
-    } catch (e) {
-      print('Error fetching districts: $e');
-      setState(() {
-        _isLoadingDistricts = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load districts. Please try again.')),
-      );
-    }
+  } catch (e) {
+    print('Error fetching districts: $e');
+    setState(() {
+      _isLoadingDistricts = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load districts. Please try again.')),
+    );
   }
+}
 
   // Now update your main widget's _openMapSelector method to use this new dialog:
   Future<void> _openMapSelector() async {

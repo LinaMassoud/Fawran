@@ -640,12 +640,13 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                     widget.onPaymentSuccess!();
                   }
                   
-                  // Navigate to BookingsScreen
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => BookingsScreen(),
-                    ),
-                  );
+                  Navigator.of(context).pop();
+                  // // Navigate to BookingsScreen
+                  // Navigator.of(context).pushReplacement(
+                  //   MaterialPageRoute(
+                  //     builder: (context) => BookingsScreen(),
+                  //   ),
+                  // );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purple,
