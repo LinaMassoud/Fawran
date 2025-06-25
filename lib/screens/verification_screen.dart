@@ -8,10 +8,9 @@ import 'package:fawran/l10n/app_localizations.dart';
 
 class VerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
-  final String userId;
 
   const VerificationScreen(
-      {super.key, required this.phoneNumber, required this.userId});
+      {super.key, required this.phoneNumber});
 
   @override
   ConsumerState<VerificationScreen> createState() => _VerificationScreenState();

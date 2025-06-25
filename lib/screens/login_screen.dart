@@ -58,7 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (next.isLoggedIn && next.isVerified) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LocationScreen()),
+          MaterialPageRoute(builder: (context) => HomeScreen()),
         );
       } else if (next.isLoggedIn && !next.isVerified) {
         Navigator.pushReplacement(
@@ -66,7 +66,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           MaterialPageRoute(
             builder: (context) => VerificationScreen(
               phoneNumber: _phoneController.text,
-              userId: 'userId',
             ),
           ),
         );

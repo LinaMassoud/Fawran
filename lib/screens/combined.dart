@@ -99,366 +99,316 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
         );
       }
     }
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.header),
-        backgroundColor: Colors.blue[900],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // STEP 1: NATIONALITY
-            sectionHeader("Step 1: Nationality"),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: nationalityAsync.when(
-                data: (list) => DropdownButtonFormField<int>(
-                  decoration: inputDecoration("Select nationality"),
-                  value: selectedNationality,
-                  onChanged: (v) {
-                    ref.read(selectedNationalityProvider.notifier).state = v;
-                    setState(() => selectedNationality = v);
-                  },
-                  items: list
-                      .map((n) => DropdownMenuItem<int>(
-                            value: n?.id,
-                            child: Text(n?.name ?? ''),
-                          ))
-                      .toList(),
-                ),
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: LinearProgressIndicator(),
-                ),
-                error: (e, _) => Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text('Error: $e'),
-                ),
-              ),
+  appBar: AppBar(
+    title: Text(widget.header),
+    backgroundColor: Colors.blue[900],
+  ),
+  body: SingleChildScrollView(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // STEP 1: NATIONALITY
+        sectionHeader("Step 1: Nationality"),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: nationalityAsync.when(
+            data: (list) => DropdownButtonFormField<int>(
+              decoration: inputDecoration("Select nationality"),
+              value: selectedNationality,
+              onChanged: (v) {
+                ref.read(selectedNationalityProvider.notifier).state = v;
+                setState(() {
+                  selectedNationality = v;
+                  selectedPackageIndex = null;
+                  selectedLaborSource = null;
+                  selectedLaborId = null;
+                  pickupOption = null;
+                });
+              },
+              items: list
+                  .map((n) => DropdownMenuItem<int>(
+                        value: n?.id,
+                        child: Text(n?.name ?? ''),
+                      ))
+                  .toList(),
             ),
+            loading: () =>
+                const Padding(padding: EdgeInsets.all(16), child: LinearProgressIndicator()),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Error: $e'),
+            ),
+          ),
+        ),
 
-            // STEP 2: CHOOSE PACKAGE
-            sectionHeader("Step 2: Choose Package"),
-            if (selectedNationality != null)
-              packagesAsync.when(
-                data: (packages) => ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: packages.length,
-                  itemBuilder: (c, i) {
-                    final pkg = packages[i];
-                    final selected = selectedPackageIndex == i;
+        // STEP 2: CHOOSE PACKAGE
+        if (selectedNationality != null) ...[
+          sectionHeader("Step 2: Choose Package"),
+          packagesAsync.when(
+            data: (packages) => ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: packages.length,
+              itemBuilder: (c, i) {
+                final pkg = packages[i];
+                final selected = selectedPackageIndex == i;
 
-                    return Card(
-                      color: selected ? Colors.blue[50] : Colors.white,
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                return Card(
+                  color: selected ? Colors.blue[50] : Colors.white,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    pkg.packageName,
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                Radio<int>(
-                                  value: i,
-                                  groupValue: selectedPackageIndex,
-                                  onChanged: (v) {
-                                    setState(() => selectedPackageIndex = v);
-                                    ref
-                                        .read(selectedPackageProvider.notifier)
-                                        .state = pkg;
-                                  },
-                                ),
-                              ],
+                            Expanded(
+                              child: Text(pkg.packageName,
+                                  style: const TextStyle(
+                                      fontSize: 16, fontWeight: FontWeight.bold)),
                             ),
-                            const SizedBox(height: 12),
-                            _packageDetailRow(
-                                "Duration (days)", "${pkg.contractDays}"),
-                            _packageDetailRow("Price (with VAT)",
-                                "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
-                            _packageDetailRow("Final Contract Price",
-                                "${pkg.contractAmount.toStringAsFixed(2)} Riyal"),
-                            _packageDetailRow("Discounted Price",
-                                "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
+                            Radio<int>(
+                              value: i,
+                              groupValue: selectedPackageIndex,
+                              onChanged: (v) {
+                                setState(() {
+                                  selectedPackageIndex = v;
+                                  selectedLaborSource = null;
+                                  selectedLaborId = null;
+                                  pickupOption = null;
+                                });
+                                ref.read(selectedPackageProvider.notifier).state = pkg;
+                              },
+                            ),
                           ],
                         ),
-                      ),
-                    );
+                        const SizedBox(height: 12),
+                        _packageDetailRow("Duration (days)", "${pkg.contractDays}"),
+                        _packageDetailRow("Price (with VAT)",
+                            "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
+                        _packageDetailRow("Final Contract Price",
+                            "${pkg.contractAmount.toStringAsFixed(2)} Riyal"),
+                        _packageDetailRow("Discounted Price",
+                            "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          )
+        ] ,
+
+        // STEP 3: LABOR SOURCE
+        if (selectedPackageIndex != null) ...[
+          sectionHeader("Step 3: Choose Labor Source"),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              children: [
+                RadioListTile<String>(
+                  title: const Text("From Company"),
+                  value: "company",
+                  groupValue: selectedLaborSource,
+                  onChanged: (v) {
+                    setState(() {
+                      selectedLaborSource = v;
+                      selectedLaborId = null;
+                      ref.read(selectedLaborerProvider.notifier).state = null;
+                    });
+                    checkCarAvailability();
                   },
                 ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
-              )
-            else
-              disabledStepCard("Please select a nationality first"),
+                RadioListTile<String>(
+                  title: const Text("From App"),
+                  value: "app",
+                  groupValue: selectedLaborSource,
+                  onChanged: (v) {
+                    setState(() {
+                      selectedLaborSource = v;
+                      selectedLaborId = null;
+                      ref.read(selectedLaborerProvider.notifier).state = null;
+                    });
+                    checkCarAvailability();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ] ,
 
-            // STEP 3: CHOOSE LABOR SOURCE (NEW)
-            sectionHeader("Step 3: Choose Labor Source"),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        // STEP 4: SELECT DRIVER (only if from App)
+        if (selectedLaborSource == "app") ...[
+          sectionHeader("Step 4: Choose Driver"),
+          laborersAsync.when(
+            data: (drivers) {
+              if (drivers.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48),
+                    child: Column(
+                      children: [
+                        Icon(Icons.groups_outlined, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text("No Available Laborers",
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700])),
+                        const SizedBox(height: 8),
+                        Text("There are currently no laborers available. Please check back later.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: drivers.length,
+                itemBuilder: (c, i) {
+                  final d = drivers[i];
+                  final sel = selectedLaborId == d.personId;
+                  return Card(
+                    color: sel ? Colors.blue[50] : Colors.white,
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        radius: 24,
+                        backgroundImage: (d.imageUrl != null && d.imageUrl!.isNotEmpty)
+                            ? NetworkImage(d.imageUrl!)
+                            : const AssetImage('assets/images/default_avatar.jpg')
+                                as ImageProvider,
+                      ),
+                      title: Text(d.employeeName),
+                      subtitle: Text("Nationality: ${d.nationality}"),
+                      trailing: Radio<int>(
+                        value: d.personId,
+                        groupValue: selectedLaborId,
+                        onChanged: (v) {
+                          setState(() => selectedLaborId = v);
+                          ref.read(selectedLaborerProvider.notifier).state = d;
+                          checkCarAvailability();
+                        },
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          )
+        ],
+
+        // STEP 5: PICKUP / DELIVERY (conditionally shown as Step 4 or 5)
+        if ((selectedLaborSource == "company") ||
+            (selectedLaborSource == "app" && selectedLaborId != null)) ...[
+          sectionHeader("Step ${selectedLaborSource == "app" ? "5" : "4"}: Pickup or Delivery"),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: loadingDeliveryCheck
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      RadioListTile<String>(
+                        title: const Text("Pick up laborer yourself"),
+                        value: "pickup",
+                        groupValue: pickupOption,
+                        onChanged: (val) => setState(() => pickupOption = val),
+                      ),
+                      RadioListTile<String>(
+                        title: const Text("Deliver laborer to home"),
+                        value: "delivery",
+                        groupValue: pickupOption,
+                        onChanged: deliveryAvailable
+                            ? (val) => setState(() => pickupOption = val)
+                            : null,
+                        subtitle: !deliveryAvailable
+                            ? const Text("Delivery option is not available currently.",
+                                style: TextStyle(color: Colors.red))
+                            : null,
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+
+        // STEP 6: AGREEMENT
+        if ((selectedLaborSource == "company") ||
+            (selectedLaborSource == "app" && selectedLaborId != null)) ...[
+          sectionHeader("Step ${selectedLaborSource == "app" ? "6" : "5"}: Agreement"),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RadioListTile<String>(
-                    title: const Text("From Company"),
-                    value: "company",
-                    groupValue: selectedLaborSource,
-                    onChanged: (v) {
-                      setState(() {
-                        selectedLaborSource = v;
-                        // If "company" selected, clear labor selection because it's automatic
-                        if (v == "company") {
-                          selectedLaborId = null;
-                          ref.read(selectedLaborerProvider.notifier).state =
-                              null;
-                        }
-                      });
-                      checkCarAvailability();
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text("From App"),
-                    value: "app",
-                    groupValue: selectedLaborSource,
-                    onChanged: (v) {
-                      setState(() {
-                        selectedLaborSource = v;
-                        if (v == "company") {
-                          selectedLaborId = null;
-                          ref.read(selectedLaborerProvider.notifier).state =
-                              null;
-                        }
-                      });
-                      checkCarAvailability();
-                    },
-                  ),
+                  if (selectedLaborSource == "company")
+                    _infoRow("Labor Source", "From Company")
+                  else
+                    _infoRow("Driver",
+                        ref.read(selectedLaborerProvider)?.arabicName ?? ''),
+                  if (selectedLaborSource == "app")
+                    _infoRow("Nationality",
+                        ref.read(selectedLaborerProvider)?.nationality ?? ''),
+                  _infoRow("Package",
+                      ref.read(selectedPackageProvider)?.packageName ?? ''),
+                  _infoRow("Days",
+                      '${ref.read(selectedPackageProvider)?.contractDays ?? ''}'),
+                  _infoRow("Price",
+                      '${ref.read(selectedPackageProvider)?.packagePriceWithVat.toStringAsFixed(2) ?? ''} Riyal'),
+                  _infoRow("Pickup/Delivery", pickupOption == "pickup"
+                      ? "Pick up yourself"
+                      : pickupOption == "delivery"
+                          ? "Delivery to home"
+                          : "Not selected"),
                 ],
               ),
             ),
+          ),
+        ],
 
-            // STEP 4: CHOOSE LABOR (only if source = app)
-            if (selectedLaborSource == "app")
-              sectionHeader("Step 4: Choose Driver"),
-            if (selectedLaborSource == "app")
-              if (selectedPackageIndex != null)
-                laborersAsync.when(
-                  data: (drivers) {
-                    if (drivers.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0, vertical: 48),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.groups_outlined,
-                                  size: 64, color: Colors.grey[400]),
-                              const SizedBox(height: 16),
-                              Text(
-                                "No Available Laborers",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "There are currently no laborers available. Please check back later.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[500],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: drivers.length,
-                      itemBuilder: (c, i) {
-                        final d = drivers[i];
-                        final sel = selectedLaborId == d.personId;
-                        return Card(
-                          color: sel ? Colors.blue[50] : Colors.white,
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              radius: 24,
-                              backgroundImage: (d.imageUrl != null &&
-                                      d.imageUrl!.isNotEmpty)
-                                  ? NetworkImage(d.imageUrl!)
-                                  : const AssetImage(
-                                          'assets/images/default_avatar.jpg')
-                                      as ImageProvider,
-                            ),
-                            title: Text(d.employeeName),
-                            subtitle: Text("Nationality: ${d.nationality}"),
-                            trailing: Radio<int>(
-                              value: d.personId,
-                              groupValue: selectedLaborId,
-                              onChanged: (v) {
-                                setState(() => selectedLaborId = v);
-                                ref
-                                    .read(selectedLaborerProvider.notifier)
-                                    .state = d;
-                                checkCarAvailability();
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
-                )
-              else
-                disabledStepCard("Please select a package first"),
-
-            // STEP 5: PICKUP OR DELIVERY (NEW)
-            if ((selectedLaborSource == "company") ||
-                (selectedLaborSource == "app" && selectedLaborId != null))
-              sectionHeader("Step 5: Pickup or Delivery"),
-            if ((selectedLaborSource == "company") ||
-                (selectedLaborSource == "app" && selectedLaborId != null))
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: loadingDeliveryCheck
-                    ? const Center(child: CircularProgressIndicator())
-                    : Column(
-                        children: [
-                          RadioListTile<String>(
-                            title: const Text("Pick up laborer yourself"),
-                            value: "pickup",
-                            groupValue: pickupOption,
-                            onChanged: (val) {
-                              setState(() {
-                                pickupOption = val;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text("Deliver laborer to home"),
-                            value: "delivery",
-                            groupValue: pickupOption,
-                            onChanged: deliveryAvailable
-                                ? (val) {
-                                    setState(() {
-                                      pickupOption = val;
-                                    });
-                                  }
-                                : null,
-                            subtitle: !deliveryAvailable
-                                ? const Text(
-                                    "Delivery option is not available currently.",
-                                    style: TextStyle(color: Colors.red),
-                                  )
-                                : null,
-                          ),
-                        ],
-                      ),
-              ),
-
-            // STEP 6: AGREEMENT
-            if ((selectedLaborSource == "company") ||
-                (selectedLaborSource == "app" && selectedLaborId != null))
-              sectionHeader("Step 6: Agreement"),
-            if ((selectedLaborSource == "company") ||
-                (selectedLaborSource == "app" && selectedLaborId != null))
-              Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (selectedLaborSource == "company")
-                        _infoRow("Labor Source", "From Company")
-                      else
-                        _infoRow(
-                            'Driver',
-                            ref.read(selectedLaborerProvider)?.arabicName ??
-                                ''),
-                      if (selectedLaborSource == "app")
-                        _infoRow(
-                            'Nationality',
-                            ref.read(selectedLaborerProvider)?.nationality ??
-                                ''),
-                      _infoRow('Package',
-                          ref.read(selectedPackageProvider)?.packageName ?? ''),
-                      _infoRow('Days',
-                          '${ref.read(selectedPackageProvider)?.contractDays ?? ''}'),
-                      _infoRow('Price',
-                          '${ref.read(selectedPackageProvider)?.packagePriceWithVat.toStringAsFixed(2) ?? ''} Riyal'),
-                      _infoRow(
-                          'Pickup/Delivery',
-                          pickupOption == "pickup"
-                              ? "Pick up yourself"
-                              : pickupOption == "delivery"
-                                  ? "Delivery to home"
-                                  : "Not selected"),
-                    ],
-                  ),
+        // SUBMIT BUTTON
+        if (((selectedLaborSource == "company") ||
+                (selectedLaborSource == "app" && selectedLaborId != null)) &&
+            pickupOption != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(const SnackBar(content: Text("Order Submitted")));
+                  submitOrder();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[900],
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-              )
-            else if (selectedLaborSource == null)
-              disabledStepCard("Please select labor source first")
-            else if (selectedLaborSource == "app" && selectedLaborId == null)
-              disabledStepCard("Please select a laborer first"),
-
-            // SUBMIT BUTTON
-            if (((selectedLaborSource == "company") ||
-                    (selectedLaborSource == "app" &&
-                        selectedLaborId != null)) &&
-                pickupOption != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Order Submitted")));
-                      // TODO: Add order submission logic here
-                      submitOrder();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[900],
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text("SUBMIT ORDER",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
+                child: const Text("SUBMIT ORDER",
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
-          ],
-        ),
-      ),
-    );
-  }
+            ),
+          ),
+      ],
+    ),
+  ),
+);
+
+
+    }
 
   @override
   void didUpdateWidget(covariant CombinedOrderScreen oldWidget) {
