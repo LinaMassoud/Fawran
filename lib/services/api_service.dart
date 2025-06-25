@@ -140,6 +140,43 @@ class ApiService {
     }
   }
 
+
+static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async {
+  try {
+    final url = '$_baseUrl/customer_addresses/$userId';
+    final token = await _secureStorage2.read(key: 'token');
+    
+    print('🔍 [fetchCustomerAddresses] Fetching addresses for userId: $userId');
+    print('🌐 [fetchCustomerAddresses] URL: $url');
+    print('🔐 [fetchCustomerAddresses] Token available: ${token != null}');
+    
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'token': token ?? '',
+      },
+    );
+    
+    print('📡 [fetchCustomerAddresses] Response status: ${response.statusCode}');
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      print('✅ [fetchCustomerAddresses] Successfully fetched ${data.length} addresses');
+      return data;
+    } else {
+      print('❌ [fetchCustomerAddresses] Failed with status: ${response.statusCode}');
+      print('❌ [fetchCustomerAddresses] Response body: ${response.body}');
+      throw Exception('Failed to load addresses. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('💥 [fetchCustomerAddresses] Error: $e');
+    throw Exception('Error loading addresses: $e');
+  }
+}
+
+
+
   static Future<List<dynamic>> fetchProfessionsHourly() async {
     try {
       final url = '$_baseUrl/home/professions';
@@ -676,3 +713,7 @@ Map<String, dynamic>? safeJsonDecode(String jsonString) {
     }
   }
 }
+
+
+
+
