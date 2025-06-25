@@ -6,6 +6,7 @@ import '../models/package_model.dart';
 import 'dart:io'; // for SocketException
 import 'dart:async'; // for TimeoutException
 import 'package:intl/intl.dart';
+import '../models/address_model.dart';
 
 class ApiService {
   static const String _baseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran';
@@ -285,6 +286,12 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
     }
   }
 
+
+
+
+
+
+
   static Future<List<dynamic>> fetchServices(
       {required int professionId}) async {
     try {
@@ -315,6 +322,160 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
       }
     } catch (e) {
       throw Exception('Error fetching services: $e');
+    }
+  }
+
+
+static Future<List<City>> fetchCities(int serviceId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/service_cities/$serviceId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> citiesJson = json.decode(response.body);
+        List<City> cities =
+            citiesJson.map((city) => City.fromJson(city)).toList();
+        return cities;
+      } else {
+        throw Exception('Failed to load cities');
+      }
+    } catch (e) {
+      throw Exception('Error fetching cities: $e');
+    }
+  }
+
+
+
+static Future<List<District>> fetchDistricts(int cityCode) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/districts/$cityCode'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> districtsJson = json.decode(response.body);
+        List<District> districts = districtsJson
+            .map((district) => District.fromJson(district))
+            .toList();
+        return districts;
+      } else {
+        throw Exception('Failed to load districts');
+      }
+    } catch (e) {
+      throw Exception('Error fetching districts: $e');
+    }
+  }
+
+
+static Future<DistrictMapResponse> fetchDistrictMapData(String districtCode) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/districts/info/$districtCode'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final districtMapResponse =
+            DistrictMapResponse.fromJson(json.decode(response.body));
+        return districtMapResponse;
+      } else {
+        throw Exception('Failed to load district map data');
+      }
+    } catch (e) {
+      throw Exception('Error fetching district map data: $e');
+    }
+  }
+
+static Future<Map<String, dynamic>> createAddress({
+    required String buildingName,
+    required int buildingNumber,
+    required String cityCode,
+    required String districtId,
+    required int houseType,
+    required int createdBy,
+    required int customerId,
+    required String mapUrl,
+    required double latitude,
+    required double longitude,
+    int? apartmentNumber,
+    int? floorNumber,
+  }) async {
+    try {
+      // Prepare request body
+      Map<String, dynamic> requestBody = {
+        'building_name': buildingName,
+        'building_number': buildingNumber,
+        'city_code': cityCode,
+        'district_id': districtId,
+        'house_type': houseType,
+        'created_by': createdBy,
+        'customer_id': customerId,
+        'map_url': mapUrl,
+        'latitude': latitude,
+        'longitude': longitude,
+      };
+
+      // Add apartment-specific fields only if house type is Apartment (2)
+      if (houseType == 2) {
+        requestBody['apartment_number'] = apartmentNumber ?? 0;
+        requestBody['floor_number'] = floorNumber ?? 0;
+      }
+
+      print('Sending POST request with body: ${json.encode(requestBody)}');
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/customer_addresses'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode(requestBody),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'data': json.decode(response.body),
+          'message': 'Address created successfully!'
+        };
+      } else {
+        // Handle error responses
+        String errorMessage = 'Failed to create address. Please try again.';
+
+        // Check if response is HTML (like the 555 error)
+        if (response.body.contains('<!DOCTYPE html>') ||
+            response.body.contains('<html>')) {
+          errorMessage =
+              'Server error occurred. Please check your network connection and try again.';
+        } else {
+          try {
+            final errorData = json.decode(response.body);
+            errorMessage = errorData['message'] ?? errorMessage;
+          } catch (e) {
+            // Keep default error message
+          }
+        }
+
+        print('API Error: ${response.statusCode} - ${response.body}');
+        return {
+          'success': false,
+          'message': '$errorMessage (${response.statusCode})',
+          'statusCode': response.statusCode
+        };
+      }
+    } catch (e) {
+      print('Exception creating address: $e');
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection and try again.',
+        'error': e.toString()
+      };
     }
   }
 
@@ -516,69 +677,6 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
     throw Exception('Error validating workers: $e');
   }
 }
-
-  @Deprecated("Old")
-  static Future<List<PackageModel>> fetchPackages({
-    required int serviceId,
-    required String groupCode,
-    int? serviceShift,
-    int jobId = 251,
-  }) async {
-    try {
-      String apiUrl;
-      // For Fawran 4 Hours (service_id=1), include service_shift parameter
-      if (serviceId == 1 && serviceShift != null) {
-        apiUrl =
-            '$packagesBaseUrl?service_id=$serviceId&group_code=$groupCode&service_shift=$serviceShift&job_id=$jobId';
-      } else {
-        // For Fawran 8 Hours (service_id=21), no service_shift parameter
-        apiUrl =
-            '$packagesBaseUrl?service_id=$serviceId&group_code=$groupCode&job_id=$jobId';
-      }
-
-      final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        // Fix malformed JSON before parsing
-        String jsonString = response.body;
-
-        // Replace empty discount_percentage values
-        jsonString = jsonString.replaceAll(
-            '"discount_percentage":,', '"discount_percentage":0,');
-        jsonString = jsonString.replaceAll(
-            '"discount_percentage":"",', '"discount_percentage":0,');
-
-        // Also fix any other potential empty numeric fields
-        jsonString = jsonString.replaceAll('":,', '":0,');
-        jsonString = jsonString.replaceAll('":",', '":0,');
-
-        final Map<String, dynamic> data = json.decode(jsonString);
-        final List<dynamic> packagesJson = data['packages'];
-
-        List<PackageModel> packages = [];
-        for (int i = 0; i < packagesJson.length; i++) {
-          try {
-            PackageModel package = PackageModel.fromJson(packagesJson[i]);
-            packages.add(package);
-          } catch (e) {
-            // Continue with other packages
-          }
-        }
-
-        return packages;
-      } else {
-        throw Exception(
-            'Failed to load packages. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error loading packages: $e');
-    }
-  }
 
   static Future<List<PackageModel>> fetchEastAsiaPackages({
     required int professionId,
