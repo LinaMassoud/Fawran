@@ -66,7 +66,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           MaterialPageRoute(
             builder: (context) => VerificationScreen(
               phoneNumber: _phoneController.text,
-              userId: 'userId',
             ),
           ),
         );

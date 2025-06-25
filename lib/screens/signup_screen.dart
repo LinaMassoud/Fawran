@@ -15,7 +15,6 @@ class SignUpScreen extends ConsumerStatefulWidget {
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _userNameController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -37,7 +36,6 @@ bool _showConfirmPassword = false;
 
   @override
   void dispose() {
-    _userNameController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
@@ -57,7 +55,6 @@ bool _showConfirmPassword = false;
           MaterialPageRoute(
             builder: (_) => VerificationScreen(
               phoneNumber: _phoneController.text,
-              userId: _userNameController.text,
             ),
           ),
         );
@@ -74,19 +71,7 @@ bool _showConfirmPassword = false;
           key: _formKey,
           child: Column(
             children: [
-              _buildTextField(
-                controller: _userNameController,
-                label: loc.username,
-                icon: Icons.person,
-                validator: (val) {
-                  if (val == null || val.isEmpty)
-                    return '${loc.username} is required';
-                  if (!nameRegex.hasMatch(val))
-                    return '${loc.username} must not contain special characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
+           
               _buildTextField(
                 controller: _firstNameController,
                 label: loc.firstName,
@@ -192,7 +177,7 @@ _buildTextField(
                     : () {
                         if (_formKey.currentState!.validate()) {
                           ref.read(authProvider.notifier).signUp(
-                                userName: _userNameController.text,
+                                userName: _phoneController.text,
                                 firstName: _firstNameController.text,
                                 middleName: _middleNameController.text,
                                 lastName: _lastNameController.text,
