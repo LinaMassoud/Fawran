@@ -58,7 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (next.isLoggedIn && next.isVerified) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => LocationScreen()),
         );
       } else if (next.isLoggedIn && !next.isVerified) {
         Navigator.pushReplacement(
