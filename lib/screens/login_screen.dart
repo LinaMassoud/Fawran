@@ -88,165 +88,169 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Language Switch
-          Positioned(
-            top: 16,
-            right: 16,
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: Row(
-                children: [
-                  const Text('العربية', style: TextStyle(fontSize: 14)),
-                  Switch(
-                    value: !isArabic,
-                    onChanged: (val) {
-                      final newLocale =
-                          val ? const Locale('en') : const Locale('ar');
-                      ref.read(localeProvider.notifier).state = newLocale;
-                    },
-                    activeTrackColor: Colors.orange,
-                  ),
-                  const Text('English', style: TextStyle(fontSize: 14)),
-                ],
-              ),
-            ),
-          ),
-
-          // Login UI
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Language Switch - Now properly positioned within safe area
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Center(
-                      child: Text(
-                        loc.login,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    const Text('العربية', style: TextStyle(fontSize: 14)),
+                    Switch(
+                      value: !isArabic,
+                      onChanged: (val) {
+                        final newLocale =
+                            val ? const Locale('en') : const Locale('ar');
+                        ref.read(localeProvider.notifier).state = newLocale;
+                      },
+                      activeTrackColor: Colors.orange,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    const SizedBox(height: 32),
-
-                    // Phone Number
-                    TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.phone),
-                        labelText: loc.phoneNumber,
-                        border: inputBorder,
-                        enabledBorder: _phoneEmpty && _submitted
-                            ? errorBorder
-                            : inputBorder,
-                        focusedBorder: _phoneEmpty && _submitted
-                            ? errorBorder
-                            : inputBorder,
-                        errorText: _phoneEmpty && _submitted
-                            ? loc.phoneNumber + ' ' + loc.requiredField
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Password
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: !_passwordVisible,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.lock),
-                        labelText: loc.password,
-                        border: inputBorder,
-                        enabledBorder: _passwordEmpty && _submitted
-                            ? errorBorder
-                            : inputBorder,
-                        focusedBorder: _passwordEmpty && _submitted
-                            ? errorBorder
-                            : inputBorder,
-                        errorText: _passwordEmpty && _submitted
-                            ? '${loc.password} ${loc.requiredField}'
-                            : null,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _passwordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _passwordVisible = !_passwordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Forgot password
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        loc.forgotPassword,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w300,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Login Button
-                    SizedBox(
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: authState.isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          textStyle: const TextStyle(fontSize: 16),
-                          backgroundColor: Colors.orange,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: authState.isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : Text(loc.login),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Sign Up Link
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          ref.read(authProvider.notifier).clearStateError();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SignUpScreen(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          "${loc.dontHaveAccount} ${loc.signUp}",
-                          style: const TextStyle(fontWeight: FontWeight.w300),
-                        ),
-                      ),
-                    ),
+                    const Text('English', style: TextStyle(fontSize: 14)),
                   ],
                 ),
               ),
             ),
-          ),
-        ],
+
+            // Login UI
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Text(
+                          loc.login,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Phone Number
+                      TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.phone),
+                          labelText: loc.phoneNumber,
+                          border: inputBorder,
+                          enabledBorder: _phoneEmpty && _submitted
+                              ? errorBorder
+                              : inputBorder,
+                          focusedBorder: _phoneEmpty && _submitted
+                              ? errorBorder
+                              : inputBorder,
+                          errorText: _phoneEmpty && _submitted
+                              ? loc.phoneNumber + ' ' + loc.requiredField
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Password
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: !_passwordVisible,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.lock),
+                          labelText: loc.password,
+                          border: inputBorder,
+                          enabledBorder: _passwordEmpty && _submitted
+                              ? errorBorder
+                              : inputBorder,
+                          focusedBorder: _passwordEmpty && _submitted
+                              ? errorBorder
+                              : inputBorder,
+                          errorText: _passwordEmpty && _submitted
+                              ? '${loc.password} ${loc.requiredField}'
+                              : null,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _passwordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _passwordVisible = !_passwordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Forgot password
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          loc.forgotPassword,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w300,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Login Button
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: authState.isLoading ? null : _handleLogin,
+                          style: ElevatedButton.styleFrom(
+                            textStyle: const TextStyle(fontSize: 16),
+                            backgroundColor: Colors.orange,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: authState.isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(loc.login),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Sign Up Link
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            ref.read(authProvider.notifier).clearStateError();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignUpScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            "${loc.dontHaveAccount} ${loc.signUp}",
+                            style: const TextStyle(fontWeight: FontWeight.w300),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
