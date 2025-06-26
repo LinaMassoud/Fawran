@@ -1336,7 +1336,7 @@ void _showPackageDetailsOverlay(PackageModel package) {
                           SizedBox(height: 8),
                           _buildDetailRow('Weekly Visits', '${package.visitsWeekly}'),
                           SizedBox(height: 8),
-                          _buildDetailRow('Schedule', package.timeDisplay),
+                          _buildDetailRow('Contract Duration', '${package.noOfMonth.toString()} Month'),
                         ],
                       ),
                     ),

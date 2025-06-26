@@ -610,10 +610,10 @@ static Future<Map<String, dynamic>> createAddress({
     final requestBody = {
       "position_id": positionId,
       "sector_type": "H", // Always H for Hourly services
-      "nationality_id": nationalityId,
+      "nationality_group": nationalityId,
       "num_workers": numWorkers,
-      "start_date": DateFormat('yyyy-MM-dd').format(startDate),
-      "end_date": DateFormat('yyyy-MM-dd').format(endDate),
+      "start_date": DateFormat('MM-dd-yyyy').format(startDate), // Changed format
+      "end_date": DateFormat('MM-dd-yyyy').format(endDate),     // Changed format
     };
     
     print('📦 [validateWorkersHourly] Request body:');
