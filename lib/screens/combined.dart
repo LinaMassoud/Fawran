@@ -58,7 +58,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
 
       final double deliveryCharge = pickupOption == "delivery" ? 50.0 : 0.0;
       final double amountToPay =
-          selectedPackage.packagePriceWithVat + deliveryCharge;
+          selectedPackage.vatAmount+ selectedPackage.contractAmount + deliveryCharge;
 
       final Map<String, dynamic> requestBody = {
         "customer_id": userId,
@@ -70,7 +70,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
         "package_name": selectedPackage.packageName,
         "period_days": selectedPackage.contractDays,
         "tax_rate": 15.0,
-        "final_price": selectedPackage.packagePriceWithVat,
+        "final_price": selectedPackage.finalInvoice,
         "delivery_charge": deliveryCharge,
         "amount_to_pay": amountToPay,
       };
@@ -78,7 +78,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
       try {
         final response = await http.post(
           Uri.parse(
-              'http://10.20.10.114:8080/ords/emdad/fawran/domestic/contract/create'),
+              'http://fawran.ddns.net:8080/ords/emdad/fawran/domestic/contract/create'),
           headers: {"Content-Type": "application/json", 'token': token},
           body: jsonEncode(requestBody),
         );
@@ -188,12 +188,12 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                         ),
                         const SizedBox(height: 12),
                         _packageDetailRow("Duration (days)", "${pkg.contractDays}"),
-                        _packageDetailRow("Price (with VAT)",
-                            "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
-                        _packageDetailRow("Final Contract Price",
+                        _packageDetailRow("Price (Before VAT)",
                             "${pkg.contractAmount.toStringAsFixed(2)} Riyal"),
-                        _packageDetailRow("Discounted Price",
-                            "${pkg.packagePriceWithVat.toStringAsFixed(2)} Riyal"),
+                        _packageDetailRow("VAT Amount",
+                            "${pkg.vatAmount.toStringAsFixed(2)} Riyal"),
+                        _packageDetailRow("financial_invoice_amount",
+                            "${pkg.finalInvoice.toStringAsFixed(2)} Riyal"),
                       ],
                     ),
                   ),
@@ -367,7 +367,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                   _infoRow("Days",
                       '${ref.read(selectedPackageProvider)?.contractDays ?? ''}'),
                   _infoRow("Price",
-                      '${ref.read(selectedPackageProvider)?.packagePriceWithVat.toStringAsFixed(2) ?? ''} Riyal'),
+                      '${ref.read(selectedPackageProvider)?.contractAmount.toStringAsFixed(2) ?? ''} Riyal'),
                   _infoRow("Pickup/Delivery", pickupOption == "pickup"
                       ? "Pick up yourself"
                       : pickupOption == "delivery"
@@ -436,7 +436,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
     try {
       // Example POST or GET depending on your API design
       final response = await http.post(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/available-cars'),
+        Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/available-cars'),
         headers: {
           "Content-Type": "application/json",
         },

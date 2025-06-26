@@ -18,7 +18,7 @@ final laborersProvider = FutureProvider<List<Laborer>>((ref) async {
   if (profession == null) return [];
 
   final response = await http.get(Uri.parse(
-      'http://10.20.10.114:8080/ords/emdad/fawran/available-domestic-workers/${profession.positionId}/${nationlaty}'));
+      'http://fawran.ddns.net:8080/ords/emdad/fawran/available-domestic-workers/${profession.positionId}/${nationlaty}'));
 
   if (response.statusCode == 200) {
     final items = jsonDecode(response.body) as List;

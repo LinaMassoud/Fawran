@@ -29,7 +29,7 @@ class _FawranServicesScreenState extends State<FawranServicesScreen> {
   Future<void> fetchServices() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/home/professions'),
+        Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/home/professions'),
       );
 
       if (response.statusCode == 200) {

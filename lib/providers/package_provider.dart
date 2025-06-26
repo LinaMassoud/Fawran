@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:fawran/models/domestic_package_model.dart';
+import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
+import 'package:fawran/providers/nationality_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'labour_provider.dart';
@@ -9,10 +11,13 @@ import 'labour_provider.dart';
 final selectedPackageProvider = StateProvider<PackageModel?>((ref) => null);
 final packageProvider = FutureProvider<List<PackageModel>>((ref) async {
   final selectedprofession = ref.watch(selectedProfessionProvider);
+  final selectedAddress = ref.watch(selectedAddressProvider);
+      final selectedNationality = ref.watch(selectedNationalityProvider);
+
   if (selectedprofession == null) return [];
 
   final response = await http.get(Uri.parse(
-    'http://10.20.10.114:8080/ords/emdad/fawran/domestic_packages/${selectedprofession.positionId}',
+    'http://fawran.ddns.net:8080/ords/emdad/fawran/domestic_packages/${selectedprofession.positionId}?nationality=${selectedNationality}&city_id=${selectedAddress?.cityCode}',
   ));
 
   if (response.statusCode == 200) {
