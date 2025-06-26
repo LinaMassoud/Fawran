@@ -36,7 +36,7 @@ class _AddressSelectionScreenState
     final userId = ref.read(userIdProvider);
     if (userId != null) {
       final url = Uri.parse(
-          'http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses/' +
+          'http://fawran.ddns.net:8080/ords/emdad/fawran/customer_addresses/' +
               userId.toString());
 
       try {

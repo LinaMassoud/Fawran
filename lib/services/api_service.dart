@@ -9,9 +9,9 @@ import 'package:intl/intl.dart';
 import '../models/address_model.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://10.20.10.114:8080/ords/emdad/fawran';
+  static const String _baseUrl = 'http://fawran.ddns.net:8080/ords/emdad/fawran';
   static const String packagesBaseUrl =
-      'http://10.20.10.114:8080/ords/emdad/fawran/service/packages';
+      'http://fawran.ddns.net:8080/ords/emdad/fawran/service/packages';
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   static final FlutterSecureStorage _secureStorage2 = FlutterSecureStorage();
 

@@ -266,7 +266,7 @@ void dispose() {
     print('Sending POST request with body: ${json.encode(requestBody)}'); // Debug print
 
     final response = await http.post(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/customer_addresses'),
+      Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/customer_addresses'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json', // Add Accept header
@@ -355,7 +355,7 @@ Future<void> _fetchDistrictMapData(String districtCode) async {
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/districts/info/$districtCode'),
+      Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/districts/info/$districtCode'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -386,7 +386,7 @@ Future<void> _fetchCitiesFromAPI(int serviceId) async {
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/service_cities/$serviceId'),
+      Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/service_cities/$serviceId'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -419,7 +419,7 @@ Future<void> _fetchDistrictsFromAPI(int cityCode) async {
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/districts/$cityCode'),
+      Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/districts/$cityCode'),
       headers: {'Content-Type': 'application/json'},
     );
 

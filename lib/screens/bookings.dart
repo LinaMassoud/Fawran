@@ -49,7 +49,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       }
 
       final url = Uri.parse(
-        "http://10.20.10.114:8080/ords/emdad/fawran/domestic/contracts/$userId",
+        "http://fawran.ddns.net:8080/ords/emdad/fawran/domestic/contracts/$userId",
       );
 
       final response = await http.get(
@@ -98,7 +98,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       }
 
       final url = Uri.parse(
-        "http://10.20.10.114:8080/ords/emdad/fawran/hourly/contracts/$userId",
+        "http://fawran.ddns.net:8080/ords/emdad/fawran/hourly/contracts/$userId",
       );
 
       print("Request URL: $url");
@@ -221,7 +221,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             _infoRow("Package", booking["package_name"] ?? ""),
             _infoRow("Days", booking["period_days"].toString()),
             _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
-            _infoRow("Delivery", "150 Riyal"),
+            if(booking["delivery_charges"] > 0 )  _infoRow("Delivery", booking["delivery_charges"].toString()),
             _infoRow("Status", booking["status"] ?? "success"),
           ],
         ),
