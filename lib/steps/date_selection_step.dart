@@ -268,13 +268,16 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
 
-    // If selecting start date, only allow today or future dates
+    // ALWAYS disable Fridays - this is the first check to ensure no Friday can be selected
+    if (date.weekday == 5) return false;
+
+    // If selecting start date, only allow today or future dates (but not Fridays - already checked above)
     if (_isSelectingStartDate) {
       return dateOnly.isAfter(todayOnly) ||
           dateOnly.isAtSameMomentAs(todayOnly);
     }
 
-    // Start date is always selectable (for changing)
+    // Start date is always selectable (for changing) - but not if it's Friday (already checked above)
     if (date == _userSelectedStartDate) {
       return true;
     }
@@ -286,9 +289,6 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
         return false;
       }
     }
-
-    // Always disable Fridays
-    if (date.weekday == 5) return false;
 
     // Check if date is already selected
     if (_selectedDates.contains(date)) {
@@ -360,6 +360,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
           (date.isBefore(_contractStartDate!) ||
               date.isAfter(_contractEndDate!));
       final isStartDate = date == _userSelectedStartDate;
+      final isFriday = date.weekday == 5;
 
       Color backgroundColor = Colors.transparent;
       Color textColor = Colors.black;
@@ -417,6 +418,8 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                       color: Colors.green.shade800,
                     ),
                   ),
+                ] else if (isFriday && !isSelected) ...[
+                  
                 ] else if (isWeekFull &&
                     !isSelected &&
                     !_isSelectingStartDate) ...[
