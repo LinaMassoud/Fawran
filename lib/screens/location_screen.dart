@@ -41,10 +41,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
   Future<void> _getCurrentLocation() async {
     final locationState = ref.read(locationProvider.notifier);
 
-    bool serviceEnabled;
-    LocationPermission permission;
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    print("Location service enabled: $serviceEnabled");
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (!mounted) return;
       locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
@@ -52,9 +51,12 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       return;
     }
 
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
+    print("Initial permission status: $permission");
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+      print("Requested permission status: $permission");
       if (permission == LocationPermission.denied) {
         if (!mounted) return;
         locationState.state = "تم رفض صلاحية الوصول إلى الموقع.";
@@ -68,13 +70,43 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       locationState.state =
           "تم رفض الصلاحية بشكل دائم. الرجاء تعديل الإعدادات.";
       setState(() => isLoading = false);
+
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("الصلاحيات مرفوضة"),
+          content: const Text("يجب تفعيل صلاحية الموقع من الإعدادات."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Geolocator.openAppSettings();
+              },
+              child: const Text("فتح الإعدادات"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("إلغاء"),
+            ),
+          ],
+        ),
+      );
+
       return;
     }
 
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception("Timeout أثناء جلب الموقع.");
+        },
       );
+
+      print("Position: ${position.latitude}, ${position.longitude}");
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
@@ -104,6 +136,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
         MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } catch (e) {
+      print("Location error: $e");
       if (!mounted) return;
       locationState.state = "حدث خطأ أثناء جلب الموقع: $e";
       setState(() => isLoading = false);
@@ -123,7 +156,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
     return Scaffold(
       appBar: AppBar(
-          automaticallyImplyLeading: false, title: const Text("تحديد الموقع")),
+        automaticallyImplyLeading: false,
+        title: const Text("تحديد الموقع"),
+      ),
       body: Center(
         child: isLoading
             ? Column(
