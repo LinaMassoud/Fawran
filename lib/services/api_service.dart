@@ -60,8 +60,12 @@ class ApiService {
       final result = safeJsonDecode(response.body);
       print('✅ [SIGNUP] Parsed result: $result');
       return result;
-    } else {
-      print('❌ [SIGNUP] Failed with status code: ${response.statusCode}');
+    } else if(response.statusCode == 409){ 
+       final result = safeJsonDecode(response.body);
+      print('✅ [SIGNUP] Parsed result: $result');
+      return result;
+    }
+    else{
       return null;
     }
   } catch (ex) {
