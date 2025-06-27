@@ -970,13 +970,20 @@ Future<void> _calculatePriceFromAPI() async {
                   final isSelected = currentValue.isNotEmpty && option == currentValue;
 
                   return InkWell(
-                    onTap: () async {  // Make this async
+                    onTap: () async {
                       Navigator.pop(context);
                       
                       // Call the onChanged callback and handle if it's async
                       final result = onChanged(option);
                       if (result is Future) {
                         await result;
+                      }
+                      
+                      // ADD THIS: Always reset calendar after any dropdown selection
+                      // This ensures calendar is reset even if the callback doesn't do it
+                      await Future.delayed(Duration(milliseconds: 100));
+                      if (mounted) {
+                        _resetCalendarSelection();
                       }
                     },
                     child: Container(
@@ -1032,6 +1039,7 @@ Future<void> _calculatePriceFromAPI() async {
         (value) {
           // Call the callback
           widget.onVisitDurationChanged!(value);
+          _resetCalendarSelection();
           _calculatePriceFromAPI();
         },
         customTitle: 'Select Visit Duration',
@@ -1280,6 +1288,7 @@ Future<void> _calculatePriceFromAPI() async {
                         // Call the callback if available
                         if (widget.onNationalityChanged != null) {
                           widget.onNationalityChanged!(value);
+                          _resetCalendarSelection();
                           _calculatePriceFromAPI();
                         }
                       },

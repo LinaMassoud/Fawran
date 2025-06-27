@@ -12,46 +12,64 @@ class ApiService {
   static const String _baseUrl = 'http://fawran.ddns.net:8080/ords/emdad/fawran';
   static const String packagesBaseUrl =
       'http://fawran.ddns.net:8080/ords/emdad/fawran/service/packages';
-  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
-  static final FlutterSecureStorage _secureStorage2 = FlutterSecureStorage();
+  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   // Sign up API
   Future<Map<String, dynamic>?> signUp({
-    required String userName,
-    required String firstName,
-    required String middleName,
-    required String lastName,
-    required String phoneNumber,
-    required String email,
-    required String password,
-  }) async {
-    final url = Uri.parse('$_baseUrl/signup');
+  required String userName,
+  required String firstName,
+  required String middleName,
+  required String lastName,
+  required String phoneNumber,
+  required String email,
+  required String password,
+}) async {
+  final url = Uri.parse('$_baseUrl/signup');
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': userName,
-          'first_name': firstName,
-          'middle_name': middleName,
-          'last_name': lastName,
-          'phone_number': phoneNumber,
-          'email': email,
-          'password': password,
-        }),
-      );
+  print('🔐 [SIGNUP] Starting sign-up process...');
+  print('📤 [SIGNUP] POST to: $url');
+  print('📤 [SIGNUP] Request payload: ${{
+    'username': userName,
+    'first_name': firstName,
+    'middle_name': middleName,
+    'last_name': lastName,
+    'phone_number': phoneNumber,
+    'email': email,
+    'password': '***'  // Mask password for security
+  }}');
 
-      if (response.statusCode == 200) {
-        final result = safeJsonDecode(response.body);
-        return result;
-      } else {
-        return null;
-      }
-    } catch (ex) {
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'username': userName,
+        'first_name': firstName,
+        'middle_name': middleName,
+        'last_name': lastName,
+        'phone_number': phoneNumber,
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    print('📬 [SIGNUP] Response status: ${response.statusCode}');
+    print('📬 [SIGNUP] Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final result = safeJsonDecode(response.body);
+      print('✅ [SIGNUP] Parsed result: $result');
+      return result;
+    } else {
+      print('❌ [SIGNUP] Failed with status code: ${response.statusCode}');
       return null;
     }
+  } catch (ex) {
+    print('🧨 [SIGNUP] Exception occurred: $ex');
+    return null;
   }
+}
+
 
   // Login API
   Future<Map<String, dynamic>?> login({
@@ -142,21 +160,19 @@ class ApiService {
   }
 
 
+
+
+
 static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async {
   try {
     final url = '$_baseUrl/customer_addresses/$userId';
-    final token = await _secureStorage2.read(key: 'token');
     
     print('🔍 [fetchCustomerAddresses] Fetching addresses for userId: $userId');
     print('🌐 [fetchCustomerAddresses] URL: $url');
-    print('🔐 [fetchCustomerAddresses] Token available: ${token != null}');
     
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'token': token ?? '',
-      },
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
     );
     
     print('📡 [fetchCustomerAddresses] Response status: ${response.statusCode}');
@@ -179,25 +195,24 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
 
 
   static Future<List<dynamic>> fetchProfessionsHourly() async {
-    try {
-      final url = '$_baseUrl/home/professions';
+  try {
+    final url = '$_baseUrl/home/professions';
 
-      final token = await _secureStorage2.read(key: 'token');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-      );
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-        return decodedData;
-      } else {
-        throw Exception(
-            'Failed to load professions. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error loading professions: $e');
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
+    
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body);
+      return decodedData;
+    } else {
+      throw Exception('Failed to load professions. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error loading professions: $e');
   }
+}
 
   static Future<List<PackageModel>> fetchServicePackages({
     required int professionId,
@@ -206,11 +221,10 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
     try {
       final url = '$_baseUrl/service_packages/$professionId/$serviceId';
 
-      final token = await _secureStorage2.read(key: 'token');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-      );
+      final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
 
       if (response.statusCode == 200) {
         String jsonString = response.body;
@@ -268,11 +282,10 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
     try {
       final url = '$_baseUrl/country_groups/$serviceId';
 
-      final token = await _secureStorage2.read(key: 'token');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-      );
+      final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
@@ -297,11 +310,10 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
     try {
       final url = '$_baseUrl/home/professions';
 
-      final token = await _secureStorage2.read(key: 'token');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-      );
+      final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -389,95 +401,199 @@ static Future<DistrictMapResponse> fetchDistrictMapData(String districtCode) asy
     }
   }
 
-static Future<Map<String, dynamic>> createAddress({
-    required String buildingName,
-    required int buildingNumber,
-    required String cityCode,
-    required String districtId,
-    required int houseType,
-    required int createdBy,
-    required int customerId,
-    required String mapUrl,
-    required double latitude,
-    required double longitude,
-    int? apartmentNumber,
-    int? floorNumber,
-  }) async {
-    try {
-      // Prepare request body
-      Map<String, dynamic> requestBody = {
-        'building_name': buildingName,
-        'building_number': buildingNumber,
-        'city_code': cityCode,
-        'district_id': districtId,
-        'house_type': houseType,
-        'created_by': createdBy,
-        'customer_id': customerId,
-        'map_url': mapUrl,
-        'latitude': latitude,
-        'longitude': longitude,
-      };
 
-      // Add apartment-specific fields only if house type is Apartment (2)
-      if (houseType == 2) {
-        requestBody['apartment_number'] = apartmentNumber ?? 0;
-        requestBody['floor_number'] = floorNumber ?? 0;
-      }
 
-      print('Sending POST request with body: ${json.encode(requestBody)}');
+static Future<bool> refreshToken() async {
+  try {
+    final refreshToken = await _secureStorage.read(key: 'refresh_token');
+    
+    if (refreshToken == null) {
+      print('❌ [REFRESH_TOKEN] No refresh token found');
+      return false;
+    }
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl/customer_addresses'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode(requestBody),
+    print('🔄 [REFRESH_TOKEN] Attempting to refresh token...');
+    
+    final url = Uri.parse('$_baseUrl/refresh-token');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'refresh_token': refreshToken,
+      }),
+    );
+
+    print('📡 [REFRESH_TOKEN] Response status: ${response.statusCode}');
+    print('📡 [REFRESH_TOKEN] Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      
+      // Save new tokens
+      await _secureStorage.write(key: 'token', value: responseData['token']);
+      await _secureStorage.write(key: 'refresh_token', value: responseData['refresh_token']);
+      
+      print('✅ [REFRESH_TOKEN] Token refreshed successfully');
+      return true;
+    } else {
+      print('❌ [REFRESH_TOKEN] Failed to refresh token: ${response.statusCode}');
+      return false;
+    }
+  } catch (e) {
+    print('💥 [REFRESH_TOKEN] Error refreshing token: $e');
+    return false;
+  }
+}
+
+// Enhanced HTTP request method with automatic token refresh
+static Future<http.Response> makeAuthenticatedRequest({
+  required String method,
+  required String url,
+  Map<String, String>? headers,
+  String? body,
+  int retryCount = 0,
+}) async {
+  final token = await _secureStorage.read(key: 'token');
+  
+  final requestHeaders = {
+    'Content-Type': 'application/json',
+    if (token != null) 'token': token,
+    ...?headers,
+  };
+
+  http.Response response;
+  
+  switch (method.toUpperCase()) {
+    case 'GET':
+      response = await http.get(Uri.parse(url), headers: requestHeaders);
+      break;
+    case 'POST':
+      response = await http.post(Uri.parse(url), headers: requestHeaders, body: body);
+      break;
+    case 'PUT':
+      response = await http.put(Uri.parse(url), headers: requestHeaders, body: body);
+      break;
+    case 'DELETE':
+      response = await http.delete(Uri.parse(url), headers: requestHeaders);
+      break;
+    default:
+      throw Exception('Unsupported HTTP method: $method');
+  }
+
+  // If we get a 401 (unauthorized) and haven't already retried
+  if (response.statusCode == 401 && retryCount == 0) {
+    print('🔄 [AUTH_REQUEST] Received 401, attempting token refresh...');
+    
+    final refreshSuccess = await refreshToken();
+    if (refreshSuccess) {
+      print('✅ [AUTH_REQUEST] Token refreshed, retrying original request...');
+      // Retry the original request with the new token
+      return makeAuthenticatedRequest(
+        method: method,
+        url: url,
+        headers: headers,
+        body: body,
+        retryCount: 1, // Prevent infinite retry loop
       );
-
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'data': json.decode(response.body),
-          'message': 'Address created successfully!'
-        };
-      } else {
-        // Handle error responses
-        String errorMessage = 'Failed to create address. Please try again.';
-
-        // Check if response is HTML (like the 555 error)
-        if (response.body.contains('<!DOCTYPE html>') ||
-            response.body.contains('<html>')) {
-          errorMessage =
-              'Server error occurred. Please check your network connection and try again.';
-        } else {
-          try {
-            final errorData = json.decode(response.body);
-            errorMessage = errorData['message'] ?? errorMessage;
-          } catch (e) {
-            // Keep default error message
-          }
-        }
-
-        print('API Error: ${response.statusCode} - ${response.body}');
-        return {
-          'success': false,
-          'message': '$errorMessage (${response.statusCode})',
-          'statusCode': response.statusCode
-        };
-      }
-    } catch (e) {
-      print('Exception creating address: $e');
-      return {
-        'success': false,
-        'message': 'Network error. Please check your connection and try again.',
-        'error': e.toString()
-      };
+    } else {
+      print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
+      // Clear all stored tokens if refresh fails
+      await _secureStorage.deleteAll();
     }
   }
+
+  return response;
+}
+
+
+
+static Future<Map<String, dynamic>> createAddress({
+  required String buildingName,
+  required int buildingNumber,
+  required String cityCode,
+  required String districtId,
+  required int houseType,
+  required int createdBy,
+  required int customerId,
+  required String mapUrl,
+  required double latitude,
+  required double longitude,
+  int? apartmentNumber,
+  int? floorNumber,
+}) async {
+  try {
+    // Prepare request body
+    Map<String, dynamic> requestBody = {
+      'building_name': buildingName,
+      'building_number': buildingNumber,
+      'city_code': cityCode,
+      'district_id': districtId,
+      'house_type': houseType,
+      'created_by': createdBy,
+      'customer_id': customerId,
+      'map_url': mapUrl,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+
+    // Add apartment-specific fields only if house type is Apartment (2)
+    if (houseType == 2) {
+      requestBody['apartment_number'] = apartmentNumber ?? 0;
+      requestBody['floor_number'] = floorNumber ?? 0;
+    }
+
+    print('Sending POST request with body: ${json.encode(requestBody)}');
+
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: '$_baseUrl/customer_addresses',
+      headers: {'Accept': 'application/json'},
+      body: json.encode(requestBody),
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return {
+        'success': true,
+        'data': json.decode(response.body),
+        'message': 'Address created successfully!'
+      };
+    } else {
+      // Handle error responses
+      String errorMessage = 'Failed to create address. Please try again.';
+
+      // Check if response is HTML (like the 555 error)
+      if (response.body.contains('<!DOCTYPE html>') ||
+          response.body.contains('<html>')) {
+        errorMessage =
+            'Server error occurred. Please check your network connection and try again.';
+      } else {
+        try {
+          final errorData = json.decode(response.body);
+          errorMessage = errorData['message'] ?? errorMessage;
+        } catch (e) {
+          // Keep default error message
+        }
+      }
+
+      print('API Error: ${response.statusCode} - ${response.body}');
+      return {
+        'success': false,
+        'message': '$errorMessage (${response.statusCode})',
+        'statusCode': response.statusCode
+      };
+    }
+  } catch (e) {
+    print('Exception creating address: $e');
+    return {
+      'success': false,
+      'message': 'Network error. Please check your connection and try again.',
+      'error': e.toString()
+    };
+  }
+}
 
   // Fetch service shifts by service ID
   static Future<List<dynamic>> fetchServiceShifts(
@@ -485,11 +601,10 @@ static Future<Map<String, dynamic>> createAddress({
     try {
       final url = '$_baseUrl/service_shifts/$serviceId';
 
-      final token = await _secureStorage2.read(key: 'token');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-      );
+      final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
@@ -546,42 +661,42 @@ static Future<Map<String, dynamic>> createAddress({
   }
 
   static Future<Map<String, dynamic>?> calculatePackagePrice({
-    required int serviceId,
-    required int duration,
-    required String groupCode,
-    required int numberOfWeeks,
-    required int numberOfVisits,
-    required int shiftId,
-    required int numberOfWorkers,
-  }) async {
-    try {
-      final url = '$_baseUrl/calculate-package-price';
-      final token = await _secureStorage2.read(key: 'token');
+  required int serviceId,
+  required int duration,
+  required String groupCode,
+  required int numberOfWeeks,
+  required int numberOfVisits,
+  required int shiftId,
+  required int numberOfWorkers,
+}) async {
+  try {
+    final url = '$_baseUrl/calculate-package-price';
+    
+    final requestBody = json.encode({
+      'service_id': serviceId,
+      'duration': duration,
+      'group_code': groupCode,
+      'number_of_weeks': numberOfWeeks,
+      'number_of_visits': numberOfVisits,
+      'shift_id': shiftId,
+      'number_of_workers': numberOfWorkers,
+    });
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-        body: json.encode({
-          'service_id': serviceId,
-          'duration': duration,
-          'group_code': groupCode,
-          'number_of_weeks': numberOfWeeks,
-          'number_of_visits': numberOfVisits,
-          'shift_id': shiftId,
-          'number_of_workers': numberOfWorkers,
-        }),
-      );
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: url,
+      body: requestBody,
+    );
 
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception(
-            'Failed to calculate price. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error calculating package price: $e');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to calculate price. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error calculating package price: $e');
   }
+}
 
 
   static Future<Map<String, dynamic>?> validateWorkersHourly({
@@ -592,88 +707,40 @@ static Future<Map<String, dynamic>> createAddress({
   required DateTime endDate,
 }) async {
   print('🔍 [validateWorkersHourly] Starting validation...');
-  print('📊 [validateWorkersHourly] Input parameters:');
-  print('   - positionId: $positionId');
-  print('   - nationalityId: $nationalityId');
-  print('   - numWorkers: $numWorkers');
-  print('   - startDate: ${DateFormat('yyyy-MM-dd').format(startDate)}');
-  print('   - endDate: ${DateFormat('yyyy-MM-dd').format(endDate)}');
+  // ... existing print statements ...
   
   try {
     final url = '$_baseUrl/validate-workers';
-    print('🌐 [validateWorkersHourly] API URL: $url');
     
-    final token = await _secureStorage2.read(key: 'token');
-    print('🔐 [validateWorkersHourly] Token retrieved: ${token != null ? 'Yes (${token.length} chars)' : 'No'}');
-    
-
     final requestBody = {
       "position_id": positionId,
-      "sector_type": "H", // Always H for Hourly services
+      "sector_type": "H",
       "nationality_group": nationalityId,
       "num_workers": numWorkers,
-      "start_date": DateFormat('MM-dd-yyyy').format(startDate), // Changed format
-      "end_date": DateFormat('MM-dd-yyyy').format(endDate),     // Changed format
+      "start_date": DateFormat('MM-dd-yyyy').format(startDate),
+      "end_date": DateFormat('MM-dd-yyyy').format(endDate),
     };
     
-    print('📦 [validateWorkersHourly] Request body:');
-    print('   ${json.encode(requestBody)}');
+    print('📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
     
-    print('🚀 [validateWorkersHourly] Sending POST request...');
-    final stopwatch = Stopwatch()..start();
-    
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'token': token ?? '',
-      },
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: url,
       body: json.encode(requestBody),
     ).timeout(Duration(seconds: 30));
     
-    stopwatch.stop();
-    print('⏱️ [validateWorkersHourly] Request completed in ${stopwatch.elapsedMilliseconds}ms');
     print('📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
-    print('📡 [validateWorkersHourly] Response headers: ${response.headers}');
-    print('📡 [validateWorkersHourly] Response body length: ${response.body.length} chars');
     
-    
-
     if (response.statusCode == 200) {
       print('✅ [validateWorkersHourly] Request successful');
       final responseData = json.decode(response.body);
-      print('🎯 [validateWorkersHourly] Parsed response data type: ${responseData.runtimeType}');
-      print('📋 [validateWorkersHourly] Response data intially: $responseData');
-      
-      if (responseData is Map<String, dynamic>) {
-        print('📋 [validateWorkersHourly] Response data: $responseData');
-        print('📋 [validateWorkersHourly] Response keys: ${responseData.keys.toList()}');
-        print('✅ [validateWorkersHourly] Validation completed successfully');
-        return responseData;
-      } else {
-        print('⚠️ [validateWorkersHourly] Unexpected response data type: ${responseData.runtimeType}');
-        return responseData as Map<String, dynamic>?;
-      }
+      return responseData as Map<String, dynamic>?;
     } else {
       print('❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
-      print('❌ [validateWorkersHourly] Error response body: ${response.body}');
       throw Exception('Failed to validate workers. Status code: ${response.statusCode}');
     }
-  } on SocketException catch (e) {
-    print('🌐 [validateWorkersHourly] SocketException caught: $e');
-    print('❌ [validateWorkersHourly] No internet connection');
-    throw Exception('No internet connection');
-  } on TimeoutException catch (e) {
-    print('⏰ [validateWorkersHourly] TimeoutException caught: $e');
-    print('❌ [validateWorkersHourly] Request timeout after 30 seconds');
-    throw Exception('Request timeout');
-  } on FormatException catch (e) {
-    print('📄 [validateWorkersHourly] FormatException caught: $e');
-    print('❌ [validateWorkersHourly] Failed to parse JSON response');
-    throw Exception('Invalid JSON response: $e');
-  } catch (e, stackTrace) {
-    print('💥 [validateWorkersHourly] Unexpected error caught: $e');
-    print('📚 [validateWorkersHourly] Stack trace: $stackTrace');
+  } catch (e) {
+    print('💥 [validateWorkersHourly] Error: $e');
     throw Exception('Error validating workers: $e');
   }
 }
@@ -747,51 +814,47 @@ static Future<Map<String, dynamic>> createAddress({
   }
 
   Future<List<ProfessionModel>> fetchProfessions() async {
-    final url = Uri.parse('$_baseUrl/home/professions');
-    final token = await _secureStorage.read(key: 'token');
+  try {
+    final url = '$_baseUrl/home/professions';
+    
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
 
-    try {
-      final response = await http.get(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => ProfessionModel.fromJson(json)).toList();
-      } else {
-        throw Exception(
-            'Failed to fetch professions. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching professions: $e');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => ProfessionModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to fetch professions. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error fetching professions: $e');
   }
+}
 
   Future<List<dynamic>> fetchNationalities({
-    required int professionId,
-    required String cityCode,
-  }) async {
-    final url = Uri.parse('$_baseUrl/nationalities/$professionId/$cityCode');
-    final token = await _secureStorage2.read(key: 'token');
+  required int professionId,
+  required String cityCode,
+}) async {
+  try {
+    final url = '$_baseUrl/nationalities/$professionId/$cityCode';
+    
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
 
-    try {
-      final response = await http.get(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': token ?? ''},
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data;
-      } else {
-        throw Exception(
-            'Failed to fetch nationalities. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching nationalities: $e');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data;
+    } else {
+      throw Exception('Failed to fetch nationalities. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error fetching nationalities: $e');
   }
+}
 }
 
 Map<String, dynamic>? safeJsonDecode(String jsonString) {
@@ -811,7 +874,6 @@ Map<String, dynamic>? safeJsonDecode(String jsonString) {
     }
   }
 }
-
 
 
 
