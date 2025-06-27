@@ -365,6 +365,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Bookings"),
+          leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    onPressed: () {
+      Navigator.of(context).pushReplacementNamed('/home');
+    },
+  ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
           child: Container(

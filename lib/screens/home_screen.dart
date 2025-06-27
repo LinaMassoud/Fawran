@@ -4,6 +4,7 @@ import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/select_address.dart';
+import 'package:fawran/screens/serviceChoice.dart';
 import 'package:fawran/screens/serviceScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:fawran/l10n/app_localizations.dart';
@@ -72,7 +73,8 @@ class HomeScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
     );
-    return Scaffold(
+    return 
+    Scaffold(
       backgroundColor: Colors.white,
 
       // Fixed Header
@@ -148,8 +150,7 @@ class HomeScreen extends ConsumerWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => CleaningServiceScreen(
-                                        professionId: profession.positionId,
+                                  builder: (context) => ServiceChoicePage(
                                       )),
                             );
                           } else {

@@ -25,9 +25,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   late final ProviderSubscription _subscription;
   bool _showPassword = false;
 bool _showConfirmPassword = false;
-  final nameRegex =
-      RegExp(r'^[a-zA-Z0-9]+$'); // For userName (only alphanumerics)
-  final nameOnlyRegex = RegExp(r'^[a-zA-Z]+$'); // For names (only letters)
+  final nameRegex = RegExp(r'^[a-zA-Z0-9\u0600-\u06FF]+$');
+
+final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
   final phoneRegex = RegExp(r'^\+?[0-9\s\-\(\)]{7,15}$');
   @override
   void initState() {

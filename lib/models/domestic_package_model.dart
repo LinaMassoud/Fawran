@@ -25,7 +25,7 @@ class PackageModel {
       vatAmount: json['vat_amount']?.toDouble() ?? 0.0,
       contractDays: json['contract_days'],
       contractAmount: json['final_price_before_vat']?.toDouble() ?? 0.0,
-      finalInvoice: json['package_price_with_vat']?.toDouble() ?? 0.0 
+      finalInvoice: json['financial_invoice_amount']?.toDouble() ?? 0.0 
     );
   }
 }
