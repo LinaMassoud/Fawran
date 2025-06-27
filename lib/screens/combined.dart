@@ -10,9 +10,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class CombinedOrderScreen extends ConsumerStatefulWidget {
-  final String header;
+  final String? header;
 
-  const CombinedOrderScreen({super.key, required this.header});
+  const CombinedOrderScreen({super.key,  this.header});
 
   @override
   ConsumerState<CombinedOrderScreen> createState() =>
@@ -101,7 +101,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
     }
     return Scaffold(
   appBar: AppBar(
-    title: Text(widget.header),
+    title: Text("${selectedProfession?.positionName}"),
     backgroundColor: Colors.blue[900],
   ),
   body: SingleChildScrollView(
@@ -192,7 +192,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                             "${pkg.contractAmount.toStringAsFixed(2)} Riyal"),
                         _packageDetailRow("VAT Amount",
                             "${pkg.vatAmount.toStringAsFixed(2)} Riyal"),
-                        _packageDetailRow("financial_invoice_amount",
+                        _packageDetailRow("financial invoice",
                             "${pkg.finalInvoice.toStringAsFixed(2)} Riyal"),
                       ],
                     ),
@@ -245,7 +245,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
 
         // STEP 4: SELECT DRIVER (only if from App)
         if (selectedLaborSource == "app") ...[
-          sectionHeader("Step 4: Choose Driver"),
+          sectionHeader("Step 4: Choose ${selectedProfession?.positionName}"),
           laborersAsync.when(
             data: (drivers) {
               if (drivers.isEmpty) {
@@ -284,13 +284,12 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                     child: ListTile(
                       leading: CircleAvatar(
                         radius: 24,
-                        backgroundImage: (d.imageUrl != null && d.imageUrl!.isNotEmpty)
-                            ? NetworkImage(d.imageUrl!)
-                            : const AssetImage('assets/images/default_avatar.jpg')
+                        backgroundImage: selectedProfession?.positionId ==7 ? const AssetImage('assets/images/default_maid.jpg')
+                            :  const AssetImage('assets/images/default_avatar.jpg')
                                 as ImageProvider,
                       ),
                       title: Text(d.employeeName),
-                      subtitle: Text("Nationality: ${d.nationality}"),
+                      subtitle: Text("Employee Number: ${d.employeeNumber}"),
                       trailing: Radio<int>(
                         value: d.personId,
                         groupValue: selectedLaborId,
@@ -357,7 +356,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                   if (selectedLaborSource == "company")
                     _infoRow("Labor Source", "From Company")
                   else
-                    _infoRow("Driver",
+                    _infoRow("${selectedProfession?.positionName}",
                         ref.read(selectedLaborerProvider)?.arabicName ?? ''),
                   if (selectedLaborSource == "app")
                     _infoRow("Nationality",
@@ -371,7 +370,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                   _infoRow("Pickup/Delivery", pickupOption == "pickup"
                       ? "Pick up yourself"
                       : pickupOption == "delivery"
-                          ? "Delivery to home"
+                          ? "50.0"
                           : "Not selected"),
                 ],
               ),

@@ -1,18 +1,20 @@
 import 'package:fawran/models/address_model.dart';
 import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/auth_provider.dart';
+import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/screens/combined.dart';
 import 'package:fawran/steps/address_selection_step.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fawran/Fawran4Hours/add_new_address.dart';
 
 class AddressSelectionScreen extends ConsumerStatefulWidget {
-  final String header;
+  final String? header;
 
-  const AddressSelectionScreen({super.key, required this.header});
+  const AddressSelectionScreen({super.key, this.header});
 
   @override
   ConsumerState<AddressSelectionScreen> createState() =>
@@ -33,11 +35,12 @@ class _AddressSelectionScreenState
   }
 
   Future<void> fetchAddresses() async {
-    final userId = ref.read(userIdProvider);
+        final _storage = FlutterSecureStorage();
+
+      final userId = await _storage.read(key: 'user_id');
     if (userId != null) {
       final url = Uri.parse(
-          'http://fawran.ddns.net:8080/ords/emdad/fawran/customer_addresses/' +
-              userId.toString());
+          'http://fawran.ddns.net:8080/ords/emdad/fawran/customer_addresses/${userId.toString()}');
 
       try {
         final response = await http.get(url);
@@ -68,6 +71,7 @@ class _AddressSelectionScreenState
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     final selectedAddress = ref.watch(selectedAddressProvider);
+    final selectedProfession = ref.watch(selectedProfessionProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -92,7 +96,7 @@ class _AddressSelectionScreenState
                   children: [
                     Center(
                       child: Text(
-                        widget.header,
+                       "${selectedProfession?.positionName}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,

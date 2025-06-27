@@ -6,6 +6,7 @@ import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/select_address.dart';
+import 'package:fawran/screens/serviceChoice.dart';
 import 'package:fawran/screens/userProfile.dart';
 
 import 'package:flutter/material.dart';
@@ -51,7 +52,12 @@ class MyApp extends ConsumerWidget {
         '/login': (context) => const LoginScreen(),
         '/profile': (context) => const UserProfileScreen(),
         '/bookings': (context) => const BookingsScreen(),
-        '/location': (context) => const LocationScreen()
+        '/location': (context) => const LocationScreen(),
+        '/home':(contex)=> HomeScreen(),
+        '/hourly':(context)=>CleaningServiceScreen(),
+        '/selectAddress':(context)=>AddressSelectionScreen()
+
+
         // '/profile' key routes to UserProfileScreen widget
       },
     );
