@@ -1151,7 +1151,7 @@ void didChangeDependencies() {
                                     Text(
                                       'SAR ${completedBooking!.originalPrice}',
                                       style: TextStyle(
-                                        fontSize: 14,
+                                        fontSize: 12,
                                         color: Colors.grey[800],
                                         decoration: TextDecoration.lineThrough,
                                       ),
@@ -2043,7 +2043,7 @@ Widget _buildDetailRow(String label, String value) {
                   Row(
                     children: [
                       Text(
-                        'SAR ${package.finalPrice.round()}',
+                        'SAR ${package.finalPrice}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -2052,7 +2052,7 @@ Widget _buildDetailRow(String label, String value) {
                       ),
                       SizedBox(width: 6),
                       Text(
-                        'SAR ${package.packagePrice.round()}',
+                        'SAR ${package.packagePrice}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],

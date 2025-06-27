@@ -730,32 +730,33 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
               ),
               Spacer(),
               Container(
-                width: 120,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _selectedDates.isNotEmpty &&
-                          !_isSelectingStartDate &&
-                          widget.onNextPressed != null
-                      ? widget.onNextPressed
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF1E3A8A),
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Next',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
+  width: 120,
+  height: 50,
+  child: ElevatedButton(
+    onPressed: _selectedDates.isNotEmpty &&
+            !_isSelectingStartDate &&
+            _selectedDates.length == _totalAllowedVisits && // Added this condition
+            widget.onNextPressed != null
+        ? widget.onNextPressed
+        : null,
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Color(0xFF1E3A8A),
+      disabledBackgroundColor: Colors.grey.shade300,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(25),
+      ),
+      elevation: 0,
+    ),
+    child: Text(
+      'Next',
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+  ),
+)
             ],
           ),
         ),
