@@ -57,8 +57,7 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   List<PackageModel> eastAsiaPackages = [];
   List<PackageModel> africanPackages = [];
 
-  List<Service> lastKnownServices = []; // Cache for fallback
-bool hasTriedFetchingServices = false;
+  
 
   bool isEastAsiaLoading = true;
   bool isAfricanLoading = true;
@@ -112,11 +111,6 @@ bool hasTriedFetchingServices = false;
     setState(() {
       availableServices = servicesList.map((service) => Service.fromJson(service)).toList();
       
-      // FIXED: Cache successful results
-      if (availableServices.isNotEmpty) {
-        lastKnownServices = List.from(availableServices);
-      }
-      
       // Always ensure a service is selected
       if (availableServices.isNotEmpty) {
         final matchingService = availableServices.firstWhere(
@@ -130,35 +124,19 @@ bool hasTriedFetchingServices = false;
       }
       
       isLoadingServices = false;
-      hasTriedFetchingServices = true;
     });
   } catch (e) {
     setState(() {
       isLoadingServices = false;
-      hasTriedFetchingServices = true;
       
-      // FIXED: Use cached services as fallback
-      if (availableServices.isEmpty && lastKnownServices.isNotEmpty) {
-        availableServices = List.from(lastKnownServices);
-        print('Using cached services as fallback');
-      }
-      
-      // If still empty, create fallback services
+      // If API fails, create fallback services only as last resort
       if (availableServices.isEmpty) {
         availableServices = [
           Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
         ];
-        print('Created fallback service');
-      }
-      
-      // Ensure selection
-      if (selectedServiceId == null) {
-        final matchingService = availableServices.firstWhere(
-          (service) => service.id == widget.serviceId,
-          orElse: () => availableServices.first,
-        );
-        selectedServiceId = matchingService.id;
-        selectedServiceName = matchingService.name;
+        
+        selectedServiceId = widget.serviceId;
+        selectedServiceName = availableServices.first.name;
         _setServiceTitle();
       }
     });
@@ -167,19 +145,18 @@ bool hasTriedFetchingServices = false;
 }
 
 Future<void> reloadServices() async {
-  // FIXED: Don't clear services or set loading immediately
   try {
+    setState(() => isLoadingServices = true);
+    
     final List<dynamic> servicesList = await ApiService.fetchServices(
       professionId: widget.professionId,
     );
 
     setState(() {
-      // Only update if we got valid results
-      if (servicesList.isNotEmpty) {
-        availableServices = servicesList.map((service) => Service.fromJson(service)).toList();
-        lastKnownServices = List.from(availableServices); // Update cache
-        
-        // Try to maintain current selection
+      availableServices = servicesList.map((service) => Service.fromJson(service)).toList();
+      
+      // Try to maintain current selection if it exists in new data
+      if (availableServices.isNotEmpty) {
         final currentSelection = availableServices.firstWhere(
           (service) => service.id == selectedServiceId,
           orElse: () => availableServices.first,
@@ -201,24 +178,6 @@ Future<void> reloadServices() async {
   } catch (e) {
     setState(() {
       isLoadingServices = false;
-      
-      // FIXED: Ensure services are never empty
-      if (availableServices.isEmpty) {
-        if (lastKnownServices.isNotEmpty) {
-          availableServices = List.from(lastKnownServices);
-        } else {
-          availableServices = [
-            Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
-          ];
-        }
-        
-        // Ensure selection
-        if (selectedServiceId == null) {
-          selectedServiceId = availableServices.first.id;
-          selectedServiceName = availableServices.first.name;
-          _setServiceTitle();
-        }
-      }
     });
     print('Error reloading services: $e');
   }
@@ -258,7 +217,7 @@ Future<void> reloadServices() async {
       dynamicServiceTitle = selectedService.name;
     });
   } else {
-    // FIXED: Better fallback logic
+    // Fallback logic when no services available
     String fallbackTitle;
     switch (widget.serviceId) {
       case 1:
@@ -277,7 +236,6 @@ Future<void> reloadServices() async {
       dynamicServiceTitle = fallbackTitle;
     });
     
-    // FIXED: Ensure selectedServiceId is set
     if (selectedServiceId == null) {
       selectedServiceId = widget.serviceId;
     }
@@ -611,19 +569,9 @@ Future<void> reloadServices() async {
     }
   }
 
- Widget _buildServiceSelector() {
-  // FIXED: Always ensure we have services to display
-  if (availableServices.isEmpty && lastKnownServices.isNotEmpty) {
-    availableServices = List.from(lastKnownServices);
-    if (selectedServiceId == null && availableServices.isNotEmpty) {
-      selectedServiceId = availableServices.first.id;
-      selectedServiceName = availableServices.first.name;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _setServiceTitle());
-    }
-  }
-
-  // Show loading only if we haven't tried fetching and have no services
-  if (isLoadingServices && availableServices.isEmpty && !hasTriedFetchingServices) {
+Widget _buildServiceSelector() {
+  // Show loading while fetching services
+  if (isLoadingServices) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -651,15 +599,15 @@ Future<void> reloadServices() async {
     );
   }
 
-  // FIXED: Always ensure selectedServiceId is set
-  if (selectedServiceId == null && availableServices.isNotEmpty) {
-    selectedServiceId = availableServices.first.id;
-    selectedServiceName = availableServices.first.name;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _setServiceTitle());
-  }
-
-  // FIXED: Always show selector if we have any services
+  // Show service selector if services are available
   if (availableServices.isNotEmpty) {
+    // Ensure selectedServiceId is set
+    if (selectedServiceId == null) {
+      selectedServiceId = availableServices.first.id;
+      selectedServiceName = availableServices.first.name;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _setServiceTitle());
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
       child: Column(
@@ -675,7 +623,7 @@ Future<void> reloadServices() async {
           ),
           SizedBox(height: 16),
 
-          // HORIZONTAL ROW FOR RADIO BUTTONS - Always visible when services exist
+          // HORIZONTAL ROW FOR RADIO BUTTONS
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -715,20 +663,7 @@ Future<void> reloadServices() async {
             ),
           ),
 
-          // Show refresh button if needed
-          if (availableServices.length == 1 || isLoadingServices)
-            Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: TextButton.icon(
-                onPressed: isLoadingServices ? null : reloadServices,
-                icon: Icon(Icons.refresh, size: 16),
-                label: Text(isLoadingServices ? 'Loading...' : 'Refresh Services'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.purple,
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                ),
-              ),
-            ),
+          
 
           SizedBox(height: 24),
         ],
@@ -736,7 +671,7 @@ Future<void> reloadServices() async {
     );
   }
 
-  // Last resort fallback - should rarely be reached
+  // No services available - show error state with retry
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
     child: Column(
@@ -780,43 +715,18 @@ Future<void> reloadServices() async {
 
 
 
-void _ensureServicesAvailable() {
-  if (availableServices.isEmpty) {
-    if (lastKnownServices.isNotEmpty) {
-      setState(() {
-        availableServices = List.from(lastKnownServices);
-      });
-    } else {
-      setState(() {
-        availableServices = [
-          Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
-        ];
-      });
-    }
-    
-    if (selectedServiceId == null) {
-      selectedServiceId = availableServices.first.id;
-      selectedServiceName = availableServices.first.name;
-      _setServiceTitle();
-    }
-  }
-}
+
 
 
 @override
 void didChangeDependencies() {
   super.didChangeDependencies();
   
-  // FIXED: Always ensure services are available when screen becomes active
-  if (ModalRoute.of(context)?.isCurrent == true) {
-    _ensureServicesAvailable();
-    
-    // Only reload if we haven't tried fetching yet or services are truly empty
-    if (!hasTriedFetchingServices || (availableServices.isEmpty && lastKnownServices.isEmpty)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        fetchServices();
-      });
-    }
+  // Fetch fresh services when screen becomes active
+  if (ModalRoute.of(context)?.isCurrent == true && availableServices.isEmpty) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchServices();
+    });
   }
 }
 
@@ -1336,7 +1246,7 @@ void _showPackageDetailsOverlay(PackageModel package) {
                           SizedBox(height: 8),
                           _buildDetailRow('Weekly Visits', '${package.visitsWeekly}'),
                           SizedBox(height: 8),
-                          _buildDetailRow('Contract Duration', '${package.noOfMonth.toString()} Month'),
+                          _buildDetailRow('Contract Duration', '${package.noOfWeeks.toString()} Weeks'),
                         ],
                       ),
                     ),
