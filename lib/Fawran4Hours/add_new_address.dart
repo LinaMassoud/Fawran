@@ -10,6 +10,7 @@ import 'dart:convert';
 import '../models/package_model.dart';
 import '../models/address_model.dart';
 import '../services/api_service.dart';
+import '../steps/address_selection_step.dart';
 
 class AddNewAddressScreen extends StatefulWidget {
   final PackageModel? package;
@@ -305,11 +306,40 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
           : null,
     );
 
+    // Create newAddress object with correct property names
+    final newAddress = {
+      'title': _addressTitleController.text,
+      'streetName': _streetNameController.text,
+      'houseNumber': _houseNumberController.text,
+      'apartmentNumber': _apartmentNumberController.text,
+      'floorNumber': _selectedFloorNumber?.toString() ?? '',
+      'houseType': _selectedHouseType,
+      'fullAddress': _fullAddressController.text,
+      'notes': _notesController.text,
+      'city': _selectedCityCode, // Changed from cityCode to city
+      'districtCode': _selectedDistrictCode, // Added districtCode property
+      'district': _selectedDistrict, // Keep this for backward compatibility
+      'coordinates': {
+        'latitude': _selectedLocation!.latitude,
+        'longitude': _selectedLocation!.longitude,
+      },
+      'api_response': result['data'],
+    };
+
+    // Create displayAddress object
+    final displayAddress = {
+      'city': _selectedCity?.cityName,
+      'district': _districts.firstWhere(
+        (d) => d.districtCode == _selectedDistrictCode,
+      ),
+      'fullAddress': _fullAddressController.text,
+    };
+
     // Hide loading indicator
     Navigator.of(context).pop();
 
     if (result['success']) {
-      // Success
+      // Success - Return result to parent screen
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message']),
@@ -317,35 +347,15 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
         ),
       );
 
-      // Return the created address data to previous screen
-      final newAddress = {
-        'title': _addressTitleController.text,
-        'streetName': _streetNameController.text,
-        'houseNumber': _houseNumberController.text,
-        'apartmentNumber': _apartmentNumberController.text,
-        'floorNumber': _selectedFloorNumber?.toString() ?? '',
-        'houseType': _selectedHouseType,
-        'fullAddress': _fullAddressController.text,
-        'notes': _notesController.text,
-        'city': _selectedCity?.cityCode,
-        'district': _selectedDistrict,
-        'coordinates': {
-          'latitude': _selectedLocation!.latitude,
-          'longitude': _selectedLocation!.longitude,
-        },
-        'api_response': result['data'],
-      };
-      final displayAddress = {
-        'city': _selectedCity?.cityName,
-        'district':
-            _districts.firstWhere((d) => d.districtCode == _selectedDistrict),
-        'fullAddress': _fullAddressController.text
-      };
-
-      Navigator.pop(context, {
-        'newAddress': newAddress,
+      // Return success result to parent screen with newAddress included
+      Navigator.of(context).pop({
+        'success': true,
+        'refresh_addresses': true,
+        'message': result['message'],
+        'newAddress': newAddress, // Added this line
         'displayAddress': displayAddress,
       });
+      
     } else {
       // Error
       ScaffoldMessenger.of(context).showSnackBar(
@@ -371,6 +381,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     );
   }
 }
+
 
 ////hene
   Future<void> _fetchDistrictMapData(String districtCode) async {
@@ -1281,3 +1292,4 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     );
   }
 }
+

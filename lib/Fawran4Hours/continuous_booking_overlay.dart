@@ -172,52 +172,82 @@ class _ContinuousBookingOverlayState
 
   // Fetch addresses from API
   Future<void> _fetchAddresses() async {
-    try {
+  try {
+    // Store the currently selected address info before refreshing
+    final currentSelectedAddress = ref.read(selectedAddressProvider);
+    String? currentSelectedCardText = currentSelectedAddress?.cardText;
+    int? currentSelectedAddressId = currentSelectedAddress?.addressId;
+    
+    setState(() {
+      isLoadingAddresses = true;
+      addressError = null;
+    });
+
+    // Get userId from the provider
+    final userId = ref.read(userIdProvider);
+
+    print('userId in _fetchAddresses = $userId');
+
+    // Check if userId is available
+    if (userId == null) {
       setState(() {
-        isLoadingAddresses = true;
-        addressError = null;
+        addressError = 'User not authenticated. Please log in again.';
+        isLoadingAddresses = false;
       });
+      return;
+    }
 
-      // Get userId from the provider
-      final userId = ref.read(userIdProvider);
+    // Use the API service method
+    final data = await ApiService.fetchCustomerAddresses(userId: userId);
 
-      print('userId in _fetchAddresses =');
+    setState(() {
+      addresses = data.map((addressData) {
+        return Address(
+          cardText: addressData['card_text']?.toString() ?? 'Address',
+          addressId: addressData['address_id'] ?? 0,
+          cityCode: int.parse(addressData['city_code']),
+          districtCode: addressData['district_code']?.toString() ?? '',
+        );
+      }).toList();
 
-      // Check if userId is available
-      if (userId == null) {
-        setState(() {
-          addressError = 'User not authenticated. Please log in again.';
-          isLoadingAddresses = false;
-        });
-        return;
+      // Try to restore the previously selected address
+      Address? addressToSelect;
+      
+      if (currentSelectedAddress != null) {
+        // First try to match by address ID
+        addressToSelect = addresses.firstWhere(
+          (address) => address.addressId == currentSelectedAddressId,
+
+        );
+        
+        // If not found by ID, try to match by card text
+        if (addressToSelect == null && currentSelectedCardText != null) {
+          addressToSelect = addresses.firstWhere(
+            (address) => address.cardText.toLowerCase() == currentSelectedCardText!.toLowerCase(),
+
+          );
+        }
+      }
+      
+      // If we couldn't restore the previous selection, select the first address
+      if (addressToSelect == null && addresses.isNotEmpty) {
+        addressToSelect = addresses.first;
+      }
+      
+      // Update the provider with the selected address
+      if (addressToSelect != null) {
+        ref.read(selectedAddressProvider.notifier).state = addressToSelect;
       }
 
-      // Use the API service method
-      final data = await ApiService.fetchCustomerAddresses(userId: userId);
-
-      setState(() {
-        addresses = data.map((addressData) {
-          return Address(
-            cardText: addressData['card_text']?.toString() ?? 'Address',
-            addressId: addressData['address_id'] ?? 0,
-            cityCode: int.parse(addressData['city_code']),
-            districtCode: addressData['district_code']?.toString() ?? '',
-          );
-        }).toList();
-
-        if (addresses.isNotEmpty && ref.read(selectedAddressProvider) == null) {
-          ref.read(selectedAddressProvider.notifier).state = addresses.first;
-        }
-
-        isLoadingAddresses = false;
-      });
-    } catch (e) {
-      setState(() {
-        addressError = 'Error loading addresses: $e';
-        isLoadingAddresses = false;
-      });
-    }
+      isLoadingAddresses = false;
+    });
+  } catch (e) {
+    setState(() {
+      addressError = 'Error loading addresses: $e';
+      isLoadingAddresses = false;
+    });
   }
+}
 
   String _extractLocationName(String? cardText) {
     if (cardText == null || cardText.isEmpty) {
@@ -322,12 +352,20 @@ class _ContinuousBookingOverlayState
   }
 
   void _selectAddress(int addressId) {
+  try {
     final selectedAddress = addresses.firstWhere(
       (address) => address.addressId == addressId,
-      orElse: () => addresses.first,
     );
     ref.read(selectedAddressProvider.notifier).state = selectedAddress;
+    print('Selected address: ${selectedAddress.cardText} with ID: ${selectedAddress.addressId}');
+  } catch (e) {
+    print('Error selecting address with ID $addressId: $e');
+    // Fallback to first address if the specific one isn't found
+    if (addresses.isNotEmpty) {
+      ref.read(selectedAddressProvider.notifier).state = addresses.first;
+    }
   }
+}
 
   void _addNewAddress() async {
   final userId = ref.read(userIdProvider);
@@ -342,34 +380,38 @@ class _ContinuousBookingOverlayState
     ),
   );
 
-  // Check if result is null (user exited without creating address)
-  if (result == null) {
-    return; // Exit early, no new address was created
-  }
-
-  // Check if result is a Map and contains the expected keys
-  if (result is Map<String, dynamic>) {
-    final add = result["newAddress"];
-    final displayAdd = result["displayAddress"];
-
-    if (add != null && add is Map<String, dynamic>) {
-      final newAddress = Address(
-        cardText:
-            '${displayAdd?['city'] ?? ''}- ${displayAdd?['district']?.districtName ?? ''}-${add['fullAddress']} ',
-        addressId: DateTime.now().millisecondsSinceEpoch,
-        cityCode: add['city'],
-        districtCode: add['districtCode'] ?? '',
+  // Check if address was successfully created
+  if (result != null && result['success'] == true && result['refresh_addresses'] == true) {
+    // First refresh the addresses list to get the actual address with proper ID
+    await _fetchAddresses();
+    
+    // Then try to select the newly created address
+    if (result["newAddress"] != null && result["displayAddress"] != null) {
+      final add = result["newAddress"];
+      final displayAdd = result["displayAddress"];
+      
+      // Create a search pattern to find the newly created address
+      final expectedCardText = '${displayAdd?['city'] ?? ''} - ${displayAdd?['district']?.districtName ?? ''}';
+      
+      // Find the address in the refreshed list that matches our new address
+      final newAddress = addresses.firstWhere(
+        (address) => address.cardText.toLowerCase().contains(expectedCardText.toLowerCase()) ||
+                    (address.cityCode.toString() == add?['city']?.toString() && 
+                     address.districtCode == add?['districtCode']?.toString()),
+        orElse: () => addresses.isNotEmpty ? addresses.last : addresses.first,
       );
-
-      setState(() {
-        addresses.add(newAddress);
-      });
-
-      ref.read(selectedAddressProvider.notifier).state = newAddress;
-
+      
+      // Set the selected address using the proper address from the API
+      if (addresses.isNotEmpty) {
+        ref.read(selectedAddressProvider.notifier).state = newAddress;
+      }
+    }
+    
+    // Show success message if needed
+    if (result['message'] != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('New address added successfully!'),
+          content: Text(result['message']),
           backgroundColor: Colors.green,
         ),
       );
@@ -833,3 +875,4 @@ class _ContinuousBookingOverlayState
     );
   }
 }
+
