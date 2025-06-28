@@ -846,33 +846,34 @@ Future<void> _calculatePriceFromAPI() async {
 
   return Container(
     margin: EdgeInsets.only(bottom: 15),
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey[300]!, width: 1.5),
-      borderRadius: BorderRadius.circular(12),
-      color: Colors.white,
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isEnabled && !isLoading
+            ? () => _showCustomDropdown(
+                context, options, value, onChanged, customTitle)
+            : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
           ),
-        ),
-        if (isEnabled)
-          GestureDetector(
-            onTap: isLoading
-                ? null
-                : () => _showCustomDropdown(
-                    context, options, value, onChanged, customTitle),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (isEnabled) ...[
                 if (isLoading)
                   SizedBox(
                     width: 16,
@@ -882,8 +883,8 @@ Future<void> _calculatePriceFromAPI() async {
                       valueColor:
                           AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
                     ),
-                  ),
-                if (!isLoading)
+                  )
+                else ...[
                   Text(
                     hasValidValue ? value : 'Select',
                     style: TextStyle(
@@ -893,23 +894,23 @@ Future<void> _calculatePriceFromAPI() async {
                           hasValidValue ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
-                if (!isLoading) SizedBox(width: 4),
-                if (!isLoading)
+                  SizedBox(width: 4),
                   Icon(Icons.keyboard_arrow_down,
                       color: Colors.grey[600], size: 20),
-              ],
-            ),
-          )
-        else
-          Text(
-            hasValidValue ? value : 'Select', // Changed from 'Not selected' to 'Select'
-            style: TextStyle(
-              fontSize: 16,
-              color: hasValidValue ? Colors.black : Colors.grey[500],
-              fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
-            ),
+                ],
+              ] else
+                Text(
+                  hasValidValue ? value : 'Select',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: hasValidValue ? Colors.black : Colors.grey[500],
+                    fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+            ],
           ),
-      ],
+        ),
+      ),
     ),
   );
 }

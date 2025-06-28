@@ -572,14 +572,10 @@ class _ContinuousBookingOverlayState
       return 0.0;
     }
 
-    print('=== PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
-
     // Handle empty strings by using defaults for calculation
     double durationOfVisit = visitDuration.isEmpty
         ? 4.0
         : (double.tryParse(visitDuration.split(' ')[0]) ?? 4.0);
-    print(
-        'Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
 
     int contractMonths = contractDuration.isEmpty
         ? 1
@@ -594,42 +590,24 @@ class _ContinuousBookingOverlayState
       contractDurationInWeeks = contractMonths * 4.0;
     }
 
-    print(
-        'Contract Duration: $contractMonths ${contractDuration.contains('week') ? 'weeks' : contractDuration.contains('year') ? 'years' : 'months'} = $contractDurationInWeeks weeks');
-
     int visitsPerWeekCount = visitsPerWeek.isEmpty
         ? 1
         : (int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1);
-    print(
-        'Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
-    print('Worker Count: $workerCount');
-    print('Hour Price: $hourPrice');
-
     // Rest of the calculation remains the same...
     double totalContractPrice = hourPrice *
         durationOfVisit *
         contractDurationInWeeks *
         visitsPerWeekCount *
         workerCount;
-    print(
-        'Total Contract Price: $totalContractPrice ($hourPrice * $durationOfVisit * $contractDurationInWeeks * $visitsPerWeekCount * $workerCount)');
-
+    
     double totalVisits = contractDurationInWeeks * visitsPerWeekCount;
-    print(
-        'Total Visits in Contract: $totalVisits ($contractDurationInWeeks * $visitsPerWeekCount)');
-
+    
     double basePricePerVisit = totalContractPrice / totalVisits;
-    print(
-        'Base Price Per Visit: $basePricePerVisit ($totalContractPrice / $totalVisits)');
-
+    
     double discountPercentage = 4.8913;
     double discountAmount = (discountPercentage / 100) * basePricePerVisit;
     double finalPricePerVisit = basePricePerVisit - discountAmount;
-    print('Discount Applied: $discountPercentage% = $discountAmount');
-    print('finalPricePerVisit: $finalPricePerVisit');
-
-    print('=== END PRICE PER VISIT CALCULATION (ContinuousBookingOverlay) ===');
-
+    
     return finalPricePerVisit;
   }
 
