@@ -330,24 +330,32 @@ class _ContinuousBookingOverlayState
   }
 
   void _addNewAddress() async {
-    final userId = ref.read(userIdProvider);
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddNewAddressScreen(
-          package: widget.package,
-          serviceId: widget.serviceId,
-          user_id: userId,
-        ),
+  final userId = ref.read(userIdProvider);
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => AddNewAddressScreen(
+        package: widget.package,
+        serviceId: widget.serviceId,
+        user_id: userId,
       ),
-    );
+    ),
+  );
+
+  // Check if result is null (user exited without creating address)
+  if (result == null) {
+    return; // Exit early, no new address was created
+  }
+
+  // Check if result is a Map and contains the expected keys
+  if (result is Map<String, dynamic>) {
     final add = result["newAddress"];
     final displayAdd = result["displayAddress"];
 
     if (add != null && add is Map<String, dynamic>) {
       final newAddress = Address(
         cardText:
-            '${displayAdd['city'] ?? ''}- ${displayAdd['district'].districtName ?? ''}-${add['fullAddress']} ',
+            '${displayAdd?['city'] ?? ''}- ${displayAdd?['district']?.districtName ?? ''}-${add['fullAddress']} ',
         addressId: DateTime.now().millisecondsSinceEpoch,
         cityCode: add['city'],
         districtCode: add['districtCode'] ?? '',
@@ -367,6 +375,7 @@ class _ContinuousBookingOverlayState
       );
     }
   }
+}
 
   // New methods for updating service details in custom booking
   void _updateNationality(String newNationality) {
