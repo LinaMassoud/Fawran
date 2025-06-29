@@ -48,6 +48,29 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       if (!mounted) return;
       locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
       setState(() => isLoading = false);
+
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("خدمة الموقع موقفة"),
+          content: const Text("يرجى تفعيل خدمة الموقع من إعدادات الجهاز."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Geolocator.openLocationSettings();
+              },
+              child: const Text("فتح الإعدادات"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("إلغاء"),
+            ),
+          ],
+        ),
+      );
+
       return;
     }
 
@@ -173,35 +196,61 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
                   ),
                 ],
               )
-            : FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        loc.currentLocation,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
+            : showLocation
+                ? FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            loc.currentLocation,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            location,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        location,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.red,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() => isLoading = true);
+                            _getCurrentLocation();
+                          },
+                          child: const Text("إعادة المحاولة"),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
       ),
     );
   }
