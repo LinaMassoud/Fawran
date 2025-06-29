@@ -43,7 +43,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final token = await _storage.read(key: 'token');
 
     final response = await http.put(
-      Uri.parse('http://10.20.10.114:8080/ords/emdad/fawran/user/profile/update'),
+      Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/user/profile/update'),
       headers: {
         'Content-Type': 'application/json',
         'token': token ?? '',

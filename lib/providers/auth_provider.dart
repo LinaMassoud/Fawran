@@ -80,19 +80,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String phoneNumber,
     required String email,
     required String password,
+    required String nationalId,
   }) async {
     state =
         state.copyWith(isLoading: true, errorMessage: '', isSignedUp: false);
 
     final response = await _apiService.signUp(
-      userName: userName,
-      firstName: firstName,
-      middleName: middleName,
-      lastName: lastName,
-      phoneNumber: phoneNumber,
-      email: email,
-      password: password,
-    );
+        userName: userName,
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        email: email,
+        password: password,
+        nationalId: nationalId);
 
     if (response != null && response['error'] != null) {
       state = state.copyWith(

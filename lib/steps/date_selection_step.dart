@@ -65,24 +65,34 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   }
 
   void _calculateContractDetails() {
-    // Get duration from package or fallback to widget parameter
+    // Get duration from package using noOfWeeks or fallback to widget parameter
     int durationInWeeks = 0;
-    String contractDuration = widget.package?.noOfMonth != null
-        ? '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}'
-        : widget.contractDuration;
+    String contractDuration = '';
 
-    if (contractDuration.toLowerCase().contains('month')) {
-      int months =
-          int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+    if (widget.package?.noOfWeeks != null && widget.package!.noOfWeeks! > 0) {
+      // Use noOfWeeks from package
+      durationInWeeks = widget.package!.noOfWeeks!;
+      contractDuration = '$durationInWeeks week${durationInWeeks > 1 ? 's' : ''}';
+    } else if (widget.package?.noOfMonth != null && widget.package!.noOfMonth > 0) {
+      // Fallback to noOfMonth if noOfWeeks is not available
+      int months = widget.package!.noOfMonth;
       durationInWeeks = months * 4; // Approximate weeks in months
-    } else if (contractDuration.toLowerCase().contains('week')) {
-      durationInWeeks =
-          int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+      contractDuration = '$months month${months > 1 ? 's' : ''}';
+    } else {
+      // Use widget parameter as final fallback
+      contractDuration = widget.contractDuration;
+      if (contractDuration.toLowerCase().contains('month')) {
+        int months = int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+        durationInWeeks = months * 4; // Approximate weeks in months
+      } else if (contractDuration.toLowerCase().contains('week')) {
+        durationInWeeks = int.tryParse(contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+      } else {
+        durationInWeeks = 4; // Default to 4 weeks if unclear
+      }
     }
 
     // Get visits per week from package or fallback to selected days
-    _visitsPerWeekCount =
-        widget.package?.visitsWeekly ?? widget.selectedDays.length;
+    _visitsPerWeekCount = widget.package?.visitsWeekly ?? widget.selectedDays.length;
 
     // Calculate total allowed visits
     _totalAllowedVisits = durationInWeeks * _visitsPerWeekCount;
@@ -91,12 +101,10 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     if (_userSelectedStartDate == null) {
       final today = DateTime.now();
       _contractStartDate = DateTime(today.year, today.month, today.day);
-      _contractEndDate =
-          _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
     } else {
       _contractStartDate = _userSelectedStartDate;
-      _contractEndDate =
-          _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
     }
   }
 
@@ -168,8 +176,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       } else {
         // Check if we've reached the total visit limit
         if (_selectedDates.length >= _totalAllowedVisits) {
-          _showSnackBar(
-              'Maximum $_totalAllowedVisits visits allowed for this contract');
+          _showSnackBar('Maximum $_totalAllowedVisits visits allowed for this contract');
           return;
         }
 
@@ -243,8 +250,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
 
     // If we have selected days from the widget, use those
     if (widget.selectedDays.isNotEmpty) {
-      final selectedWeekdays =
-          widget.selectedDays.map(_dayNameToWeekday).toList();
+      final selectedWeekdays = widget.selectedDays.map(_dayNameToWeekday).toList();
       return selectedWeekdays.contains(date.weekday);
     }
 
@@ -268,27 +274,25 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
 
-    // If selecting start date, only allow today or future dates
+    // ALWAYS disable Fridays - this is the first check to ensure no Friday can be selected
+    if (date.weekday == 5) return false;
+
+    // If selecting start date, only allow today or future dates (but not Fridays - already checked above)
     if (_isSelectingStartDate) {
-      return dateOnly.isAfter(todayOnly) ||
-          dateOnly.isAtSameMomentAs(todayOnly);
+      return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
     }
 
-    // Start date is always selectable (for changing)
+    // Start date is always selectable (for changing) - but not if it's Friday (already checked above)
     if (date == _userSelectedStartDate) {
       return true;
     }
 
     // Check if date is within contract period
     if (_contractStartDate != null && _contractEndDate != null) {
-      if (dateOnly.isBefore(_contractStartDate!) ||
-          dateOnly.isAfter(_contractEndDate!)) {
+      if (dateOnly.isBefore(_contractStartDate!) || dateOnly.isAfter(_contractEndDate!)) {
         return false;
       }
     }
-
-    // Always disable Fridays
-    if (date.weekday == 5) return false;
 
     // Check if date is already selected
     if (_selectedDates.contains(date)) {
@@ -315,8 +319,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
 
   void _navigateToMonth(int monthOffset) {
     setState(() {
-      _currentMonth =
-          DateTime(_currentMonth.year, _currentMonth.month + monthOffset);
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + monthOffset);
     });
 
     // Calculate the page index for the new month
@@ -357,9 +360,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
       final isOutsideContract = !_isSelectingStartDate &&
           _contractStartDate != null &&
           _contractEndDate != null &&
-          (date.isBefore(_contractStartDate!) ||
-              date.isAfter(_contractEndDate!));
+          (date.isBefore(_contractStartDate!) || date.isAfter(_contractEndDate!));
       final isStartDate = date == _userSelectedStartDate;
+      final isFriday = date.weekday == 5;
 
       Color backgroundColor = Colors.transparent;
       Color textColor = Colors.black;
@@ -401,8 +404,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                   day.toString(),
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     color: textColor,
                   ),
                 ),
@@ -417,9 +419,9 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                       color: Colors.green.shade800,
                     ),
                   ),
-                ] else if (isWeekFull &&
-                    !isSelected &&
-                    !_isSelectingStartDate) ...[
+                ] else if (isFriday && !isSelected) ...[
+                  
+                ] else if (isWeekFull && !isSelected && !_isSelectingStartDate) ...[
                   // Second priority: Week full indicator
                   
                 ] else if (!widget.isCustomBooking &&
@@ -532,15 +534,25 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
     );
   }
 
+  String _getContractDurationText() {
+    if (widget.package?.noOfWeeks != null && widget.package!.noOfWeeks! > 0) {
+      int weeks = widget.package!.noOfWeeks!;
+      return '$weeks week${weeks > 1 ? 's' : ''}';
+    } else if (widget.package?.noOfMonth != null && widget.package!.noOfMonth > 0) {
+      int months = widget.package!.noOfMonth;
+      return '$months month${months > 1 ? 's' : ''}';
+    } else {
+      return widget.contractDuration;
+    }
+  }
+
   Widget _buildContractInfo() {
     String statusText = _isSelectingStartDate
         ? 'Please select your start date'
         : 'Select visit dates within contract period (tap START date to change)';
 
-    // Get contract duration from package or fallback
-    String contractDurationText = widget.package?.noOfMonth != null
-        ? '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}'
-        : widget.contractDuration;
+    // Get contract duration text using the helper method
+    String contractDurationText = _getContractDurationText();
 
     // Get package name if available
     String packageInfo = widget.package?.packageName ?? 'Custom Package';
@@ -589,8 +601,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color:
-                  _isSelectingStartDate ? Colors.orange : Colors.blue.shade600,
+              color: _isSelectingStartDate ? Colors.orange : Colors.blue.shade600,
             ),
           ),
           Text(
@@ -653,19 +664,18 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
             ),
           ),
         ),
+        // _buildContractInfo(),
         Expanded(
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (index) {
               setState(() {
-                _currentMonth =
-                    DateTime(DateTime.now().year, DateTime.now().month + index);
+                _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
               });
             },
             itemCount: 24,
             itemBuilder: (context, index) {
-              final month =
-                  DateTime(DateTime.now().year, DateTime.now().month + index);
+              final month = DateTime(DateTime.now().year, DateTime.now().month + index);
               return _buildMonthView(month);
             },
           ),
@@ -715,8 +725,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     ),
                   ),
                   Text(
-                    widget.package?.formattedFinalPrice ??
-                        'SAR ${widget.totalPrice.toInt()}',
+                    widget.package?.formattedFinalPrice ?? 'SAR ${widget.totalPrice.toInt()}',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -732,6 +741,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                 child: ElevatedButton(
                   onPressed: _selectedDates.isNotEmpty &&
                           !_isSelectingStartDate &&
+                          _selectedDates.length == _totalAllowedVisits &&
                           widget.onNextPressed != null
                       ? widget.onNextPressed
                       : null,
@@ -752,7 +762,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     ),
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),

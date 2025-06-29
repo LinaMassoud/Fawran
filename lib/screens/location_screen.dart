@@ -41,20 +41,45 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
   Future<void> _getCurrentLocation() async {
     final locationState = ref.read(locationProvider.notifier);
 
-    bool serviceEnabled;
-    LocationPermission permission;
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    print("Location service enabled: $serviceEnabled");
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (!mounted) return;
       locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
       setState(() => isLoading = false);
+
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("خدمة الموقع موقفة"),
+          content: const Text("يرجى تفعيل خدمة الموقع من إعدادات الجهاز."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Geolocator.openLocationSettings();
+              },
+              child: const Text("فتح الإعدادات"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("إلغاء"),
+            ),
+          ],
+        ),
+      );
+
       return;
     }
 
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
+    print("Initial permission status: $permission");
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+      print("Requested permission status: $permission");
       if (permission == LocationPermission.denied) {
         if (!mounted) return;
         locationState.state = "تم رفض صلاحية الوصول إلى الموقع.";
@@ -68,13 +93,43 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       locationState.state =
           "تم رفض الصلاحية بشكل دائم. الرجاء تعديل الإعدادات.";
       setState(() => isLoading = false);
+
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("الصلاحيات مرفوضة"),
+          content: const Text("يجب تفعيل صلاحية الموقع من الإعدادات."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Geolocator.openAppSettings();
+              },
+              child: const Text("فتح الإعدادات"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("إلغاء"),
+            ),
+          ],
+        ),
+      );
+
       return;
     }
 
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception("Timeout أثناء جلب الموقع.");
+        },
       );
+
+      print("Position: ${position.latitude}, ${position.longitude}");
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
@@ -104,6 +159,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
         MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } catch (e) {
+      print("Location error: $e");
       if (!mounted) return;
       locationState.state = "حدث خطأ أثناء جلب الموقع: $e";
       setState(() => isLoading = false);
@@ -123,7 +179,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
     return Scaffold(
       appBar: AppBar(
-          automaticallyImplyLeading: false, title: const Text("تحديد الموقع")),
+        automaticallyImplyLeading: false,
+        title: const Text("تحديد الموقع"),
+      ),
       body: Center(
         child: isLoading
             ? Column(
@@ -138,35 +196,61 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
                   ),
                 ],
               )
-            : FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        loc.currentLocation,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
+            : showLocation
+                ? FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            loc.currentLocation,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            location,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        location,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.red,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() => isLoading = true);
+                            _getCurrentLocation();
+                          },
+                          child: const Text("إعادة المحاولة"),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
       ),
     );
   }

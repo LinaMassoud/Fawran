@@ -11,7 +11,8 @@ class BookingsScreen extends StatefulWidget {
 }
 
 class _BookingsScreenState extends State<BookingsScreen> {
-  final _storage = FlutterSecureStorage();
+  static const String _baseUrl = 'http://fawran.ddns.net:8080/ords/emdad/fawran';
+  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   List<Map<String, dynamic>> _permanentContracts = [];
   List<Map<String, dynamic>> _hourlyContracts = [];
@@ -22,6 +23,109 @@ class _BookingsScreenState extends State<BookingsScreen> {
   void initState() {
     super.initState();
     _fetchAllContracts();
+  }
+
+  static Future<bool> refreshToken() async {
+    try {
+      final refreshToken = await _secureStorage.read(key: 'refresh_token');
+      
+      if (refreshToken == null) {
+        print('❌ [REFRESH_TOKEN] No refresh token found');
+        return false;
+      }
+
+      print('🔄 [REFRESH_TOKEN] Attempting to refresh token...');
+      
+      final url = Uri.parse('$_baseUrl/refresh-token');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'refresh_token': refreshToken,
+        }),
+      );
+
+      print('📡 [REFRESH_TOKEN] Response status: ${response.statusCode}');
+      print('📡 [REFRESH_TOKEN] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        
+        // Save new tokens
+        await _secureStorage.write(key: 'token', value: responseData['token']);
+        await _secureStorage.write(key: 'refresh_token', value: responseData['refresh_token']);
+        
+        print('✅ [REFRESH_TOKEN] Token refreshed successfully');
+        return true;
+      } else {
+        print('❌ [REFRESH_TOKEN] Failed to refresh token: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('💥 [REFRESH_TOKEN] Error refreshing token: $e');
+      return false;
+    }
+  }
+
+  // Enhanced HTTP request method with automatic token refresh
+  static Future<http.Response> makeAuthenticatedRequest({
+    required String method,
+    required String url,
+    Map<String, String>? headers,
+    String? body,
+    int retryCount = 0,
+  }) async {
+    final token = await _secureStorage.read(key: 'token');
+    
+    final requestHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'token': token,
+      ...?headers,
+    };
+
+    http.Response response;
+    
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = await http.get(Uri.parse(url), headers: requestHeaders);
+        break;
+      case 'POST':
+        response = await http.post(Uri.parse(url), headers: requestHeaders, body: body);
+        break;
+      case 'PUT':
+        response = await http.put(Uri.parse(url), headers: requestHeaders, body: body);
+        break;
+      case 'DELETE':
+        response = await http.delete(Uri.parse(url), headers: requestHeaders);
+        break;
+      default:
+        throw Exception('Unsupported HTTP method: $method');
+    }
+
+    // If we get a 401 (unauthorized) and haven't already retried
+    if (response.statusCode == 401 && retryCount == 0) {
+      print('🔄 [AUTH_REQUEST] Received 401, attempting token refresh...');
+      
+      final refreshSuccess = await refreshToken();
+      if (refreshSuccess) {
+        print('✅ [AUTH_REQUEST] Token refreshed, retrying original request...');
+        // Retry the original request with the new token
+        return makeAuthenticatedRequest(
+          method: method,
+          url: url,
+          headers: headers,
+          body: body,
+          retryCount: 1, // Prevent infinite retry loop
+        );
+      } else {
+        print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
+        // Clear all stored tokens if refresh fails
+        await _secureStorage.deleteAll();
+      }
+    }
+
+    return response;
   }
 
   Future<void> _fetchAllContracts() async {
@@ -41,27 +145,26 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Future<void> _fetchPermanentContracts() async {
     try {
-      final token = await _storage.read(key: 'token') ?? '';
-      final userId = await _storage.read(key: 'user_id') ?? '';
+      final userId = await _secureStorage.read(key: 'user_id') ?? '';
 
-      if (token.isEmpty || userId.isEmpty) {
-        throw Exception("Missing token or customer ID in storage");
+      if (userId.isEmpty) {
+        throw Exception("Missing customer ID in storage");
       }
 
-      final url = Uri.parse(
-        "http://10.20.10.114:8080/ords/emdad/fawran/domestic/contracts/$userId",
+      print('🔍 [PERMANENT_CONTRACTS] Fetching contracts for user: $userId');
+
+      final url = "$_baseUrl/domestic/contracts/$userId";
+      
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
       );
 
-      final response = await http.get(
-        url,
-        headers: {
-          "token": token,
-          "Accept": "application/json",
-        },
-      );
+      print('📡 [PERMANENT_CONTRACTS] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         String rawJson = response.body;
+        print('📦 [PERMANENT_CONTRACTS] Raw response length: ${rawJson.length}');
 
         // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
         rawJson = rawJson.replaceAllMapped(
@@ -70,46 +173,38 @@ class _BookingsScreenState extends State<BookingsScreen> {
         );
 
         final List<dynamic> data = json.decode(rawJson);
+        print('✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
 
         setState(() {
           _permanentContracts = data.cast<Map<String, dynamic>>();
         });
       } else {
-        throw Exception(
-            "Failed to load permanent contracts: ${response.statusCode}");
+        print('❌ [PERMANENT_CONTRACTS] Failed with status: ${response.statusCode}');
+        throw Exception("Failed to load permanent contracts: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error fetching permanent contracts: $e");
+      print("💥 [PERMANENT_CONTRACTS] Error fetching permanent contracts: $e");
+      // Don't set empty list, keep existing data
     }
   }
 
   Future<void> _fetchHourlyContracts() async {
     try {
-      final token = await _storage.read(key: 'token') ?? '';
-      final userId = await _storage.read(key: 'user_id') ?? '';
+      final userId = await _secureStorage.read(key: 'user_id') ?? '';
 
       print("=== HOURLY CONTRACTS DEBUG ===");
-      print(
-          "Token: ${token.isNotEmpty ? 'Present (${token.length} chars)' : 'Missing'}");
       print("User ID: $userId");
 
-      if (token.isEmpty || userId.isEmpty) {
-        throw Exception("Missing token or customer ID in storage");
+      if (userId.isEmpty) {
+        throw Exception("Missing customer ID in storage");
       }
 
-      final url = Uri.parse(
-        "http://10.20.10.114:8080/ords/emdad/fawran/hourly/contracts/$userId",
-      );
-
+      final url = "$_baseUrl/hourly/contracts/$userId";
       print("Request URL: $url");
-      print("Request Headers: {token: [HIDDEN], Accept: application/json}");
 
-      final response = await http.get(
-        url,
-        headers: {
-          "token": token,
-          "Accept": "application/json",
-        },
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
       );
 
       print("Response Status Code: ${response.statusCode}");
@@ -141,8 +236,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
           setState(() {
             _hourlyContracts = data.cast<Map<String, dynamic>>();
           });
-          print(
-              "Successfully stored ${_hourlyContracts.length} hourly contracts");
+          print("✅ [HOURLY_CONTRACTS] Successfully stored ${_hourlyContracts.length} hourly contracts");
         } catch (jsonError) {
           print("JSON Parsing Error: $jsonError");
           print("Attempting to parse as single object...");
@@ -161,11 +255,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
         print("Status Code: ${response.statusCode}");
         print("Reason Phrase: ${response.reasonPhrase}");
         print("Error Response Body: ${response.body}");
-        throw Exception(
-            "Failed to load hourly contracts: ${response.statusCode}");
+        throw Exception("Failed to load hourly contracts: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error fetching hourly contracts: $e");
+      print("💥 [HOURLY_CONTRACTS] Error fetching hourly contracts: $e");
       print("Error Type: ${e.runtimeType}");
       if (e is http.ClientException) {
         print("Network Error Details: ${e.message}");
@@ -221,7 +314,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             _infoRow("Package", booking["package_name"] ?? ""),
             _infoRow("Days", booking["period_days"].toString()),
             _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
-            _infoRow("Delivery", "150 Riyal"),
+            if(booking["delivery_charges"] > 0 )  _infoRow("Delivery", booking["delivery_charges"].toString()),
             _infoRow("Status", booking["status"] ?? "success"),
           ],
         ),
@@ -365,6 +458,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Bookings"),
+          leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    onPressed: () {
+      Navigator.of(context).pushReplacementNamed('/home');
+    },
+  ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
           child: Container(

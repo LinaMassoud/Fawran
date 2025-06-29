@@ -156,6 +156,46 @@ double _vatAmount = 0.0;
 
 
 
+void _resetDependentFields(String changedField) {
+  switch (changedField) {
+    case 'nationality':
+      // Reset all fields below nationality
+      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      widget.onVisitsPerWeekChanged('');
+      widget.onContractDurationChanged('');
+      break;
+    case 'workerCount':
+      // Reset all fields below worker count
+      widget.onContractDurationChanged('');
+      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      widget.onVisitsPerWeekChanged('');
+      break;
+    case 'contractDuration':
+      // Reset fields below contract duration
+      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      widget.onVisitsPerWeekChanged('');
+      break;
+    case 'time':
+      // Reset fields below time
+      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      widget.onVisitsPerWeekChanged('');
+      break;
+    case 'visitDuration':
+      // Reset fields below visit duration
+      widget.onVisitsPerWeekChanged('');
+      break;
+  }
+  
+  // Always reset calendar and dates for any field change
+  _resetCalendarSelection();
+}
+
+
+
+
 Future<void> _calculatePriceFromAPI() async {
   print('🔍 DEBUG: Starting _calculatePriceFromAPI calculation');
   
@@ -846,33 +886,34 @@ Future<void> _calculatePriceFromAPI() async {
 
   return Container(
     margin: EdgeInsets.only(bottom: 15),
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey[300]!, width: 1.5),
-      borderRadius: BorderRadius.circular(12),
-      color: Colors.white,
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isEnabled && !isLoading
+            ? () => _showCustomDropdown(
+                context, options, value, onChanged, customTitle)
+            : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
           ),
-        ),
-        if (isEnabled)
-          GestureDetector(
-            onTap: isLoading
-                ? null
-                : () => _showCustomDropdown(
-                    context, options, value, onChanged, customTitle),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (isEnabled) ...[
                 if (isLoading)
                   SizedBox(
                     width: 16,
@@ -882,8 +923,8 @@ Future<void> _calculatePriceFromAPI() async {
                       valueColor:
                           AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
                     ),
-                  ),
-                if (!isLoading)
+                  )
+                else ...[
                   Text(
                     hasValidValue ? value : 'Select',
                     style: TextStyle(
@@ -893,23 +934,23 @@ Future<void> _calculatePriceFromAPI() async {
                           hasValidValue ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
-                if (!isLoading) SizedBox(width: 4),
-                if (!isLoading)
+                  SizedBox(width: 4),
                   Icon(Icons.keyboard_arrow_down,
                       color: Colors.grey[600], size: 20),
-              ],
-            ),
-          )
-        else
-          Text(
-            hasValidValue ? value : 'Select', // Changed from 'Not selected' to 'Select'
-            style: TextStyle(
-              fontSize: 16,
-              color: hasValidValue ? Colors.black : Colors.grey[500],
-              fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
-            ),
+                ],
+              ] else
+                Text(
+                  hasValidValue ? value : 'Select',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: hasValidValue ? Colors.black : Colors.grey[500],
+                    fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+            ],
           ),
-      ],
+        ),
+      ),
     ),
   );
 }
@@ -970,7 +1011,7 @@ Future<void> _calculatePriceFromAPI() async {
                   final isSelected = currentValue.isNotEmpty && option == currentValue;
 
                   return InkWell(
-                    onTap: () async {  // Make this async
+                    onTap: () async {
                       Navigator.pop(context);
                       
                       // Call the onChanged callback and handle if it's async
@@ -978,6 +1019,14 @@ Future<void> _calculatePriceFromAPI() async {
                       if (result is Future) {
                         await result;
                       }
+                      
+                      // REMOVE THIS SECTION - the reset is now handled in _resetDependentFields
+                      // // ADD THIS: Always reset calendar after any dropdown selection
+                      // // This ensures calendar is reset even if the callback doesn't do it
+                      // await Future.delayed(Duration(milliseconds: 100));
+                      // if (mounted) {
+                      //   _resetCalendarSelection();
+                      // }
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -1032,6 +1081,7 @@ Future<void> _calculatePriceFromAPI() async {
         (value) {
           // Call the callback
           widget.onVisitDurationChanged!(value);
+          _resetDependentFields('visitDuration'); 
           _calculatePriceFromAPI();
         },
         customTitle: 'Select Visit Duration',
@@ -1126,7 +1176,7 @@ Future<void> _calculatePriceFromAPI() async {
                 GestureDetector(
                   onTap: () {
                     widget.onWorkerCountChanged(i);
-                    _resetCalendarSelection();
+                    _resetDependentFields('workerCount');
                     _calculatePriceFromAPI();
                     // Recalculate total price if dates are selected
                     if (_internalSelectedDates.isNotEmpty &&
@@ -1277,14 +1327,13 @@ Future<void> _calculatePriceFromAPI() async {
                       widget.selectedNationality,
                       nationalities,
                       (value) {
-                        // Call the callback if available
                         if (widget.onNationalityChanged != null) {
                           widget.onNationalityChanged!(value);
+                          _resetDependentFields('nationality'); // Add this line
                           _calculatePriceFromAPI();
                         }
                       },
-                      isEnabled: widget.isCustomBooking &&
-                          widget.onNationalityChanged != null,
+                      isEnabled: widget.isCustomBooking && widget.onNationalityChanged != null,
                       customTitle: 'Select Nationality',
                       isLoading: isLoadingNationalities,
                     ),
@@ -1292,56 +1341,54 @@ Future<void> _calculatePriceFromAPI() async {
                     _buildWorkerCountField(),
 
                     _buildDropdownField(
-                      'Contract Duration',
-                      widget.contractDuration,
-                      contractDurations,
-                      (value) {
-                        widget.onContractDurationChanged(value);
-                        _resetCalendarSelection(); // Add this line
-                        if (widget.isCustomBooking) {
-                          _calculatePriceFromAPI();
-                        }
-                      },
-                      customTitle: 'Select Contract Duration',
-                    ),
+  'Contract Duration',
+  widget.contractDuration,
+  contractDurations,
+  (value) {
+    widget.onContractDurationChanged(value);
+    _resetDependentFields('contractDuration'); // Add this line
+    if (widget.isCustomBooking) {
+      _calculatePriceFromAPI();
+    }
+  },
+  customTitle: 'Select Contract Duration',
+),
 
                     _buildDropdownField(
-                      'Time',
-                      widget.selectedTime,
-                      timeSlots,
-                      (value) {
-                        // Call the callback if available
-                        if (widget.onTimeChanged != null) {
-                          widget.onTimeChanged!(value);
-                          _resetCalendarSelection();
-                          _calculatePriceFromAPI();
-                        }
-                      },
-                      isEnabled: widget.isCustomBooking &&
-                          widget.onTimeChanged != null,
-                      customTitle: 'Select Time Slot',
-                      isLoading: isLoadingTimeSlots,
-                    ),
+  'Time',
+  widget.selectedTime,
+  timeSlots,
+  (value) {
+    if (widget.onTimeChanged != null) {
+      widget.onTimeChanged!(value);
+      _resetDependentFields('time'); // Add this line
+      _calculatePriceFromAPI();
+    }
+  },
+  isEnabled: widget.isCustomBooking && widget.onTimeChanged != null,
+  customTitle: 'Select Time Slot',
+  isLoading: isLoadingTimeSlots,
+),
+
 
                     _buildVisitDurationField(),
 
                     _buildDropdownField(
-                    'Visits week number',
-                    widget.visitsPerWeek,
-                    visitFrequencies,
-                    (value) async {  // Make this async
-                      widget.onVisitsPerWeekChanged(value);
-                      _resetCalendarSelection();
-                      
-                      // Wait a frame for the widget to update its state
-                      await Future.delayed(Duration(milliseconds: 100));
-                      
-                      if (widget.isCustomBooking) {
-                        await _calculatePriceFromAPI(); // Make this await
-                      }
-                    },
-                    customTitle: 'Select Visits Per Week',
-                  ),
+  'Visits week number',
+  widget.visitsPerWeek,
+  visitFrequencies,
+  (value) async {
+    widget.onVisitsPerWeekChanged(value);
+    _resetCalendarSelection(); // Keep this as it's the last field
+    
+    await Future.delayed(Duration(milliseconds: 100));
+    
+    if (widget.isCustomBooking) {
+      await _calculatePriceFromAPI();
+    }
+  },
+  customTitle: 'Select Visits Per Week',
+),
 
                     // Day Selection Widget - Auto-navigates when complete
                     _buildSelectDateField(),

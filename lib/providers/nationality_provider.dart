@@ -18,7 +18,7 @@ final nationalitiesProvider = FutureProvider<List<Nationality?>>((ref) async {
   final cityCode = selectedAddress.cityCode;
 
   final url =
-      'http://10.20.10.114:8080/ords/emdad/fawran/nationalities/$professionId/$cityCode';
+      'http://fawran.ddns.net:8080/ords/emdad/fawran/nationalities/$professionId/$cityCode';
 
   final response = await http.get(Uri.parse(url));
 

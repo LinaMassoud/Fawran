@@ -19,33 +19,30 @@ class Laborer {
     required this.positionName,
   });
 
-factory Laborer.fromJson(Map<String, dynamic> json) {
-  try{
-  final m = Laborer(
-    personId: int.parse(json['person_id'].toString()),
-    employeeNumber: int.parse(json['employee_number'].toString()), // <-- FIXED
-    employeeName: json['employee_name'],
-    arabicName: json['arabic_name'],
-    nationality: json['nationality'],
-    nationalityId: json['nationality_id'].toString(),
-    positionName: json['position_name'],
-  );
-
-  return m;
-  }
-  catch(e){
-    print(e);
+  factory Laborer.fromJson(Map<String, dynamic> json) {
+    try {
       final m = Laborer(
-    personId: int.parse(json['person_id'].toString()),
-    employeeNumber: int.parse(json['employee_number'].toString()), // <-- FIXED
-    employeeName: json['employee_name'],
-    arabicName: json['arabic_name'],
-    nationality: json['nationality'],
-    nationalityId: json['nationality_id'].toString(),
-    positionName: json['position_name'],
-  );
-
-  return m;
+        personId: int.tryParse(json['person_id']?.toString() ?? '') ?? 0,
+        employeeNumber: int.tryParse(json['employee_number']?.toString() ?? '') ?? 0,
+        employeeName: json['employee_name']?.toString() ?? 'Unknown',
+        arabicName: json['arabic_name']?.toString() ?? 'غير معروف',
+        nationality: json['nationality']?.toString() ?? 'Unknown',
+        nationalityId: json['nationality_id']?.toString() ?? 'N/A',
+        positionName: json['position_name']?.toString() ?? 'N/A',
+      );
+      return m;
+    } catch (e) {
+      print('Error parsing Laborer: $e');
+      // Return a default object to avoid breaking the app
+      return Laborer(
+        personId: 0,
+        employeeNumber: 0,
+        employeeName: 'Unknown',
+        arabicName: 'غير معروف',
+        nationality: 'Unknown',
+        nationalityId: 'N/A',
+        positionName: 'N/A',
+      );
+    }
   }
-}
 }
