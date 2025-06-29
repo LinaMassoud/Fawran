@@ -27,6 +27,8 @@ class _AddressSelectionScreenState
   bool _doorstepServiceSelected = false;
   List<Address> addresses = [];
   int? _selectedAddress;
+  bool isLoading = false;
+  String? addressError;
 
   @override
   void initState() {
@@ -35,34 +37,130 @@ class _AddressSelectionScreenState
   }
 
   Future<void> fetchAddresses() async {
-        final _storage = FlutterSecureStorage();
+    final storage = FlutterSecureStorage();
+    final userId = await storage.read(key: 'user_id');
 
-      final userId = await _storage.read(key: 'user_id');
-    if (userId != null) {
+    if (userId == null) {
+      setState(() {
+        addressError = 'User not authenticated. Please log in again.';
+        isLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      addressError = null;
+    });
+
+    try {
       final url = Uri.parse(
-          'http://fawran.ddns.net:8080/ords/emdad/fawran/customer_addresses/${userId.toString()}');
+          'http://fawran.ddns.net:8080/ords/emdad/fawran/customer_addresses/$userId');
 
-      try {
-        final response = await http.get(url);
-        if (response.statusCode == 200) {
-          final List<dynamic> jsonData = json.decode(response.body);
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        final List<Address> fetchedAddresses =
+            jsonData.map((item) => Address.fromJson(item)).toList();
 
-          final List<Address> fetchedAddresses =
-              jsonData.map((item) => Address.fromJson(item)).toList();
+        final currentSelected = ref.read(selectedAddressProvider);
+        String? currentText = currentSelected?.cardText;
+        int? currentId = currentSelected?.addressId;
 
-          setState(() {
-            addresses = fetchedAddresses;
-            if (addresses.isNotEmpty) {
-              _selectedAddress = addresses.first.addressId;
-              ref.read(selectedAddressProvider.notifier).state =
-                  addresses.first;
-            }
-          });
-        } else {
-          print('Failed to load addresses: ${response.statusCode}');
+        Address? addressToSelect;
+
+        if (currentId != null) {
+          addressToSelect = fetchedAddresses
+              .firstWhere((addr) => addr.addressId == currentId);
         }
-      } catch (e) {
-        print('Error fetching addresses: $e');
+
+        if (addressToSelect == null && currentText != null) {
+          addressToSelect = fetchedAddresses.firstWhere(
+            (addr) => addr.cardText.toLowerCase() == currentText.toLowerCase(),
+          );
+        }
+
+        addressToSelect ??=
+            fetchedAddresses.isNotEmpty ? fetchedAddresses.first : null;
+
+        setState(() {
+          addresses = fetchedAddresses
+              .map((a) => a.copyWith(
+                  isSelected: a.addressId == addressToSelect?.addressId))
+              .toList();
+          _selectedAddress = addressToSelect?.addressId;
+          isLoading = false;
+        });
+
+        if (addressToSelect != null) {
+          ref.read(selectedAddressProvider.notifier).state = addressToSelect;
+        }
+      } else {
+        setState(() {
+          addressError = 'Failed to load addresses: ${response.statusCode}';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        addressError = 'Error fetching addresses: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  void _addNewAddress() async {
+    final userId = ref.watch(userIdProvider);
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddNewAddressScreen(user_id: userId),
+      ),
+    );
+
+    if (result == null) return;
+
+    if (result is Map<String, dynamic> &&
+        result['success'] == true &&
+        result['refresh_addresses'] == true) {
+      await fetchAddresses();
+
+      final add = result["newAddress"];
+      final displayAdd = result["displayAddress"];
+
+      if (add != null && displayAdd != null) {
+        final expectedCardText =
+            '${displayAdd['city'] ?? ''} - ${displayAdd['district']?.districtName ?? ''}';
+
+        final newAddress = addresses.firstWhere(
+          (address) =>
+              address.cardText
+                  .toLowerCase()
+                  .contains(expectedCardText.toLowerCase()) ||
+              (address.cityCode.toString() == add['city'].toString() &&
+                  address.districtCode == add['districtCode']),
+          orElse: () => addresses.last,
+        );
+
+        ref.read(selectedAddressProvider.notifier).state = newAddress;
+
+        setState(() {
+          _selectedAddress = newAddress.addressId;
+          addresses = addresses
+              .map((a) =>
+                  a.copyWith(isSelected: a.addressId == newAddress.addressId))
+              .toList();
+        });
+
+        if (result['message'] != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
     }
   }
@@ -79,7 +177,6 @@ class _AddressSelectionScreenState
         children: [
           Column(
             children: [
-              // Header
               Container(
                 width: double.infinity,
                 height: statusBarHeight + 100,
@@ -96,7 +193,7 @@ class _AddressSelectionScreenState
                   children: [
                     Center(
                       child: Text(
-                       "${selectedProfession?.positionName}",
+                        "${selectedProfession?.positionName}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -115,8 +212,6 @@ class _AddressSelectionScreenState
                   ],
                 ),
               ),
-
-              // Step Info
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -133,29 +228,9 @@ class _AddressSelectionScreenState
                             style: TextStyle(color: Colors.grey.shade600)),
                       ],
                     ),
-                    // Stack(
-                    //   alignment: Alignment.center,
-                    //   children: [
-                    //     SizedBox(
-                    //       height: 40,
-                    //       width: 40,
-                    //       child: CircularProgressIndicator(
-                    //         value: 0.2,
-                    //         strokeWidth: 4,
-                    //         color: Colors.green,
-                    //         backgroundColor: Colors.grey.shade300,
-                    //       ),
-                    //     ),
-                    //     const Text("1 of 5",
-                    //         style: TextStyle(
-                    //             fontSize: 10, fontWeight: FontWeight.bold)),
-                    //   ],
-                    // ),
                   ],
                 ),
               ),
-
-              // Address Selection Step
               Expanded(
                 child: AddressSelectionStep(
                   selectedAddress: selectedAddress,
@@ -163,10 +238,9 @@ class _AddressSelectionScreenState
                   onAddressSelected: (id) {
                     setState(() {
                       _selectedAddress = id;
-                      addresses = addresses.map((address) {
-                        return address.copyWith(
-                            isSelected: address.addressId == id);
-                      }).toList();
+                      addresses = addresses
+                          .map((a) => a.copyWith(isSelected: a.addressId == id))
+                          .toList();
                     });
 
                     final selected =
@@ -184,9 +258,9 @@ class _AddressSelectionScreenState
                     );
                   },
                   price: _doorstepServiceSelected ? 150.0 : 0.0,
-                  isLoading: false,
-                  error: null,
-                  onRetryPressed: null,
+                  isLoading: isLoading,
+                  error: addressError,
+                  onRetryPressed: fetchAddresses,
                 ),
               ),
             ],
@@ -194,42 +268,5 @@ class _AddressSelectionScreenState
         ],
       ),
     );
-  }
-
-  void _addNewAddress() async {
-    final userId = ref.watch(userIdProvider);
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => AddNewAddressScreen(user_id: userId)),
-    );
-    final add = result["newAddress"];
-    final displayAdd = result["displayAddress"];
-
-    if (add != null && add is Map<String, dynamic>) {
-      final newAddress = Address(
-        cardText:
-            '${displayAdd['city'] ?? ''}- ${displayAdd['district'].districtName ?? ''}-${add['fullAddress']} ',
-        addressId: DateTime.now().millisecondsSinceEpoch,
-        cityCode: add['city'],
-        districtCode: add['districtCode'] ?? '',
-      );
-
-      setState(() {
-        addresses =
-            addresses.map((a) => a.copyWith(isSelected: false)).toList();
-        addresses.add(newAddress);
-        _selectedAddress = newAddress.addressId;
-      });
-
-      ref.read(selectedAddressProvider.notifier).state = newAddress;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('New address added successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
   }
 }

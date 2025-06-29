@@ -22,12 +22,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _nationalIdController = TextEditingController();
   late final ProviderSubscription _subscription;
   bool _showPassword = false;
-bool _showConfirmPassword = false;
+  bool _showConfirmPassword = false;
   final nameRegex = RegExp(r'^[a-zA-Z0-9\u0600-\u06FF]+$');
 
-final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
+  final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
+  final numberOnlyRegex = RegExp(r'^\d+$');
   final phoneRegex = RegExp(r'^\+?[0-9\s\-\(\)]{7,15}$');
   @override
   void initState() {
@@ -43,6 +45,7 @@ final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _nationalIdController.dispose();
     super.dispose();
   }
 
@@ -71,7 +74,6 @@ final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
           key: _formKey,
           child: Column(
             children: [
-           
               _buildTextField(
                 controller: _firstNameController,
                 label: loc.firstName,
@@ -112,6 +114,20 @@ final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
               ),
               const SizedBox(height: 10),
               _buildTextField(
+                controller: _nationalIdController,
+                label: "National Id",
+                icon: Icons.person,
+                validator: (val) {
+                  if (val == null || val.isEmpty)
+                    return 'national id is required';
+                  if (!numberOnlyRegex.hasMatch(val))
+                    return 'national id must not contain characters';
+                  if (val.length != 9) return 'national id must be 9 numbers';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
                 controller: _phoneController,
                 label: loc.phoneNumber,
                 icon: Icons.phone,
@@ -139,52 +155,49 @@ final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
               ),
               const SizedBox(height: 10),
               _buildTextField(
-  controller: _passwordController,
-  label: loc.password,
-  icon: Icons.lock,
-  validator: (val) => val != null && val.length >= 6
-      ? null
-      : 'Password must be at least 6 characters',
-  isObscured: !_showPassword,
-  toggleVisibility: () {
-    setState(() {
-      _showPassword = !_showPassword;
-    });
-  },
-),
-
-const SizedBox(height: 10),
-
-_buildTextField(
-  controller: _confirmPasswordController,
-  label: loc.confirmPassword,
-  icon: Icons.lock,
-  validator: (val) => val == _passwordController.text
-      ? null
-      : 'Passwords do not match',
-  isObscured: !_showConfirmPassword,
-  toggleVisibility: () {
-    setState(() {
-      _showConfirmPassword = !_showConfirmPassword;
-    });
-  },
-),
-
-             const SizedBox(height: 20),
+                controller: _passwordController,
+                label: loc.password,
+                icon: Icons.lock,
+                validator: (val) => val != null && val.length >= 6
+                    ? null
+                    : 'Password must be at least 6 characters',
+                isObscured: !_showPassword,
+                toggleVisibility: () {
+                  setState(() {
+                    _showPassword = !_showPassword;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                label: loc.confirmPassword,
+                icon: Icons.lock,
+                validator: (val) => val == _passwordController.text
+                    ? null
+                    : 'Passwords do not match',
+                isObscured: !_showConfirmPassword,
+                toggleVisibility: () {
+                  setState(() {
+                    _showConfirmPassword = !_showConfirmPassword;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: authState.isLoading
                     ? null
                     : () {
                         if (_formKey.currentState!.validate()) {
                           ref.read(authProvider.notifier).signUp(
-                                userName: _phoneController.text,
-                                firstName: _firstNameController.text,
-                                middleName: _middleNameController.text,
-                                lastName: _lastNameController.text,
-                                phoneNumber: _phoneController.text,
-                                email: _emailController.text,
-                                password: _passwordController.text,
-                              );
+                              userName: _phoneController.text,
+                              firstName: _firstNameController.text,
+                              middleName: _middleNameController.text,
+                              lastName: _lastNameController.text,
+                              phoneNumber: _phoneController.text,
+                              email: _emailController.text,
+                              password: _passwordController.text,
+                              nationalId: _nationalIdController.text);
                         }
                       },
                 style: ElevatedButton.styleFrom(
@@ -219,38 +232,37 @@ _buildTextField(
       ),
     );
   }
+
   Widget _buildTextField({
-  required TextEditingController controller,
-  required String label,
-  required IconData icon,
-  bool obscureText = false,
-  TextInputType? keyboardType,
-  String? Function(String?)? validator,
-  VoidCallback? toggleVisibility,
-  bool? isObscured,
-}) {
-  return TextFormField(
-    controller: controller,
-    obscureText: isObscured ?? obscureText,
-    keyboardType: keyboardType,
-    validator: validator,
-    decoration: InputDecoration(
-      labelText: label,
-      border: const OutlineInputBorder(),
-      prefixIcon: Icon(icon),
-      suffixIcon: toggleVisibility != null
-          ? IconButton(
-              icon: Icon(
-                (isObscured ?? obscureText)
-                    ? Icons.visibility_off
-                    : Icons.visibility,
-              ),
-              onPressed: toggleVisibility,
-            )
-          : null,
-    ),
-  );
-}
-
-
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    VoidCallback? toggleVisibility,
+    bool? isObscured,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isObscured ?? obscureText,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        prefixIcon: Icon(icon),
+        suffixIcon: toggleVisibility != null
+            ? IconButton(
+                icon: Icon(
+                  (isObscured ?? obscureText)
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                ),
+                onPressed: toggleVisibility,
+              )
+            : null,
+      ),
+    );
+  }
 }

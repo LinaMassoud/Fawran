@@ -9,71 +9,72 @@ import 'package:intl/intl.dart';
 import '../models/address_model.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://fawran.ddns.net:8080/ords/emdad/fawran';
+  static const String _baseUrl =
+      'http://fawran.ddns.net:8080/ords/emdad/fawran';
   static const String packagesBaseUrl =
       'http://fawran.ddns.net:8080/ords/emdad/fawran/service/packages';
   static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   // Sign up API
   Future<Map<String, dynamic>?> signUp({
-  required String userName,
-  required String firstName,
-  required String middleName,
-  required String lastName,
-  required String phoneNumber,
-  required String email,
-  required String password,
-}) async {
-  final url = Uri.parse('$_baseUrl/signup');
+    required String userName,
+    required String firstName,
+    required String middleName,
+    required String lastName,
+    required String phoneNumber,
+    required String email,
+    required String password,
+    required String nationalId,
+  }) async {
+    final url = Uri.parse('$_baseUrl/signup');
 
-  print('🔐 [SIGNUP] Starting sign-up process...');
-  print('📤 [SIGNUP] POST to: $url');
-  print('📤 [SIGNUP] Request payload: ${{
-    'username': userName,
-    'first_name': firstName,
-    'middle_name': middleName,
-    'last_name': lastName,
-    'phone_number': phoneNumber,
-    'email': email,
-    'password': '***'  // Mask password for security
-  }}');
+    print('🔐 [SIGNUP] Starting sign-up process...');
+    print('📤 [SIGNUP] POST to: $url');
+    print('📤 [SIGNUP] Request payload: ${{
+      'username': userName,
+      'first_name': firstName,
+      'middle_name': middleName,
+      'last_name': lastName,
+      'phone_number': phoneNumber,
+      'email': email,
+      'password': '***', // Mask password for security
+    }}');
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'username': userName,
-        'first_name': firstName,
-        'middle_name': middleName,
-        'last_name': lastName,
-        'phone_number': phoneNumber,
-        'email': email,
-        'password': password,
-      }),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'username': userName,
+          'first_name': firstName,
+          'middle_name': middleName,
+          'last_name': lastName,
+          'phone_number': phoneNumber,
+          'email': email,
+          'password': password,
+          'id_number': nationalId
+        }),
+      );
 
-    print('📬 [SIGNUP] Response status: ${response.statusCode}');
-    print('📬 [SIGNUP] Response body: ${response.body}');
+      print('📬 [SIGNUP] Response status: ${response.statusCode}');
+      print('📬 [SIGNUP] Response body: ${response.body}');
 
-    if (response.statusCode == 200) {
-      final result = safeJsonDecode(response.body);
-      print('✅ [SIGNUP] Parsed result: $result');
-      return result;
-    } else if(response.statusCode == 409){ 
-       final result = safeJsonDecode(response.body);
-      print('✅ [SIGNUP] Parsed result: $result');
-      return result;
-    }
-    else{
+      if (response.statusCode == 200) {
+        final result = safeJsonDecode(response.body);
+        print('✅ [SIGNUP] Parsed result: $result');
+        return result;
+      } else if (response.statusCode == 409) {
+        final result = safeJsonDecode(response.body);
+        print('✅ [SIGNUP] Parsed result: $result');
+        return result;
+      } else {
+        return null;
+      }
+    } catch (ex) {
+      print('🧨 [SIGNUP] Exception occurred: $ex');
       return null;
     }
-  } catch (ex) {
-    print('🧨 [SIGNUP] Exception occurred: $ex');
-    return null;
   }
-}
-
 
   // Login API
   Future<Map<String, dynamic>?> login({
@@ -163,60 +164,61 @@ class ApiService {
     }
   }
 
+  static Future<List<dynamic>> fetchCustomerAddresses(
+      {required int userId}) async {
+    try {
+      final url = '$_baseUrl/customer_addresses/$userId';
 
+      print(
+          '🔍 [fetchCustomerAddresses] Fetching addresses for userId: $userId');
+      print('🌐 [fetchCustomerAddresses] URL: $url');
 
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
 
+      print(
+          '📡 [fetchCustomerAddresses] Response status: ${response.statusCode}');
 
-static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async {
-  try {
-    final url = '$_baseUrl/customer_addresses/$userId';
-    
-    print('🔍 [fetchCustomerAddresses] Fetching addresses for userId: $userId');
-    print('🌐 [fetchCustomerAddresses] URL: $url');
-    
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
-    
-    print('📡 [fetchCustomerAddresses] Response status: ${response.statusCode}');
-    
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      print('✅ [fetchCustomerAddresses] Successfully fetched ${data.length} addresses');
-      return data;
-    } else {
-      print('❌ [fetchCustomerAddresses] Failed with status: ${response.statusCode}');
-      print('❌ [fetchCustomerAddresses] Response body: ${response.body}');
-      throw Exception('Failed to load addresses. Status code: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print(
+            '✅ [fetchCustomerAddresses] Successfully fetched ${data.length} addresses');
+        return data;
+      } else {
+        print(
+            '❌ [fetchCustomerAddresses] Failed with status: ${response.statusCode}');
+        print('❌ [fetchCustomerAddresses] Response body: ${response.body}');
+        throw Exception(
+            'Failed to load addresses. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('💥 [fetchCustomerAddresses] Error: $e');
+      throw Exception('Error loading addresses: $e');
     }
-  } catch (e) {
-    print('💥 [fetchCustomerAddresses] Error: $e');
-    throw Exception('Error loading addresses: $e');
   }
-}
-
-
 
   static Future<List<dynamic>> fetchProfessionsHourly() async {
-  try {
-    final url = '$_baseUrl/home/professions';
+    try {
+      final url = '$_baseUrl/home/professions';
 
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
-    
-    if (response.statusCode == 200) {
-      final decodedData = json.decode(response.body);
-      return decodedData;
-    } else {
-      throw Exception('Failed to load professions. Status code: ${response.statusCode}');
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception(
+            'Failed to load professions. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading professions: $e');
     }
-  } catch (e) {
-    throw Exception('Error loading professions: $e');
   }
-}
 
   static Future<List<PackageModel>> fetchServicePackages({
     required int professionId,
@@ -226,9 +228,9 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
       final url = '$_baseUrl/service_packages/$professionId/$serviceId';
 
       final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+        method: 'GET',
+        url: url,
+      );
 
       if (response.statusCode == 200) {
         String jsonString = response.body;
@@ -287,9 +289,9 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
       final url = '$_baseUrl/country_groups/$serviceId';
 
       final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+        method: 'GET',
+        url: url,
+      );
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
@@ -303,21 +305,15 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
     }
   }
 
-
-
-
-
-
-
   static Future<List<dynamic>> fetchServices(
       {required int professionId}) async {
     try {
       final url = '$_baseUrl/home/professions';
 
       final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+        method: 'GET',
+        url: url,
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -341,8 +337,7 @@ static Future<List<dynamic>> fetchCustomerAddresses({required int userId}) async
     }
   }
 
-
-static Future<List<City>> fetchCities(int serviceId) async {
+  static Future<List<City>> fetchCities(int serviceId) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/service_cities/$serviceId'),
@@ -362,9 +357,7 @@ static Future<List<City>> fetchCities(int serviceId) async {
     }
   }
 
-
-
-static Future<List<District>> fetchDistricts(int cityCode) async {
+  static Future<List<District>> fetchDistricts(int cityCode) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/districts/$cityCode'),
@@ -385,8 +378,8 @@ static Future<List<District>> fetchDistricts(int cityCode) async {
     }
   }
 
-
-static Future<DistrictMapResponse> fetchDistrictMapData(String districtCode) async {
+  static Future<DistrictMapResponse> fetchDistrictMapData(
+      String districtCode) async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/districts/info/$districtCode'),
@@ -405,199 +398,199 @@ static Future<DistrictMapResponse> fetchDistrictMapData(String districtCode) asy
     }
   }
 
+  static Future<bool> refreshToken() async {
+    try {
+      final refreshToken = await _secureStorage.read(key: 'refresh_token');
 
-
-static Future<bool> refreshToken() async {
-  try {
-    final refreshToken = await _secureStorage.read(key: 'refresh_token');
-    
-    if (refreshToken == null) {
-      print('❌ [REFRESH_TOKEN] No refresh token found');
-      return false;
-    }
-
-    print('🔄 [REFRESH_TOKEN] Attempting to refresh token...');
-    
-    final url = Uri.parse('$_baseUrl/refresh-token');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'refresh_token': refreshToken,
-      }),
-    );
-
-    print('📡 [REFRESH_TOKEN] Response status: ${response.statusCode}');
-    print('📡 [REFRESH_TOKEN] Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      
-      // Save new tokens
-      await _secureStorage.write(key: 'token', value: responseData['token']);
-      await _secureStorage.write(key: 'refresh_token', value: responseData['refresh_token']);
-      
-      print('✅ [REFRESH_TOKEN] Token refreshed successfully');
-      return true;
-    } else {
-      print('❌ [REFRESH_TOKEN] Failed to refresh token: ${response.statusCode}');
-      return false;
-    }
-  } catch (e) {
-    print('💥 [REFRESH_TOKEN] Error refreshing token: $e');
-    return false;
-  }
-}
-
-// Enhanced HTTP request method with automatic token refresh
-static Future<http.Response> makeAuthenticatedRequest({
-  required String method,
-  required String url,
-  Map<String, String>? headers,
-  String? body,
-  int retryCount = 0,
-}) async {
-  final token = await _secureStorage.read(key: 'token');
-  
-  final requestHeaders = {
-    'Content-Type': 'application/json',
-    if (token != null) 'token': token,
-    ...?headers,
-  };
-
-  http.Response response;
-  
-  switch (method.toUpperCase()) {
-    case 'GET':
-      response = await http.get(Uri.parse(url), headers: requestHeaders);
-      break;
-    case 'POST':
-      response = await http.post(Uri.parse(url), headers: requestHeaders, body: body);
-      break;
-    case 'PUT':
-      response = await http.put(Uri.parse(url), headers: requestHeaders, body: body);
-      break;
-    case 'DELETE':
-      response = await http.delete(Uri.parse(url), headers: requestHeaders);
-      break;
-    default:
-      throw Exception('Unsupported HTTP method: $method');
-  }
-
-  // If we get a 401 (unauthorized) and haven't already retried
-  if (response.statusCode == 401 && retryCount == 0) {
-    print('🔄 [AUTH_REQUEST] Received 401, attempting token refresh...');
-    
-    final refreshSuccess = await refreshToken();
-    if (refreshSuccess) {
-      print('✅ [AUTH_REQUEST] Token refreshed, retrying original request...');
-      // Retry the original request with the new token
-      return makeAuthenticatedRequest(
-        method: method,
-        url: url,
-        headers: headers,
-        body: body,
-        retryCount: 1, // Prevent infinite retry loop
-      );
-    } else {
-      print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
-      // Clear all stored tokens if refresh fails
-      await _secureStorage.deleteAll();
-    }
-  }
-
-  return response;
-}
-
-
-
-static Future<Map<String, dynamic>> createAddress({
-  required String buildingName,
-  required int buildingNumber,
-  required String cityCode,
-  required String districtId,
-  required int houseType,
-  required int createdBy,
-  required int customerId,
-  required String mapUrl,
-  required double latitude,
-  required double longitude,
-  int? apartmentNumber,
-  int? floorNumber,
-}) async {
-  try {
-    // Prepare request body
-    Map<String, dynamic> requestBody = {
-      'building_name': buildingName,
-      'building_number': buildingNumber,
-      'city_code': cityCode,
-      'district_id': districtId,
-      'house_type': houseType,
-      'created_by': createdBy,
-      'customer_id': customerId,
-      'map_url': mapUrl,
-      'latitude': latitude,
-      'longitude': longitude,
-    };
-
-    // Add apartment-specific fields only if house type is Apartment (2)
-    if (houseType == 2) {
-      requestBody['apartment_number'] = apartmentNumber ?? 0;
-      requestBody['floor_number'] = floorNumber ?? 0;
-    }
-
-    print('Sending POST request with body: ${json.encode(requestBody)}');
-
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: '$_baseUrl/customer_addresses',
-      headers: {'Accept': 'application/json'},
-      body: json.encode(requestBody),
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return {
-        'success': true,
-        'data': json.decode(response.body),
-        'message': 'Address created successfully!'
-      };
-    } else {
-      // Handle error responses
-      String errorMessage = 'Failed to create address. Please try again.';
-
-      // Check if response is HTML (like the 555 error)
-      if (response.body.contains('<!DOCTYPE html>') ||
-          response.body.contains('<html>')) {
-        errorMessage =
-            'Server error occurred. Please check your network connection and try again.';
-      } else {
-        try {
-          final errorData = json.decode(response.body);
-          errorMessage = errorData['message'] ?? errorMessage;
-        } catch (e) {
-          // Keep default error message
-        }
+      if (refreshToken == null) {
+        print('❌ [REFRESH_TOKEN] No refresh token found');
+        return false;
       }
 
-      print('API Error: ${response.statusCode} - ${response.body}');
+      print('🔄 [REFRESH_TOKEN] Attempting to refresh token...');
+
+      final url = Uri.parse('$_baseUrl/refresh-token');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'refresh_token': refreshToken,
+        }),
+      );
+
+      print('📡 [REFRESH_TOKEN] Response status: ${response.statusCode}');
+      print('📡 [REFRESH_TOKEN] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        // Save new tokens
+        await _secureStorage.write(key: 'token', value: responseData['token']);
+        await _secureStorage.write(
+            key: 'refresh_token', value: responseData['refresh_token']);
+
+        print('✅ [REFRESH_TOKEN] Token refreshed successfully');
+        return true;
+      } else {
+        print(
+            '❌ [REFRESH_TOKEN] Failed to refresh token: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('💥 [REFRESH_TOKEN] Error refreshing token: $e');
+      return false;
+    }
+  }
+
+// Enhanced HTTP request method with automatic token refresh
+  static Future<http.Response> makeAuthenticatedRequest({
+    required String method,
+    required String url,
+    Map<String, String>? headers,
+    String? body,
+    int retryCount = 0,
+  }) async {
+    final token = await _secureStorage.read(key: 'token');
+
+    final requestHeaders = {
+      'Content-Type': 'application/json',
+      if (token != null) 'token': token,
+      ...?headers,
+    };
+
+    http.Response response;
+
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = await http.get(Uri.parse(url), headers: requestHeaders);
+        break;
+      case 'POST':
+        response = await http.post(Uri.parse(url),
+            headers: requestHeaders, body: body);
+        break;
+      case 'PUT':
+        response =
+            await http.put(Uri.parse(url), headers: requestHeaders, body: body);
+        break;
+      case 'DELETE':
+        response = await http.delete(Uri.parse(url), headers: requestHeaders);
+        break;
+      default:
+        throw Exception('Unsupported HTTP method: $method');
+    }
+
+    // If we get a 401 (unauthorized) and haven't already retried
+    if (response.statusCode == 401 && retryCount == 0) {
+      print('🔄 [AUTH_REQUEST] Received 401, attempting token refresh...');
+
+      final refreshSuccess = await refreshToken();
+      if (refreshSuccess) {
+        print('✅ [AUTH_REQUEST] Token refreshed, retrying original request...');
+        // Retry the original request with the new token
+        return makeAuthenticatedRequest(
+          method: method,
+          url: url,
+          headers: headers,
+          body: body,
+          retryCount: 1, // Prevent infinite retry loop
+        );
+      } else {
+        print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
+        // Clear all stored tokens if refresh fails
+        await _secureStorage.deleteAll();
+      }
+    }
+
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> createAddress({
+    required String buildingName,
+    required int buildingNumber,
+    required String cityCode,
+    required String districtId,
+    required int houseType,
+    required int createdBy,
+    required int customerId,
+    required String mapUrl,
+    required double latitude,
+    required double longitude,
+    int? apartmentNumber,
+    int? floorNumber,
+  }) async {
+    try {
+      // Prepare request body
+      Map<String, dynamic> requestBody = {
+        'building_name': buildingName,
+        'building_number': buildingNumber,
+        'city_code': cityCode,
+        'district_id': districtId,
+        'house_type': houseType,
+        'created_by': createdBy,
+        'customer_id': customerId,
+        'map_url': mapUrl,
+        'latitude': latitude,
+        'longitude': longitude,
+      };
+
+      // Add apartment-specific fields only if house type is Apartment (2)
+      if (houseType == 2) {
+        requestBody['apartment_number'] = apartmentNumber ?? 0;
+        requestBody['floor_number'] = floorNumber ?? 0;
+      }
+
+      print('Sending POST request with body: ${json.encode(requestBody)}');
+
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: '$_baseUrl/customer_addresses',
+        headers: {'Accept': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'data': json.decode(response.body),
+          'message': 'Address created successfully!'
+        };
+      } else {
+        // Handle error responses
+        String errorMessage = 'Failed to create address. Please try again.';
+
+        // Check if response is HTML (like the 555 error)
+        if (response.body.contains('<!DOCTYPE html>') ||
+            response.body.contains('<html>')) {
+          errorMessage =
+              'Server error occurred. Please check your network connection and try again.';
+        } else {
+          try {
+            final errorData = json.decode(response.body);
+            errorMessage = errorData['message'] ?? errorMessage;
+          } catch (e) {
+            // Keep default error message
+          }
+        }
+
+        print('API Error: ${response.statusCode} - ${response.body}');
+        return {
+          'success': false,
+          'message': '$errorMessage (${response.statusCode})',
+          'statusCode': response.statusCode
+        };
+      }
+    } catch (e) {
+      print('Exception creating address: $e');
       return {
         'success': false,
-        'message': '$errorMessage (${response.statusCode})',
-        'statusCode': response.statusCode
+        'message': 'Network error. Please check your connection and try again.',
+        'error': e.toString()
       };
     }
-  } catch (e) {
-    print('Exception creating address: $e');
-    return {
-      'success': false,
-      'message': 'Network error. Please check your connection and try again.',
-      'error': e.toString()
-    };
   }
-}
 
   // Fetch service shifts by service ID
   static Future<List<dynamic>> fetchServiceShifts(
@@ -606,9 +599,9 @@ static Future<Map<String, dynamic>> createAddress({
       final url = '$_baseUrl/service_shifts/$serviceId';
 
       final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+        method: 'GET',
+        url: url,
+      );
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
@@ -665,89 +658,93 @@ static Future<Map<String, dynamic>> createAddress({
   }
 
   static Future<Map<String, dynamic>?> calculatePackagePrice({
-  required int serviceId,
-  required int duration,
-  required String groupCode,
-  required int numberOfWeeks,
-  required int numberOfVisits,
-  required int shiftId,
-  required int numberOfWorkers,
-}) async {
-  try {
-    final url = '$_baseUrl/calculate-package-price';
-    
-    final requestBody = json.encode({
-      'service_id': serviceId,
-      'duration': duration,
-      'group_code': groupCode,
-      'number_of_weeks': numberOfWeeks,
-      'number_of_visits': numberOfVisits,
-      'shift_id': shiftId,
-      'number_of_workers': numberOfWorkers,
-    });
+    required int serviceId,
+    required int duration,
+    required String groupCode,
+    required int numberOfWeeks,
+    required int numberOfVisits,
+    required int shiftId,
+    required int numberOfWorkers,
+  }) async {
+    try {
+      final url = '$_baseUrl/calculate-package-price';
 
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: url,
-      body: requestBody,
-    );
+      final requestBody = json.encode({
+        'service_id': serviceId,
+        'duration': duration,
+        'group_code': groupCode,
+        'number_of_weeks': numberOfWeeks,
+        'number_of_visits': numberOfVisits,
+        'shift_id': shiftId,
+        'number_of_workers': numberOfWorkers,
+      });
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to calculate price. Status code: ${response.statusCode}');
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: url,
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception(
+            'Failed to calculate price. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error calculating package price: $e');
     }
-  } catch (e) {
-    throw Exception('Error calculating package price: $e');
   }
-}
-
 
   static Future<Map<String, dynamic>?> validateWorkersHourly({
-  required int positionId,
-  required String nationalityId,
-  required int numWorkers,
-  required DateTime startDate,
-  required DateTime endDate,
-}) async {
-  print('🔍 [validateWorkersHourly] Starting validation...');
-  // ... existing print statements ...
-  
-  try {
-    final url = '$_baseUrl/validate-workers';
-    
-    final requestBody = {
-      "position_id": positionId,
-      "sector_type": "H",
-      "nationality_group": nationalityId,
-      "num_workers": numWorkers,
-      "start_date": DateFormat('MM-dd-yyyy').format(startDate),
-      "end_date": DateFormat('MM-dd-yyyy').format(endDate),
-    };
-    
-    print('📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
-    
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: url,
-      body: json.encode(requestBody),
-    ).timeout(Duration(seconds: 30));
-    
-    print('📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
-    
-    if (response.statusCode == 200) {
-      print('✅ [validateWorkersHourly] Request successful');
-      final responseData = json.decode(response.body);
-      return responseData as Map<String, dynamic>?;
-    } else {
-      print('❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
-      throw Exception('Failed to validate workers. Status code: ${response.statusCode}');
+    required int positionId,
+    required String nationalityId,
+    required int numWorkers,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    print('🔍 [validateWorkersHourly] Starting validation...');
+    // ... existing print statements ...
+
+    try {
+      final url = '$_baseUrl/validate-workers';
+
+      final requestBody = {
+        "position_id": positionId,
+        "sector_type": "H",
+        "nationality_group": nationalityId,
+        "num_workers": numWorkers,
+        "start_date": DateFormat('MM-dd-yyyy').format(startDate),
+        "end_date": DateFormat('MM-dd-yyyy').format(endDate),
+      };
+
+      print(
+          '📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
+
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: url,
+        body: json.encode(requestBody),
+      ).timeout(Duration(seconds: 30));
+
+      print(
+          '📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        print('✅ [validateWorkersHourly] Request successful');
+        final responseData = json.decode(response.body);
+        return responseData as Map<String, dynamic>?;
+      } else {
+        print(
+            '❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
+        throw Exception(
+            'Failed to validate workers. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('💥 [validateWorkersHourly] Error: $e');
+      throw Exception('Error validating workers: $e');
     }
-  } catch (e) {
-    print('💥 [validateWorkersHourly] Error: $e');
-    throw Exception('Error validating workers: $e');
   }
-}
 
   static Future<List<PackageModel>> fetchEastAsiaPackages({
     required int professionId,
@@ -818,47 +815,49 @@ static Future<Map<String, dynamic>> createAddress({
   }
 
   Future<List<ProfessionModel>> fetchProfessions() async {
-  try {
-    final url = '$_baseUrl/home/professions';
-    
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+    try {
+      final url = '$_baseUrl/home/professions';
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => ProfessionModel.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to fetch professions. Status code: ${response.statusCode}');
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => ProfessionModel.fromJson(json)).toList();
+      } else {
+        throw Exception(
+            'Failed to fetch professions. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching professions: $e');
     }
-  } catch (e) {
-    throw Exception('Error fetching professions: $e');
   }
-}
 
   Future<List<dynamic>> fetchNationalities({
-  required int professionId,
-  required String cityCode,
-}) async {
-  try {
-    final url = '$_baseUrl/nationalities/$professionId/$cityCode';
-    
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+    required int professionId,
+    required String cityCode,
+  }) async {
+    try {
+      final url = '$_baseUrl/nationalities/$professionId/$cityCode';
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data;
-    } else {
-      throw Exception('Failed to fetch nationalities. Status code: ${response.statusCode}');
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data;
+      } else {
+        throw Exception(
+            'Failed to fetch nationalities. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching nationalities: $e');
     }
-  } catch (e) {
-    throw Exception('Error fetching nationalities: $e');
   }
-}
 }
 
 Map<String, dynamic>? safeJsonDecode(String jsonString) {
@@ -878,6 +877,3 @@ Map<String, dynamic>? safeJsonDecode(String jsonString) {
     }
   }
 }
-
-
-

@@ -73,8 +73,7 @@ class HomeScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
     );
-    return 
-    Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
 
       // Fixed Header
@@ -150,8 +149,7 @@ class HomeScreen extends ConsumerWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => ServiceChoicePage(
-                                      )),
+                                  builder: (context) => ServiceChoicePage()),
                             );
                           } else {
                             Navigator.push(
@@ -239,63 +237,6 @@ class HomeScreen extends ConsumerWidget {
             SizedBox(height: 20),
 
             // New Horizontal Slider with Title "الخدمات الاكثر طلبا"
-            Text(
-              loc.top_requested,
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black),
-            ),
-            SizedBox(height: 10),
-            SizedBox(
-              height: 160, // taller to fit bigger image
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: imagePaths.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 160,
-                    margin: EdgeInsets.only(right: 12),
-                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.accents[index % Colors.accents.length]
-                          .withOpacity(0.85),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          services[index],
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 12),
-                        Image.asset(
-                          imagePaths[index],
-                          height: 80, // Bigger image
-                          width: 80,
-                          fit: BoxFit.contain,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
             SizedBox(height: 20),
             Text(
               loc.saving_packages,
