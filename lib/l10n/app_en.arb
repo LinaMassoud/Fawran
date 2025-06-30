@@ -31,11 +31,10 @@
 
   "fetching_location" : "fetching your location...",
   "currentLocation" : "📍 currentLocation:",
-   "offer":  "Save up to 15%\nwhen you order now",
-     "requiredField":"This field is required"   
-
-
-
-
+  "offer":  "Save up to 15% \n when you order now",
+  "requiredField":"This field is required",
+ "housemaidoffer":"House Maid \n 7 days",
+  "privateDriver":"Private Driver \n 7 days",
+  "tenpercent":" %10 OFF"
 
 }

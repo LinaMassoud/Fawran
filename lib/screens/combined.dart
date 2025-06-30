@@ -193,7 +193,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                         _packageDetailRow("VAT Amount",
                             "${pkg.vatAmount.toStringAsFixed(2)} Riyal"),
                         _packageDetailRow("Package Price",
-                            "${(pkg.finalInvoice + pkg.vatAmount).toString()} Riyal"),
+                            "${(pkg.contractAmount + pkg.vatAmount).toString()} Riyal"),
                       ],
                     ),
                   ),
