@@ -5,12 +5,9 @@ import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/serviceChoice.dart';
-import 'package:fawran/screens/serviceScreen.dart';
 import 'package:flutter/material.dart';
-import 'package:fawran/l10n/app_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/package_model.dart';
-import 'package:fawran/Fawran4Hours/fawran_services_display.dart';
 
 class HomeScreen extends ConsumerWidget {
   @override
@@ -281,8 +278,9 @@ class HomeScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                'خدمة السائق الخاص\n7 أيام',
+                          Text(
+                                loc.privateDriver,
+
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -291,7 +289,7 @@ class HomeScreen extends ConsumerWidget {
                               ),
                               SizedBox(height: 6),
                               Text(
-                                'خصم %10',
+                                loc.tenpercent,
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 13,
@@ -335,7 +333,7 @@ class HomeScreen extends ConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'عقد عاملة منزلية\n3 شهور',
+                                loc.housemaidoffer,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -344,7 +342,7 @@ class HomeScreen extends ConsumerWidget {
                               ),
                               SizedBox(height: 6),
                               Text(
-                                'خصم %10',
+                                loc.tenpercent,
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 13,
