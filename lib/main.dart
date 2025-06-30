@@ -3,6 +3,7 @@ import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
 import 'package:fawran/screens/AuthCheckingScreen.dart';
 import 'package:fawran/screens/bookings.dart';
 import 'package:fawran/screens/home_screen.dart';
+import 'package:fawran/screens/launchScreen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/select_address.dart';
@@ -46,7 +47,7 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
-      home: const LoginScreen(),
+      home: const LaunchScreen(),
       routes: {
         // '/login' key routes to LoginScreen widget
         '/login': (context) => const LoginScreen(),

@@ -954,7 +954,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   Widget _buildTextField(String hint, TextEditingController controller,
-      {int maxLines = 1, bool enabled = true}) {
+      {int maxLines = 1, bool enabled = true, int? maxLength}) {
     return Container(
       width: double.infinity,
       padding:
@@ -968,6 +968,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
         controller: controller,
         maxLines: maxLines,
         enabled: enabled,
+        maxLength: maxLength,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
@@ -1095,7 +1096,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     SizedBox(height: 8),
                     _buildTextField('Please give the address a name',
                         _addressTitleController,
-                        enabled: _canProceedToDetails),
+                        enabled: _canProceedToDetails,maxLength: 50),
 
                     SizedBox(height: 20),
 
@@ -1133,7 +1134,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                               SizedBox(height: 8),
                               _buildTextField(
                                   'Street name', _streetNameController,
-                                  enabled: _canProceedToDetails),
+                                  enabled: _canProceedToDetails,maxLength: 50),
                             ],
                           ),
                         ),
@@ -1160,6 +1161,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                                       ? 'House Number'
                                       : 'Building Number',
                                   _houseNumberController,
+                                  maxLength: 10,
                                   enabled: _canProceedToDetails),
                             ],
                           ),
@@ -1210,7 +1212,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                                 SizedBox(height: 8),
                                 _buildTextField('Apartment Number',
                                     _apartmentNumberController,
-                                    enabled: _canProceedToDetails),
+                                    enabled: _canProceedToDetails,maxLength: 10),
                               ],
                             ),
                           ),
@@ -1232,7 +1234,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     ),
                     SizedBox(height: 8),
                     _buildTextField('Full Address', _fullAddressController,
-                        maxLines: 3, enabled: _canProceedToDetails),
+                        maxLines: 3, enabled: _canProceedToDetails,maxLength: 100),
 
                     SizedBox(height: 20),
 
@@ -1249,7 +1251,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     SizedBox(height: 8),
                     _buildTextField(
                         'Unit Number, Entrance code etc..', _notesController,
-                        maxLines: 2, enabled: _canProceedToDetails),
+                        maxLines: 2, enabled: _canProceedToDetails,maxLength: 100),
                   ],
                 ),
               ),
