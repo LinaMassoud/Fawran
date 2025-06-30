@@ -171,7 +171,7 @@ class _ContinuousBookingOverlayState
   }
 
   // Fetch addresses from API
-  Future<void> _fetchAddresses() async {
+Future<void> _fetchAddresses() async {
   try {
     // Store the currently selected address info before refreshing
     final currentSelectedAddress = ref.read(selectedAddressProvider);
@@ -182,12 +182,12 @@ class _ContinuousBookingOverlayState
       isLoadingAddresses = true;
       addressError = null;
     });
-
+ 
     // Get userId from the provider
     final userId = ref.read(userIdProvider);
-
+ 
     print('userId in _fetchAddresses = $userId');
-
+ 
     // Check if userId is available
     if (userId == null) {
       setState(() {
@@ -196,10 +196,10 @@ class _ContinuousBookingOverlayState
       });
       return;
     }
-
+ 
     // Use the API service method
     final data = await ApiService.fetchCustomerAddresses(userId: userId);
-
+ 
     setState(() {
       addresses = data.map((addressData) {
         return Address(
@@ -209,23 +209,28 @@ class _ContinuousBookingOverlayState
           districtCode: addressData['district_code']?.toString() ?? '',
         );
       }).toList();
-
+ 
       // Try to restore the previously selected address
       Address? addressToSelect;
       
-      if (currentSelectedAddress != null) {
+      if (currentSelectedAddress != null && addresses.isNotEmpty) {
         // First try to match by address ID
-        addressToSelect = addresses.firstWhere(
-          (address) => address.addressId == currentSelectedAddressId,
-
-        );
-        
-        // If not found by ID, try to match by card text
-        if (addressToSelect == null && currentSelectedCardText != null) {
+        try {
           addressToSelect = addresses.firstWhere(
-            (address) => address.cardText.toLowerCase() == currentSelectedCardText!.toLowerCase(),
-
+            (address) => address.addressId == currentSelectedAddressId,
           );
+        } catch (e) {
+          // If not found by ID, try to match by card text
+          if (currentSelectedCardText != null) {
+            try {
+              addressToSelect = addresses.firstWhere(
+                (address) => address.cardText.toLowerCase() == currentSelectedCardText!.toLowerCase(),
+              );
+            } catch (e) {
+              // If still not found, addressToSelect remains null
+              print('Previous address not found in new user\'s addresses');
+            }
+          }
         }
       }
       
@@ -237,8 +242,11 @@ class _ContinuousBookingOverlayState
       // Update the provider with the selected address
       if (addressToSelect != null) {
         ref.read(selectedAddressProvider.notifier).state = addressToSelect;
+      } else {
+        // Clear the selected address if no addresses are available
+        ref.read(selectedAddressProvider.notifier).state = null;
       }
-
+ 
       isLoadingAddresses = false;
     });
   } catch (e) {
@@ -248,7 +256,6 @@ class _ContinuousBookingOverlayState
     });
   }
 }
-
   String _extractLocationName(String? cardText) {
     if (cardText == null || cardText.isEmpty) {
       return 'Address';

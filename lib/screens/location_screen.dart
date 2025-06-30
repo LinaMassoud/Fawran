@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fawran/l10n/app_localizations.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/home_screen.dart';
@@ -158,12 +160,32 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),
       );
-    } catch (e) {
-      print("Location error: $e");
-      if (!mounted) return;
-      locationState.state = "حدث خطأ أثناء جلب الموقع: $e";
-      setState(() => isLoading = false);
-    }
+   } catch (e, stackTrace) {
+  print("Location error: $e");
+  print("Stack trace: $stackTrace");
+
+  if (!mounted) return;
+
+  String errorMessage;
+
+  if (e is TimeoutException) {
+    errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
+  } else if (e is PermissionDeniedException || e.toString().contains("PERMISSION_DENIED")) {
+    errorMessage = "صلاحية الموقع مرفوضة. يرجى التحقق من إعدادات التطبيق.";
+  } else if (e.toString().contains("LocationServiceDisabledException")) {
+    errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من إعدادات الجهاز.";
+  } else {
+    errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.";
+  }
+
+  locationState.state = errorMessage;
+
+  setState(() {
+    isLoading = false;
+    showLocation = false;
+  });
+}
+
   }
 
   @override
