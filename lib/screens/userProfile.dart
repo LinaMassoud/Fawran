@@ -22,7 +22,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   TextEditingController _middleNameController = TextEditingController();
   TextEditingController _lastNameController = TextEditingController();
   String phoneNumber = '';
-  String userName = '';
+  String userID = '';
 
   @override
   void initState() {
@@ -35,7 +35,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     _middleNameController.text = await _storage.read(key: 'middle_name') ?? '';
     _lastNameController.text = await _storage.read(key: 'last_name') ?? '';
     phoneNumber = await _storage.read(key: 'phone_number') ?? '';
-    userName = await _storage.read(key: 'username') ?? '';
+    userID = await _storage.read(key: 'user_id') ?? '';
     setState(() {});
   }
 
@@ -49,7 +49,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         'token': token ?? '',
       },
       body: json.encode({
-        'username': userName,
+        'user_id': userID,
         'first_name': _firstNameController.text,
         'middle_name': _middleNameController.text,
         'last_name': _lastNameController.text,
