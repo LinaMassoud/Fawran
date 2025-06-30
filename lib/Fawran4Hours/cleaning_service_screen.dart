@@ -1398,9 +1398,25 @@ Widget _buildDetailRow(String label, String value) {
       );
     }
 
+    // Helper function to get delivery time based on shift name
+    String _getDeliveryTime(String shiftName) {
+      final lowerShiftName = shiftName.toLowerCase();
+      if (lowerShiftName.contains('morning')) {
+        return '7:30-10:00 AM';
+      } else if (lowerShiftName.contains('evening')) {
+        return '3:30-6:00 PM';
+      } else if (lowerShiftName.contains('full day') || lowerShiftName.contains('fullday')) {
+        return '7:30 AM-10:00 PM';
+      }
+      return ''; // Default case if shift type is not recognized
+    }
+
     // If only one shift available, show it as a static display
     if (availableShifts.length == 1) {
       final shift = availableShifts.first;
+      final shiftName = shift['service_shifts'];
+      final deliveryTime = _getDeliveryTime(shiftName);
+      
       return Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 12),
@@ -1415,33 +1431,43 @@ Widget _buildDetailRow(String label, String value) {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              shift['service_shifts']
-                      .toString()
-                      .toLowerCase()
-                      .contains('morning')
-                  ? Icons.wb_sunny
-                  : Icons.nightlight_round,
-              color: shift['service_shifts']
-                      .toString()
-                      .toLowerCase()
-                      .contains('morning')
-                  ? Colors.orange
-                  : Colors.indigo,
-              size: 20,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  shiftName.toString().toLowerCase().contains('morning')
+                      ? Icons.wb_sunny
+                      : Icons.nightlight_round,
+                  color: shiftName.toString().toLowerCase().contains('morning')
+                      ? Colors.orange
+                      : Colors.indigo,
+                  size: 20,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  shiftName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 6),
-            Text(
-              shift['service_shifts'],
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+            if (deliveryTime.isNotEmpty) ...[
+              SizedBox(height: 4),
+              Text(
+                deliveryTime,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       );
@@ -1464,6 +1490,7 @@ Widget _buildDetailRow(String label, String value) {
           final shiftId = shift['id'];
           final shiftName = shift['service_shifts'];
           final isSelected = selectedShift == shiftId;
+          final deliveryTime = _getDeliveryTime(shiftName);
 
           return Expanded(
             child: GestureDetector(
@@ -1483,32 +1510,53 @@ Widget _buildDetailRow(String label, String value) {
                         ]
                       : null,
                 ),
-                child: Row(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      shiftName.toString().toLowerCase().contains('morning')
-                          ? Icons.wb_sunny
-                          : Icons.nightlight_round,
-                      color: isSelected
-                          ? (shiftName
-                                  .toString()
-                                  .toLowerCase()
-                                  .contains('morning')
-                              ? Colors.orange
-                              : Colors.indigo)
-                          : Colors.grey,
-                      size: 20,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          shiftName.toString().toLowerCase().contains('morning')
+                              ? Icons.wb_sunny
+                              : Icons.nightlight_round,
+                          color: isSelected
+                              ? (shiftName
+                                      .toString()
+                                      .toLowerCase()
+                                      .contains('morning')
+                                  ? Colors.orange
+                                  : Colors.indigo)
+                              : Colors.grey,
+                          size: 20,
+                        ),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            shiftName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? Colors.black : Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 6),
-                    Text(
-                      shiftName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.black : Colors.grey[600],
+                    if (deliveryTime.isNotEmpty) ...[
+                      SizedBox(height: 4),
+                      Text(
+                        deliveryTime,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isSelected ? Colors.grey[700] : Colors.grey[500],
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

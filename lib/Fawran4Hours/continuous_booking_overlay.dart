@@ -119,7 +119,10 @@ class _ContinuousBookingOverlayState
   late String visitsPerWeek;
   late double hourPrice; // New field for custom booking
 
+double? _hourPrice;
   double? _totalPriceFromServiceDetails;
+  double? _pricePerVisitFromServiceDetails;
+  double? _priceVatFromServiceDetails;
   // Date Selection Data
   List<DateTime> selectedDates = [];
 
@@ -284,15 +287,17 @@ Future<void> _fetchAddresses() async {
   }
 
   String _getTimeFromShift(String shift) {
-    switch (shift) {
-      case '1':
-        return 'Morning';
-      case '2':
-        return 'Evening';
-      default:
-        return 'Morning';
-    }
+  switch (shift) {
+    case '1':
+      return 'Morning';
+    case '2':
+      return 'Evening';
+    case '3':
+      return 'Full Day';
+    default:
+      return 'Morning';
   }
+}
 
   @override
   void dispose() {
@@ -329,6 +334,29 @@ Future<void> _fetchAddresses() async {
       );
     }
   }
+
+
+void _updatePricePerVisit(double pricePerVisit) {
+  setState(() {
+    _pricePerVisitFromServiceDetails = pricePerVisit;
+  });
+  print("Price per visit updated: $pricePerVisit");
+}
+
+void _updateHourPrice(double hourPrice) {
+  setState(() {
+    // Store the hour price in a state variable in the parent
+    hourPrice = hourPrice; // You'll need to add this variable to parent state
+  });
+  print('Updated hour price: $hourPrice');
+}
+
+void _updatePriceVat(double priceVat) {
+  setState(() {
+    _priceVatFromServiceDetails = priceVat;
+  });
+  print('Updated price VAT: $priceVat');
+}
 
   void _previousStep() {
     if (currentStep > 0) {
@@ -514,43 +542,212 @@ Future<void> _fetchAddresses() async {
     );
   }
 
-  void _completePurchase() async {
+
+Future<void> _createContract(BookingData bookingData) async {
+  try {
+    // Get required data from providers and state
+    final userId = ref.read(userIdProvider);
     final selectedAddress = ref.read(selectedAddressProvider);
+    
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+    
+    if (selectedAddress == null) {
+      throw Exception('No address selected');
+    }
 
-    // Use the total price from ServiceDetailsStep for custom booking
-    final totalPrice = widget.isCustomBooking
-        ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
-        : widget.package!.finalPrice;
-
-    final originalPrice = widget.isCustomBooking
-        ? _calculateOriginalPrice()
-        : widget.package!.packagePrice ?? widget.package!.finalPrice;
-
-    final bookingData = BookingData(
-      selectedDates: selectedDates,
-      totalPrice: totalPrice,
-      originalPrice: originalPrice,
-      selectedAddress: selectedAddress != null
-          ? _extractLocationName(selectedAddress.cardText)
-          : 'No Address',
-      workerCount: workerCount,
-      contractDuration: contractDuration,
-      visitsPerWeek: visitsPerWeek,
-      selectedNationality: selectedNationality,
-      packageName: widget.isCustomBooking
-          ? 'Custom Service Package'
-          : widget.package!.packageName,
-    );
-
-    print(
-        "bookingData total price after _completePurchase = ${bookingData.totalPrice}");
-    await _animationController.reverse();
-    Navigator.pop(context);
-
-    if (widget.onBookingCompleted != null) {
-      widget.onBookingCompleted!(bookingData);
+    // Extract numeric values from strings
+    int hoursNumber = widget.isCustomBooking 
+        ? (visitDuration.isEmpty ? 4 : int.tryParse(visitDuration.split(' ')[0]) ?? 4)
+        : int.tryParse(widget.package!.duration) ?? 4;
+    
+    int weeklyVisit = widget.isCustomBooking
+        ? (visitsPerWeek.isEmpty ? 1 : int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1)
+        : widget.package!.visitsWeekly;
+    
+    int contractPeriod;
+if (widget.isCustomBooking) {
+  if (contractDuration.isEmpty) {
+    contractPeriod = 4; // Default 1 month = 4 weeks
+  } else {
+    int duration = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
+    if (contractDuration.contains('month')) {
+      contractPeriod = duration * 4; // Convert months to weeks
+    } else if (contractDuration.contains('week')) {
+      contractPeriod = duration; // Already in weeks
+    } else if (contractDuration.contains('year')) {
+      contractPeriod = duration * 52; // Convert years to weeks
+    } else {
+      contractPeriod = duration * 4; // Default to treating as months
     }
   }
+} else {
+  contractPeriod = widget.package!.noOfWeeks ?? (widget.package!.noOfMonth * 4);// Convert package months to weeks
+}
+    
+    // Use package data for non-custom bookings, calculate for custom bookings
+    int visitShift;
+    String groupCode;
+    
+    if (widget.isCustomBooking) {
+      // Convert selected time to shift number for custom booking
+          if (selectedTime == 'Morning') {
+        visitShift = 1;
+      } else if (selectedTime == 'Evening') {
+        visitShift = 2;
+      } else if (selectedTime == 'Full Day') {
+        visitShift = 3;
+      } else {
+        visitShift = 1; // Default to Morning
+      }
+      
+      // Convert nationality to group code for custom booking
+      groupCode = '2'; // Default East Asia
+      if (selectedNationality == 'South Asia') {
+        groupCode = '1';
+      } else if (selectedNationality == 'AFRICAN COUNTRIES') {
+        groupCode = '3';
+      }
+    } else {
+      // Use package data directly for non-custom bookings
+      visitShift = int.tryParse(widget.package!.serviceShift) ?? 1;
+      groupCode = widget.package!.groupCode;
+    }
+    
+    // Calculate prices - use package originalPrice for non-custom bookings
+    double totalPrice = bookingData.totalPrice;
+    double originalPrice = widget.isCustomBooking 
+        ? bookingData.totalPrice 
+        : widget.package!.originalPrice;
+    double priceAfterDiscount = widget.isCustomBooking 
+        ? bookingData.totalPrice 
+        : widget.package!.priceAfterDiscount;
+    
+    int vatRate = widget.isCustomBooking ? 15 : widget.package!.vatPercentage;
+    double priceVat = widget.isCustomBooking 
+    ? (_priceVatFromServiceDetails ?? (totalPrice - (totalPrice / 1.15)))
+    : widget.package!.vatAmount;
+
+    // Format visit calendar from selected days
+    String visitCalendar = selectedDays.isNotEmpty 
+        ? selectedDays.join('-')
+        : '';
+    
+    // Format appointments from selected dates
+    List<String> appointments = selectedDates.map((date) => 
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'
+    ).toList();
+    
+    String contractStartDate = appointments.isNotEmpty 
+        ? appointments.first 
+        : DateTime.now().toIso8601String().split('T')[0];
+
+    // Call the ApiService method
+    final result = await ApiService.createContract(
+      customerId: userId,
+      serviceId: widget.serviceId,
+      groupCode: groupCode,
+      cityId: selectedAddress.cityCode.toString(),
+      district: selectedAddress.districtCode,
+      employeeCount: workerCount,
+      hoursNumber: hoursNumber,
+      weeklyVisit: weeklyVisit,
+      contractPeriod: contractPeriod,
+      visitShift: visitShift,
+      hourlyPrice: widget.isCustomBooking ? (_hourPrice?.toInt() ?? hourPrice.toInt()) : widget.package!.hourPrice.toInt(),
+      contractStartDate: contractStartDate,
+      totalPrice: totalPrice.toInt(),
+      priceVat: priceVat.toInt(),
+      vatRat: vatRate,
+      customerLocation: selectedAddress.cardText,
+      priceAfterDiscount: priceAfterDiscount.toInt(),
+      originalPrice: originalPrice.toInt(),
+      visitPrice: widget.isCustomBooking 
+        ? (_pricePerVisitFromServiceDetails?.toInt() ?? _calculatePricePerVisit().toInt())
+        : widget.package!.visitPrice.toInt(),
+      visitCalendar: visitCalendar.isNotEmpty ? visitCalendar : null,
+      packageId: !widget.isCustomBooking && widget.package != null ? widget.package!.packageId : null,
+      appointments: appointments.isNotEmpty ? appointments : null,
+    );
+
+    if (mounted) {
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Contract created successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to create contract'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+    
+  } catch (e) {
+    print('Error creating contract: $e');
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create contract: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+}
+
+
+
+  void _completePurchase() async {
+  final selectedAddress = ref.read(selectedAddressProvider);
+
+  // Use the total price from ServiceDetailsStep for custom booking
+  final totalPrice = widget.isCustomBooking
+      ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
+      : widget.package!.finalPrice;
+
+  final originalPrice = widget.isCustomBooking
+      ? _calculateOriginalPrice()
+      : widget.package!.packagePrice ?? widget.package!.finalPrice;
+
+  final bookingData = BookingData(
+    selectedDates: selectedDates,
+    totalPrice: totalPrice,
+    originalPrice: originalPrice,
+    selectedAddress: selectedAddress != null
+        ? _extractLocationName(selectedAddress.cardText)
+        : 'No Address',
+    workerCount: workerCount,
+    contractDuration: contractDuration,
+    visitsPerWeek: visitsPerWeek,
+    selectedNationality: selectedNationality,
+    packageName: widget.isCustomBooking
+        ? 'Custom Service Package'
+        : widget.package!.packageName,
+  );
+
+  print("bookingData total price after _completePurchase = ${bookingData.totalPrice}");
+  
+  // Create contract before closing overlay
+  await _createContract(bookingData);
+  
+  await _animationController.reverse();
+  Navigator.pop(context);
+
+  if (widget.onBookingCompleted != null) {
+    widget.onBookingCompleted!(bookingData);
+  }
+}
 
   void _updateTotalPriceFromServiceDetails(double totalPrice) {
     setState(() {
@@ -844,6 +1041,9 @@ Future<void> _fetchAddresses() async {
                                       pricePerVisit: _calculatePricePerVisit(),
                                       onTotalPriceChanged:
                                           _updateTotalPriceFromServiceDetails,
+                                      onPricePerVisitChanged: _updatePricePerVisit,
+                                      onHourPriceChanged: _updateHourPrice,
+                                      onPriceVatChanged: _updatePriceVat, 
                                     )
                                   : DateSelectionStep(
                                       selectedDates: selectedDates,

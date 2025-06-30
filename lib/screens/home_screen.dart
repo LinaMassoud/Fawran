@@ -26,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
       noOfMonth: 3,
       hourPrice: 25.0,
       visitsWeekly: 2,
+      originalPrice: 147.2,
       noOfEmployee: 1,
       packageId: 2001,
       visitPrice: 50.0,
