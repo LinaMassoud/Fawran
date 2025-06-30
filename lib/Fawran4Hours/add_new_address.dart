@@ -1161,6 +1161,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                                       ? 'House Number'
                                       : 'Building Number',
                                   _houseNumberController,
+                                  maxLength: 10,
                                   enabled: _canProceedToDetails),
                             ],
                           ),
