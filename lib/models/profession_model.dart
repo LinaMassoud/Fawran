@@ -22,12 +22,14 @@ class ProfessionModel {
   final String positionName;
   final List<ServiceModel> services;
   final bool hasDomesticPackage;
+  final String image;
 
   ProfessionModel({
     required this.positionId,
     required this.positionName,
     required this.services,
     required this.hasDomesticPackage,
+    required this.image
   });
 
   factory ProfessionModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class ProfessionModel {
           .map((service) => ServiceModel.fromJson(service))
           .toList(),
       hasDomesticPackage: json['has_domestic_package'] == "true",
+      image:json['image_path']
     );
   }
 }

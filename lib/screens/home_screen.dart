@@ -10,6 +10,20 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomeScreen extends ConsumerWidget {
+
+
+String getFullImageUrl( String imagePath) {
+  // Replace backslashes with forward slashes
+  String sanitizedPath = imagePath.replaceAll('\\', '/');
+  
+  // Encode the URL to handle spaces, special characters, etc.
+  String encodedPath = Uri.encodeFull(sanitizedPath);
+  
+  // Concatenate the base URL with the sanitized and encoded path
+  final res= "http://fawran.ddns.net:8080/" + encodedPath;
+  return res;
+}
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.watch(localeProvider);
@@ -48,13 +62,7 @@ class HomeScreen extends ConsumerWidget {
     }
 
     final isArabic = currentLocale.languageCode == 'ar';
-    final List<String> imagePaths = [
-      'assets/images/5.png',
-      'assets/images/1.png',
-      'assets/images/3.png',
-      'assets/images/2.png',
-      'assets/images/4.png',
-    ];
+
 
     final List<String> services = [
       loc.service_driver,
@@ -169,8 +177,7 @@ class HomeScreen extends ConsumerWidget {
                                 color: Colors.orange,
                                 borderRadius: BorderRadius.circular(12),
                                 image: DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/${profession.positionId}.png'),
+                                  image: NetworkImage(getFullImageUrl(profession.image)),
                                   fit: BoxFit.cover,
                                 ),
                               ),
