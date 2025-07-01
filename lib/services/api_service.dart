@@ -504,6 +504,147 @@ class ApiService {
     return response;
   }
 
+
+
+static Future<Map<String, dynamic>> createContract({
+  required int customerId,
+  required int serviceId,
+  required String groupCode,
+  required String cityId,
+  required String district,
+  required int employeeCount,
+  required int hoursNumber,
+  required int weeklyVisit,
+  required int contractPeriod,
+  required int visitShift,
+  required int hourlyPrice,
+  required String contractStartDate,
+  required int totalPrice,
+  required int priceVat,
+  required int vatRat,
+  required String customerLocation,
+  required int priceAfterDiscount,
+  required int originalPrice,
+  required int visitPrice,
+  String? visitCalendar,
+  int? packageId,
+  List<String>? appointments,
+}) async {
+  try {
+    // Prepare request body
+    Map<String, dynamic> requestBody = {
+      "customer_id": customerId,
+      "service_id": serviceId,
+      "group_code": groupCode,
+      "city_id": cityId,
+      "district": district,
+      "employee_count": employeeCount,
+      "hours_number": hoursNumber,
+      "weekly_visit": weeklyVisit,
+      "contract_period": contractPeriod,
+      "visit_shift": visitShift,
+      "hourly_price": hourlyPrice,
+      "contract_start_date": contractStartDate,
+      "total_price": totalPrice,
+      "price_vat": priceVat,
+      "vat_rat": vatRat,
+      "customer_location": customerLocation,
+      "price_after_discount": priceAfterDiscount,
+      "original_price": originalPrice,
+      "visit_price": visitPrice,
+    };
+
+    // Add optional fields if available
+    if (visitCalendar != null && visitCalendar.isNotEmpty) {
+      requestBody["visit_calendar"] = visitCalendar;
+    }
+    
+    if (packageId != null) {
+      requestBody["package_id"] = packageId;
+    }
+    
+    if (appointments != null && appointments.isNotEmpty) {
+      requestBody["appointments"] = appointments;
+    }
+
+    print('Creating contract with body: ${json.encode(requestBody)}');
+
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: '$_baseUrl/hourly/contract/create',
+      body: json.encode(requestBody),
+    );
+
+    print('Contract creation response status: ${response.statusCode}');
+    print('Contract creation response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = json.decode(response.body);
+      
+      if (responseData['contract_id'] != null) {
+        print('Contract created successfully with ID: ${responseData['contract_id']}');
+        
+        return {
+          'success': true,
+          'contract_id': responseData['contract_id'],
+          'message': responseData['message'] ?? 'Contract created successfully',
+          'data': responseData,
+        };
+      } else {
+        throw Exception('Contract creation failed: Invalid response format');
+      }
+    } else {
+      final errorData = json.decode(response.body);
+      return {
+        'success': false,
+        'message': errorData['message'] ?? 'Unknown error occurred',
+        'statusCode': response.statusCode,
+      };
+    }
+    
+  } catch (e) {
+    print('Error creating contract: $e');
+    return {
+      'success': false,
+      'message': 'Failed to create contract: ${e.toString()}',
+      'error': e.toString(),
+    };
+  }
+}
+
+
+
+static Future<Map<String, dynamic>> fetchServiceTerms() async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/service_terms',
+    );
+
+    print('📡 [FETCH_TERMS] Response status: ${response.statusCode}');
+    print('📡 [FETCH_TERMS] Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      // Return the raw response body as terms since it's already a JSON array
+      return {
+        'success': true,
+        'terms': response.body, // Store as JSON string to be parsed in UI
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Failed to load terms and conditions. Please try again.',
+      };
+    }
+  } catch (e) {
+    print('💥 [FETCH_TERMS] Error: $e');
+    return {
+      'success': false,
+      'message': 'Error loading terms and conditions. Please check your internet connection.',
+    };
+  }
+}
+
   static Future<Map<String, dynamic>> createAddress({
     required String buildingName,
     required int buildingNumber,

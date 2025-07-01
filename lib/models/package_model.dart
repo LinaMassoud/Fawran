@@ -10,6 +10,7 @@ class PackageModel {
   final double visitPrice;
   final String packageName;
   final int vatPercentage;
+  final double originalPrice; // Added original_price field
   final double packagePrice;
   final double? discountPercentage; // Made nullable as it can be null in JSON
   final double priceAfterDiscount;
@@ -29,6 +30,7 @@ class PackageModel {
     required this.visitPrice,
     required this.packageName,
     required this.vatPercentage,
+    required this.originalPrice, // Added to constructor
     required this.packagePrice,
     this.discountPercentage,
     required this.priceAfterDiscount,
@@ -41,6 +43,7 @@ class PackageModel {
     return PackageModel(
       packageId: _parseInt(json['package_id']),
       packageName: json['package_name']?.toString() ?? '',
+      originalPrice: _parseDouble(json['original_price']), // Added original_price parsing
       packagePrice: _parseDouble(json['package_price']),
       visitPrice: _parseDouble(json['visit_price']),
       noOfEmployee: _parseInt(json['no_of_employee']),
@@ -132,6 +135,10 @@ class PackageModel {
     return 'SAR ${finalPrice.toStringAsFixed(2)}';
   }
 
+  String get formattedOriginalPrice { // Added formatted original price
+    return 'SAR ${originalPrice.toStringAsFixed(2)}';
+  }
+
   String get formattedPackagePrice {
     return 'SAR ${packagePrice.toStringAsFixed(2)}';
   }
@@ -150,6 +157,7 @@ class PackageModel {
     return {
       'package_id': packageId,
       'package_name': packageName,
+      'original_price': originalPrice, // Added to JSON serialization
       'package_price': packagePrice,
       'visit_price': visitPrice,
       'no_of_employee': noOfEmployee,
@@ -183,6 +191,7 @@ class PackageModel {
     double? visitPrice,
     String? packageName,
     int? vatPercentage,
+    double? originalPrice, // Added to copyWith method
     double? packagePrice,
     double? discountPercentage,
     double? priceAfterDiscount,
@@ -202,6 +211,7 @@ class PackageModel {
       visitPrice: visitPrice ?? this.visitPrice,
       packageName: packageName ?? this.packageName,
       vatPercentage: vatPercentage ?? this.vatPercentage,
+      originalPrice: originalPrice ?? this.originalPrice, // Added to copyWith implementation
       packagePrice: packagePrice ?? this.packagePrice,
       discountPercentage: discountPercentage ?? this.discountPercentage,
       priceAfterDiscount: priceAfterDiscount ?? this.priceAfterDiscount,
@@ -213,7 +223,7 @@ class PackageModel {
 
   @override
   String toString() {
-    return 'PackageModel(packageId: $packageId, packageName: $packageName, finalPrice: $finalPrice, hourPrice: $hourPrice, duration: $duration, visitsWeekly: $visitsWeekly)';
+    return 'PackageModel(packageId: $packageId, packageName: $packageName, originalPrice: $originalPrice, finalPrice: $finalPrice, hourPrice: $hourPrice, duration: $duration, visitsWeekly: $visitsWeekly)';
   }
 
   @override

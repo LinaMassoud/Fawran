@@ -35,6 +35,9 @@ class ServiceDetailsStep extends StatefulWidget {
   final Function(String)? onVisitDurationChanged;
   final Function(List<DateTime>)? onSelectedDatesChanged;
   final Function(double)? onTotalPriceChanged;
+  final Function(double)? onPricePerVisitChanged;
+  final Function(double)? onHourPriceChanged;
+  final Function(double)? onPriceVatChanged;
 
   const ServiceDetailsStep({
     Key? key,
@@ -65,6 +68,9 @@ class ServiceDetailsStep extends StatefulWidget {
     required this.professionId,
     this.pricePerVisit = 0.0,
     this.onTotalPriceChanged, // Add this line
+    this.onPricePerVisitChanged,
+    this.onHourPriceChanged,
+    this.onPriceVatChanged,
   }) : super(key: key);
 
   @override
@@ -89,6 +95,8 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
   bool isLoadingTimeSlots = false;
   bool isLoadingVisitDurations = false;
 
+  double _apiHourPrice = 0.0;
+
   bool _showCalendar = false;
   List<DateTime> _internalSelectedDates = [];
   double _calculatedTotalPrice = 0.0;
@@ -99,6 +107,7 @@ bool _isCalculatingPrice = false;
 
 double _apiFinalPricePerVisit = 0.0; // Price per visit with VAT
 double _vatAmount = 0.0;
+double _apiPriceVat = 0.0;
 
   @override
   void initState() {
@@ -340,11 +349,15 @@ Future<void> _calculatePriceFromAPI() async {
       final pricePerVisit = response['price_per_visit']?.toDouble() ?? 0.0;
       final totalPrice = response['total_price']?.toDouble() ?? 0.0;
       final finalPrice = response['final_price']?.toDouble() ?? 0.0; // Price with VAT
+      final hourPrice = response['hour_price']?.toDouble() ?? 0.0;
+      final priceVat = response['price_vat']?.toDouble() ?? 0.0;
       
       print('🔍 DEBUG: Extracted from response:');
       print('  - price_per_visit: $pricePerVisit (without VAT)');
       print('  - total_price: $totalPrice (without VAT)');
       print('  - final_price: $finalPrice (with VAT)');
+      print('  - hour_price: $hourPrice');
+      print('  - price_vat: $priceVat');
       
       // Calculate VAT amount and final price per visit
       final vatAmount = finalPrice - totalPrice;
@@ -353,18 +366,36 @@ Future<void> _calculatePriceFromAPI() async {
       print('🔍 DEBUG: Calculated VAT values:');
       print('  - VAT amount per visit: $vatAmount');
       print('  - Final price per visit (with VAT): $finalPricePerVisit');
+      print('  - Hour price: $hourPrice');
+      print('  - Price VAT from API: $priceVat'); 
       
       setState(() {
         _apiPricePerVisit = pricePerVisit; // Without VAT
         _apiTotalPrice = totalPrice; // Without VAT
         _apiFinalPricePerVisit = finalPricePerVisit; // With VAT
         _vatAmount = vatAmount; // VAT amount per visit
+        _apiHourPrice = hourPrice;
+        _apiPriceVat = priceVat; 
         _isCalculatingPrice = false;
       });
       
       print('✅ DEBUG: Updated state with new prices');
       print('🔄 DEBUG: Set _isCalculatingPrice to false');
 
+if (widget.onPricePerVisitChanged != null) {
+  widget.onPricePerVisitChanged!(_apiPricePerVisit); // Pass price with VAT
+  print('✅ DEBUG: Called onPricePerVisitChanged callback with: $_apiPricePerVisit');
+}
+
+if (widget.onHourPriceChanged != null) {
+      widget.onHourPriceChanged!(_apiHourPrice);
+      print('✅ DEBUG: Called onHourPriceChanged callback with: $_apiHourPrice');
+    }
+
+    if (widget.onPriceVatChanged != null) {
+    widget.onPriceVatChanged!(_apiPriceVat);
+    print('✅ DEBUG: Called onPriceVatChanged callback with: $_apiPriceVat');
+  }
       // Update parent with the new price per visit if callback is available
       print('🔍 DEBUG: Checking callback and selected dates:');
       print('  - onTotalPriceChanged is null: ${widget.onTotalPriceChanged == null}');

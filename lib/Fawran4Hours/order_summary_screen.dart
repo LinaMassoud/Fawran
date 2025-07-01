@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'continuous_booking_overlay.dart';
 import '../models/booking_model.dart';
 import '../screens/bookings.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/gestures.dart';
+import '../services/api_service.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
   final BookingData bookingData;
@@ -26,7 +30,194 @@ class OrderSummaryScreen extends StatefulWidget {
 class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   bool _isPaymentSummaryExpanded = false;
   bool _agreeToTerms = false;
+  bool _isLoadingTerms = false; 
+  String _termsContent = '';
 
+
+Future<void> _fetchServiceTerms() async {
+  setState(() {
+    _isLoadingTerms = true;
+  });
+
+  try {
+    final result = await ApiService.fetchServiceTerms();
+    
+    setState(() {
+      if (result['success']) {
+        // Store the terms as JSON string to be parsed later
+        _termsContent = result['terms'];
+      } else {
+        _termsContent = result['message'];
+      }
+      _isLoadingTerms = false;
+    });
+  } catch (e) {
+    print('Error: $e');
+    setState(() {
+      _termsContent = 'Error loading terms and conditions. Please check your internet connection.';
+      _isLoadingTerms = false;
+    });
+  }
+}
+
+
+void _showTermsAndConditions() async {
+  await _fetchServiceTerms();
+  
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Terms and Conditions',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.grey[600]),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              Container(
+                height: 1,
+                color: Colors.grey[300],
+                margin: EdgeInsets.symmetric(vertical: 16),
+              ),
+              
+              // Content
+              Expanded(
+                child: _isLoadingTerms
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.purple,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Loading terms and conditions...',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: _buildFormattedTerms(),
+                    ),
+              ),
+              
+              // Close button
+              SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    'Close',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+// Add this new method to format the terms properly
+Widget _buildFormattedTerms() {
+  try {
+    // Try to parse _termsContent as JSON array
+    final List<dynamic> termsList = json.decode(_termsContent);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (int i = 0; i < termsList.length; i++)
+          Padding(
+            padding: EdgeInsets.only(bottom: 16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.purple,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${i + 1}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    termsList[i].toString(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  } catch (e) {
+    // Fallback to plain text display if JSON parsing fails
+    return Text(
+      _termsContent,
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.black87,
+        height: 1.5,
+      ),
+    );
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -327,38 +518,55 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
 
                   // Terms and conditions
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Checkbox(
-                        value: _agreeToTerms,
-                        onChanged: (value) {
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: _agreeToTerms,
+                      onChanged: (value) {
+                        setState(() {
+                          _agreeToTerms = value ?? false;
+                        });
+                      },
+                      activeColor: Colors.purple,
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
                           setState(() {
-                            _agreeToTerms = value ?? false;
+                            _agreeToTerms = !_agreeToTerms;
                           });
                         },
-                        activeColor: Colors.purple,
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _agreeToTerms = !_agreeToTerms;
-                            });
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 12),
-                            child: Text(
-                              'I agree to the Terms and Conditions',
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: RichText(
+                            text: TextSpan(
+                              text: 'I agree to the ',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black87,
                               ),
+                              children: [
+                                TextSpan(
+                                  text: 'Terms and Conditions',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.purple,
+                                    decoration: TextDecoration.underline,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      _showTermsAndConditions();
+                                    },
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
                   SizedBox(height: 100),
                 ],
               ),
@@ -594,8 +802,10 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
+        contentPadding: EdgeInsets.all(24), // Add proper padding
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center, // Center align all content
           children: [
             Container(
               width: 80,
@@ -612,7 +822,8 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
             ),
             SizedBox(height: 24),
             Text(
-              'Payment Successful!',
+              'Order Created Successfully!',
+              textAlign: TextAlign.center, // Add text alignment
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -621,7 +832,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
             ),
             SizedBox(height: 12),
             Text(
-              'Your cleaning service has been booked successfully. You will receive a confirmation shortly.',
+              'Create order successfully. Kindly pay within 60 minutes otherwise order will be cancelled.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -633,20 +844,20 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Close the dialog first
                   
                   // Call the callback to notify parent about successful payment
                   if (widget.onPaymentSuccess != null) {
                     widget.onPaymentSuccess!();
                   }
                   
-                  Navigator.of(context).pop();
-                  // // Navigate to BookingsScreen
-                  // Navigator.of(context).pushReplacement(
-                  //   MaterialPageRoute(
-                  //     builder: (context) => BookingsScreen(),
-                  //   ),
-                  // );
+                  // Navigate to BookingsScreen and remove all previous routes
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => BookingsScreen(),
+                    ),
+                    (route) => false, // This removes all previous routes
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purple,
