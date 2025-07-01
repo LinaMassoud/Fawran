@@ -498,29 +498,28 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   bool _areAllFieldsValid() {
-    // Check basic required fields
-    if (_addressTitleController.text.trim().isEmpty ||
-        _selectedHouseType == null ||
-        _streetNameController.text.trim().isEmpty ||
-        _houseNumberController.text.trim().isEmpty ||
-        _fullAddressController.text.trim().isEmpty ||
-        _selectedLocation == null ||
-        _selectedCity == null ||
-        _selectedDistrictCode == null ||
-        _selectedDistrictCode!.isEmpty) {
+  // Check basic required fields (excluding address title and notes)
+  if (_selectedHouseType == null ||
+      _streetNameController.text.trim().isEmpty ||
+      _houseNumberController.text.trim().isEmpty ||
+      _fullAddressController.text.trim().isEmpty ||
+      _selectedLocation == null ||
+      _selectedCity == null ||
+      _selectedDistrictCode == null ||
+      _selectedDistrictCode!.isEmpty) {
+    return false;
+  }
+
+  // Check apartment-specific fields if house type is Apartment
+  if (_selectedHouseType == 'Apartment') {
+    if (_selectedFloorNumber == null ||
+        _apartmentNumberController.text.trim().isEmpty) {
       return false;
     }
-
-    // Check apartment-specific fields if house type is Apartment
-    if (_selectedHouseType == 'Apartment') {
-      if (_selectedFloorNumber == null ||
-          _apartmentNumberController.text.trim().isEmpty) {
-        return false;
-      }
-    }
-
-    return true;
   }
+
+  return true;
+}
 
 // Add this new method to handle location selection and geocoding:
   Future<void> _handleLocationSelection(LatLng selectedLocation) async {
@@ -917,7 +916,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           hint: Text(
-            'Select floor',
+            'Select floor *',
             style: TextStyle(
               color: enabled ? Colors.grey[600] : Colors.grey[400],
               fontSize: 16,
@@ -1059,7 +1058,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
                     // Step 1: District
                     _buildStepIndicator(
-                        1, 'District', _isDistrictCompleted, _currentStep >= 1),
+                        1, 'District *', _isDistrictCompleted, _currentStep >= 1),
                     SizedBox(height: 20),
                     _buildCityDropdown(),
                     SizedBox(height: 15),
@@ -1071,7 +1070,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
                     // Step 2: Map
                     _buildStepIndicator(
-                        2, 'Map', _isMapCompleted, _currentStep >= 2),
+                        2, 'Map *', _isMapCompleted, _currentStep >= 2),
                     SizedBox(height: 20),
                     _buildMapSelector(enabled: _isDistrictCompleted),
 
@@ -1101,7 +1100,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     SizedBox(height: 20),
 
                     Text(
-                      'House Type',
+                      'House Type *',
                       style: TextStyle(
                         fontSize: 16,
                         color: _canProceedToDetails
@@ -1122,7 +1121,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Street Name',
+                                'Street Name *',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: _canProceedToDetails
@@ -1145,8 +1144,8 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                             children: [
                               Text(
                                 _selectedHouseType == 'Villa'
-                                    ? 'House Number'
-                                    : 'Building Number',
+                                    ? 'House Number *'
+                                    : 'Building Number *',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: _canProceedToDetails
@@ -1179,7 +1178,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Floor Number',
+                                  'Floor Number *',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: _canProceedToDetails
@@ -1200,7 +1199,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Apartment Number',
+                                  'Apartment Number *',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: _canProceedToDetails
@@ -1223,7 +1222,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     SizedBox(height: 20),
 
                     Text(
-                      'Full Address',
+                      'Full Address *',
                       style: TextStyle(
                         fontSize: 16,
                         color: _canProceedToDetails

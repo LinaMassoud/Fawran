@@ -233,7 +233,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 booking["service_contract_id"]?.toString() ?? ""),
             _infoRow("Contract ID", booking["contract_id"]?.toString() ?? ""),
             _infoRow("Customer", booking["customer_display"] ?? ""),
-            _infoRow("Service ID", booking["service_id"]?.toString() ?? ""),
+            _infoRow("Service", booking["service_id"]?.toString() ?? ""),
             _infoRow("Total Price", "${booking["total_price"] ?? 0} Riyal"),
             _infoRow("VAT", "${booking["vat_price"] ?? 0} Riyal"),
             _infoRow("Start Date", formatDate(booking["contract_start_date"])),

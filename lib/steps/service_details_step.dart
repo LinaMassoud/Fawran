@@ -1481,7 +1481,7 @@ if (widget.onHourPriceChanged != null) {
                         ),
                       ),
                       Text(
-                        'SAR ${(_calculatedTotalPrice > 0 && _internalSelectedDates.isNotEmpty) ? _calculatedTotalPrice.toStringAsFixed(1) : '0.0'}',
+                        'SAR ${(_calculatedTotalPrice > 0 && _internalSelectedDates.isNotEmpty) ? _calculatedTotalPrice.toStringAsFixed(2) : '0.0'}',
                         style: TextStyle(
                           fontSize: 20,
                           color: Colors.black,
