@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../services/api_service.dart';
 
 class BookingsScreen extends StatefulWidget {
-  const BookingsScreen({super.key});
+  final String? initialTab;
+  const BookingsScreen({
+    super.key,
+    this.initialTab, // Add this parameter
+  });
 
   @override
   State<BookingsScreen> createState() => _BookingsScreenState();
@@ -19,114 +24,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
   bool _isLoading = true;
   String _selectedTab = 'all'; // 'all', 'permanent', 'hourly'
 
-  @override
+   @override
   void initState() {
     super.initState();
+    // Set initial tab based on parameter, default to 'all'
+    _selectedTab = widget.initialTab ?? 'all';
     _fetchAllContracts();
   }
 
-  static Future<bool> refreshToken() async {
-    try {
-      final refreshToken = await _secureStorage.read(key: 'refresh_token');
-      
-      if (refreshToken == null) {
-        print('❌ [REFRESH_TOKEN] No refresh token found');
-        return false;
-      }
-
-      print('🔄 [REFRESH_TOKEN] Attempting to refresh token...');
-      
-      final url = Uri.parse('$_baseUrl/refresh-token');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'refresh_token': refreshToken,
-        }),
-      );
-
-      print('📡 [REFRESH_TOKEN] Response status: ${response.statusCode}');
-      print('📡 [REFRESH_TOKEN] Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        
-        // Save new tokens
-        await _secureStorage.write(key: 'token', value: responseData['token']);
-        await _secureStorage.write(key: 'refresh_token', value: responseData['refresh_token']);
-        
-        print('✅ [REFRESH_TOKEN] Token refreshed successfully');
-        return true;
-      } else {
-        print('❌ [REFRESH_TOKEN] Failed to refresh token: ${response.statusCode}');
-        return false;
-      }
-    } catch (e) {
-      print('💥 [REFRESH_TOKEN] Error refreshing token: $e');
-      return false;
-    }
-  }
-
-  // Enhanced HTTP request method with automatic token refresh
-  static Future<http.Response> makeAuthenticatedRequest({
-    required String method,
-    required String url,
-    Map<String, String>? headers,
-    String? body,
-    int retryCount = 0,
-  }) async {
-    final token = await _secureStorage.read(key: 'token');
-    
-    final requestHeaders = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      if (token != null) 'token': token,
-      ...?headers,
-    };
-
-    http.Response response;
-    
-    switch (method.toUpperCase()) {
-      case 'GET':
-        response = await http.get(Uri.parse(url), headers: requestHeaders);
-        break;
-      case 'POST':
-        response = await http.post(Uri.parse(url), headers: requestHeaders, body: body);
-        break;
-      case 'PUT':
-        response = await http.put(Uri.parse(url), headers: requestHeaders, body: body);
-        break;
-      case 'DELETE':
-        response = await http.delete(Uri.parse(url), headers: requestHeaders);
-        break;
-      default:
-        throw Exception('Unsupported HTTP method: $method');
-    }
-
-    // If we get a 401 (unauthorized) and haven't already retried
-    if (response.statusCode == 401 && retryCount == 0) {
-      print('🔄 [AUTH_REQUEST] Received 401, attempting token refresh...');
-      
-      final refreshSuccess = await refreshToken();
-      if (refreshSuccess) {
-        print('✅ [AUTH_REQUEST] Token refreshed, retrying original request...');
-        // Retry the original request with the new token
-        return makeAuthenticatedRequest(
-          method: method,
-          url: url,
-          headers: headers,
-          body: body,
-          retryCount: 1, // Prevent infinite retry loop
-        );
-      } else {
-        print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
-        // Clear all stored tokens if refresh fails
-        await _secureStorage.deleteAll();
-      }
-    }
-
-    return response;
-  }
 
   Future<void> _fetchAllContracts() async {
     setState(() {
@@ -145,43 +50,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Future<void> _fetchPermanentContracts() async {
     try {
-      final userId = await _secureStorage.read(key: 'user_id') ?? '';
-
-      if (userId.isEmpty) {
-        throw Exception("Missing customer ID in storage");
-      }
-
-      print('🔍 [PERMANENT_CONTRACTS] Fetching contracts for user: $userId');
-
-      final url = "$_baseUrl/domestic/contracts/$userId";
-      
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
-
-      print('📡 [PERMANENT_CONTRACTS] Response status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        String rawJson = response.body;
-        print('📦 [PERMANENT_CONTRACTS] Raw response length: ${rawJson.length}');
-
-        // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
-        rawJson = rawJson.replaceAllMapped(
-          RegExp(r'"price_before_vat"\s*:\s*,'),
-          (match) => '"price_before_vat": null,',
-        );
-
-        final List<dynamic> data = json.decode(rawJson);
-        print('✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
-
-        setState(() {
-          _permanentContracts = data.cast<Map<String, dynamic>>();
-        });
-      } else {
-        print('❌ [PERMANENT_CONTRACTS] Failed with status: ${response.statusCode}');
-        throw Exception("Failed to load permanent contracts: ${response.statusCode}");
-      }
+      final contracts = await ApiService.fetchPermanentContracts();
+      setState(() {
+        _permanentContracts = contracts;
+      });
     } catch (e) {
       print("💥 [PERMANENT_CONTRACTS] Error fetching permanent contracts: $e");
       // Don't set empty list, keep existing data
@@ -190,74 +62,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Future<void> _fetchHourlyContracts() async {
     try {
-      final userId = await _secureStorage.read(key: 'user_id') ?? '';
-
-      print("=== HOURLY CONTRACTS DEBUG ===");
-      print("User ID: $userId");
-
-      if (userId.isEmpty) {
-        throw Exception("Missing customer ID in storage");
-      }
-
-      final url = "$_baseUrl/hourly/contracts/$userId";
-      print("Request URL: $url");
-
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
-
-      print("Response Status Code: ${response.statusCode}");
-      print("Response Headers: ${response.headers}");
-      print("Response Body Length: ${response.body.length}");
-      print("Raw Response Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        try {
-          final List<dynamic> data = json.decode(response.body);
-          print("Parsed Data Type: ${data.runtimeType}");
-          print("Number of hourly contracts: ${data.length}");
-
-          // Print each contract with its structure
-          for (int i = 0; i < data.length; i++) {
-            print("--- Hourly Contract $i ---");
-            print("Contract Type: ${data[i].runtimeType}");
-            if (data[i] is Map) {
-              final contract = data[i] as Map<String, dynamic>;
-              print("Contract Keys: ${contract.keys.toList()}");
-              contract.forEach((key, value) {
-                print("  $key: $value (${value.runtimeType})");
-              });
-            } else {
-              print("Contract Data: ${data[i]}");
-            }
-          }
-
-          setState(() {
-            _hourlyContracts = data.cast<Map<String, dynamic>>();
-          });
-          print("✅ [HOURLY_CONTRACTS] Successfully stored ${_hourlyContracts.length} hourly contracts");
-        } catch (jsonError) {
-          print("JSON Parsing Error: $jsonError");
-          print("Attempting to parse as single object...");
-          try {
-            final Map<String, dynamic> singleData = json.decode(response.body);
-            print("Single Object Keys: ${singleData.keys.toList()}");
-            singleData.forEach((key, value) {
-              print("  $key: $value (${value.runtimeType})");
-            });
-          } catch (e) {
-            print("Failed to parse as single object: $e");
-          }
-        }
-      } else {
-        print("HTTP Error Details:");
-        print("Status Code: ${response.statusCode}");
-        print("Reason Phrase: ${response.reasonPhrase}");
-        print("Error Response Body: ${response.body}");
-        throw Exception("Failed to load hourly contracts: ${response.statusCode}");
-      }
-    } catch (e) {
+      final contracts = await ApiService.fetchHourlyContracts();
+      setState(() {
+        _hourlyContracts = contracts;
+      });
+    }  catch (e) {
       print("💥 [HOURLY_CONTRACTS] Error fetching hourly contracts: $e");
       print("Error Type: ${e.runtimeType}");
       if (e is http.ClientException) {

@@ -854,9 +854,9 @@ Widget _buildFormattedTerms() {
                   // Navigate to BookingsScreen and remove all previous routes
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
-                      builder: (context) => BookingsScreen(),
+                      builder: (context) => BookingsScreen(initialTab: 'hourly'),
                     ),
-                    (route) => false, // This removes all previous routes
+                    (route) => false,
                   );
                 },
                 style: ElevatedButton.styleFrom(
