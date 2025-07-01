@@ -657,15 +657,15 @@ if (widget.isCustomBooking) {
       visitShift: visitShift,
       hourlyPrice: widget.isCustomBooking ? (_hourPrice?.toInt() ?? hourPrice.toInt()) : widget.package!.hourPrice.toInt(),
       contractStartDate: contractStartDate,
-      totalPrice: totalPrice.toInt(),
-      priceVat: priceVat.toInt(),
+      totalPrice: totalPrice,
+      priceVat: priceVat,
       vatRat: vatRate,
       customerLocation: selectedAddress.cardText,
-      priceAfterDiscount: priceAfterDiscount.toInt(),
-      originalPrice: originalPrice.toInt(),
+      priceAfterDiscount: priceAfterDiscount,
+      originalPrice: originalPrice,
       visitPrice: widget.isCustomBooking 
-        ? (_pricePerVisitFromServiceDetails?.toInt() ?? _calculatePricePerVisit().toInt())
-        : widget.package!.visitPrice.toInt(),
+        ? (_pricePerVisitFromServiceDetails ?? _calculatePricePerVisit())
+        : widget.package!.visitPrice,
       visitCalendar: visitCalendar.isNotEmpty ? visitCalendar : null,
       packageId: !widget.isCustomBooking && widget.package != null ? widget.package!.packageId : null,
       appointments: appointments.isNotEmpty ? appointments : null,
