@@ -454,10 +454,10 @@ Widget _buildFormattedTerms() {
 
                     // Payment breakdown
                     _buildPaymentRow('Item total',
-                        'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(0)}'),
+                        'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(1)}'),
                     SizedBox(height: 12),
                     _buildPaymentRow('Pack discount',
-                        '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)}',
+                        '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(1)}',
                         isDiscount: true),
                     SizedBox(height: 16),
                     Container(height: 1, color: Colors.black87),
@@ -505,7 +505,7 @@ Widget _buildFormattedTerms() {
                         ),
                       ),
                       Text(
-                        'SAR ${widget.bookingData.totalPrice.toStringAsFixed(0)}',
+                        'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
