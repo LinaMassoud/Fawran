@@ -3,8 +3,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 
-class BookingsScreen extends StatefulWidget {
+class BookingsScreen extends ConsumerStatefulWidget {
   final String? initialTab;
   const BookingsScreen({
     super.key,
@@ -12,10 +14,10 @@ class BookingsScreen extends StatefulWidget {
   });
 
   @override
-  State<BookingsScreen> createState() => _BookingsScreenState();
+  ConsumerState<BookingsScreen> createState() => _BookingsScreenState();
 }
 
-class _BookingsScreenState extends State<BookingsScreen> {
+class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   static const String _baseUrl = 'http://fawran.ddns.net:8080/ords/emdad/fawran';
   static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
@@ -50,7 +52,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Future<void> _fetchPermanentContracts() async {
     try {
-      final contracts = await ApiService.fetchPermanentContracts();
+      final userId = ref.read(userIdProvider);
+      if (userId == null) {
+        print("💥 [PERMANENT_CONTRACTS] No user ID available");
+        return;
+      }
+      
+      final contracts = await ApiService.fetchPermanentContracts(userId: userId);
       setState(() {
         _permanentContracts = contracts;
       });
@@ -62,11 +70,17 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Future<void> _fetchHourlyContracts() async {
     try {
-      final contracts = await ApiService.fetchHourlyContracts();
+      final userId = ref.read(userIdProvider);
+      if (userId == null) {
+        print("💥 [HOURLY_CONTRACTS] No user ID available");
+        return;
+      }
+      
+      final contracts = await ApiService.fetchHourlyContracts(userId: userId);
       setState(() {
         _hourlyContracts = contracts;
       });
-    }  catch (e) {
+    } catch (e) {
       print("💥 [HOURLY_CONTRACTS] Error fetching hourly contracts: $e");
       print("Error Type: ${e.runtimeType}");
       if (e is http.ClientException) {
@@ -75,6 +89,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
     }
     print("=== END HOURLY CONTRACTS DEBUG ===\n");
   }
+
 
   Widget _infoRow(String title, String value) {
     return Padding(
@@ -233,7 +248,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 booking["service_contract_id"]?.toString() ?? ""),
             _infoRow("Contract ID", booking["contract_id"]?.toString() ?? ""),
             _infoRow("Customer", booking["customer_display"] ?? ""),
-            _infoRow("Service ID", booking["service_id"]?.toString() ?? ""),
+            _infoRow("Service", booking["service_id"]?.toString() ?? ""),
             _infoRow("Total Price", "${booking["total_price"] ?? 0} Riyal"),
             _infoRow("VAT", "${booking["vat_price"] ?? 0} Riyal"),
             _infoRow("Start Date", formatDate(booking["contract_start_date"])),

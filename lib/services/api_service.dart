@@ -7,6 +7,7 @@ import 'dart:io'; // for SocketException
 import 'dart:async'; // for TimeoutException
 import 'package:intl/intl.dart';
 import '../models/address_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiService {
   static const String _baseUrl =
@@ -647,12 +648,12 @@ static Future<Map<String, dynamic>> fetchServiceTerms() async {
 
 
 
-static Future<List<Map<String, dynamic>>> fetchPermanentContracts() async {
+static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
+  required int userId,
+}) async {
   try {
-    final userId = await _secureStorage.read(key: 'user_id') ?? '';
-
-    if (userId.isEmpty) {
-      throw Exception("Missing customer ID in storage");
+    if (userId.toString().isEmpty) {
+      throw Exception("Missing customer ID");
     }
 
     print('🔍 [PERMANENT_CONTRACTS] Fetching contracts for user: $userId');
@@ -690,15 +691,15 @@ static Future<List<Map<String, dynamic>>> fetchPermanentContracts() async {
   }
 }
 
-static Future<List<Map<String, dynamic>>> fetchHourlyContracts() async {
+static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
+  required int userId,
+}) async {
   try {
-    final userId = await _secureStorage.read(key: 'user_id') ?? '';
-
     print("=== HOURLY CONTRACTS DEBUG ===");
     print("User ID: $userId");
 
-    if (userId.isEmpty) {
-      throw Exception("Missing customer ID in storage");
+    if (userId.toString().isEmpty) {
+      throw Exception("Missing customer ID");
     }
 
     final url = "$_baseUrl/hourly/contracts/$userId";
