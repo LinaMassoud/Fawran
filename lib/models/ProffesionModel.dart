@@ -5,12 +5,16 @@ class ProfessionModel {
   final String positionName;
   final bool hasDomesticPackage;
   final List<Service> services;
+    final String image;
+
 
   ProfessionModel({
     required this.positionId,
     required this.positionName,
     required this.hasDomesticPackage,
     required this.services,
+        required this.image
+
   });
 
 factory ProfessionModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +26,8 @@ factory ProfessionModel.fromJson(Map<String, dynamic> json) {
             ?.map((serviceJson) => Service.fromJson(serviceJson))
             .toList() ??
         [],
+              image:json['image_path']
+
   );
 }
 
