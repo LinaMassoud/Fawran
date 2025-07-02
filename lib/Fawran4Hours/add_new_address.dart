@@ -498,28 +498,30 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   bool _areAllFieldsValid() {
-  // Check basic required fields (excluding address title and notes)
-  if (_selectedHouseType == null ||
-      _streetNameController.text.trim().isEmpty ||
-      _houseNumberController.text.trim().isEmpty ||
-      _fullAddressController.text.trim().isEmpty ||
-      _selectedLocation == null ||
-      _selectedCity == null ||
-      _selectedDistrictCode == null ||
-      _selectedDistrictCode!.isEmpty) {
-    return false;
-  }
-
-  // Check apartment-specific fields if house type is Apartment
-  if (_selectedHouseType == 'Apartment') {
-    if (_selectedFloorNumber == null ||
-        _apartmentNumberController.text.trim().isEmpty) {
+    // Check basic required fields
+    if (_addressTitleController.text.trim().isEmpty ||
+        _selectedHouseType == null ||
+        _streetNameController.text.trim().isEmpty ||
+        _houseNumberController.text.trim().isEmpty ||
+        _fullAddressController.text.trim().isEmpty ||
+        _selectedLocation == null ||
+        _selectedCity == null ||
+        _selectedDistrictCode == null ||
+        _selectedDistrictCode!.isEmpty) {
       return false;
     }
+
+    // Check apartment-specific fields if house type is Apartment
+    if (_selectedHouseType == 'Apartment') {
+      if (_selectedFloorNumber == null ||
+          _apartmentNumberController.text.trim().isEmpty) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  return true;
-}
 
 // Add this new method to handle location selection and geocoding:
   Future<void> _handleLocationSelection(LatLng selectedLocation) async {
@@ -1083,7 +1085,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     SizedBox(height: 25),
 
                     Text(
-                      'Address Title',
+                      'Address Title *',
                       style: TextStyle(
                         fontSize: 16,
                         color: _canProceedToDetails
