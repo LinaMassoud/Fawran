@@ -4,13 +4,12 @@ import 'package:fawran/screens/signup_screen.dart';
 import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class VerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
 
-  const VerificationScreen(
-      {super.key, required this.phoneNumber});
+  const VerificationScreen({super.key, required this.phoneNumber});
 
   @override
   ConsumerState<VerificationScreen> createState() => _VerificationScreenState();
@@ -43,7 +42,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   }
 
   void _submitOtp() async {
-     if (!mounted) return;
+    if (!mounted) return;
     final code = _otpControllers.map((c) => c.text).join();
     if (code.length < 6) return;
 

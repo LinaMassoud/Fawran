@@ -1,4 +1,5 @@
 import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
+import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/package_model.dart';
 import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
@@ -6,23 +7,20 @@ import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/serviceChoice.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomeScreen extends ConsumerWidget {
+  String getFullImageUrl(String imagePath) {
+    // Replace backslashes with forward slashes
+    String sanitizedPath = imagePath.replaceAll('\\', '/');
 
+    // Encode the URL to handle spaces, special characters, etc.
+    String encodedPath = Uri.encodeFull(sanitizedPath);
 
-String getFullImageUrl( String imagePath) {
-  // Replace backslashes with forward slashes
-  String sanitizedPath = imagePath.replaceAll('\\', '/');
-  
-  // Encode the URL to handle spaces, special characters, etc.
-  String encodedPath = Uri.encodeFull(sanitizedPath);
-  
-  // Concatenate the base URL with the sanitized and encoded path
-  final res= "http://fawran.ddns.net:8080/" + encodedPath;
-  return res;
-}
+    // Concatenate the base URL with the sanitized and encoded path
+    final res = "http://fawran.ddns.net:8080/" + encodedPath;
+    return res;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,7 +60,6 @@ String getFullImageUrl( String imagePath) {
     }
 
     final isArabic = currentLocale.languageCode == 'ar';
-
 
     final List<String> services = [
       loc.service_driver,
@@ -177,7 +174,8 @@ String getFullImageUrl( String imagePath) {
                                 color: Colors.orange,
                                 borderRadius: BorderRadius.circular(12),
                                 image: DecorationImage(
-                                  image: NetworkImage(getFullImageUrl(profession.image)),
+                                  image: NetworkImage(
+                                      getFullImageUrl(profession.image)),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -286,9 +284,8 @@ String getFullImageUrl( String imagePath) {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                          Text(
+                              Text(
                                 loc.privateDriver,
-
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
