@@ -792,23 +792,6 @@ void didChangeDependencies() {
                       onPressed: _toggleSearch,
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.only(right: 16, top: 10, bottom: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.share, color: Colors.black),
-                      onPressed: () {},
-                    ),
-                  ),
                 ],
               ),
               if (isSearchActive)
