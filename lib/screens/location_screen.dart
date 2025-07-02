@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:flutter/material.dart';

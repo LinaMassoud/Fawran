@@ -33,6 +33,7 @@ flutter:
   uses-material-design: true
   generate: true
 
+  
   assets:
     - assets/images/
     - assets/images/cleaning_hero.jpg
@@ -42,3 +43,6 @@ flutter:
     - assets/images/cleaning_service_card.jpg
     - assets/images/services-image.png
     - assets/images/emdad-logo.png
+
+
+
