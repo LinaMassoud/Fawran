@@ -136,7 +136,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
-        localeIdentifier: 'ar',
+        localeIdentifier: 'en',
       );
 
       Placemark place = placemarks.first;
@@ -160,32 +160,32 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),
       );
-   } catch (e, stackTrace) {
-  print("Location error: $e");
-  print("Stack trace: $stackTrace");
+    } catch (e, stackTrace) {
+      print("Location error: $e");
+      print("Stack trace: $stackTrace");
 
-  if (!mounted) return;
+      if (!mounted) return;
 
-  String errorMessage;
+      String errorMessage;
 
-  if (e is TimeoutException) {
-    errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
-  } else if (e is PermissionDeniedException || e.toString().contains("PERMISSION_DENIED")) {
-    errorMessage = "صلاحية الموقع مرفوضة. يرجى التحقق من إعدادات التطبيق.";
-  } else if (e.toString().contains("LocationServiceDisabledException")) {
-    errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من إعدادات الجهاز.";
-  } else {
-    errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.";
-  }
+      if (e is TimeoutException) {
+        errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
+      } else if (e is PermissionDeniedException ||
+          e.toString().contains("PERMISSION_DENIED")) {
+        errorMessage = "صلاحية الموقع مرفوضة. يرجى التحقق من إعدادات التطبيق.";
+      } else if (e.toString().contains("LocationServiceDisabledException")) {
+        errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من إعدادات الجهاز.";
+      } else {
+        errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.${e}";
+      }
 
-  locationState.state = errorMessage;
+      locationState.state = errorMessage;
 
-  setState(() {
-    isLoading = false;
-    showLocation = false;
-  });
-}
-
+      setState(() {
+        isLoading = false;
+        showLocation = false;
+      });
+    }
   }
 
   @override
