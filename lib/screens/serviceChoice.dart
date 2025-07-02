@@ -6,7 +6,7 @@ class ServiceChoicePage extends StatelessWidget {
   void _handleChoice(BuildContext context, String serviceName) {
     // Navigate based on selected service
     if (serviceName == 'Hourly Maid') {
-      Navigator.of(context).pushReplacementNamed('/hourly');
+      Navigator.of(context).pushNamed('/hourly');
     } else if (serviceName == 'Permanent Maid') {
       Navigator.of(context).pushNamed('/selectAddress');
     }
