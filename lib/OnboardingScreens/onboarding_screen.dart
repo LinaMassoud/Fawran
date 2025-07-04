@@ -55,20 +55,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   // Different content for each onboarding screen
   final List<OnboardingContent> _onboardingData = [
     OnboardingContent(
-      title: "Book Your Service",
-      description: "Choose the domestic solution that\nmatches your lifestyle and\npersonalized requirements",
+      title: "Flexible Service Solutions",
+      description: "Fawran service provides trained and\nqualified labors on an hourly basis\nwith flexible scheduling options",
     ),
     OnboardingContent(
-      title: "Professional Staff",
-      description: "Our trained and verified professionals\nensure quality service delivery\nat your doorstep",
+      title: "Trained & Qualified Staff",
+      description: "Our verified professionals deliver\nquality service with weekly or\nmonthly contracts available",
     ),
     OnboardingContent(
-      title: "Real-time Tracking",
-      description: "Track your service request in real-time\nand get updates on arrival\nand completion status",
+      title: "Schedule Based on Your Needs",
+      description: "All services are scheduled based\non your specific requests and\npreferred timing",
     ),
     OnboardingContent(
-      title: "24/7 Support",
-      description: "Round the clock customer support\nto assist you with any queries\nor service requirements",
+      title: "Complete Service Management",
+      description: "From booking to completion,\nmanage all your domestic service\nrequirements in one place",
     ),
   ];
 

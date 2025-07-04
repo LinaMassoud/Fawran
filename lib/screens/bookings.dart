@@ -90,6 +90,87 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     print("=== END HOURLY CONTRACTS DEBUG ===\n");
   }
 
+  // Helper function to format status for permanent contracts
+  String getPermanentStatusText(dynamic status) {
+    if (status == null) return "Unknown";
+    String statusStr = status.toString().toLowerCase();
+    switch (statusStr) {
+      case "success":
+      case "confirmed":
+        return "Confirmed";
+      case "pending":
+      case "not confirmed":  // Add this line for consistency
+        return "Not confirmed";
+      case "cancelled":
+        return "Cancelled";
+      case "completed":
+      case "paid":
+        return "Paid";
+      default:
+        return status.toString();
+    }
+  }
+
+  // Helper function to get status color for permanent contracts
+  Color getPermanentStatusColor(dynamic status) {
+    if (status == null) return Colors.grey;
+    String statusStr = status.toString().toLowerCase();
+    switch (statusStr) {
+      case "success":
+      case "confirmed":
+        return Colors.blue;
+      case "pending":
+      case "not confirmed":  // Add this line
+        return Colors.orange;
+      case "cancelled":
+        return Colors.red;
+      case "completed":
+      case "paid":
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Helper function to format status for hourly contracts
+  String getHourlyStatusText(dynamic status) {
+    if (status == null) return "Unknown";
+    if (status is int) {
+      switch (status) {
+        case 0:
+          return "Not confirmed";
+        case 1:
+          return "Confirmed";
+        case 2:
+          return "Paid";
+        case 3:
+          return "Cancelled";
+        default:
+          return "Status $status";
+      }
+    }
+    return status.toString();
+  }
+
+  // Helper function to get status color for hourly contracts
+  Color getHourlyStatusColor(dynamic status) {
+    if (status == null) return Colors.grey;
+    if (status is int) {
+      switch (status) {
+        case 0:
+          return Colors.orange;
+        case 1:
+          return Colors.blue;
+        case 2:
+          return Colors.green;
+        case 3:
+          return Colors.red;
+        default:
+          return Colors.grey;
+      }
+    }
+    return Colors.grey;
+  }
 
   Widget _infoRow(String title, String value) {
     return Padding(
@@ -115,21 +196,41 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Service type indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                "Permanent Service",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+            // Service type indicator with status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Permanent Service",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-              ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: getPermanentStatusColor(booking["status"]).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    getPermanentStatusText(booking["status"]),
+                    style: TextStyle(
+                      color: getPermanentStatusColor(booking["status"]),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             _infoRow("Contract ID", booking["contract_id"] ?? ""),
@@ -139,7 +240,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             _infoRow("Days", booking["period_days"].toString()),
             _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
             if(booking["delivery_charges"] > 0 )  _infoRow("Delivery", booking["delivery_charges"].toString()),
-            _infoRow("Status", booking["status"] ?? "success"),
           ],
         ),
       ),
@@ -147,46 +247,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Widget _buildHourlyContractCard(Map<String, dynamic> booking) {
-    // Helper function to format status
-    String getStatusText(dynamic status) {
-      if (status == null) return "Unknown";
-      if (status is int) {
-        switch (status) {
-          case 0:
-            return "Not confirmed";
-          case 1:
-            return "Confirmed";
-          case 2:
-            return "paid";
-          case 3:
-            return "Cancelled";
-          default:
-            return "Status $status";
-        }
-      }
-      return status.toString();
-    }
-
-    // Helper function to get status color
-    Color getStatusColor(dynamic status) {
-      if (status == null) return Colors.grey;
-      if (status is int) {
-        switch (status) {
-          case 0:
-            return Colors.orange;
-          case 1:
-            return Colors.blue;
-          case 2:
-            return Colors.green;
-          case 3:
-            return Colors.red;
-          default:
-            return Colors.grey;
-        }
-      }
-      return Colors.grey;
-    }
-
     // Helper function to format date
     String formatDate(String? dateStr) {
       if (dateStr == null || dateStr.isEmpty) return "Not specified";
@@ -229,13 +289,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: getStatusColor(booking["status"]).withOpacity(0.1),
+                    color: getHourlyStatusColor(booking["status"]).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    getStatusText(booking["status"]),
+                    getHourlyStatusText(booking["status"]),
                     style: TextStyle(
-                      color: getStatusColor(booking["status"]),
+                      color: getHourlyStatusColor(booking["status"]),
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -252,7 +312,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             _infoRow("Total Price", "${booking["total_price"] ?? 0} Riyal"),
             _infoRow("VAT", "${booking["vat_price"] ?? 0} Riyal"),
             _infoRow("Start Date", formatDate(booking["contract_start_date"])),
-            _infoRow("Status", getStatusText(booking["status"])),
           ],
         ),
       ),

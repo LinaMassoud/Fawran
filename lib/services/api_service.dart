@@ -339,65 +339,65 @@ class ApiService {
   }
 
   static Future<List<City>> fetchCities(int serviceId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/service_cities/$serviceId'),
-        headers: {'Content-Type': 'application/json'},
-      );
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/service_cities/$serviceId',
+    );
 
-      if (response.statusCode == 200) {
-        List<dynamic> citiesJson = json.decode(response.body);
-        List<City> cities =
-            citiesJson.map((city) => City.fromJson(city)).toList();
-        return cities;
-      } else {
-        throw Exception('Failed to load cities');
-      }
-    } catch (e) {
-      throw Exception('Error fetching cities: $e');
+    if (response.statusCode == 200) {
+      List<dynamic> citiesJson = json.decode(response.body);
+      List<City> cities =
+          citiesJson.map((city) => City.fromJson(city)).toList();
+      return cities;
+    } else {
+      throw Exception('Failed to load cities');
     }
+  } catch (e) {
+    throw Exception('Error fetching cities: $e');
   }
+}
 
   static Future<List<District>> fetchDistricts(int cityCode) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/districts/$cityCode'),
-        headers: {'Content-Type': 'application/json'},
-      );
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/districts/$cityCode',
+    );
 
-      if (response.statusCode == 200) {
-        List<dynamic> districtsJson = json.decode(response.body);
-        List<District> districts = districtsJson
-            .map((district) => District.fromJson(district))
-            .toList();
-        return districts;
-      } else {
-        throw Exception('Failed to load districts');
-      }
-    } catch (e) {
-      throw Exception('Error fetching districts: $e');
+    if (response.statusCode == 200) {
+      List<dynamic> districtsJson = json.decode(response.body);
+      List<District> districts = districtsJson
+          .map((district) => District.fromJson(district))
+          .toList();
+      return districts;
+    } else {
+      throw Exception('Failed to load districts');
     }
+  } catch (e) {
+    throw Exception('Error fetching districts: $e');
   }
+}
 
   static Future<DistrictMapResponse> fetchDistrictMapData(
-      String districtCode) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/districts/info/$districtCode'),
-        headers: {'Content-Type': 'application/json'},
-      );
+    String districtCode) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/districts/info/$districtCode',
+    );
 
-      if (response.statusCode == 200) {
-        final districtMapResponse =
-            DistrictMapResponse.fromJson(json.decode(response.body));
-        return districtMapResponse;
-      } else {
-        throw Exception('Failed to load district map data');
-      }
-    } catch (e) {
-      throw Exception('Error fetching district map data: $e');
+    if (response.statusCode == 200) {
+      final districtMapResponse =
+          DistrictMapResponse.fromJson(json.decode(response.body));
+      return districtMapResponse;
+    } else {
+      throw Exception('Failed to load district map data');
     }
+  } catch (e) {
+    throw Exception('Error fetching district map data: $e');
   }
+}
 
   static Future<bool> refreshToken() async {
     try {
@@ -965,30 +965,36 @@ static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
     }
   }
 
-  static Future<Map<String, dynamic>?> validateWorkersHourly({
+  static Future<Map<String, dynamic>?> validateWorkersWithDates({
     required int positionId,
     required String nationalityId,
     required int numWorkers,
     required DateTime startDate,
     required DateTime endDate,
+    required int shiftId,
+    required String cityCode,
+    required String districtId,
+    required List<String> appointmentDates,
   }) async {
-    print('🔍 [validateWorkersHourly] Starting validation...');
-    // ... existing print statements ...
+    print('🔍 [validateWorkersWithDates] Starting validation...');
 
     try {
       final url = '$_baseUrl/validate-workers';
 
       final requestBody = {
-        "position_id": positionId,
         "sector_type": "H",
-        "nationality_group": nationalityId,
+        "position_id": positionId,
         "num_workers": numWorkers,
         "start_date": DateFormat('MM-dd-yyyy').format(startDate),
         "end_date": DateFormat('MM-dd-yyyy').format(endDate),
+        "shift_id": shiftId,
+        "nationality_id": nationalityId,
+        "city_code": cityCode,
+        "district_id": districtId,
+        "appointment_dates": appointmentDates,
       };
 
-      print(
-          '📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
+      print('📦 [validateWorkersWithDates] Request body: ${json.encode(requestBody)}');
 
       final response = await makeAuthenticatedRequest(
         method: 'POST',
@@ -996,22 +1002,20 @@ static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
         body: json.encode(requestBody),
       ).timeout(Duration(seconds: 30));
 
-      print(
-          '📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
+      print('📡 [validateWorkersWithDates] Response status code: ${response.statusCode}');
+      print('📡 [validateWorkersWithDates] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        print('✅ [validateWorkersHourly] Request successful');
+        print('✅ [validateWorkersWithDates] Request successful');
         final responseData = json.decode(response.body);
         return responseData as Map<String, dynamic>?;
       } else {
-        print(
-            '❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
-        throw Exception(
-            'Failed to validate workers. Status code: ${response.statusCode}');
+        print('❌ [validateWorkersWithDates] Request failed with status ${response.statusCode}');
+        return null;
       }
     } catch (e) {
-      print('💥 [validateWorkersHourly] Error: $e');
-      throw Exception('Error validating workers: $e');
+      print('💥 [validateWorkersWithDates] Error: $e');
+      return null;
     }
   }
 

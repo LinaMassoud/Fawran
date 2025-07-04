@@ -8,8 +8,49 @@ import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/serviceChoice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _storage = FlutterSecureStorage();
+  String userName = '';
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserName();
+  }
+
+  Future<void> loadUserName() async {
+    try {
+      final firstName = await _storage.read(key: 'first_name') ?? '';
+      final lastName = await _storage.read(key: 'last_name') ?? '';
+      
+      setState(() {
+        if (firstName.isNotEmpty && lastName.isNotEmpty) {
+          userName = '$firstName $lastName';
+        } else if (firstName.isNotEmpty) {
+          userName = firstName;
+        } else if (lastName.isNotEmpty) {
+          userName = lastName;
+        } else {
+          userName = 'User'; // Default fallback
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        userName = 'User';
+        isLoading = false;
+      });
+    }
+  }
+
   String getFullImageUrl(String imagePath) {
     // Replace backslashes with forward slashes
     String sanitizedPath = imagePath.replaceAll('\\', '/');
@@ -23,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentLocale = ref.watch(localeProvider);
     final location = ref.watch(locationProvider);
     final professionsAsync = ref.watch(professionsProvider);
@@ -47,6 +88,7 @@ class HomeScreen extends ConsumerWidget {
       vatAmount: 162,
       finalPrice: 1242.0,
     );
+    
     void navigateToCleaningWithOffer(PackageModel package, int shift) {
       Navigator.push(
         context,
@@ -76,6 +118,7 @@ class HomeScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(8),
       borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
     );
+    
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -84,24 +127,45 @@ class HomeScreen extends ConsumerWidget {
         automaticallyImplyLeading: false,
         elevation: 0,
         backgroundColor: Colors.white,
-        toolbarHeight: 80,
+        toolbarHeight: 100, // Increased height to accommodate welcome message
         title: SizedBox(
-          height: 80, // match toolbarHeight
+          height: 100, // match toolbarHeight
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center, // center vertically
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Welcome Message
+              if (isLoading)
+                Text(
+                  loc.home,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                )
+              else
+                Text(
+                  'Welcome ${userName}',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              SizedBox(height: 4),
               Text(
                 loc.home,
                 style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
                 ),
               ),
+              SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Icons.location_on, color: Colors.grey, size: 18),
+                  Icon(Icons.location_on, color: Colors.grey, size: 16),
                   SizedBox(width: 4),
                   Expanded(
                     child: Text(
@@ -125,12 +189,15 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
+      
       // Body Content
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: ListView(
           children: [
             SizedBox(height: 16),
+            
+            // Services Grid
             SizedBox(
               height: 160,
               child: professionsAsync.when(
@@ -197,7 +264,6 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            // Services Grid
             SizedBox(height: 20),
 
             // Horizontal Slider (Colored Rectangles)
