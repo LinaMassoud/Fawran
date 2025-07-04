@@ -3,7 +3,9 @@ import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/package_model.dart';
 import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
+import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/providers/location_provider.dart';
+import 'package:fawran/providers/sliderprovider.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/serviceChoice.dart';
 import 'package:flutter/material.dart';
@@ -24,10 +26,12 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentLocale = ref.watch(localeProvider);
+    final currentLocale = ref.watch(localeNotifierProvider);
     final location = ref.watch(locationProvider);
     final professionsAsync = ref.watch(professionsProvider);
     final loc = AppLocalizations.of(context)!;
+    final sliderItemsAsync = ref.watch(sliderItemsProvider);
+
     final examplePackage = PackageModel(
       groupCode: "GRP001",
       serviceShift: "Evening",
@@ -119,8 +123,11 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.language),
             onPressed: () {
-              ref.read(localeProvider.notifier).state =
-                  isArabic ? const Locale('en') : const Locale('ar');
+             ref.read(localeNotifierProvider.notifier).setLocale(isArabic ? const Locale('en') : const Locale('ar'));
+
+                  ;
+                  ref.invalidate(professionsProvider);
+
             },
           ),
         ],
@@ -198,48 +205,49 @@ class HomeScreen extends ConsumerWidget {
             ),
 
             // Services Grid
-            SizedBox(height: 20),
+////horizontal slider
+///
+SizedBox(
+  height: 130,
+  child: sliderItemsAsync.when(
+    data: (sliderItems) {
+      if (sliderItems.isEmpty) {
+        return Center(child: Text("No items available"));
+      }
+      return ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: sliderItems.length,
+        itemBuilder: (context, index) {
+          final item = sliderItems[index];
+          final imageUrl = getFullImageUrl(item.imageUrl);
+          print("Image URL: $imageUrl");  // Debug line
 
-            // Horizontal Slider (Colored Rectangles)
-            SizedBox(
-              height: 130,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      //navigateToCleaningWithOffer(examplePackage,1); // 👈 Call your function here with optional index
-                    },
-                    child: Container(
-                      width: 160,
-                      margin: EdgeInsets.only(right: 10),
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.primaries[index % Colors.primaries.length]
-                            .shade400,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(
-                        child: Text(
-                          loc.offer,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  );
-                },
+          return Container(
+            width: 200,
+            margin: EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.grey[300], // Background color added
+              image: DecorationImage(
+                image: NetworkImage(imageUrl),
+                fit: BoxFit.cover,
               ),
             ),
+            child: Center(
+              child: Text(
+                "Image ${index + 1}",  // Optional: Add text to help visualize each image
+                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+            ),
+          );
+        },
+      );
+    },
+    loading: () => Center(child: CircularProgressIndicator()),
+    error: (e, st) => Center(child: Text("Error loading images: $e")),
+  ),
+),
 
-            SizedBox(height: 20),
-
-            // New Horizontal Slider with Title "الخدمات الاكثر طلبا"
             SizedBox(height: 20),
             Text(
               loc.saving_packages,
