@@ -11,8 +11,9 @@ import '../models/package_model.dart';
 import '../models/address_model.dart';
 import '../services/api_service.dart';
 import '../steps/address_selection_step.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddNewAddressScreen extends StatefulWidget {
+class AddNewAddressScreen extends ConsumerStatefulWidget {
   final PackageModel? package;
   final int? serviceId;
   final int? user_id; // Add serviceId parameter
@@ -25,10 +26,10 @@ class AddNewAddressScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _AddNewAddressScreenState createState() => _AddNewAddressScreenState();
+  ConsumerState<AddNewAddressScreen> createState() => _AddNewAddressScreenState();
 }
 
-class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
+class _AddNewAddressScreenState extends ConsumerState<AddNewAddressScreen> {
   // Controllers for form fields
   final TextEditingController _addressTitleController = TextEditingController();
   final TextEditingController _streetNameController = TextEditingController();
@@ -284,7 +285,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     // Parse building/house number
     int buildingNumber = int.tryParse(_houseNumberController.text) ?? 0;
 
-    // Call API service
+    // Call API service with ref parameter
     final result = await ApiService.createAddress(
       buildingName: _addressTitleController.text.isNotEmpty
           ? _addressTitleController.text
@@ -304,6 +305,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
       floorNumber: _selectedHouseType == 'Apartment'
           ? _selectedFloorNumber
           : null,
+      ref: ref, // Pass ref for language header
     );
 
     // Create newAddress object with correct property names
@@ -384,73 +386,77 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
 
 ////hene
-  Future<void> _fetchDistrictMapData(String districtCode) async {
-  setState(() {
-    _isLoadingDistrictMap = true;
-  });
+ Future<void> _fetchDistrictMapData(String districtCode) async {
+    setState(() {
+      _isLoadingDistrictMap = true;
+    });
 
-  try {
-    final districtMapResponse = await ApiService.fetchDistrictMapData(districtCode);
-    setState(() {
-      _districtMapData = districtMapResponse;
-      _isLoadingDistrictMap = false;
-    });
-  } catch (e) {
-    print('Error fetching district map data: $e');
-    setState(() {
-      _isLoadingDistrictMap = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content:
-              Text('Failed to load district map data. Please try again.')),
-    );
+    try {
+      final districtMapResponse = await ApiService.fetchDistrictMapData(
+        districtCode,
+        ref: ref,
+      );
+      setState(() {
+        _districtMapData = districtMapResponse;
+        _isLoadingDistrictMap = false;
+      });
+    } catch (e) {
+      print('Error fetching district map data: $e');
+      setState(() {
+        _isLoadingDistrictMap = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load district map data. Please try again.')
+        ),
+      );
+    }
   }
-}
 
   Future<void> _fetchCitiesFromAPI(int serviceId) async {
-  setState(() {
-    _isLoadingCities = true;
-  });
+    print("serviceId in _fetchCitiesFromAPI = $serviceId");
+    setState(() {
+      _isLoadingCities = true;
+    });
 
-  try {
-    final cities = await ApiService.fetchCities(serviceId);
-    setState(() {
-      _availableCities = cities;
-      _isLoadingCities = false;
-    });
-  } catch (e) {
-    print('Error fetching cities: $e');
-    setState(() {
-      _isLoadingCities = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load cities. Please try again.')),
-    );
+    try {
+      final cities = await ApiService.fetchCities(serviceId, ref: ref);
+      setState(() {
+        _availableCities = cities;
+        _isLoadingCities = false;
+      });
+    } catch (e) {
+      print('Error fetching cities: $e');
+      setState(() {
+        _isLoadingCities = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load cities. Please try again.')),
+      );
+    }
   }
-}
 
   Future<void> _fetchDistrictsFromAPI(int cityCode) async {
-  setState(() {
-    _isLoadingDistricts = true;
-  });
+    setState(() {
+      _isLoadingDistricts = true;
+    });
 
-  try {
-    final districts = await ApiService.fetchDistricts(cityCode);
-    setState(() {
-      _availableDistricts = districts;
-      _isLoadingDistricts = false;
-    });
-  } catch (e) {
-    print('Error fetching districts: $e');
-    setState(() {
-      _isLoadingDistricts = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load districts. Please try again.')),
-    );
+    try {
+      final districts = await ApiService.fetchDistricts(cityCode, ref: ref);
+      setState(() {
+        _availableDistricts = districts;
+        _isLoadingDistricts = false;
+      });
+    } catch (e) {
+      print('Error fetching districts: $e');
+      setState(() {
+        _isLoadingDistricts = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load districts. Please try again.')),
+      );
+    }
   }
-}
 
   // Now update your main widget's _openMapSelector method to use this new dialog:
   Future<void> _openMapSelector() async {

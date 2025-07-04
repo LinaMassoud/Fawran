@@ -8,6 +8,7 @@ import 'dart:async'; // for TimeoutException
 import 'package:intl/intl.dart';
 import '../models/address_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart'; 
 
 class ApiService {
   static const String _baseUrl =
@@ -165,184 +166,194 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> fetchCustomerAddresses(
-      {required int userId}) async {
-    try {
-      final url = '$_baseUrl/customer_addresses/$userId';
+  static Future<List<dynamic>> fetchCustomerAddresses({
+  required int userId,
+  WidgetRef? ref, // Add this parameter
+}) async {
+  try {
+    final url = '$_baseUrl/customer_addresses/$userId';
 
-      print(
-          '🔍 [fetchCustomerAddresses] Fetching addresses for userId: $userId');
-      print('🌐 [fetchCustomerAddresses] URL: $url');
+    print('🔍 [fetchCustomerAddresses] Fetching addresses for userId: $userId');
+    print('🌐 [fetchCustomerAddresses] URL: $url');
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref, // Pass ref here
+    );
 
-      print(
-          '📡 [fetchCustomerAddresses] Response status: ${response.statusCode}');
+    // Rest of the method remains the same...
+    print('📡 [fetchCustomerAddresses] Response status: ${response.statusCode}');
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        print(
-            '✅ [fetchCustomerAddresses] Successfully fetched ${data.length} addresses');
-        return data;
-      } else {
-        print(
-            '❌ [fetchCustomerAddresses] Failed with status: ${response.statusCode}');
-        print('❌ [fetchCustomerAddresses] Response body: ${response.body}');
-        throw Exception(
-            'Failed to load addresses. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('💥 [fetchCustomerAddresses] Error: $e');
-      throw Exception('Error loading addresses: $e');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      print('✅ [fetchCustomerAddresses] Successfully fetched ${data.length} addresses');
+      return data;
+    } else {
+      print('❌ [fetchCustomerAddresses] Failed with status: ${response.statusCode}');
+      print('❌ [fetchCustomerAddresses] Response body: ${response.body}');
+      throw Exception('Failed to load addresses. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    print('💥 [fetchCustomerAddresses] Error: $e');
+    throw Exception('Error loading addresses: $e');
   }
+}
 
-  static Future<List<dynamic>> fetchProfessionsHourly() async {
-    try {
-      final url = '$_baseUrl/home/professions';
+  static Future<List<dynamic>> fetchProfessionsHourly({WidgetRef? ref}) async {
+  try {
+    final url = '$_baseUrl/home/professions';
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref,
+    );
 
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-        return decodedData;
-      } else {
-        throw Exception(
-            'Failed to load professions. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error loading professions: $e');
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body);
+      return decodedData;
+    } else {
+      throw Exception(
+          'Failed to load professions. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error loading professions: $e');
   }
+}
 
   static Future<List<PackageModel>> fetchServicePackages({
-    required int professionId,
-    required int serviceId,
-  }) async {
-    try {
-      final url = '$_baseUrl/service_packages/$professionId/$serviceId';
+  required int professionId,
+  required int serviceId,
+  WidgetRef? ref,
+}) async {
+  try {
+    final url = '$_baseUrl/service_packages/$professionId/$serviceId';
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref,
+    );
 
-      if (response.statusCode == 200) {
-        String jsonString = response.body;
+    if (response.statusCode == 200) {
+      String jsonString = response.body;
 
-        // Comprehensive null value handling
-        jsonString = jsonString.replaceAll(
-            '"discount_percentage":null', '"discount_percentage":0');
-        jsonString = jsonString.replaceAll(
-            '"discount_percentage":"null"', '"discount_percentage":0');
-        jsonString = jsonString.replaceAll(
-            '"discount_percentage":,', '"discount_percentage":0,');
-        jsonString = jsonString.replaceAll(
-            '"discount_percentage":"",', '"discount_percentage":0,');
-        jsonString =
-            jsonString.replaceAll('"no_of_weeks":null', '"no_of_weeks":0');
-        jsonString =
-            jsonString.replaceAll('"no_of_weeks":"null"', '"no_of_weeks":0');
-        jsonString =
-            jsonString.replaceAll('"hour_price":null', '"hour_price":0');
-        jsonString =
-            jsonString.replaceAll('"hour_price":"null"', '"hour_price":0');
+      // Comprehensive null value handling
+      jsonString = jsonString.replaceAll(
+          '"discount_percentage":null', '"discount_percentage":0');
+      jsonString = jsonString.replaceAll(
+          '"discount_percentage":"null"', '"discount_percentage":0');
+      jsonString = jsonString.replaceAll(
+          '"discount_percentage":,', '"discount_percentage":0,');
+      jsonString = jsonString.replaceAll(
+          '"discount_percentage":"",', '"discount_percentage":0,');
+      jsonString =
+          jsonString.replaceAll('"no_of_weeks":null', '"no_of_weeks":0');
+      jsonString =
+          jsonString.replaceAll('"no_of_weeks":"null"', '"no_of_weeks":0');
+      jsonString =
+          jsonString.replaceAll('"hour_price":null', '"hour_price":0');
+      jsonString =
+          jsonString.replaceAll('"hour_price":"null"', '"hour_price":0');
 
-        // Handle any other null values that might cause issues
-        jsonString = jsonString.replaceAll(':null,', ':0,');
-        jsonString = jsonString.replaceAll(':null}', ':0}');
-        jsonString = jsonString.replaceAll(':"null",', ':0,');
-        jsonString = jsonString.replaceAll(':"null"}', ':0}');
+      // Handle any other null values that might cause issues
+      jsonString = jsonString.replaceAll(':null,', ':0,');
+      jsonString = jsonString.replaceAll(':null}', ':0}');
+      jsonString = jsonString.replaceAll(':"null",', ':0,');
+      jsonString = jsonString.replaceAll(':"null"}', ':0}');
 
-        final List<dynamic> packagesJson = json.decode(jsonString);
+      final List<dynamic> packagesJson = json.decode(jsonString);
 
-        List<PackageModel> packages = [];
-        for (int i = 0; i < packagesJson.length; i++) {
-          var packageData = packagesJson[i];
-          try {
-            PackageModel package = PackageModel.fromJson(packageData);
-            packages.add(package);
-          } catch (e) {
-            // Continue with other packages instead of throwing
-          }
+      List<PackageModel> packages = [];
+      for (int i = 0; i < packagesJson.length; i++) {
+        var packageData = packagesJson[i];
+        try {
+          PackageModel package = PackageModel.fromJson(packageData);
+          packages.add(package);
+        } catch (e) {
+          // Continue with other packages instead of throwing
         }
-
-        return packages;
-      } else {
-        throw Exception(
-            'Failed to load service packages. Status code: ${response.statusCode}');
       }
-    } catch (e) {
-      throw Exception('Error loading service packages: $e');
+
+      return packages;
+    } else {
+      throw Exception(
+          'Failed to load service packages. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error loading service packages: $e');
   }
+}
 
   // Fetch country groups by service ID
-  static Future<List<dynamic>> fetchCountryGroups(
-      {required int serviceId}) async {
-    try {
-      final url = '$_baseUrl/country_groups/$serviceId';
+  static Future<List<dynamic>> fetchCountryGroups({
+  required int serviceId,
+  WidgetRef? ref,
+}) async {
+  try {
+    final url = '$_baseUrl/country_groups/$serviceId';
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref,
+    );
 
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-        return decodedData;
-      } else {
-        throw Exception(
-            'Failed to load country groups. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error loading country groups: $e');
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body);
+      return decodedData;
+    } else {
+      throw Exception(
+          'Failed to load country groups. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error loading country groups: $e');
   }
+}
 
-  static Future<List<dynamic>> fetchServices(
-      {required int professionId}) async {
-    try {
-      final url = '$_baseUrl/home/professions';
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+  static Future<List<dynamic>> fetchServices({
+  required int professionId,
+  WidgetRef? ref, // Add this parameter
+}) async {
+  try {
+    final url = '$_baseUrl/home/professions';
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref, // Pass ref here to access localeProvider
+    );
 
-        // Find the selected position and extract its services
-        for (var position in data) {
-          if (position['position_id'] == professionId) {
-            final List<dynamic> servicesList = position['services'] ?? [];
-            return servicesList;
-          }
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+
+      // Find the selected position and extract its services
+      for (var position in data) {
+        if (position['position_id'] == professionId) {
+          final List<dynamic> servicesList = position['services'] ?? [];
+          return servicesList;
         }
-
-        // If profession not found, return empty list
-        return [];
-      } else {
-        throw Exception(
-            'Failed to load services. Status code: ${response.statusCode}');
       }
-    } catch (e) {
-      throw Exception('Error fetching services: $e');
-    }
-  }
 
-  static Future<List<City>> fetchCities(int serviceId) async {
+      // If profession not found, return empty list
+      return [];
+    } else {
+      throw Exception(
+          'Failed to load services. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error fetching services: $e');
+  }
+}
+
+  static Future<List<City>> fetchCities(int serviceId, {WidgetRef? ref}) async {
   try {
     final response = await makeAuthenticatedRequest(
       method: 'GET',
       url: '$_baseUrl/service_cities/$serviceId',
+      ref: ref,
     );
 
     if (response.statusCode == 200) {
@@ -358,11 +369,12 @@ class ApiService {
   }
 }
 
-  static Future<List<District>> fetchDistricts(int cityCode) async {
+  static Future<List<District>> fetchDistricts(int cityCode, {WidgetRef? ref}) async {
   try {
     final response = await makeAuthenticatedRequest(
       method: 'GET',
       url: '$_baseUrl/districts/$cityCode',
+      ref: ref,
     );
 
     if (response.statusCode == 200) {
@@ -379,12 +391,15 @@ class ApiService {
   }
 }
 
-  static Future<DistrictMapResponse> fetchDistrictMapData(
-    String districtCode) async {
+ static Future<DistrictMapResponse> fetchDistrictMapData(
+  String districtCode, {
+  WidgetRef? ref,
+}) async {
   try {
     final response = await makeAuthenticatedRequest(
       method: 'GET',
       url: '$_baseUrl/districts/info/$districtCode',
+      ref: ref,
     );
 
     if (response.statusCode == 200) {
@@ -445,65 +460,76 @@ class ApiService {
 
 // Enhanced HTTP request method with automatic token refresh
   static Future<http.Response> makeAuthenticatedRequest({
-    required String method,
-    required String url,
-    Map<String, String>? headers,
-    String? body,
-    int retryCount = 0,
-  }) async {
-    final token = await _secureStorage.read(key: 'token');
-
-    final requestHeaders = {
-      'Content-Type': 'application/json',
-      if (token != null) 'token': token,
-      ...?headers,
-    };
-
-    http.Response response;
-
-    switch (method.toUpperCase()) {
-      case 'GET':
-        response = await http.get(Uri.parse(url), headers: requestHeaders);
-        break;
-      case 'POST':
-        response = await http.post(Uri.parse(url),
-            headers: requestHeaders, body: body);
-        break;
-      case 'PUT':
-        response =
-            await http.put(Uri.parse(url), headers: requestHeaders, body: body);
-        break;
-      case 'DELETE':
-        response = await http.delete(Uri.parse(url), headers: requestHeaders);
-        break;
-      default:
-        throw Exception('Unsupported HTTP method: $method');
-    }
-
-    // If we get a 401 (unauthorized) and haven't already retried
-    if (response.statusCode == 401 && retryCount == 0) {
-      print('🔄 [AUTH_REQUEST] Received 401, attempting token refresh...');
-
-      final refreshSuccess = await refreshToken();
-      if (refreshSuccess) {
-        print('✅ [AUTH_REQUEST] Token refreshed, retrying original request...');
-        // Retry the original request with the new token
-        return makeAuthenticatedRequest(
-          method: method,
-          url: url,
-          headers: headers,
-          body: body,
-          retryCount: 1, // Prevent infinite retry loop
-        );
-      } else {
-        print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
-        // Clear all stored tokens if refresh fails
-        await _secureStorage.deleteAll();
-      }
-    }
-
-    return response;
+  required String method,
+  required String url,
+  Map<String, String>? headers,
+  String? body,
+  int retryCount = 0,
+  WidgetRef? ref, // Add this parameter
+}) async {
+  final token = await _secureStorage.read(key: 'token');
+  
+  // Get language from localeProvider if ref is provided
+  String language = 'en'; // Default to English
+  if (ref != null) {
+    final locale = ref.read(localeProvider);
+    language = locale.languageCode; // This will be 'en' or 'ar'
   }
+
+  final requestHeaders = {
+    'Content-Type': 'application/json',
+    'language': language, // Add language header
+    if (token != null) 'token': token,
+    ...?headers,
+  };
+
+  // Rest of the method remains the same...
+  http.Response response;
+
+  switch (method.toUpperCase()) {
+    case 'GET':
+      response = await http.get(Uri.parse(url), headers: requestHeaders);
+      break;
+    case 'POST':
+      response = await http.post(Uri.parse(url),
+          headers: requestHeaders, body: body);
+      break;
+    case 'PUT':
+      response =
+          await http.put(Uri.parse(url), headers: requestHeaders, body: body);
+      break;
+    case 'DELETE':
+      response = await http.delete(Uri.parse(url), headers: requestHeaders);
+      break;
+    default:
+      throw Exception('Unsupported HTTP method: $method');
+  }
+
+  // If we get a 401 (unauthorized) and haven't already retried
+  if (response.statusCode == 401 && retryCount == 0) {
+    print('🔄 [AUTH_REQUEST] Received 401, attempting token refresh...');
+
+    final refreshSuccess = await refreshToken();
+    if (refreshSuccess) {
+      print('✅ [AUTH_REQUEST] Token refreshed, retrying original request...');
+      // Retry the original request with the new token
+      return makeAuthenticatedRequest(
+        method: method,
+        url: url,
+        headers: headers,
+        body: body,
+        retryCount: 1, // Prevent infinite retry loop
+        ref: ref, // Pass ref to retry
+      );
+    } else {
+      print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
+      // Clear all stored tokens if refresh fails
+      await _secureStorage.deleteAll();
+    }
+  }
+
+  return response;
+}
 
 
 
@@ -530,6 +556,7 @@ static Future<Map<String, dynamic>> createContract({
   String? visitCalendar,
   int? packageId,
   List<String>? appointments,
+  WidgetRef? ref,
 }) async {
   try {
     // Prepare request body
@@ -574,6 +601,7 @@ static Future<Map<String, dynamic>> createContract({
       method: 'POST',
       url: '$_baseUrl/hourly/contract/create',
       body: json.encode(requestBody),
+      ref: ref,
     );
 
     print('Contract creation response status: ${response.statusCode}');
@@ -615,11 +643,12 @@ static Future<Map<String, dynamic>> createContract({
 
 
 
-static Future<Map<String, dynamic>> fetchServiceTerms() async {
+static Future<Map<String, dynamic>> fetchServiceTerms({WidgetRef? ref}) async {
   try {
     final response = await makeAuthenticatedRequest(
       method: 'GET',
       url: '$_baseUrl/service_terms',
+      ref: ref,
     );
 
     print('📡 [FETCH_TERMS] Response status: ${response.statusCode}');
@@ -647,9 +676,9 @@ static Future<Map<String, dynamic>> fetchServiceTerms() async {
 }
 
 
-
 static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
   required int userId,
+  WidgetRef? ref,
 }) async {
   try {
     if (userId.toString().isEmpty) {
@@ -663,6 +692,7 @@ static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
     final response = await makeAuthenticatedRequest(
       method: 'GET',
       url: url,
+      ref: ref,
     );
 
     print('📡 [PERMANENT_CONTRACTS] Response status: ${response.statusCode}');
@@ -693,6 +723,7 @@ static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
 
 static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
   required int userId,
+  WidgetRef? ref,
 }) async {
   try {
     print("=== HOURLY CONTRACTS DEBUG ===");
@@ -708,6 +739,7 @@ static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
     final response = await makeAuthenticatedRequest(
       method: 'GET',
       url: url,
+      ref: ref,
     );
 
     print("Response Status Code: ${response.statusCode}");
@@ -774,157 +806,164 @@ static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
 
 
   static Future<Map<String, dynamic>> createAddress({
-    required String buildingName,
-    required int buildingNumber,
-    required String cityCode,
-    required String districtId,
-    required int houseType,
-    required int createdBy,
-    required int customerId,
-    required String mapUrl,
-    required double latitude,
-    required double longitude,
-    int? apartmentNumber,
-    int? floorNumber,
-  }) async {
-    try {
-      // Prepare request body
-      Map<String, dynamic> requestBody = {
-        'building_name': buildingName,
-        'building_number': buildingNumber,
-        'city_code': cityCode,
-        'district_id': districtId,
-        'house_type': houseType,
-        'created_by': createdBy,
-        'customer_id': customerId,
-        'map_url': mapUrl,
-        'latitude': latitude,
-        'longitude': longitude,
+  required String buildingName,
+  required int buildingNumber,
+  required String cityCode,
+  required String districtId,
+  required int houseType,
+  required int createdBy,
+  required int customerId,
+  required String mapUrl,
+  required double latitude,
+  required double longitude,
+  int? apartmentNumber,
+  int? floorNumber,
+  WidgetRef? ref,
+}) async {
+  try {
+    // Prepare request body
+    Map<String, dynamic> requestBody = {
+      'building_name': buildingName,
+      'building_number': buildingNumber,
+      'city_code': cityCode,
+      'district_id': districtId,
+      'house_type': houseType,
+      'created_by': createdBy,
+      'customer_id': customerId,
+      'map_url': mapUrl,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+
+    // Add apartment-specific fields only if house type is Apartment (2)
+    if (houseType == 2) {
+      requestBody['apartment_number'] = apartmentNumber ?? 0;
+      requestBody['floor_number'] = floorNumber ?? 0;
+    }
+
+    print('Sending POST request with body: ${json.encode(requestBody)}');
+
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: '$_baseUrl/customer_addresses',
+      headers: {'Accept': 'application/json'},
+      body: json.encode(requestBody),
+      ref: ref,
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return {
+        'success': true,
+        'data': json.decode(response.body),
+        'message': 'Address created successfully!'
       };
+    } else {
+      // Handle error responses
+      String errorMessage = 'Failed to create address. Please try again.';
 
-      // Add apartment-specific fields only if house type is Apartment (2)
-      if (houseType == 2) {
-        requestBody['apartment_number'] = apartmentNumber ?? 0;
-        requestBody['floor_number'] = floorNumber ?? 0;
-      }
-
-      print('Sending POST request with body: ${json.encode(requestBody)}');
-
-      final response = await makeAuthenticatedRequest(
-        method: 'POST',
-        url: '$_baseUrl/customer_addresses',
-        headers: {'Accept': 'application/json'},
-        body: json.encode(requestBody),
-      );
-
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'data': json.decode(response.body),
-          'message': 'Address created successfully!'
-        };
+      // Check if response is HTML (like the 555 error)
+      if (response.body.contains('<!DOCTYPE html>') ||
+          response.body.contains('<html>')) {
+        errorMessage =
+            'Server error occurred. Please check your network connection and try again.';
       } else {
-        // Handle error responses
-        String errorMessage = 'Failed to create address. Please try again.';
-
-        // Check if response is HTML (like the 555 error)
-        if (response.body.contains('<!DOCTYPE html>') ||
-            response.body.contains('<html>')) {
-          errorMessage =
-              'Server error occurred. Please check your network connection and try again.';
-        } else {
-          try {
-            final errorData = json.decode(response.body);
-            errorMessage = errorData['message'] ?? errorMessage;
-          } catch (e) {
-            // Keep default error message
-          }
+        try {
+          final errorData = json.decode(response.body);
+          errorMessage = errorData['message'] ?? errorMessage;
+        } catch (e) {
+          // Keep default error message
         }
-
-        print('API Error: ${response.statusCode} - ${response.body}');
-        return {
-          'success': false,
-          'message': '$errorMessage (${response.statusCode})',
-          'statusCode': response.statusCode
-        };
       }
-    } catch (e) {
-      print('Exception creating address: $e');
+
+      print('API Error: ${response.statusCode} - ${response.body}');
       return {
         'success': false,
-        'message': 'Network error. Please check your connection and try again.',
-        'error': e.toString()
+        'message': '$errorMessage (${response.statusCode})',
+        'statusCode': response.statusCode
       };
     }
+  } catch (e) {
+    print('Exception creating address: $e');
+    return {
+      'success': false,
+      'message': 'Network error. Please check your connection and try again.',
+      'error': e.toString()
+    };
   }
+}
 
   // Fetch service shifts by service ID
-  static Future<List<dynamic>> fetchServiceShifts(
-      {required int serviceId}) async {
-    try {
-      final url = '$_baseUrl/service_shifts/$serviceId';
+  static Future<List<dynamic>> fetchServiceShifts({
+  required int serviceId,
+  WidgetRef? ref,
+}) async {
+  try {
+    final url = '$_baseUrl/service_shifts/$serviceId';
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref,
+    );
 
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-        return decodedData;
-      } else {
-        throw Exception(
-            'Failed to load service shifts. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error loading service shifts: $e');
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body);
+      return decodedData;
+    } else {
+      throw Exception(
+          'Failed to load service shifts. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error loading service shifts: $e');
   }
+}
 
   static Future<List<PackageModel>> fetchPackagesByGroup({
-    required int professionId,
-    required int serviceId,
-    required String groupCode,
-    int? serviceShift,
-  }) async {
-    try {
-      // First get all packages for the service
-      final allPackages = await fetchServicePackages(
-        professionId: professionId,
-        serviceId: serviceId,
-      );
+  required int professionId,
+  required int serviceId,
+  required String groupCode,
+  int? serviceShift,
+  WidgetRef? ref,
+}) async {
+  try {
+    // First get all packages for the service
+    final allPackages = await fetchServicePackages(
+      professionId: professionId,
+      serviceId: serviceId,
+      ref: ref,
+    );
 
-      // Filter by group code and service shift if provided
-      List<PackageModel> filteredPackages = [];
+    // Filter by group code and service shift if provided
+    List<PackageModel> filteredPackages = [];
 
-      for (int i = 0; i < allPackages.length; i++) {
-        PackageModel package = allPackages[i];
-        bool matchesGroup =
-            package.groupCode.toString() == groupCode.toString();
-        bool matchesShift;
+    for (int i = 0; i < allPackages.length; i++) {
+      PackageModel package = allPackages[i];
+      bool matchesGroup =
+          package.groupCode.toString() == groupCode.toString();
+      bool matchesShift;
 
-        if (serviceShift == null) {
-          matchesShift = true;
-        } else {
-          // Convert both to int for comparison to handle string/int mismatches
-          int? packageShift = int.tryParse(package.serviceShift.toString());
-          int? targetShift = int.tryParse(serviceShift.toString());
-          matchesShift = packageShift == targetShift;
-        }
-
-        if (matchesGroup && matchesShift) {
-          filteredPackages.add(package);
-        }
+      if (serviceShift == null) {
+        matchesShift = true;
+      } else {
+        // Convert both to int for comparison to handle string/int mismatches
+        int? packageShift = int.tryParse(package.serviceShift.toString());
+        int? targetShift = int.tryParse(serviceShift.toString());
+        matchesShift = packageShift == targetShift;
       }
 
-      return filteredPackages;
-    } catch (e) {
-      throw Exception('Error loading packages by group: $e');
+      if (matchesGroup && matchesShift) {
+        filteredPackages.add(package);
+      }
     }
+
+    return filteredPackages;
+  } catch (e) {
+    throw Exception('Error loading packages by group: $e');
   }
+}
 
   static Future<Map<String, dynamic>?> calculatePackagePrice({
     required int serviceId,
@@ -1020,117 +1059,131 @@ static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
   }
 
   static Future<List<PackageModel>> fetchEastAsiaPackages({
-    required int professionId,
-    required int serviceId,
-    int? serviceShift,
-  }) async {
+  required int professionId,
+  required int serviceId,
+  int? serviceShift,
+  WidgetRef? ref,
+}) async {
+  try {
+    // Get country groups to find the correct group code for Asian
+    final countryGroups = await fetchCountryGroups(
+      serviceId: serviceId,
+      ref: ref,
+    );
+
+    var asianGroup;
     try {
-      // Get country groups to find the correct group code for Asian
-      final countryGroups = await fetchCountryGroups(serviceId: serviceId);
-
-      var asianGroup;
-      try {
-        asianGroup = countryGroups.firstWhere(
-          (group) =>
-              group['group_name'].toString().toUpperCase().contains('ASIAN'),
-        );
-      } catch (e) {
-        asianGroup = {'group_code': '2'}; // fallback to hardcoded value
-      }
-
-      final groupCode = asianGroup['group_code'];
-
-      final packages = await fetchPackagesByGroup(
-        professionId: professionId,
-        serviceId: serviceId,
-        groupCode: groupCode,
-        serviceShift: serviceShift,
+      asianGroup = countryGroups.firstWhere(
+        (group) =>
+            group['group_name'].toString().toUpperCase().contains('ASIAN'),
       );
-
-      return packages;
     } catch (e) {
-      throw Exception('Error loading East Asia packages: $e');
+      asianGroup = {'group_code': '2'}; // fallback to hardcoded value
     }
+
+    final groupCode = asianGroup['group_code'];
+
+    final packages = await fetchPackagesByGroup(
+      professionId: professionId,
+      serviceId: serviceId,
+      groupCode: groupCode,
+      serviceShift: serviceShift,
+      ref: ref,
+    );
+
+    return packages;
+  } catch (e) {
+    throw Exception('Error loading East Asia packages: $e');
   }
+}
 
   static Future<List<PackageModel>> fetchAfricanPackages({
-    required int professionId,
-    required int serviceId,
-    int? serviceShift,
-  }) async {
+  required int professionId,
+  required int serviceId,
+  int? serviceShift,
+  WidgetRef? ref,
+}) async {
+  try {
+    // Get country groups to find the correct group code for African
+    final countryGroups = await fetchCountryGroups(
+      serviceId: serviceId,
+      ref: ref,
+    );
+
+    var africanGroup;
     try {
-      // Get country groups to find the correct group code for African
-      final countryGroups = await fetchCountryGroups(serviceId: serviceId);
-
-      var africanGroup;
-      try {
-        africanGroup = countryGroups.firstWhere(
-          (group) =>
-              group['group_name'].toString().toUpperCase().contains('AFRICAN'),
-        );
-      } catch (e) {
-        africanGroup = {'group_code': '3'}; // fallback to hardcoded value
-      }
-
-      final groupCode = africanGroup['group_code'];
-
-      final packages = await fetchPackagesByGroup(
-        professionId: professionId,
-        serviceId: serviceId,
-        groupCode: groupCode,
-        serviceShift: serviceShift,
+      africanGroup = countryGroups.firstWhere(
+        (group) =>
+            group['group_name'].toString().toUpperCase().contains('AFRICAN'),
       );
-
-      return packages;
     } catch (e) {
-      throw Exception('Error loading African packages: $e');
+      africanGroup = {'group_code': '3'}; // fallback to hardcoded value
     }
+
+    final groupCode = africanGroup['group_code'];
+
+    final packages = await fetchPackagesByGroup(
+      professionId: professionId,
+      serviceId: serviceId,
+      groupCode: groupCode,
+      serviceShift: serviceShift,
+      ref: ref,
+    );
+
+    return packages;
+  } catch (e) {
+    throw Exception('Error loading African packages: $e');
   }
+}
 
-  Future<List<ProfessionModel>> fetchProfessions() async {
-    try {
-      final url = '$_baseUrl/home/professions';
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+  Future<List<ProfessionModel>> fetchProfessions({WidgetRef? ref}) async {
+  try {
+    final url = '$_baseUrl/home/professions';
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => ProfessionModel.fromJson(json)).toList();
-      } else {
-        throw Exception(
-            'Failed to fetch professions. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching professions: $e');
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => ProfessionModel.fromJson(json)).toList();
+    } else {
+      throw Exception(
+          'Failed to fetch professions. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error fetching professions: $e');
   }
+}
 
   Future<List<dynamic>> fetchNationalities({
-    required int professionId,
-    required String cityCode,
-  }) async {
-    try {
-      final url = '$_baseUrl/nationalities/$professionId/$cityCode';
+  required int professionId,
+  required String cityCode,
+  WidgetRef? ref,
+}) async {
+  try {
+    final url = '$_baseUrl/nationalities/$professionId/$cityCode';
 
-      final response = await makeAuthenticatedRequest(
-        method: 'GET',
-        url: url,
-      );
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+      ref: ref,
+    );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data;
-      } else {
-        throw Exception(
-            'Failed to fetch nationalities. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching nationalities: $e');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data;
+    } else {
+      throw Exception(
+          'Failed to fetch nationalities. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    throw Exception('Error fetching nationalities: $e');
   }
+}
 }
 
 Map<String, dynamic>? safeJsonDecode(String jsonString) {

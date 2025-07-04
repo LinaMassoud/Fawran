@@ -200,8 +200,11 @@ Future<void> _fetchAddresses() async {
       return;
     }
  
-    // Use the API service method
-    final data = await ApiService.fetchCustomerAddresses(userId: userId);
+    // Use the API service method and pass ref for locale access
+    final data = await ApiService.fetchCustomerAddresses(
+      userId: userId,
+      ref: ref, // Pass ref here to access localeProvider
+    );
  
     setState(() {
       addresses = data.map((addressData) {
