@@ -106,4 +106,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tenpercent => ' %10 OFF';
+
+  @override
+  String get welcome => 'Welcome';
 }

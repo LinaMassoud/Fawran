@@ -6,22 +6,21 @@ import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/providers/sliderprovider.dart';
+import 'package:fawran/providers/userNameProvider.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/serviceChoice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+// Provider to fetch user name from secure storage
+
 
 class HomeScreen extends ConsumerWidget {
   String getFullImageUrl(String imagePath) {
-    // Replace backslashes with forward slashes
     String sanitizedPath = imagePath.replaceAll('\\', '/');
-
-    // Encode the URL to handle spaces, special characters, etc.
     String encodedPath = Uri.encodeFull(sanitizedPath);
-
-    // Concatenate the base URL with the sanitized and encoded path
-    final res = "http://fawran.ddns.net:8080/" + encodedPath;
-    return res;
+    return "http://fawran.ddns.net:8080/$encodedPath";
   }
 
   @override
@@ -29,13 +28,15 @@ class HomeScreen extends ConsumerWidget {
     final currentLocale = ref.watch(localeNotifierProvider);
     final location = ref.watch(locationProvider);
     final professionsAsync = ref.watch(professionsProvider);
-    final loc = AppLocalizations.of(context)!;
     final sliderItemsAsync = ref.watch(sliderItemsProvider);
+    final userNameAsync = ref.watch(userNameProvider);
+    final loc = AppLocalizations.of(context)!;
+    final isArabic = currentLocale.languageCode == 'ar';
 
     final examplePackage = PackageModel(
       groupCode: "GRP001",
       serviceShift: "Evening",
-      duration: "90", // duration in minutes
+      duration: "90",
       noOfMonth: 3,
       hourPrice: 25.0,
       visitsWeekly: 2,
@@ -51,6 +52,7 @@ class HomeScreen extends ConsumerWidget {
       vatAmount: 162,
       finalPrice: 1242.0,
     );
+
     void navigateToCleaningWithOffer(PackageModel package, int shift) {
       Navigator.push(
         context,
@@ -63,77 +65,56 @@ class HomeScreen extends ConsumerWidget {
       );
     }
 
-    final isArabic = currentLocale.languageCode == 'ar';
-
-    final List<String> services = [
-      loc.service_driver,
-      loc.service_full_time_maid,
-      loc.service_maid_4h,
-      loc.service_maid_8h,
-      loc.service_driver,
-      loc.service_full_time_maid,
-      loc.service_maid_4h,
-      loc.service_maid_8h
-    ];
-
-    final inputBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
-    );
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // Fixed Header
       appBar: AppBar(
         automaticallyImplyLeading: false,
         elevation: 0,
         backgroundColor: Colors.white,
-        toolbarHeight: 80,
-        title: SizedBox(
-          height: 80, // match toolbarHeight
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // center vertically
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                loc.home,
+        toolbarHeight: 100,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            userNameAsync.when(
+              data: (name) => Text(
+                "${loc.welcome}, $name",
                 style: TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 18,
                 ),
               ),
-              Row(
-                children: [
-                  Icon(Icons.location_on, color: Colors.grey, size: 18),
-                  SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      location,
-                      style: TextStyle(color: Colors.grey[700], fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+              loading: () => Text(loc.welcome),
+              error: (err, stack) => Text(loc.welcome),
+            ),
+            Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.grey, size: 18),
+                SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    location,
+                    style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.language),
             onPressed: () {
               ref.read(localeNotifierProvider.notifier).setLocale(
-                  isArabic ? const Locale('en') : const Locale('ar'));
-
-              ;
+                    isArabic ? const Locale('en') : const Locale('ar'),
+                  );
               ref.invalidate(professionsProvider);
               ref.invalidate(sliderItemsProvider);
             },
           ),
         ],
       ),
-      // Body Content
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: ListView(
@@ -204,10 +185,7 @@ class HomeScreen extends ConsumerWidget {
                 error: (error, stack) => Center(child: Text('Error: $error')),
               ),
             ),
-
-            // Services Grid
-////horizontal slider
-            ///
+            SizedBox(height: 20),
             SizedBox(
               height: 130,
               child: sliderItemsAsync.when(
@@ -221,14 +199,12 @@ class HomeScreen extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       final item = sliderItems[index];
                       final imageUrl = getFullImageUrl(item.imageUrl);
-                      print("Image URL: $imageUrl"); // Debug line
-
                       return Container(
                         width: 200,
                         margin: EdgeInsets.only(right: 12),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[300], // Background color added
+                          color: Colors.grey[300],
                           image: DecorationImage(
                             image: NetworkImage(imageUrl),
                             fit: BoxFit.cover,
@@ -243,7 +219,6 @@ class HomeScreen extends ConsumerWidget {
                     Center(child: Text("Error loading images: $e")),
               ),
             ),
-
             SizedBox(height: 20),
             Text(
               loc.saving_packages,
@@ -252,17 +227,14 @@ class HomeScreen extends ConsumerWidget {
                   fontWeight: FontWeight.bold,
                   color: Colors.black),
             ),
-
             SizedBox(height: 20),
-
-            // Promo Cards
             Row(
               children: [
                 Expanded(
                   child: Container(
-                    height: 130, // ⬆️ Increased height
+                    height: 130,
                     margin: const EdgeInsetsDirectional.only(end: 8),
-                    padding: const EdgeInsets.all(12), // ⬅️ Add inner padding
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.blue[400],
                       borderRadius: BorderRadius.circular(16),
@@ -366,14 +338,10 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ],
             ),
-
             SizedBox(height: 80),
-            // Phone / Email
           ],
         ),
       ),
-
-      // Fixed Footer
       bottomNavigationBar: BottomAppBar(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
@@ -384,15 +352,13 @@ class HomeScreen extends ConsumerWidget {
               Icon(Icons.search, color: Colors.grey),
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(
-                      context, '/bookings'); // Navigate to profile
+                  Navigator.pushNamed(context, '/bookings');
                 },
                 child: Icon(Icons.calendar_month, color: Colors.grey),
               ),
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(
-                      context, '/profile'); // Navigate to profile
+                  Navigator.pushNamed(context, '/profile');
                 },
                 child: Icon(Icons.person, color: Colors.grey),
               ),

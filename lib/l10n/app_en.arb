@@ -35,6 +35,8 @@
   "requiredField":"This field is required",
  "housemaidoffer":"House Maid \n 7 days",
   "privateDriver":"Private Driver \n 7 days",
-  "tenpercent":" %10 OFF"
+  "tenpercent":" %10 OFF",
+    "welcome":"Welcome"
+
 
 }
