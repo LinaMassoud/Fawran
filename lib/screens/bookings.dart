@@ -142,36 +142,37 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Widget _buildHourlyContractCard(Map<String, dynamic> booking) {
-    String getStatusText(dynamic status) {
-      if (status == null) return "Unknown";
-      if (status is int) {
-        switch (status) {
+    String getStatusText(String status) {
+      final statusInt = int.parse(status);
+        switch (statusInt) {
           case 0:
             return "Not confirmed";
           case 1:
             return "Confirmed";
           case 2:
-            return "Paid";
-          case 3:
             return "Cancelled";
+          case 3:
+            return "Paid";
+           default:
+           return "unKnown";  
         }
       }
-      return status.toString();
-    }
+    
 
     Color getStatusColor(dynamic status) {
+      
       if (status == null) return Colors.grey;
-      if (status is int) {
-        switch (status) {
+      final statusInt = int.parse(status);
+        switch (statusInt) {
           case 0:
             return Colors.orange;
           case 1:
             return Colors.blue;
           case 2:
-            return Colors.green;
-          case 3:
             return Colors.red;
-        }
+          case 3:
+            return Colors.green;
+        
       }
       return Colors.grey;
     }
@@ -252,13 +253,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 ),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: booking["status"] == "canceled"
+                  onPressed: booking["status"] == "2"
                       ? null // Disable the button if status is "canceled"
                       : () {
                           ref
                               .read(contractsProvider.notifier)
-                              .cancelPermContract(
-                                booking["contract_id"].toString(),
+                              .cancelHourlyContract(
+                                booking["service_contract_id"].toString(),
                                 isHourly: false,
                               );
                         },

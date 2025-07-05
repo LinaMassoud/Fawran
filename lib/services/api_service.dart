@@ -167,7 +167,7 @@ class ApiService {
   }
 
   static Future<List<dynamic>> fetchCustomerAddresses(
-      {required int userId}) async {
+      {required String userId}) async {
     try {
       final url = '$_baseUrl/customer_addresses/$userId';
 
@@ -670,7 +670,7 @@ class ApiService {
   }
 
   static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
-    required int userId,
+    required String userId,
   }) async {
     try {
       if (userId.toString().isEmpty) {
@@ -717,7 +717,7 @@ class ApiService {
   }
 
   static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
-    required int userId,
+    required String userId,
   }) async {
     try {
       print("=== HOURLY CONTRACTS DEBUG ===");
@@ -811,10 +811,10 @@ class ApiService {
     }
   }
 
-  static Future<void> cancelHourlyContract(String contractId) async {
+  static Future<void> cancelHourlyContract(String contractServiceId) async {
     final url = "$_baseUrl/hourly/contracts/cancel";
 
-    Map<String, dynamic> requestBody = {"contract_id": contractId};
+    Map<String, dynamic> requestBody = {"service_contract_id": contractServiceId};
 
     final response = await makeAuthenticatedRequest(
         method: 'put', url: url, body: json.encode(requestBody));
@@ -830,7 +830,7 @@ class ApiService {
     required String districtId,
     required int houseType,
     required int createdBy,
-    required int customerId,
+    required String customerId,
     required String mapUrl,
     required double latitude,
     required double longitude,

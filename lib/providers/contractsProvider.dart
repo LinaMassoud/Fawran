@@ -1,11 +1,13 @@
 import 'package:fawran/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart';
 import '../services/api_service.dart';
 
 final contractsProvider =
     StateNotifierProvider<ContractsNotifier, ContractsState>(
         (ref) => ContractsNotifier(ref));
+  final _storage = FlutterSecureStorage();
 
 class ContractsState {
   final List<Map<String, dynamic>> permanent;
@@ -41,7 +43,7 @@ class ContractsNotifier extends StateNotifier<ContractsState> {
 
   Future<void> fetchContracts() async {
     state = state.copyWith(isLoading: true);
-    final userId = ref.read(userIdProvider);
+  final userId = await _storage.read(key: 'user_id') ?? '';
     if (userId == null) return;
 
     try {
@@ -67,11 +69,11 @@ class ContractsNotifier extends StateNotifier<ContractsState> {
     }
   }
 
-  Future<void> cancelHourlyContract(String contractId,
+  Future<void> cancelHourlyContract(String contractServiceId,
       {required bool isHourly}) async {
     try {
       await ApiService.cancelHourlyContract(
-          contractId); // You'll define this in ApiService
+          contractServiceId); // You'll define this in ApiService
       await fetchContracts(); // Refresh list
     } catch (e) {
       print("💥 Error cancelling contract: $e");

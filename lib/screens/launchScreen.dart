@@ -1,4 +1,5 @@
 import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
+import 'package:fawran/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -34,7 +35,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
       String? token = await _secureStorage.read(key: 'token');
       if (token != null && token.isNotEmpty) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LocationScreen()),
+          MaterialPageRoute(builder: (_) =>const  LocationScreen()),
         );
       } else {
         Navigator.of(context).pushReplacement(

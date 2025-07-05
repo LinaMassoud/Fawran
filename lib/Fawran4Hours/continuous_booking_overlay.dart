@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 // Import your existing screens
@@ -95,6 +96,8 @@ class _ContinuousBookingOverlayState
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late PageController _pageController;
+    final _storage = FlutterSecureStorage();
+
 
   int currentStep = 0;
   // Modified: Dynamic total steps based on booking type
@@ -187,7 +190,7 @@ Future<void> _fetchAddresses() async {
     });
  
     // Get userId from the provider
-    final userId = ref.read(userIdProvider);
+    final userId = await _storage.read(key: 'user_id') ?? '';
  
     print('userId in _fetchAddresses = $userId');
  
@@ -403,7 +406,7 @@ void _updatePriceVat(double priceVat) {
 }
 
   void _addNewAddress() async {
-  final userId = ref.read(userIdProvider);
+  final userId = await _storage.read(key: 'user_id') ?? '';
   final result = await Navigator.push(
     context,
     MaterialPageRoute(

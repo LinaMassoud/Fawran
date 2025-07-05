@@ -30,6 +30,7 @@ class _AddressSelectionScreenState
   int? _selectedAddress;
   bool isLoading = false;
   String? addressError;
+  final _storage = FlutterSecureStorage();
 
   @override
   void initState() {
@@ -56,7 +57,7 @@ Future<void> fetchAddresses() async {
 
   try {
     // ✅ Use the API service
-    final data = await ApiService.fetchCustomerAddresses(userId:int.parse(userId));
+    final data = await ApiService.fetchCustomerAddresses(userId:userId);
 
     // Parse data into Address list
     final List<Address> fetchedAddresses = data.map((item) {
@@ -117,7 +118,7 @@ Future<void> fetchAddresses() async {
 
 
   void _addNewAddress() async {
-    final userId = ref.watch(userIdProvider);
+  final userId = await _storage.read(key: 'user_id') ?? '';
 
     final result = await Navigator.push(
       context,
