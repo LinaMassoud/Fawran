@@ -326,7 +326,7 @@ Future<void> reloadServices() async {
           context,
           package: widget.autoOpenPackage!,
           selectedShift: widget.autoOpenShift ?? 1,
-          serviceId: widget.serviceId, // Add serviceId
+          serviceId: selectedServiceId ?? widget.serviceId,
           professionId: widget.professionId,
           onBookingCompleted: _onBookingCompleted,
         );
@@ -429,11 +429,11 @@ Future<void> reloadServices() async {
 
   setState(() {
     selectedServiceId = serviceId;
+    print("selectedServiceId on _onServiceChanged = $selectedServiceId");
     selectedServiceName = selectedService.name;
     // Update the dynamic service title immediately
     _setServiceTitle();
   });
-
   // Refresh shifts and packages when service changes
   _loadServiceShifts().then((_) {
     // After shifts are loaded, update the UI state and fetch packages
@@ -1286,7 +1286,7 @@ void _showPackageDetailsOverlay(PackageModel package) {
                             context,
                             package: package,
                             selectedShift: selectedEastAsiaShift,
-                            serviceId: widget.serviceId,
+                            serviceId: selectedServiceId ?? widget.serviceId,
                             professionId: widget.professionId,
                             onBookingCompleted: _onBookingCompleted,
                           );
@@ -2097,7 +2097,7 @@ Widget _buildDetailRow(String label, String value) {
                             context,
                             package: package,
                             selectedShift: selectedEastAsiaShift,
-                            serviceId: widget.serviceId,
+                            serviceId: selectedServiceId ?? widget.serviceId,
                             professionId: widget.professionId,
                             onBookingCompleted: _onBookingCompleted,
                           );
