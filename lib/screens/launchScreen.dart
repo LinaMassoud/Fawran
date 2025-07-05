@@ -35,7 +35,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
       String? token = await _secureStorage.read(key: 'token');
       if (token != null && token.isNotEmpty) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) =>  HomeScreen()),
+          MaterialPageRoute(builder: (_) =>const  LocationScreen()),
         );
       } else {
         Navigator.of(context).pushReplacement(
