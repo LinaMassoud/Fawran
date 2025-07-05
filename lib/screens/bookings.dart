@@ -121,12 +121,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 ),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: () {
-                    ref.read(contractsProvider.notifier).cancelPermContract(
-                          booking["contract_id"].toString(),
-                          isHourly: false,
-                        );
-                  },
+                  onPressed: status == "cancelled" || status == "canceled"
+                      ? null // Disable the button if status is "canceled"
+                      : () {
+                          ref
+                              .read(contractsProvider.notifier)
+                              .cancelPermContract(
+                                booking["contract_id"].toString(),
+                                isHourly: false,
+                              );
+                        },
                   child: const Text("Cancel"),
                 ),
               ],
@@ -248,12 +252,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 ),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: () {
-                    ref.read(contractsProvider.notifier).cancelHourlyContract(
-                          booking["contract_id"].toString(),
-                          isHourly: true,
-                        );
-                  },
+                  onPressed: booking["status"] == "canceled"
+                      ? null // Disable the button if status is "canceled"
+                      : () {
+                          ref
+                              .read(contractsProvider.notifier)
+                              .cancelPermContract(
+                                booking["contract_id"].toString(),
+                                isHourly: false,
+                              );
+                        },
                   child: const Text("Cancel"),
                 ),
               ],

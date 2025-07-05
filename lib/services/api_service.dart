@@ -629,6 +629,14 @@ class ApiService {
     }
   }
 
+  static Future<http.Response> createPermanentContract({
+    required Map<String, dynamic> requestBody,
+  }) async {
+    final url = "${_baseUrl}/domestic/contract/create";
+    return await makeAuthenticatedRequest(
+        method: 'Post', url: url, body: json.encode(requestBody));
+  }
+
   static Future<Map<String, dynamic>> fetchServiceTerms() async {
     try {
       final response = await makeAuthenticatedRequest(
