@@ -65,8 +65,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       await _storage.write(key: 'last_name', value: _lastNameController.text);
 
       // 🔄 Refresh provider so HomeScreen updates
-      ref.invalidate(userNameProvider);
-
+ref.invalidate(userNameProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profile updated successfully')),
       );
@@ -82,7 +81,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     await _storage.deleteAll();
 
     // Call logout from authProvider
-    ref.read(authProvider.notifier).logout();
+    ref.read(authProvider.notifier).logout(ref);
 
     // Navigate to login screen
     Navigator.pushReplacementNamed(context, '/login');

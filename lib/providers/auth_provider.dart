@@ -1,9 +1,13 @@
 // providers/auth_provider.dart
+import 'package:fawran/providers/contractsProvider.dart';
+import 'package:fawran/providers/userNameProvider.dart';
 import 'package:flutter/material.dart'; // ✅ Import for Locale
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/api_service.dart';
 
 final userIdProvider = StateProvider<int?>((ref) => null);
+  final _storage = FlutterSecureStorage();
 
 class AuthState {
   final bool isLoading;
@@ -110,6 +114,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login({
     required String phoneNumber,
     required String password,
+    required WidgetRef ref
   }) async {
     state =
         state.copyWith(isLoading: true, errorMessage: '', isSignedUp: false);
@@ -134,6 +139,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
             isVerified: false,
             errorMessage: errorMessage, // Set the exact error message here
           );
+                ref.invalidate(userNameProvider);
+
         } else {
           // For other errors, simply show the error message
           state = state.copyWith(
@@ -151,7 +158,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final userId = result['user_id'];
 
         _setUserId(userId);
-
+   ref.invalidate(userNameProvider);
+      ref.invalidate(contractsProvider);
         // Optionally store token and refreshToken in secure storage
         // await _secureStorage.write(key: 'token', value: token);
         // await _secureStorage.write(key: 'refresh_token', value: refreshToken);
@@ -180,12 +188,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
   }
+void logout(WidgetRef ref) {
+  _storage.deleteAll();
+  _setUserId(null);
+  state = AuthState.initial();
 
-  void logout() {
-    _setUserId(null);
-    state = AuthState.initial();
-  }
-
+}
   clearStateError() {
     state = state.copyWith(errorMessage: '');
   }

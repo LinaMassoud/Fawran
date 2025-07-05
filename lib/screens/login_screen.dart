@@ -1,5 +1,7 @@
 import 'package:fawran/models/user.dart';
+import 'package:fawran/providers/contractsProvider.dart';
 import 'package:fawran/providers/localProvider.dart';
+import 'package:fawran/providers/userNameProvider.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/verification_screen.dart';
@@ -44,7 +46,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ref.read(authProvider.notifier).login(
             phoneNumber: _phoneController.text.trim(),
             password: _passwordController.text.trim(),
+            ref:ref
           );
+          
+ 
     }
   }
 
@@ -59,7 +64,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (next.isLoggedIn && next.isVerified) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LocationScreen()),
+          MaterialPageRoute(builder: (context) => HomeScreen()),
         );
       } else if (next.isLoggedIn && !next.isVerified) {
         Navigator.pushReplacement(
