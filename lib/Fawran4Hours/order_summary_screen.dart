@@ -6,8 +6,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OrderSummaryScreen extends StatefulWidget {
+class OrderSummaryScreen extends ConsumerStatefulWidget {
   final BookingData bookingData;
   final double totalSavings;
   final double originalPrice;
@@ -27,7 +28,7 @@ class OrderSummaryScreen extends StatefulWidget {
   _OrderSummaryScreenState createState() => _OrderSummaryScreenState();
 }
 
-class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
+class _OrderSummaryScreenState extends ConsumerState<OrderSummaryScreen> {
   bool _isPaymentSummaryExpanded = false;
   bool _agreeToTerms = false;
   bool _isLoadingTerms = false; 
@@ -40,7 +41,7 @@ Future<void> _fetchServiceTerms() async {
   });
 
   try {
-    final result = await ApiService.fetchServiceTerms();
+    final result = await ApiService.fetchServiceTerms(ref: ref);
     
     setState(() {
       if (result['success']) {

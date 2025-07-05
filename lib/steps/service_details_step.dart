@@ -4,8 +4,9 @@ import '../services/api_service.dart';
 import '../models/profession_model.dart';
 import 'package:intl/intl.dart';
 import 'custom_date_selection.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ServiceDetailsStep extends StatefulWidget {
+class ServiceDetailsStep extends ConsumerStatefulWidget {
   final String selectedNationality;
   final int workerCount;
   final String contractDuration;
@@ -74,10 +75,10 @@ class ServiceDetailsStep extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ServiceDetailsStepState createState() => _ServiceDetailsStepState();
+  ConsumerState<ServiceDetailsStep> createState() => _ServiceDetailsStepState();
 }
 
-class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
+class _ServiceDetailsStepState extends ConsumerState<ServiceDetailsStep> {
   final List<String> weekDays = [
     'Sunday',
     'Monday',
@@ -120,48 +121,59 @@ double _apiPriceVat = 0.0;
   }
 
   Future<void> _loadVisitDurations() async {
-    setState(() {
-      isLoadingVisitDurations = true;
-    });
+  setState(() {
+    isLoadingVisitDurations = true;
+  });
 
-    try {
-      final apiService = ApiService();
-      final professions = await apiService.fetchProfessions();
+  try {
+    final apiService = ApiService();
+    final professions = await apiService.fetchProfessions(ref: ref);
 
-      List<String> availableDurations = [];
+    List<String> availableDurations = [];
 
-      // Find the profession that contains the service with matching serviceId
-      for (final profession in professions) {
-        if (profession.services != null && profession.services!.isNotEmpty) {
-          // Look for matching service in the services list
-          for (final service in profession.services!) {
-            if (service.id == widget.serviceId) {
-              // Extract the duration from service name (e.g., "FAWRAN 4 Hours" -> "4 hours")
-              final serviceName = service.name;
-              final match = RegExp(r'(\d+)\s*Hours?').firstMatch(serviceName);
-              if (match != null) {
-                final hours = match.group(1);
+    // Find the profession that contains the service with matching serviceId
+    for (final profession in professions) {
+      if (profession.services != null && profession.services!.isNotEmpty) {
+        // Look for matching service in the services list
+        for (final service in profession.services!) {
+          if (service.id == widget.serviceId) {
+            // Extract the duration from service name
+            // Handles both English (e.g., "FAWRAN 4 Hours") and Arabic (e.g., "فوران 4 ساعات")
+            final serviceName = service.name;
+            
+            // Check for Arabic "ساعات" first
+            final arabicMatch = RegExp(r'(\d+)\s*ساعات').firstMatch(serviceName);
+            if (arabicMatch != null) {
+              final hours = arabicMatch.group(1);
+              availableDurations.add('$hours ساعات');
+            } else {
+              // Check for English "Hours"
+              final englishMatch = RegExp(r'(\d+)\s*Hours?', caseSensitive: false)
+                  .firstMatch(serviceName);
+              if (englishMatch != null) {
+                final hours = englishMatch.group(1);
                 availableDurations.add('$hours hours');
               }
-              break;
             }
+            break;
           }
         }
       }
-
-      setState(() {
-        visitDurations =
-            availableDurations.isNotEmpty ? availableDurations : [];
-        isLoadingVisitDurations = false;
-      });
-    } catch (e) {
-      print('Error loading visit durations: $e');
-      setState(() {
-        visitDurations = []; // No fallback values
-        isLoadingVisitDurations = false;
-      });
     }
+
+    setState(() {
+      visitDurations =
+          availableDurations.isNotEmpty ? availableDurations : [];
+      isLoadingVisitDurations = false;
+    });
+  } catch (e) {
+    print('Error loading visit durations: $e');
+    setState(() {
+      visitDurations = []; // No fallback values
+      isLoadingVisitDurations = false;
+    });
   }
+}
 
 
 
@@ -271,7 +283,7 @@ Future<void> _calculatePriceFromAPI() async {
     
     try {
       print('🌐 DEBUG: Calling ApiService.fetchCountryGroups with serviceId: ${widget.serviceId}');
-      final countryGroups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+      final countryGroups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId,ref: ref);
       print('🔍 DEBUG: Received ${countryGroups.length} country groups from API');
       
       final matchingGroup = countryGroups.firstWhere(
@@ -300,7 +312,7 @@ Future<void> _calculatePriceFromAPI() async {
     
     try {
       print('🌐 DEBUG: Calling ApiService.fetchServiceShifts with serviceId: ${widget.serviceId}');
-      final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
+      final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId,ref: ref);
       print('🔍 DEBUG: Received ${serviceShifts.length} service shifts from API');
       
       final matchingShift = serviceShifts.firstWhere(
@@ -729,7 +741,7 @@ if (widget.onHourPriceChanged != null) {
 
     try {
       final response =
-          await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+          await ApiService.fetchCountryGroups(serviceId: widget.serviceId,ref: ref);
       if (response is List && response.isNotEmpty) {
         setState(() {
           nationalities = response
@@ -755,7 +767,7 @@ if (widget.onHourPriceChanged != null) {
 
     try {
       final response =
-          await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
+          await ApiService.fetchServiceShifts(serviceId: widget.serviceId,ref: ref);
       if (response is List && response.isNotEmpty) {
         setState(() {
           timeSlots = response

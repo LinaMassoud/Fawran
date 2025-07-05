@@ -58,7 +58,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         return;
       }
       
-      final contracts = await ApiService.fetchPermanentContracts(userId: userId);
+      final contracts = await ApiService.fetchPermanentContracts(userId: userId,ref: ref);
       setState(() {
         _permanentContracts = contracts;
       });
@@ -76,7 +76,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         return;
       }
       
-      final contracts = await ApiService.fetchHourlyContracts(userId: userId);
+      final contracts = await ApiService.fetchHourlyContracts(userId: userId,ref: ref);
       setState(() {
         _hourlyContracts = contracts;
       });
