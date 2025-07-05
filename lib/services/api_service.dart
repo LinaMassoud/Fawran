@@ -339,66 +339,68 @@ class ApiService {
     }
   }
 
-  static Future<List<City>> fetchCities(int serviceId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/service_cities/$serviceId'),
-        headers: {'Content-Type': 'application/json'},
-      );
+  static Future<List<City>> fetchCities(int serviceId, {WidgetRef? ref}) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/service_cities/$serviceId',
+    );
 
-      if (response.statusCode == 200) {
-        List<dynamic> citiesJson = json.decode(response.body);
-        List<City> cities =
-            citiesJson.map((city) => City.fromJson(city)).toList();
-        return cities;
-      } else {
-        throw Exception('Failed to load cities');
-      }
-    } catch (e) {
-      throw Exception('Error fetching cities: $e');
+    if (response.statusCode == 200) {
+      List<dynamic> citiesJson = json.decode(response.body);
+      List<City> cities =
+          citiesJson.map((city) => City.fromJson(city)).toList();
+      return cities;
+    } else {
+      throw Exception('Failed to load cities');
     }
+  } catch (e) {
+    throw Exception('Error fetching cities: $e');
   }
+}
 
-  static Future<List<District>> fetchDistricts(int cityCode) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/districts/$cityCode'),
-        headers: {'Content-Type': 'application/json'},
-      );
+  static Future<List<District>> fetchDistricts(int cityCode, {WidgetRef? ref}) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/districts/$cityCode',
+    );
 
-      if (response.statusCode == 200) {
-        List<dynamic> districtsJson = json.decode(response.body);
-        List<District> districts = districtsJson
-            .map((district) => District.fromJson(district))
-            .toList();
-        return districts;
-      } else {
-        throw Exception('Failed to load districts');
-      }
-    } catch (e) {
-      throw Exception('Error fetching districts: $e');
+    if (response.statusCode == 200) {
+      List<dynamic> districtsJson = json.decode(response.body);
+      List<District> districts = districtsJson
+          .map((district) => District.fromJson(district))
+          .toList();
+      return districts;
+    } else {
+      throw Exception('Failed to load districts');
     }
+  } catch (e) {
+    throw Exception('Error fetching districts: $e');
   }
+}
 
   static Future<DistrictMapResponse> fetchDistrictMapData(
-      String districtCode) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/districts/info/$districtCode'),
-        headers: {'Content-Type': 'application/json'},
-      );
+  String districtCode, {
+  WidgetRef? ref,
+}) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/districts/info/$districtCode',
+    );
 
-      if (response.statusCode == 200) {
-        final districtMapResponse =
-            DistrictMapResponse.fromJson(json.decode(response.body));
-        return districtMapResponse;
-      } else {
-        throw Exception('Failed to load district map data');
-      }
-    } catch (e) {
-      throw Exception('Error fetching district map data: $e');
+    if (response.statusCode == 200) {
+      final districtMapResponse =
+          DistrictMapResponse.fromJson(json.decode(response.body));
+      return districtMapResponse;
+    } else {
+      throw Exception('Failed to load district map data');
     }
+  } catch (e) {
+    throw Exception('Error fetching district map data: $e');
   }
+}
 
   static Future<bool> refreshToken() async {
     try {

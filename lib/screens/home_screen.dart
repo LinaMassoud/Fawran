@@ -346,7 +346,6 @@ class HomeScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 const Icon(Icons.home, color: Colors.black),
-                const Icon(Icons.search, color: Colors.grey),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/bookings'),
                   child: const Icon(Icons.calendar_month, color: Colors.grey),
