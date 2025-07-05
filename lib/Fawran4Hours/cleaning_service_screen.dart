@@ -291,33 +291,40 @@ Future<void> reloadServices() async {
 
   // NEW: Load country groups dynamically
   Future<void> _loadCountryGroups() async {
-    try {
-      setState(() => isLoadingGroups = true);
+  try {
+    setState(() => isLoadingGroups = true);
 
-      final groups =
-          await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+    final groups =
+        await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
 
-      setState(() {
-        countryGroups = groups;
-        isLoadingGroups = false;
+    setState(() {
+      countryGroups = groups;
+      isLoadingGroups = false;
 
-        // Update group names based on API response
-        for (var group in groups) {
-          if (group['group_name'].toString().toUpperCase().contains('ASIA')) {
+      // Update group names based on group_code (more reliable than string matching)
+      for (var group in groups) {
+        final groupCode = group['group_code'].toString();
+        
+        switch (groupCode) {
+          case '2': // Based on your debug output, group_code "2" is East Asia
             eastAsiaGroupName = group['group_name'];
-          } else if (group['group_name']
-              .toString()
-              .toUpperCase()
-              .contains('AFRICAN')) {
+            break;
+          case '3': // Based on your debug output, group_code "3" is Africa
             africanGroupName = group['group_name'];
-          }
+            break;
+          // Add more cases as needed
+          default:
+            // Handle unknown group codes
+            print('Unknown group code: $groupCode with name: ${group['group_name']}');
+            break;
         }
-      });
-    } catch (e) {
-      setState(() => isLoadingGroups = false);
-      print('Error loading country groups: $e');
-    }
+      }
+    });
+  } catch (e) {
+    setState(() => isLoadingGroups = false);
+    print('Error loading country groups: $e');
   }
+}
 
   void _checkAndShowAutoOverlay() {
     if (widget.autoOpenPackage != null) {
