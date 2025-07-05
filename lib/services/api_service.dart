@@ -444,8 +444,8 @@ class ApiService {
     }
   }
 
-   static Future<List<SliderItem>> fetchSliderItems() async {
-   final response = await makeAuthenticatedRequest(
+  static Future<List<SliderItem>> fetchSliderItems() async {
+    final response = await makeAuthenticatedRequest(
       method: 'GET',
       url: '$_baseUrl/slider-items',
     );
@@ -472,7 +472,7 @@ class ApiService {
     final requestHeaders = {
       'Content-Type': 'application/json',
       if (token != null) 'token': token,
-      if(local!=null) 'language':local,
+      if (local != null) 'language': local,
       ...?headers,
     };
 
@@ -522,273 +522,306 @@ class ApiService {
     return response;
   }
 
+  static Future<Map<String, dynamic>> createContract({
+    required int customerId,
+    required int serviceId,
+    required String groupCode,
+    required String cityId,
+    required String district,
+    required int employeeCount,
+    required int hoursNumber,
+    required int weeklyVisit,
+    required int contractPeriod,
+    required int visitShift,
+    required int hourlyPrice,
+    required String contractStartDate,
+    required double totalPrice,
+    required double priceVat,
+    required int vatRat,
+    required String customerLocation,
+    required double priceAfterDiscount,
+    required double originalPrice,
+    required double visitPrice,
+    String? visitCalendar,
+    int? packageId,
+    List<String>? appointments,
+  }) async {
+    try {
+      // Prepare request body
+      Map<String, dynamic> requestBody = {
+        "customer_id": customerId,
+        "service_id": serviceId,
+        "group_code": groupCode,
+        "city_id": cityId,
+        "district": district,
+        "employee_count": employeeCount,
+        "hours_number": hoursNumber,
+        "weekly_visit": weeklyVisit,
+        "contract_period": contractPeriod,
+        "visit_shift": visitShift,
+        "hourly_price": hourlyPrice,
+        "contract_start_date": contractStartDate,
+        "total_price": totalPrice,
+        "price_vat": priceVat,
+        "vat_rat": vatRat,
+        "customer_location": customerLocation,
+        "price_after_discount": priceAfterDiscount,
+        "original_price": originalPrice,
+        "visit_price": visitPrice,
+      };
 
-
-static Future<Map<String, dynamic>> createContract({
-  required int customerId,
-  required int serviceId,
-  required String groupCode,
-  required String cityId,
-  required String district,
-  required int employeeCount,
-  required int hoursNumber,
-  required int weeklyVisit,
-  required int contractPeriod,
-  required int visitShift,
-  required int hourlyPrice,
-  required String contractStartDate,
-  required double totalPrice,
-  required double priceVat,
-  required int vatRat,
-  required String customerLocation,
-  required double priceAfterDiscount,
-  required double originalPrice,
-  required double visitPrice,
-  String? visitCalendar,
-  int? packageId,
-  List<String>? appointments,
-}) async {
-  try {
-    // Prepare request body
-    Map<String, dynamic> requestBody = {
-      "customer_id": customerId,
-      "service_id": serviceId,
-      "group_code": groupCode,
-      "city_id": cityId,
-      "district": district,
-      "employee_count": employeeCount,
-      "hours_number": hoursNumber,
-      "weekly_visit": weeklyVisit,
-      "contract_period": contractPeriod,
-      "visit_shift": visitShift,
-      "hourly_price": hourlyPrice,
-      "contract_start_date": contractStartDate,
-      "total_price": totalPrice,
-      "price_vat": priceVat,
-      "vat_rat": vatRat,
-      "customer_location": customerLocation,
-      "price_after_discount": priceAfterDiscount,
-      "original_price": originalPrice,
-      "visit_price": visitPrice,
-    };
-
-    // Add optional fields if available
-    if (visitCalendar != null && visitCalendar.isNotEmpty) {
-      requestBody["visit_calendar"] = visitCalendar;
-    }
-    
-    if (packageId != null) {
-      requestBody["package_id"] = packageId;
-    }
-    
-    if (appointments != null && appointments.isNotEmpty) {
-      requestBody["appointments"] = appointments;
-    }
-
-    print('Creating contract with body: ${json.encode(requestBody)}');
-
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: '$_baseUrl/hourly/contract/create',
-      body: json.encode(requestBody),
-    );
-
-    print('Contract creation response status: ${response.statusCode}');
-    print('Contract creation response body: ${response.body}');
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = json.decode(response.body);
-      
-      if (responseData['contract_id'] != null) {
-        print('Contract created successfully with ID: ${responseData['contract_id']}');
-        
-        return {
-          'success': true,
-          'contract_id': responseData['contract_id'],
-          'message': responseData['message'] ?? 'Contract created successfully',
-          'data': responseData,
-        };
-      } else {
-        throw Exception('Contract creation failed: Invalid response format');
+      // Add optional fields if available
+      if (visitCalendar != null && visitCalendar.isNotEmpty) {
+        requestBody["visit_calendar"] = visitCalendar;
       }
-    } else {
-      final errorData = json.decode(response.body);
-      return {
-        'success': false,
-        'message': errorData['message'] ?? 'Unknown error occurred',
-        'statusCode': response.statusCode,
-      };
-    }
-    
-  } catch (e) {
-    print('Error creating contract: $e');
-    return {
-      'success': false,
-      'message': 'Failed to create contract: ${e.toString()}',
-      'error': e.toString(),
-    };
-  }
-}
 
+      if (packageId != null) {
+        requestBody["package_id"] = packageId;
+      }
 
+      if (appointments != null && appointments.isNotEmpty) {
+        requestBody["appointments"] = appointments;
+      }
 
-static Future<Map<String, dynamic>> fetchServiceTerms() async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/service_terms',
-    );
+      print('Creating contract with body: ${json.encode(requestBody)}');
 
-    print('📡 [FETCH_TERMS] Response status: ${response.statusCode}');
-    print('📡 [FETCH_TERMS] Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      // Return the raw response body as terms since it's already a JSON array
-      return {
-        'success': true,
-        'terms': response.body, // Store as JSON string to be parsed in UI
-      };
-    } else {
-      return {
-        'success': false,
-        'message': 'Failed to load terms and conditions. Please try again.',
-      };
-    }
-  } catch (e) {
-    print('💥 [FETCH_TERMS] Error: $e');
-    return {
-      'success': false,
-      'message': 'Error loading terms and conditions. Please check your internet connection.',
-    };
-  }
-}
-
-
-
-static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
-  required int userId,
-}) async {
-  try {
-    if (userId.toString().isEmpty) {
-      throw Exception("Missing customer ID");
-    }
-
-    print('🔍 [PERMANENT_CONTRACTS] Fetching contracts for user: $userId');
-
-    final url = "$_baseUrl/domestic/contracts/$userId";
-    
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
-
-    print('📡 [PERMANENT_CONTRACTS] Response status: ${response.statusCode}');
-
-    if (response.statusCode == 200) {
-      String rawJson = response.body;
-      print('📦 [PERMANENT_CONTRACTS] Raw response length: ${rawJson.length}');
-
-      // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
-      rawJson = rawJson.replaceAllMapped(
-        RegExp(r'"price_before_vat"\s*:\s*,'),
-        (match) => '"price_before_vat": null,',
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: '$_baseUrl/hourly/contract/create',
+        body: json.encode(requestBody),
       );
 
-      final List<dynamic> data = json.decode(rawJson);
-      print('✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
+      print('Contract creation response status: ${response.statusCode}');
+      print('Contract creation response body: ${response.body}');
 
-      return data.cast<Map<String, dynamic>>();
-    } else {
-      print('❌ [PERMANENT_CONTRACTS] Failed with status: ${response.statusCode}');
-      throw Exception("Failed to load permanent contracts: ${response.statusCode}");
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+
+        if (responseData['contract_id'] != null) {
+          print(
+              'Contract created successfully with ID: ${responseData['contract_id']}');
+
+          return {
+            'success': true,
+            'contract_id': responseData['contract_id'],
+            'message':
+                responseData['message'] ?? 'Contract created successfully',
+            'data': responseData,
+          };
+        } else {
+          throw Exception('Contract creation failed: Invalid response format');
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Unknown error occurred',
+          'statusCode': response.statusCode,
+        };
+      }
+    } catch (e) {
+      print('Error creating contract: $e');
+      return {
+        'success': false,
+        'message': 'Failed to create contract: ${e.toString()}',
+        'error': e.toString(),
+      };
     }
-  } catch (e) {
-    print("💥 [PERMANENT_CONTRACTS] Error fetching permanent contracts: $e");
-    throw Exception("Error fetching permanent contracts: $e");
   }
-}
 
-static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
-  required int userId,
-}) async {
-  try {
-    print("=== HOURLY CONTRACTS DEBUG ===");
-    print("User ID: $userId");
+  static Future<http.Response> createPermanentContract({
+    required Map<String, dynamic> requestBody,
+  }) async {
+    final url = "${_baseUrl}/domestic/contract/create";
+    return await makeAuthenticatedRequest(
+        method: 'Post', url: url, body: json.encode(requestBody));
+  }
 
-    if (userId.toString().isEmpty) {
-      throw Exception("Missing customer ID");
+  static Future<Map<String, dynamic>> fetchServiceTerms() async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/service_terms',
+      );
+
+      print('📡 [FETCH_TERMS] Response status: ${response.statusCode}');
+      print('📡 [FETCH_TERMS] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Return the raw response body as terms since it's already a JSON array
+        return {
+          'success': true,
+          'terms': response.body, // Store as JSON string to be parsed in UI
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to load terms and conditions. Please try again.',
+        };
+      }
+    } catch (e) {
+      print('💥 [FETCH_TERMS] Error: $e');
+      return {
+        'success': false,
+        'message':
+            'Error loading terms and conditions. Please check your internet connection.',
+      };
     }
+  }
 
-    final url = "$_baseUrl/hourly/contracts/$userId";
-    print("Request URL: $url");
+  static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
+    required int userId,
+  }) async {
+    try {
+      if (userId.toString().isEmpty) {
+        throw Exception("Missing customer ID");
+      }
 
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+      print('🔍 [PERMANENT_CONTRACTS] Fetching contracts for user: $userId');
 
-    print("Response Status Code: ${response.statusCode}");
-    print("Response Headers: ${response.headers}");
-    print("Response Body Length: ${response.body.length}");
-    print("Raw Response Body: ${response.body}");
+      final url = "$_baseUrl/domestic/contracts/$userId";
 
-    if (response.statusCode == 200) {
-      try {
-        final List<dynamic> data = json.decode(response.body);
-        print("Parsed Data Type: ${data.runtimeType}");
-        print("Number of hourly contracts: ${data.length}");
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
 
-        // Print each contract with its structure
-        for (int i = 0; i < data.length; i++) {
-          print("--- Hourly Contract $i ---");
-          print("Contract Type: ${data[i].runtimeType}");
-          if (data[i] is Map) {
-            final contract = data[i] as Map<String, dynamic>;
-            print("Contract Keys: ${contract.keys.toList()}");
-            contract.forEach((key, value) {
+      print('📡 [PERMANENT_CONTRACTS] Response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        String rawJson = response.body;
+        print(
+            '📦 [PERMANENT_CONTRACTS] Raw response length: ${rawJson.length}');
+
+        // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
+        rawJson = rawJson.replaceAllMapped(
+          RegExp(r'"price_before_vat"\s*:\s*,'),
+          (match) => '"price_before_vat": null,',
+        );
+
+        final List<dynamic> data = json.decode(rawJson);
+        print(
+            '✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
+
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        print(
+            '❌ [PERMANENT_CONTRACTS] Failed with status: ${response.statusCode}');
+        throw Exception(
+            "Failed to load permanent contracts: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("💥 [PERMANENT_CONTRACTS] Error fetching permanent contracts: $e");
+      throw Exception("Error fetching permanent contracts: $e");
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
+    required int userId,
+  }) async {
+    try {
+      print("=== HOURLY CONTRACTS DEBUG ===");
+      print("User ID: $userId");
+
+      if (userId.toString().isEmpty) {
+        throw Exception("Missing customer ID");
+      }
+
+      final url = "$_baseUrl/hourly/contracts/$userId";
+      print("Request URL: $url");
+
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      print("Response Status Code: ${response.statusCode}");
+      print("Response Headers: ${response.headers}");
+      print("Response Body Length: ${response.body.length}");
+      print("Raw Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        try {
+          final List<dynamic> data = json.decode(response.body);
+          print("Parsed Data Type: ${data.runtimeType}");
+          print("Number of hourly contracts: ${data.length}");
+
+          // Print each contract with its structure
+          for (int i = 0; i < data.length; i++) {
+            print("--- Hourly Contract $i ---");
+            print("Contract Type: ${data[i].runtimeType}");
+            if (data[i] is Map) {
+              final contract = data[i] as Map<String, dynamic>;
+              print("Contract Keys: ${contract.keys.toList()}");
+              contract.forEach((key, value) {
+                print("  $key: $value (${value.runtimeType})");
+              });
+            } else {
+              print("Contract Data: ${data[i]}");
+            }
+          }
+
+          print(
+              "✅ [HOURLY_CONTRACTS] Successfully fetched ${data.length} hourly contracts");
+          return data.cast<Map<String, dynamic>>();
+        } catch (jsonError) {
+          print("JSON Parsing Error: $jsonError");
+          print("Attempting to parse as single object...");
+          try {
+            final Map<String, dynamic> singleData = json.decode(response.body);
+            print("Single Object Keys: ${singleData.keys.toList()}");
+            singleData.forEach((key, value) {
               print("  $key: $value (${value.runtimeType})");
             });
-          } else {
-            print("Contract Data: ${data[i]}");
+            return [singleData]; // Return as list with single item
+          } catch (e) {
+            print("Failed to parse as single object: $e");
+            throw Exception("Failed to parse hourly contracts response");
           }
         }
-
-        print("✅ [HOURLY_CONTRACTS] Successfully fetched ${data.length} hourly contracts");
-        return data.cast<Map<String, dynamic>>();
-      } catch (jsonError) {
-        print("JSON Parsing Error: $jsonError");
-        print("Attempting to parse as single object...");
-        try {
-          final Map<String, dynamic> singleData = json.decode(response.body);
-          print("Single Object Keys: ${singleData.keys.toList()}");
-          singleData.forEach((key, value) {
-            print("  $key: $value (${value.runtimeType})");
-          });
-          return [singleData]; // Return as list with single item
-        } catch (e) {
-          print("Failed to parse as single object: $e");
-          throw Exception("Failed to parse hourly contracts response");
-        }
+      } else {
+        print("HTTP Error Details:");
+        print("Status Code: ${response.statusCode}");
+        print("Reason Phrase: ${response.reasonPhrase}");
+        print("Error Response Body: ${response.body}");
+        throw Exception(
+            "Failed to load hourly contracts: ${response.statusCode}");
       }
-    } else {
-      print("HTTP Error Details:");
-      print("Status Code: ${response.statusCode}");
-      print("Reason Phrase: ${response.reasonPhrase}");
-      print("Error Response Body: ${response.body}");
-      throw Exception("Failed to load hourly contracts: ${response.statusCode}");
+    } catch (e) {
+      print("💥 [HOURLY_CONTRACTS] Error fetching hourly contracts: $e");
+      print("Error Type: ${e.runtimeType}");
+      if (e is http.ClientException) {
+        print("Network Error Details: ${e.message}");
+      }
+      throw Exception("Error fetching hourly contracts: $e");
+    } finally {
+      print("=== END HOURLY CONTRACTS DEBUG ===\n");
     }
-  } catch (e) {
-    print("💥 [HOURLY_CONTRACTS] Error fetching hourly contracts: $e");
-    print("Error Type: ${e.runtimeType}");
-    if (e is http.ClientException) {
-      print("Network Error Details: ${e.message}");
-    }
-    throw Exception("Error fetching hourly contracts: $e");
-  } finally {
-    print("=== END HOURLY CONTRACTS DEBUG ===\n");
   }
-}
 
+  static Future<void> cancelPermContract(String contractId) async {
+    final url = "$_baseUrl/domestic/contract/cancel";
+
+    Map<String, dynamic> requestBody = {"contract_id": contractId};
+
+    final response = await makeAuthenticatedRequest(
+        method: 'put', url: url, body: json.encode(requestBody));
+    if (response.statusCode != 200) {
+      throw Exception("Failed to cancel contract");
+    }
+  }
+
+  static Future<void> cancelHourlyContract(String contractId) async {
+    final url = "$_baseUrl/hourly/contracts/cancel";
+
+    Map<String, dynamic> requestBody = {"contract_id": contractId};
+
+    final response = await makeAuthenticatedRequest(
+        method: 'put', url: url, body: json.encode(requestBody));
+    if (response.statusCode != 200) {
+      throw Exception("Failed to cancel contract");
+    }
+  }
 
   static Future<Map<String, dynamic>> createAddress({
     required String buildingName,

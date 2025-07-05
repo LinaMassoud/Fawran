@@ -1,95 +1,24 @@
+import 'package:fawran/providers/contractsProvider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../services/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final String? initialTab;
-  const BookingsScreen({
-    super.key,
-    this.initialTab, // Add this parameter
-  });
+  const BookingsScreen({super.key, this.initialTab});
 
   @override
   ConsumerState<BookingsScreen> createState() => _BookingsScreenState();
 }
 
 class _BookingsScreenState extends ConsumerState<BookingsScreen> {
-  static const String _baseUrl = 'http://fawran.ddns.net:8080/ords/emdad/fawran';
-  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  String _selectedTab = 'all';
 
-  List<Map<String, dynamic>> _permanentContracts = [];
-  List<Map<String, dynamic>> _hourlyContracts = [];
-  bool _isLoading = true;
-  String _selectedTab = 'all'; // 'all', 'permanent', 'hourly'
-
-   @override
+  @override
   void initState() {
     super.initState();
-    // Set initial tab based on parameter, default to 'all'
     _selectedTab = widget.initialTab ?? 'all';
-    _fetchAllContracts();
   }
-
-
-  Future<void> _fetchAllContracts() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    await Future.wait([
-      _fetchPermanentContracts(),
-      _fetchHourlyContracts(),
-    ]);
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _fetchPermanentContracts() async {
-    try {
-      final userId = ref.read(userIdProvider);
-      if (userId == null) {
-        print("💥 [PERMANENT_CONTRACTS] No user ID available");
-        return;
-      }
-      
-      final contracts = await ApiService.fetchPermanentContracts(userId: userId);
-      setState(() {
-        _permanentContracts = contracts;
-      });
-    } catch (e) {
-      print("💥 [PERMANENT_CONTRACTS] Error fetching permanent contracts: $e");
-      // Don't set empty list, keep existing data
-    }
-  }
-
-  Future<void> _fetchHourlyContracts() async {
-    try {
-      final userId = ref.read(userIdProvider);
-      if (userId == null) {
-        print("💥 [HOURLY_CONTRACTS] No user ID available");
-        return;
-      }
-      
-      final contracts = await ApiService.fetchHourlyContracts(userId: userId);
-      setState(() {
-        _hourlyContracts = contracts;
-      });
-    } catch (e) {
-      print("💥 [HOURLY_CONTRACTS] Error fetching hourly contracts: $e");
-      print("Error Type: ${e.runtimeType}");
-      if (e is http.ClientException) {
-        print("Network Error Details: ${e.message}");
-      }
-    }
-    print("=== END HOURLY CONTRACTS DEBUG ===\n");
-  }
-
 
   Widget _infoRow(String title, String value) {
     return Padding(
@@ -108,6 +37,24 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Widget _buildPermanentContractCard(Map<String, dynamic> booking) {
+    String status = booking["status"] ?? "success";
+
+    Color statusColor = Colors.grey;
+    switch (status.toLowerCase()) {
+      case "active":
+        statusColor = Colors.green;
+        break;
+      case "pending":
+        statusColor = Colors.orange;
+        break;
+      case "cancelled":
+      case "canceled":
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.blue;
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
@@ -115,21 +62,43 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Service type indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                "Permanent Service",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+            // Header with status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Permanent Service",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-              ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             _infoRow("Contract ID", booking["contract_id"] ?? ""),
@@ -138,8 +107,34 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             _infoRow("Package", booking["package_name"] ?? ""),
             _infoRow("Days", booking["period_days"].toString()),
             _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
-            if(booking["delivery_charges"] > 0 )  _infoRow("Delivery", booking["delivery_charges"].toString()),
-            _infoRow("Status", booking["status"] ?? "success"),
+            if (booking["delivery_charges"] > 0)
+              _infoRow("Delivery", booking["delivery_charges"].toString()),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    // Placeholder for payment logic
+                  },
+                  child: const Text("Pay Now"),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: status == "cancelled" || status == "canceled"
+                      ? null // Disable the button if status is "canceled"
+                      : () {
+                          ref
+                              .read(contractsProvider.notifier)
+                              .cancelPermContract(
+                                booking["contract_id"].toString(),
+                                isHourly: false,
+                              );
+                        },
+                  child: const Text("Cancel"),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -147,7 +142,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Widget _buildHourlyContractCard(Map<String, dynamic> booking) {
-    // Helper function to format status
     String getStatusText(dynamic status) {
       if (status == null) return "Unknown";
       if (status is int) {
@@ -157,17 +151,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           case 1:
             return "Confirmed";
           case 2:
-            return "paid";
+            return "Paid";
           case 3:
             return "Cancelled";
-          default:
-            return "Status $status";
         }
       }
       return status.toString();
     }
 
-    // Helper function to get status color
     Color getStatusColor(dynamic status) {
       if (status == null) return Colors.grey;
       if (status is int) {
@@ -180,20 +171,17 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             return Colors.green;
           case 3:
             return Colors.red;
-          default:
-            return Colors.grey;
         }
       }
       return Colors.grey;
     }
 
-    // Helper function to format date
     String formatDate(String? dateStr) {
       if (dateStr == null || dateStr.isEmpty) return "Not specified";
       try {
         final date = DateTime.parse(dateStr);
         return "${date.day}/${date.month}/${date.year}";
-      } catch (e) {
+      } catch (_) {
         return dateStr;
       }
     }
@@ -205,7 +193,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Service type indicator
+            // Header with status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -252,26 +240,48 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             _infoRow("Total Price", "${booking["total_price"] ?? 0} Riyal"),
             _infoRow("VAT", "${booking["vat_price"] ?? 0} Riyal"),
             _infoRow("Start Date", formatDate(booking["contract_start_date"])),
-            _infoRow("Status", getStatusText(booking["status"])),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    // Placeholder
+                  },
+                  child: const Text("Pay Now"),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: booking["status"] == "canceled"
+                      ? null // Disable the button if status is "canceled"
+                      : () {
+                          ref
+                              .read(contractsProvider.notifier)
+                              .cancelPermContract(
+                                booking["contract_id"].toString(),
+                                isHourly: false,
+                              );
+                        },
+                  child: const Text("Cancel"),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  List<Widget> _getFilteredContracts() {
+  List<Widget> _getFilteredContracts(
+      List<Map<String, dynamic>> permanent, List<Map<String, dynamic>> hourly) {
     List<Widget> contracts = [];
 
     if (_selectedTab == 'all' || _selectedTab == 'permanent') {
-      contracts.addAll(_permanentContracts
-          .map((booking) => _buildPermanentContractCard(booking))
-          .toList());
+      contracts.addAll(permanent.map(_buildPermanentContractCard));
     }
 
     if (_selectedTab == 'all' || _selectedTab == 'hourly') {
-      contracts.addAll(_hourlyContracts
-          .map((booking) => _buildHourlyContractCard(booking))
-          .toList());
+      contracts.addAll(hourly.map(_buildHourlyContractCard));
     }
 
     return contracts;
@@ -279,15 +289,18 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(contractsProvider);
+    final notifier = ref.read(contractsProvider.notifier);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Bookings"),
-          leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () {
-      Navigator.of(context).pushReplacementNamed('/home');
-    },
-  ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushReplacementNamed('/home');
+          },
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
           child: Container(
@@ -297,18 +310,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 Expanded(
                   child: SegmentedButton<String>(
                     segments: const [
+                      ButtonSegment(value: 'all', label: Text('All')),
                       ButtonSegment(
-                        value: 'all',
-                        label: Text('All'),
-                      ),
-                      ButtonSegment(
-                        value: 'permanent',
-                        label: Text('Permanent'),
-                      ),
-                      ButtonSegment(
-                        value: 'hourly',
-                        label: Text('Hourly'),
-                      ),
+                          value: 'permanent', label: Text('Permanent')),
+                      ButtonSegment(value: 'hourly', label: Text('Hourly')),
                     ],
                     selected: {_selectedTab},
                     onSelectionChanged: (Set<String> selection) {
@@ -323,45 +328,36 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           ),
         ),
       ),
-      body: _isLoading
+      body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _fetchAllContracts,
+              onRefresh: notifier.fetchContracts,
               child: Builder(
                 builder: (context) {
-                  final filteredContracts = _getFilteredContracts();
-
-                  if (filteredContracts.isEmpty) {
+                  final filtered =
+                      _getFilteredContracts(state.permanent, state.hourly);
+                  if (filtered.isEmpty) {
                     return const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.receipt_long,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
+                          Icon(Icons.receipt_long,
+                              size: 64, color: Colors.grey),
                           SizedBox(height: 16),
-                          Text(
-                            "No bookings found",
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          Text("No bookings found",
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.grey)),
                         ],
                       ),
                     );
                   }
 
-                  return ListView(
-                    children: filteredContracts,
-                  );
+                  return ListView(children: filtered);
                 },
               ),
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _fetchAllContracts,
+        onPressed: notifier.fetchContracts,
         tooltip: 'Refresh',
         child: const Icon(Icons.refresh),
       ),
