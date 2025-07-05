@@ -15,7 +15,7 @@ import '../steps/address_selection_step.dart';
 class AddNewAddressScreen extends StatefulWidget {
   final PackageModel? package;
   final int? serviceId;
-  final int? user_id; // Add serviceId parameter
+  final String? user_id; // Add serviceId parameter
 
   const AddNewAddressScreen({
     Key? key,
@@ -294,7 +294,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
       districtId: _selectedDistrictCode?.toString() ?? '',
       houseType: houseTypeValue,
       createdBy: 1,
-      customerId: widget.user_id ?? 0,
+      customerId: widget.user_id ?? '',
       mapUrl: mapUrl,
       latitude: _selectedLocation!.latitude,
       longitude: _selectedLocation!.longitude,
