@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fawran/providers/userNameProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,7 +44,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final token = await _storage.read(key: 'token');
 
     final response = await http.put(
-      Uri.parse('http://fawran.ddns.net:8080/ords/emdad/fawran/user/profile/update'),
+      Uri.parse(
+          'http://fawran.ddns.net:8080/ords/emdad/fawran/user/profile/update'),
       headers: {
         'Content-Type': 'application/json',
         'token': token ?? '',
@@ -57,9 +59,13 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     );
 
     if (response.statusCode == 200) {
-      await _storage.write(key: 'first_name', value: _firstNameController.text);
-      await _storage.write(key: 'middle_name', value: _middleNameController.text);
+      await _storage.write(
+          key: 'first_name',
+          value: _firstNameController.text); // 👈 Use correct keys!
       await _storage.write(key: 'last_name', value: _lastNameController.text);
+
+      // 🔄 Refresh provider so HomeScreen updates
+      ref.invalidate(userNameProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profile updated successfully')),

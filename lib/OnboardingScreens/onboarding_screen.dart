@@ -21,24 +21,23 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
-  
   // Animation duration constants
   static const Duration kCircle1Duration = Duration(seconds: 8);
   static const Duration kCircle2Duration = Duration(seconds: 10);
   static const Duration kCircle3Duration = Duration(seconds: 6);
-  
+
   // Layout offset constants
   static const double kCircle1BaseLeft = -80;
   static const double kCircle1MovementMultiplier = 60;
   static const double kCircle2BaseRight = -100;
   static const double kCircle2MovementMultiplier = 50;
   static const double kCircle3MovementMultiplier = 80;
-  
+
   // Circle size constants
   static const double kCircle1Size = 200;
   static const double kCircle2Size = 250;
   static const double kCircle3Size = 180;
-  
+
   late final PageController _pageController;
   int _currentPage = 0;
 
@@ -55,41 +54,45 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   // Different content for each onboarding screen
   final List<OnboardingContent> _onboardingData = [
     OnboardingContent(
-      title: "Book Your Service",
-      description: "Choose the domestic solution that\nmatches your lifestyle and\npersonalized requirements",
+      title: "Flexible Service Solutions",
+      description:
+          "Fawran service provides trained and\nqualified labors on an hourly basis\nwith flexible scheduling options",
     ),
     OnboardingContent(
-      title: "Professional Staff",
-      description: "Our trained and verified professionals\nensure quality service delivery\nat your doorstep",
+      title: "Trained & Qualified Staff",
+      description:
+          "Our verified professionals deliver\nquality service with weekly or\nmonthly contracts available",
     ),
     OnboardingContent(
-      title: "Real-time Tracking",
-      description: "Track your service request in real-time\nand get updates on arrival\nand completion status",
+      title: "Schedule Based on Your Needs",
+      description:
+          "All services are scheduled based\non your specific requests and\npreferred timing",
     ),
     OnboardingContent(
-      title: "24/7 Support",
-      description: "Round the clock customer support\nto assist you with any queries\nor service requirements",
+      title: "Complete Service Management",
+      description:
+          "From booking to completion,\nmanage all your domestic service\nrequirements in one place",
     ),
   ];
 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize PageController in initState for better lifecycle management
     _pageController = PageController();
-    
+
     // Initialize animation controllers with duration constants
     _circle1Controller = AnimationController(
       duration: kCircle1Duration,
       vsync: this,
     );
-    
+
     _circle2Controller = AnimationController(
       duration: kCircle2Duration,
       vsync: this,
     );
-    
+
     _circle3Controller = AnimationController(
       duration: kCircle3Duration,
       vsync: this,
@@ -156,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Scaffold(
       body: Stack(
         children: [
@@ -175,13 +178,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
           ),
-          
+
           // Animated decorative circles positioned across the background
           AnimatedBuilder(
             animation: _circle1Animation,
             builder: (context, child) {
               return Positioned(
-                left: kCircle1BaseLeft + (_circle1Animation.value.dx * kCircle1MovementMultiplier),
+                left: kCircle1BaseLeft +
+                    (_circle1Animation.value.dx * kCircle1MovementMultiplier),
                 top: screenHeight * 0.1 + (_circle1Animation.value.dy * 40),
                 child: Container(
                   width: kCircle1Size,
@@ -194,12 +198,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               );
             },
           ),
-          
+
           AnimatedBuilder(
             animation: _circle2Animation,
             builder: (context, child) {
               return Positioned(
-                right: kCircle2BaseRight + (_circle2Animation.value.dx * kCircle2MovementMultiplier),
+                right: kCircle2BaseRight +
+                    (_circle2Animation.value.dx * kCircle2MovementMultiplier),
                 top: screenHeight * 0.25 + (_circle2Animation.value.dy * 50),
                 child: Container(
                   width: kCircle2Size,
@@ -212,12 +217,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               );
             },
           ),
-          
+
           AnimatedBuilder(
             animation: _circle3Animation,
             builder: (context, child) {
               return Positioned(
-                left: screenWidth * 0.2 + (_circle3Animation.value.dx * kCircle3MovementMultiplier),
+                left: screenWidth * 0.2 +
+                    (_circle3Animation.value.dx * kCircle3MovementMultiplier),
                 bottom: screenHeight * 0.45 + (_circle3Animation.value.dy * 30),
                 child: Container(
                   width: kCircle3Size,
@@ -230,7 +236,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               );
             },
           ),
-          
+
           // Main content
           Column(
             children: [
@@ -241,7 +247,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.08),
-                      
+
                       // Logo Section - "فورز" (Fawran in Arabic)
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -253,7 +259,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               fontSize: 72,
                               fontWeight: FontWeight.w900,
                               color: const Color(0xFFFF8A50),
-                              fontFamily: 'serif', // Using serif for more calligraphic look
+                              fontFamily:
+                                  'serif', // Using serif for more calligraphic look
                               shadows: [
                                 Shadow(
                                   offset: const Offset(2, 2),
@@ -273,15 +280,16 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           ),
                         ],
                       ),
-                      
+
                       const Spacer(),
-                      
+
                       // Page indicators positioned lower
                       Padding(
                         padding: const EdgeInsets.only(bottom: 1),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_onboardingData.length, (index) {
+                          children:
+                              List.generate(_onboardingData.length, (index) {
                             return AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -301,7 +309,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   ),
                 ),
               ),
-              
+
               // Bottom white container - fills remaining space
               Expanded(
                 child: Container(
@@ -314,7 +322,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     ),
                   ),
                   child: SafeArea(
-                    top: false, // Don't apply safe area to top since we handle it above
+                    top:
+                        false, // Don't apply safe area to top since we handle it above
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                       child: PageView.builder(
@@ -355,15 +364,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                   ],
                                 ),
                               ),
-                              
+
                               // Bottom buttons
                               Padding(
-                                padding: const EdgeInsets.only(top: 16, bottom: 8),
+                                padding:
+                                    const EdgeInsets.only(top: 16, bottom: 8),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    if (_currentPage < _onboardingData.length - 1)
+                                    if (_currentPage <
+                                        _onboardingData.length - 1)
                                       TextButton(
                                         onPressed: _skipToEnd,
                                         child: const Text(
@@ -378,30 +390,39 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     else
                                       const SizedBox(width: 60),
                                     ElevatedButton(
-                                      onPressed: _currentPage < _onboardingData.length - 1 ? _nextPage : () {
-                                        // Handle get started action
-                                         Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );
-                                        print('Get Started pressed');
-                                      },
+                                      onPressed: _currentPage <
+                                              _onboardingData.length - 1
+                                          ? _nextPage
+                                          : () {
+                                              // Handle get started action
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const LoginScreen(),
+                                                ),
+                                              );
+                                              print('Get Started pressed');
+                                            },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF06214B),
+                                        backgroundColor:
+                                            const Color(0xFF06214B),
                                         foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 28,
                                           vertical: 14,
                                         ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(28),
+                                          borderRadius:
+                                              BorderRadius.circular(28),
                                         ),
                                         elevation: 0,
                                       ),
                                       child: Text(
-                                        _currentPage < _onboardingData.length - 1 ? 'Next' : 'Get Started',
+                                        _currentPage <
+                                                _onboardingData.length - 1
+                                            ? 'Next'
+                                            : 'Get Started',
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,

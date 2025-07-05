@@ -106,4 +106,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tenpercent => 'خصم %10';
+
+  @override
+  String get welcome => 'أهلا';
 }
