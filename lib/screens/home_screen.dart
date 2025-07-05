@@ -123,11 +123,12 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.language),
             onPressed: () {
-             ref.read(localeNotifierProvider.notifier).setLocale(isArabic ? const Locale('en') : const Locale('ar'));
+              ref.read(localeNotifierProvider.notifier).setLocale(
+                  isArabic ? const Locale('en') : const Locale('ar'));
 
-                  ;
-                  ref.invalidate(professionsProvider);
-
+              ;
+              ref.invalidate(professionsProvider);
+              ref.invalidate(sliderItemsProvider);
             },
           ),
         ],
@@ -206,47 +207,42 @@ class HomeScreen extends ConsumerWidget {
 
             // Services Grid
 ////horizontal slider
-///
-SizedBox(
-  height: 130,
-  child: sliderItemsAsync.when(
-    data: (sliderItems) {
-      if (sliderItems.isEmpty) {
-        return Center(child: Text("No items available"));
-      }
-      return ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: sliderItems.length,
-        itemBuilder: (context, index) {
-          final item = sliderItems[index];
-          final imageUrl = getFullImageUrl(item.imageUrl);
-          print("Image URL: $imageUrl");  // Debug line
+            ///
+            SizedBox(
+              height: 130,
+              child: sliderItemsAsync.when(
+                data: (sliderItems) {
+                  if (sliderItems.isEmpty) {
+                    return Center(child: Text("No items available"));
+                  }
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: sliderItems.length,
+                    itemBuilder: (context, index) {
+                      final item = sliderItems[index];
+                      final imageUrl = getFullImageUrl(item.imageUrl);
+                      print("Image URL: $imageUrl"); // Debug line
 
-          return Container(
-            width: 200,
-            margin: EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey[300], // Background color added
-              image: DecorationImage(
-                image: NetworkImage(imageUrl),
-                fit: BoxFit.cover,
+                      return Container(
+                        width: 200,
+                        margin: EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[300], // Background color added
+                          image: DecorationImage(
+                            image: NetworkImage(imageUrl),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => Center(child: CircularProgressIndicator()),
+                error: (e, st) =>
+                    Center(child: Text("Error loading images: $e")),
               ),
             ),
-            child: Center(
-              child: Text(
-                "Image ${index + 1}",  // Optional: Add text to help visualize each image
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-            ),
-          );
-        },
-      );
-    },
-    loading: () => Center(child: CircularProgressIndicator()),
-    error: (e, st) => Center(child: Text("Error loading images: $e")),
-  ),
-),
 
             SizedBox(height: 20),
             Text(
