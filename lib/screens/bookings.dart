@@ -17,6 +17,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   @override
   void initState() {
     super.initState();
+    Future.microtask(() {
+    ref.read(contractsProvider.notifier).fetchContracts();
+  });
     _selectedTab = widget.initialTab ?? 'all';
   }
 
@@ -292,6 +295,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(contractsProvider);
     final notifier = ref.read(contractsProvider.notifier);
+    final userId = ref.watch(authProvider);
 
     return Scaffold(
       appBar: AppBar(
