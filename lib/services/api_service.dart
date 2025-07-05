@@ -704,7 +704,14 @@ class ApiService {
             '✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
 
         return data.cast<Map<String, dynamic>>();
-      } else {
+      } else  if(response.statusCode == 204){
+  final List<dynamic> data = json.decode("[]");
+        print(
+            '✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
+
+        return data.cast<Map<String, dynamic>>();
+      }
+      else{
         print(
             '❌ [PERMANENT_CONTRACTS] Failed with status: ${response.statusCode}');
         throw Exception(
@@ -779,7 +786,12 @@ class ApiService {
             throw Exception("Failed to parse hourly contracts response");
           }
         }
-      } else {
+      }
+      else if(response.statusCode ==204){
+        return [];
+      }
+      
+       else {
         print("HTTP Error Details:");
         print("Status Code: ${response.statusCode}");
         print("Reason Phrase: ${response.reasonPhrase}");
