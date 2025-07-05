@@ -3,7 +3,6 @@ import 'package:flutter/material.dart'; // ✅ Import for Locale
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 
-final localeProvider = StateProvider<Locale>((ref) => const Locale('en'));
 final userIdProvider = StateProvider<int?>((ref) => null);
 
 class AuthState {

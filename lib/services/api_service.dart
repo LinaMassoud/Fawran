@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:fawran/models/ProffesionModel.dart';
+import 'package:fawran/models/sliderItem.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/package_model.dart';
@@ -443,6 +444,20 @@ class ApiService {
     }
   }
 
+   static Future<List<SliderItem>> fetchSliderItems() async {
+   final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/slider-items',
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((item) => SliderItem.fromJson(item)).toList();
+    } else {
+      throw Exception("Failed to load slider items");
+    }
+  }
+
 // Enhanced HTTP request method with automatic token refresh
   static Future<http.Response> makeAuthenticatedRequest({
     required String method,
@@ -452,10 +467,12 @@ class ApiService {
     int retryCount = 0,
   }) async {
     final token = await _secureStorage.read(key: 'token');
+    final local = await _secureStorage.read(key: 'lang_code');
 
     final requestHeaders = {
       'Content-Type': 'application/json',
       if (token != null) 'token': token,
+      if(local!=null) 'language':local,
       ...?headers,
     };
 

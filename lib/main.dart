@@ -1,6 +1,7 @@
 import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
 import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/screens/AuthCheckingScreen.dart';
 import 'package:fawran/screens/bookings.dart';
 import 'package:fawran/screens/home_screen.dart';
@@ -30,7 +31,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locale = ref.watch(localeProvider); // Reactively watch locale
+    final locale = ref.watch(localeNotifierProvider); // Reactively watch locale
 
     return MaterialApp(
       title: 'Login App',

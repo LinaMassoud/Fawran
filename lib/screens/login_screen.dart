@@ -1,4 +1,5 @@
 import 'package:fawran/models/user.dart';
+import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/verification_screen.dart';
@@ -51,7 +52,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final authState = ref.watch(authProvider);
-    final locale = ref.watch(localeProvider);
+    final locale = ref.watch(localeNotifierProvider);
     final isArabic = locale.languageCode == 'ar';
 
     ref.listen<AuthState>(authProvider, (prev, next) {
@@ -105,7 +106,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onChanged: (val) {
                         final newLocale =
                             val ? const Locale('en') : const Locale('ar');
-                        ref.read(localeProvider.notifier).state = newLocale;
+                        ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
                       },
                       activeTrackColor: Colors.orange,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
