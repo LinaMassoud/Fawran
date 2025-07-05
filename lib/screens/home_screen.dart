@@ -349,7 +349,6 @@ class HomeScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Icon(Icons.home, color: Colors.black),
-              Icon(Icons.search, color: Colors.grey),
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, '/bookings');

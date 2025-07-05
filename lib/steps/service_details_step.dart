@@ -120,48 +120,59 @@ double _apiPriceVat = 0.0;
   }
 
   Future<void> _loadVisitDurations() async {
-    setState(() {
-      isLoadingVisitDurations = true;
-    });
+  setState(() {
+    isLoadingVisitDurations = true;
+  });
 
-    try {
-      final apiService = ApiService();
-      final professions = await apiService.fetchProfessions();
+  try {
+    final apiService = ApiService();
+    final professions = await apiService.fetchProfessions();
 
-      List<String> availableDurations = [];
+    List<String> availableDurations = [];
 
-      // Find the profession that contains the service with matching serviceId
-      for (final profession in professions) {
-        if (profession.services != null && profession.services!.isNotEmpty) {
-          // Look for matching service in the services list
-          for (final service in profession.services!) {
-            if (service.id == widget.serviceId) {
-              // Extract the duration from service name (e.g., "FAWRAN 4 Hours" -> "4 hours")
-              final serviceName = service.name;
-              final match = RegExp(r'(\d+)\s*Hours?').firstMatch(serviceName);
-              if (match != null) {
-                final hours = match.group(1);
+    // Find the profession that contains the service with matching serviceId
+    for (final profession in professions) {
+      if (profession.services != null && profession.services!.isNotEmpty) {
+        // Look for matching service in the services list
+        for (final service in profession.services!) {
+          if (service.id == widget.serviceId) {
+            // Extract the duration from service name
+            // Handles both English (e.g., "FAWRAN 4 Hours") and Arabic (e.g., "فوران 4 ساعات")
+            final serviceName = service.name;
+            
+            // Check for Arabic "ساعات" first
+            final arabicMatch = RegExp(r'(\d+)\s*ساعات').firstMatch(serviceName);
+            if (arabicMatch != null) {
+              final hours = arabicMatch.group(1);
+              availableDurations.add('$hours ساعات');
+            } else {
+              // Check for English "Hours"
+              final englishMatch = RegExp(r'(\d+)\s*Hours?', caseSensitive: false)
+                  .firstMatch(serviceName);
+              if (englishMatch != null) {
+                final hours = englishMatch.group(1);
                 availableDurations.add('$hours hours');
               }
-              break;
             }
+            break;
           }
         }
       }
-
-      setState(() {
-        visitDurations =
-            availableDurations.isNotEmpty ? availableDurations : [];
-        isLoadingVisitDurations = false;
-      });
-    } catch (e) {
-      print('Error loading visit durations: $e');
-      setState(() {
-        visitDurations = []; // No fallback values
-        isLoadingVisitDurations = false;
-      });
     }
+
+    setState(() {
+      visitDurations =
+          availableDurations.isNotEmpty ? availableDurations : [];
+      isLoadingVisitDurations = false;
+    });
+  } catch (e) {
+    print('Error loading visit durations: $e');
+    setState(() {
+      visitDurations = []; // No fallback values
+      isLoadingVisitDurations = false;
+    });
   }
+}
 
 
 

@@ -1358,197 +1358,277 @@ Widget _buildDetailRow(String label, String value) {
   }
 
   Widget _buildShiftSelector(bool isEastAsia) {
-    if (isLoadingShifts || availableShifts.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Center(
-          child: isLoadingShifts
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(
-                  'No shifts available',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-        ),
-      );
-    }
+  if (isLoadingShifts || availableShifts.isEmpty) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Center(
+        child: isLoadingShifts
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(
+                'No shifts available',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+      ),
+    );
+  }
 
-    // Helper function to get delivery time based on shift name
-    String _getDeliveryTime(String shiftName) {
-      final lowerShiftName = shiftName.toLowerCase();
-      if (lowerShiftName.contains('morning')) {
-        return '7:30-10:00 AM';
-      } else if (lowerShiftName.contains('evening')) {
-        return '3:30-6:00 PM';
-      } else if (lowerShiftName.contains('full day') || lowerShiftName.contains('fullday')) {
-        return '7:30 AM-10:00 PM';
-      }
-      return ''; // Default case if shift type is not recognized
-    }
+  // Helper function to check if text contains Arabic characters
+  bool _isArabicText(String text) {
+    return text.runes.any((rune) => rune >= 0x0600 && rune <= 0x06FF);
+  }
 
-    // If only one shift available, show it as a static display
-    if (availableShifts.length == 1) {
-      final shift = availableShifts.first;
-      final shiftName = shift['service_shifts'];
-      final deliveryTime = _getDeliveryTime(shiftName);
-      
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  shiftName.toString().toLowerCase().contains('morning')
-                      ? Icons.wb_sunny
-                      : Icons.nightlight_round,
-                  color: shiftName.toString().toLowerCase().contains('morning')
-                      ? Colors.orange
-                      : Colors.indigo,
-                  size: 20,
-                ),
-                SizedBox(width: 6),
-                Text(
+  // Helper function to get delivery time based on shift name (supports Arabic)
+  String _getDeliveryTime(String shiftName) {
+    final lowerShiftName = shiftName.toLowerCase();
+    
+    // Check English shift names
+    if (lowerShiftName.contains('morning')) {
+      return '7:30-10:00 AM';
+    } else if (lowerShiftName.contains('evening')) {
+      return '3:30-6:00 PM';
+    } else if (lowerShiftName.contains('full day') || lowerShiftName.contains('fullday')) {
+      return '7:30 AM-10:00 PM';
+    }
+    
+    // Check Arabic shift names - Fixed patterns
+    if (lowerShiftName.contains('صباح') || lowerShiftName.contains('الصباح')) {
+      return '7:30-10:00 صباحاً';
+    } else if (lowerShiftName.contains('مسائي') || lowerShiftName.contains('مساني') || 
+               lowerShiftName.contains('مساء') || lowerShiftName.contains('المساء')) {
+      return '3:30-6:00 مساءً';
+    } else if (lowerShiftName.contains('يوم كامل') || lowerShiftName.contains('كامل')) {
+      return '7:30 صباحاً-10:00 مساءً';
+    }
+    
+    return ''; // Default case if shift type is not recognized
+  }
+
+  // Helper function to get appropriate icon based on shift name
+  IconData _getShiftIcon(String shiftName) {
+    final lowerShiftName = shiftName.toLowerCase();
+    
+    // Check for morning shifts (English and Arabic)
+    if (lowerShiftName.contains('morning') || 
+        lowerShiftName.contains('صباح') || 
+        lowerShiftName.contains('الصباح')) {
+      return Icons.wb_sunny;
+    }
+    
+    // Check for evening shifts (English and Arabic) - Fixed patterns
+    if (lowerShiftName.contains('evening') || 
+        lowerShiftName.contains('مسائي') || 
+        lowerShiftName.contains('مساني') ||
+        lowerShiftName.contains('مساء') || 
+        lowerShiftName.contains('المساء')) {
+      return Icons.nightlight_round; 
+    }
+    
+    // Check for full day shifts (English and Arabic) - Fixed patterns
+    if (lowerShiftName.contains('full day') || 
+        lowerShiftName.contains('fullday') ||
+        lowerShiftName.contains('يوم كامل') || 
+        lowerShiftName.contains('كامل')) {
+      return Icons.access_time; // Changed from schedule to access_time to match screenshot
+    }
+    
+    // Default icon
+    return Icons.access_time;
+  }
+
+  // Helper function to get icon color based on shift name
+  Color _getShiftIconColor(String shiftName, bool isSelected) {
+    if (!isSelected) return Colors.grey;
+    
+    final lowerShiftName = shiftName.toLowerCase();
+    
+    // Morning shifts - orange
+    if (lowerShiftName.contains('morning') || 
+        lowerShiftName.contains('صباح') || 
+        lowerShiftName.contains('الصباح')) {
+      return Colors.orange;
+    }
+    
+    // Evening shifts - indigo - Fixed patterns
+    if (lowerShiftName.contains('evening') || 
+        lowerShiftName.contains('مسائي') || 
+        lowerShiftName.contains('مساني') ||
+        lowerShiftName.contains('مساء') || 
+        lowerShiftName.contains('المساء')) {
+      return Colors.indigo;
+    }
+    
+    // Full day shifts - blue - Fixed patterns
+    if (lowerShiftName.contains('full day') || 
+        lowerShiftName.contains('fullday') ||
+        lowerShiftName.contains('يوم كامل') || 
+        lowerShiftName.contains('كامل')) {
+      return Colors.blue;
+    }
+    
+    // Default color
+    return Colors.grey[700]!;
+  }
+
+  // If only one shift available, show it as a static display
+  if (availableShifts.length == 1) {
+    final shift = availableShifts.first;
+    final shiftName = shift['service_shifts'];
+    final deliveryTime = _getDeliveryTime(shiftName);
+    final isArabic = _isArabicText(shiftName);
+    
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _getShiftIcon(shiftName),
+                color: _getShiftIconColor(shiftName, true),
+                size: 20,
+              ),
+              SizedBox(width: 6),
+              Flexible(
+                child: Text(
                   shiftName,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
-                ),
-              ],
-            ),
-            if (deliveryTime.isNotEmpty) ...[
-              SizedBox(height: 4),
-              Text(
-                deliveryTime,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w400,
+                  textAlign: TextAlign.center,
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                 ),
               ),
             ],
-          ],
-        ),
-      );
-    }
-
-    // Multiple shifts available - show selector
-    int selectedShift =
-        isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
-    Function(int) onShiftChanged =
-        isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Row(
-        children: availableShifts.map<Widget>((shift) {
-          final shiftId = shift['id'];
-          final shiftName = shift['service_shifts'];
-          final isSelected = selectedShift == shiftId;
-          final deliveryTime = _getDeliveryTime(shiftName);
-
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onShiftChanged(shiftId),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          shiftName.toString().toLowerCase().contains('morning')
-                              ? Icons.wb_sunny
-                              : Icons.nightlight_round,
-                          color: isSelected
-                              ? (shiftName
-                                      .toString()
-                                      .toLowerCase()
-                                      .contains('morning')
-                                  ? Colors.orange
-                                  : Colors.indigo)
-                              : Colors.grey,
-                          size: 20,
-                        ),
-                        SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            shiftName,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.black : Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (deliveryTime.isNotEmpty) ...[
-                      SizedBox(height: 4),
-                      Text(
-                        deliveryTime,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isSelected ? Colors.grey[700] : Colors.grey[500],
-                          fontWeight: FontWeight.w400,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ],
-                ),
+          ),
+          if (deliveryTime.isNotEmpty) ...[
+            SizedBox(height: 4),
+            Text(
+              deliveryTime,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w400,
               ),
+              textDirection: _isArabicText(deliveryTime) ? TextDirection.rtl : TextDirection.ltr,
             ),
-          );
-        }).toList(),
+          ],
+        ],
       ),
     );
   }
+
+  // Multiple shifts available - show selector
+  int selectedShift =
+      isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
+  Function(int) onShiftChanged =
+      isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
+
+  return Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(25),
+    ),
+    child: Row(
+      children: availableShifts.map<Widget>((shift) {
+        final shiftId = shift['id'];
+        final shiftName = shift['service_shifts'];
+        final isSelected = selectedShift == shiftId;
+        final deliveryTime = _getDeliveryTime(shiftName);
+        final isArabic = _isArabicText(shiftName);
+
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => onShiftChanged(shiftId),
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _getShiftIcon(shiftName),
+                        color: _getShiftIconColor(shiftName, isSelected),
+                        size: 20,
+                      ),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          shiftName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.black : Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (deliveryTime.isNotEmpty) ...[
+                    SizedBox(height: 4),
+                    Text(
+                      deliveryTime,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isSelected ? Colors.grey[700] : Colors.grey[500],
+                        fontWeight: FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                      textDirection: _isArabicText(deliveryTime) ? TextDirection.rtl : TextDirection.ltr,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    ),
+  );
+}
 
   Widget _buildSearchResultsHeader() {
     if (!isSearchActive || searchQuery.isEmpty) return SizedBox.shrink();
