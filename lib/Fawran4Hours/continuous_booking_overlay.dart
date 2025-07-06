@@ -548,12 +548,17 @@ void _updatePriceVat(double priceVat) {
 
 Future<void> _createContract(BookingData bookingData) async {
   try {
-    // Get required data from providers and state
-    final userId = ref.read(userIdProvider);
+    // Get required data from secure storage and state
+    final userIdString = await _storage.read(key: 'user_id');
     final selectedAddress = ref.read(selectedAddressProvider);
     
-    if (userId == null) {
+    if (userIdString == null || userIdString.isEmpty) {
       throw Exception('User not authenticated');
+    }
+    
+    final userId = int.tryParse(userIdString);
+    if (userId == null) {
+      throw Exception('Invalid user ID format');
     }
     
     if (selectedAddress == null) {
@@ -646,6 +651,7 @@ if (widget.isCustomBooking) {
         ? appointments.first 
         : DateTime.now().toIso8601String().split('T')[0];
 
+print("serviceId before passing ApiService.createContract = ${widget.serviceId}");
     // Call the ApiService method
     final result = await ApiService.createContract(
       customerId: userId,
