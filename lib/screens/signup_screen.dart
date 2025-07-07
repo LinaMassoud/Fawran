@@ -30,8 +30,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
   final numberOnlyRegex = RegExp(r'^\d+$');
-  final phoneRegex = RegExp(r'^\+?[0-9\s\-\(\)]{7,15}$');
-  @override
+final phoneRegex = RegExp(r'^05\d{8}$');
+
+ @override
   void initState() {
     super.initState();
   }
@@ -136,7 +137,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   if (val == null || val.isEmpty)
                     return '${loc.phoneNumber} is required';
                   if (!phoneRegex.hasMatch(val))
-                    return ' enter valid ${loc.phoneNumber} ';
+                    return ' enter valid Saudi ${loc.phoneNumber} ';
                   return null;
                 },
               ),
