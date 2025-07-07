@@ -17,8 +17,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'providers/auth_provider.dart';
 import '../Fawran4Hours/fawran_services_display.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async{
+    await dotenv.load();
+
   runApp(
     const ProviderScope(
       child: MyApp(),

@@ -44,6 +44,7 @@ flutter:
     - assets/images/cleaning_service_card.jpg
     - assets/images/services-image.png
     - assets/images/emdad-logo.png
+    - .env
 
 
 

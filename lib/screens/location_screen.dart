@@ -42,7 +42,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
     _getCurrentLocation();
   }
-  Future<void> fetchNearbyPlaces(Position position) async {
+ Future<void> fetchNearbyPlaces(Position position) async {
   final apiKey = dotenv.env['API_KEY']; // 🔁 ضع مفتاحك هنا
   final url =
       'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${position.latitude},${position.longitude}&radius=1000&type=point_of_interest&key=$apiKey';
@@ -54,11 +54,11 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
     final results = data['results'] as List;
 
     if (results.isNotEmpty) {
-      final names = results.map((place) => place['name']).toList().cast<String>();
+      final nearestPlaceName = results.first['name'] as String;
 
       if (!mounted) return;
       ref.read(locationProvider.notifier).state =
-          'لم يتم تحديد موقعك بدقة، لكن إليك بعض الأماكن القريبة:\n\n${names.take(5).join('\n')}';
+          'أقرب مكان إليك: $nearestPlaceName';
 
       setState(() {
         isLoading = false;
