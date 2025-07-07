@@ -839,7 +839,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> createAddress({
     required String buildingName,
-    required int buildingNumber,
+    required String buildingNumber, // Changed from int to String
     required String cityCode,
     required String districtId,
     required int houseType,
@@ -848,14 +848,14 @@ class ApiService {
     required String mapUrl,
     required double latitude,
     required double longitude,
-    int? apartmentNumber,
+    String? apartmentNumber, // Changed from int? to String?
     int? floorNumber,
   }) async {
     try {
       // Prepare request body
       Map<String, dynamic> requestBody = {
         'building_name': buildingName,
-        'building_number': buildingNumber,
+        'building_number': buildingNumber, // Now string
         'city_code': cityCode,
         'district_id': districtId,
         'house_type': houseType,
@@ -868,7 +868,7 @@ class ApiService {
 
       // Add apartment-specific fields only if house type is Apartment (2)
       if (houseType == 2) {
-        requestBody['apartment_number'] = apartmentNumber ?? 0;
+        requestBody['apartment_number'] = apartmentNumber ?? ''; // Now string
         requestBody['floor_number'] = floorNumber ?? 0;
       }
 
