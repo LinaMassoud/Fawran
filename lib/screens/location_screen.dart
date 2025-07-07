@@ -4,6 +4,7 @@ import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -42,7 +43,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
     _getCurrentLocation();
   }
   Future<void> fetchNearbyPlaces(Position position) async {
-  const apiKey = 'AIzaSyBGEvt8jnOj9431_sPT7fkm7U1QvrutFVs'; // 🔁 ضع مفتاحك هنا
+  final apiKey = dotenv.env['API_KEY']; // 🔁 ضع مفتاحك هنا
   final url =
       'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${position.latitude},${position.longitude}&radius=1000&type=point_of_interest&key=$apiKey';
 
