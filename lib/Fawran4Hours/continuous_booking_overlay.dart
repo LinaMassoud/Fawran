@@ -97,6 +97,7 @@ class _ContinuousBookingOverlayState
   late Animation<double> _slideAnimation;
   late PageController _pageController;
     final _storage = FlutterSecureStorage();
+bool _isCompletingPurchase = false;
 
 
   int currentStep = 0;
@@ -718,6 +719,9 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
 
 
   void _completePurchase() async {
+
+      if (_isCompletingPurchase) return; // Prevent duplicate calls
+  _isCompletingPurchase = true;
   final selectedAddress = ref.read(selectedAddressProvider);
 
   // Use the total price from ServiceDetailsStep for custom booking
