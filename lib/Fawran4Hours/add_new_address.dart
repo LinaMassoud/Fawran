@@ -286,25 +286,25 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
     // Call API service
     final result = await ApiService.createAddress(
-      buildingName: _addressTitleController.text.isNotEmpty
-          ? _addressTitleController.text
-          : '',
-      buildingNumber: buildingNumber,
-      cityCode: _selectedCityCode?.toString() ?? '',
-      districtId: _selectedDistrictCode?.toString() ?? '',
-      houseType: houseTypeValue,
-      createdBy: 1,
-      customerId: widget.user_id ?? '',
-      mapUrl: mapUrl,
-      latitude: _selectedLocation!.latitude,
-      longitude: _selectedLocation!.longitude,
-      apartmentNumber: _selectedHouseType == 'Apartment'
-          ? int.tryParse(_apartmentNumberController.text)
-          : null,
-      floorNumber: _selectedHouseType == 'Apartment'
-          ? _selectedFloorNumber
-          : null,
-    );
+  buildingName: _addressTitleController.text.isNotEmpty
+      ? _addressTitleController.text
+      : '',
+  buildingNumber: _houseNumberController.text, // Now passing string directly
+  cityCode: _selectedCityCode?.toString() ?? '',
+  districtId: _selectedDistrictCode?.toString() ?? '',
+  houseType: houseTypeValue,
+  createdBy: 1,
+  customerId: widget.user_id ?? '',
+  mapUrl: mapUrl,
+  latitude: _selectedLocation!.latitude,
+  longitude: _selectedLocation!.longitude,
+  apartmentNumber: _selectedHouseType == 'Apartment'
+      ? _apartmentNumberController.text // Now passing string directly
+      : null,
+  floorNumber: _selectedHouseType == 'Apartment'
+      ? _selectedFloorNumber
+      : null,
+);
 
     // Create newAddress object with correct property names
     final newAddress = {
@@ -454,42 +454,58 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
   // Now update your main widget's _openMapSelector method to use this new dialog:
   Future<void> _openMapSelector() async {
-    if (!_isDistrictCompleted) return;
-
-    LatLng initialLocation;
-
-    // First priority: Use previously selected location if exists
-    if (_selectedLocation != null) {
-      initialLocation = _selectedLocation!;
-    }
-    // Second priority: Use district map data if available
-    else if (_districtMapData != null) {
-      initialLocation =
-          LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
-    }
-    // Fallback: Use default location
-    else {
-      initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
-    }
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => MapSelectorDialog(
-        initialLocation: initialLocation,
-        boundaryCoordinates: _districtMapData?.polygonCoordinates,
-        onLocationSelected: (LatLng selectedLocation) async {
-          setState(() {
-            _selectedLocation = selectedLocation;
-            _hasUserMovedPin = true;
-            _isLocationConfirmed = false;
-          });
-
-          await _handleLocationSelection(selectedLocation);
-        },
-      ),
+  if (!_isDistrictCompleted) return;
+  
+  // Don't open map if still loading district map data
+  if (_isLoadingDistrictMap) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please wait while map data is loading...')),
     );
+    return;
   }
+  
+  // Don't open map if district map data is not available yet
+  if (_selectedDistrictCode != null && _districtMapData == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Map data not available. Please try again.')),
+    );
+    return;
+  }
+
+  LatLng initialLocation;
+
+  // First priority: Use previously selected location if exists
+  if (_selectedLocation != null) {
+    initialLocation = _selectedLocation!;
+  }
+  // Second priority: Use district map data if available
+  else if (_districtMapData != null) {
+    initialLocation =
+        LatLng(_districtMapData!.latitude, _districtMapData!.longitude);
+  }
+  // Fallback: Use default location
+  else {
+    initialLocation = _districtLocation ?? LatLng(24.6877, 46.7219);
+  }
+
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) => MapSelectorDialog(
+      initialLocation: initialLocation,
+      boundaryCoordinates: _districtMapData?.polygonCoordinates,
+      onLocationSelected: (LatLng selectedLocation) async {
+        setState(() {
+          _selectedLocation = selectedLocation;
+          _hasUserMovedPin = true;
+          _isLocationConfirmed = false;
+        });
+
+        await _handleLocationSelection(selectedLocation);
+      },
+    ),
+  );
+}
 
   void _onFieldChanged() {
     setState(() {
@@ -986,19 +1002,39 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   Widget _buildMapSelector({bool enabled = true}) {
-    return GestureDetector(
-      onTap: enabled ? _openMapSelector : null,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 18),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!, width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-          color: enabled ? Colors.white : Colors.grey[100],
-        ),
-        child: Row(
-          children: [
-            SizedBox(width: 16),
+  return GestureDetector(
+    onTap: enabled ? _openMapSelector : null,
+    child: Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        color: enabled ? Colors.white : Colors.grey[100],
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 16),
+          if (_isLoadingDistrictMap && _selectedDistrictCode != null) ...[
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Loading map data...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: enabled ? Colors.grey[600] : Colors.grey[400],
+                ),
+              ),
+            ),
+          ] else ...[
             Expanded(
               child: Text(
                 _isMapCompleted ? 'Map selected' : 'Select on map',
@@ -1017,12 +1053,13 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                 fontSize: 16,
               ),
             ),
-            SizedBox(width: 16),
           ],
-        ),
+          SizedBox(width: 16),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
