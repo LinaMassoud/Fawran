@@ -109,6 +109,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             _infoRow("Profession", booking["profession_name"] ?? ""),
             _infoRow("Package", booking["package_name"] ?? ""),
             _infoRow("Days", booking["period_days"].toString()),
+             _infoRow("Vat", "${booking["vat_amount"]} Riyal"),
             _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
             if (booking["delivery_charges"] > 0)
               _infoRow("Delivery", booking["delivery_charges"].toString()),
