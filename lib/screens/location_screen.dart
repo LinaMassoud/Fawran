@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/location_provider.dart';
@@ -8,7 +9,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LocationScreen extends ConsumerStatefulWidget {
@@ -42,36 +42,36 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
     _getCurrentLocation();
   }
- Future<void> fetchNearbyPlaces(Position position) async {
-  final apiKey = dotenv.env['API_KEY']; // 🔁 ضع مفتاحك هنا
-  final url =
-      'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${position.latitude},${position.longitude}&radius=1000&type=point_of_interest&key=$apiKey';
 
-  final response = await http.get(Uri.parse(url));
+  Future<void> fetchNearbyPlaces(Position position) async {
+    final apiKey = dotenv.env['API_KEY'];
+    final url =
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${position.latitude},${position.longitude}&radius=1000&type=point_of_interest&key=$apiKey';
 
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    final results = data['results'] as List;
+    final response = await http.get(Uri.parse(url));
 
-    if (results.isNotEmpty) {
-      final nearestPlaceName = results.first['name'] as String;
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final results = data['results'] as List;
 
-      if (!mounted) return;
-      ref.read(locationProvider.notifier).state =
-          'أقرب مكان إليك: $nearestPlaceName';
+      if (results.isNotEmpty) {
+        final nearestPlaceName = results.first['name'] as String;
 
-      setState(() {
-        isLoading = false;
-        showLocation = false;
-      });
+        if (!mounted) return;
+        ref.read(locationProvider.notifier).state =
+            'أقرب مكان إليك: $nearestPlaceName';
+
+        setState(() {
+          isLoading = false;
+          showLocation = false;
+        });
+      } else {
+        throw Exception("لم يتم العثور على أماكن قريبة.");
+      }
     } else {
-      throw Exception("لم يتم العثور على أماكن قريبة.");
+      throw Exception("فشل الاتصال بخدمة Google Places.");
     }
-  } else {
-    throw Exception("فشل الاتصال بخدمة Google Places.");
   }
-}
-
 
   Future<void> _getCurrentLocation() async {
     final locationState = ref.read(locationProvider.notifier);
@@ -191,63 +191,71 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
-    } 
-   catch (e, stackTrace) {
-  print("Location error: $e");
-  print("Stack trace: $stackTrace");
+    } catch (e, stackTrace) {
+      print("Location error: $e");
+      print("Stack trace: $stackTrace");
 
-  Position? lastKnown = await Geolocator.getLastKnownPosition();
- if (lastKnown != null) {
-  try {
-    await fetchNearbyPlaces(lastKnown);
+      try {
+        Position? lastKnown = await Geolocator.getLastKnownPosition();
 
-    // ✅ اعتبرنا الموقع تم تحديده بنجاح
-    if (!mounted) return;
+        if (lastKnown != null) {
+          try {
+            await fetchNearbyPlaces(lastKnown);
 
-    setState(() {
-      isLoading = false;
-      showLocation = true;
-    });
+            if (!mounted) return;
+            setState(() {
+              isLoading = false;
+              showLocation = true;
+            });
 
-    _controller.forward();
-    await Future.delayed(const Duration(seconds: 2));
+            _controller.forward();
+            await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-    );
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
 
-    return;
-  } catch (_) {
-    // إذا فشل جلب الأماكن القريبة أيضًا، نتابع لعرض الخطأ العادي
-  }
-}
+            return;
+          } catch (_) {
+            // Nearby places fetch failed, continue to show fallback error
+          }
+        }
+      } catch (lastKnownError) {
+        if (lastKnownError is PermissionRequestInProgressException) {
+          ref.read(locationProvider.notifier).state =
+              "طلب صلاحية الموقع جارٍ. يرجى الانتظار...";
+          await Future.delayed(const Duration(seconds: 2));
+          _getCurrentLocation();
+          return;
+        }
+      }
 
-  if (!mounted) return;
+      if (!mounted) return;
 
-  String errorMessage;
+      String errorMessage;
 
-  if (e is TimeoutException) {
-    errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
-  } else if (e is PermissionDeniedException ||
-      e.toString().contains("PERMISSION_DENIED")) {
-    errorMessage = "صلاحية الموقع مرفوضة. يرجى التحقق من إعدادات التطبيق.";
-  } else if (e.toString().contains("LocationServiceDisabledException")) {
-    errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من إعدادات الجهاز.";
-  } else {
-    errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
-  }
+      if (e is TimeoutException) {
+        errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
+      } else if (e is PermissionDeniedException ||
+          e.toString().contains("PERMISSION_DENIED")) {
+        errorMessage = "صلاحية الموقع مرفوضة. يرجى التحقق من إعدادات التطبيق.";
+      } else if (e.toString().contains("LocationServiceDisabledException")) {
+        errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من إعدادات الجهاز.";
+      } else {
+        errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
+      }
 
-  ref.read(locationProvider.notifier).state = errorMessage;
+      ref.read(locationProvider.notifier).state = errorMessage;
 
-  setState(() {
-    isLoading = false;
-    showLocation = false;
-  });
-}
+      setState(() {
+        isLoading = false;
+        showLocation = false;
+      });
+    }
   }
 
   @override
