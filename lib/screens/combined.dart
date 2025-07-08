@@ -81,6 +81,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
         "final_price": selectedPackage.finalInvoice,
         "delivery_charge": deliveryCharge,
         "amount_to_pay": amountToPay,
+        "vat_amount": selectedPackage.vatAmount
       };
 
       try {
