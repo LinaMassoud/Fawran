@@ -696,10 +696,7 @@ class ApiService {
             '📦 [PERMANENT_CONTRACTS] Raw response length: ${rawJson.length}');
 
         // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
-        rawJson = rawJson.replaceAllMapped(
-          RegExp(r'"price_before_vat"\s*:\s*,'),
-          (match) => '"price_before_vat": null,',
-        );
+      
 
         final List<dynamic> data = json.decode(rawJson);
         print(
