@@ -291,82 +291,103 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
     return contracts;
   }
+@override
+Widget build(BuildContext context) {
+  final state = ref.watch(contractsProvider);
+  final notifier = ref.read(contractsProvider.notifier);
+  final userId = ref.watch(authProvider);
 
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(contractsProvider);
-    final notifier = ref.read(contractsProvider.notifier);
-    final userId = ref.watch(authProvider);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Bookings"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pushReplacementNamed('/home');
-          },
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'all', label: Text('All')),
-                      ButtonSegment(
-                          value: 'permanent', label: Text('Permanent')),
-                      ButtonSegment(value: 'hourly', label: Text('Hourly')),
-                    ],
-                    selected: {_selectedTab},
-                    onSelectionChanged: (Set<String> selection) {
-                      setState(() {
-                        _selectedTab = selection.first;
-                      });
-                    },
-                  ),
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text("My Bookings"),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          Navigator.of(context).pushReplacementNamed('/home');
+        },
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(50),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // reduced from 16
+          child: Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(
+                      value: 'all',
+                      label: Text(
+                        'All',
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                      ),
+                    ),
+                    ButtonSegment(
+                      value: 'permanent',
+                      label: Text(
+                        'Permanent',
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                      ),
+                    ),
+                    ButtonSegment(
+                      value: 'hourly',
+                      label: Text(
+                        'Hourly',
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                      ),
+                    ),
+                  ],
+                  selected: {_selectedTab},
+                  onSelectionChanged: (Set<String> selection) {
+                    setState(() {
+                      _selectedTab = selection.first;
+                    });
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: notifier.fetchContracts,
-              child: Builder(
-                builder: (context) {
-                  final filtered =
-                      _getFilteredContracts(state.permanent, state.hourly);
-                  if (filtered.isEmpty) {
-                    return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.receipt_long,
-                              size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text("No bookings found",
-                              style:
-                                  TextStyle(fontSize: 18, color: Colors.grey)),
-                        ],
-                      ),
-                    );
-                  }
+    ),
+    body: state.isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: notifier.fetchContracts,
+            child: Builder(
+              builder: (context) {
+                final filtered =
+                    _getFilteredContracts(state.permanent, state.hourly);
+                if (filtered.isEmpty) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.receipt_long, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          "No bookings found",
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-                  return ListView(children: filtered);
-                },
-              ),
+                return ListView(children: filtered);
+              },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: notifier.fetchContracts,
-        tooltip: 'Refresh',
-        child: const Icon(Icons.refresh),
-      ),
-    );
-  }
+          ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: notifier.fetchContracts,
+      tooltip: 'Refresh',
+      child: const Icon(Icons.refresh),
+    ),
+  );
+}
+
+
 }
