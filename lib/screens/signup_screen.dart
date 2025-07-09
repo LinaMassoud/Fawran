@@ -187,20 +187,28 @@ final phoneRegex = RegExp(r'^05\d{8}$');
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: authState.isLoading
-                    ? null
-                    : () {
-                        if (_formKey.currentState!.validate()) {
-                          ref.read(authProvider.notifier).signUp(
-                              userName: _phoneController.text,
-                              firstName: _firstNameController.text,
-                              middleName: _middleNameController.text,
-                              lastName: _lastNameController.text,
-                              phoneNumber: _phoneController.text,
-                              email: _emailController.text,
-                              password: _passwordController.text,
-                              nationalId: _nationalIdController.text);
-                        }
-                      },
+    ? null
+    : () {
+        // Trim all inputs before validation and usage
+        _firstNameController.text = _firstNameController.text.trim();
+        _middleNameController.text = _middleNameController.text.trim();
+        _lastNameController.text = _lastNameController.text.trim();
+        _nationalIdController.text = _nationalIdController.text.trim();
+
+        if (_formKey.currentState!.validate()) {
+          ref.read(authProvider.notifier).signUp(
+            userName: _phoneController.text,
+            firstName: _firstNameController.text,
+            middleName: _middleNameController.text,
+            lastName: _lastNameController.text,
+            phoneNumber: _phoneController.text,
+            email: _emailController.text,
+            password: _passwordController.text,
+            nationalId: _nationalIdController.text,
+          );
+        }
+      },
+
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),
