@@ -77,19 +77,18 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
   }
 
 Future<void> _getCurrentLocation() async {
-  // If there's already an ongoing location request, wait for it to finish
+  // If already fetching, wait for it to finish first
   if (_locationRequestCompleter != null && !_locationRequestCompleter!.isCompleted) {
-     await _locationRequestCompleter!.future;
-    print("Location request is already in progress, waiting for it to complete...");
-  } else {
-    // Create a new location request if no request is in progress
-    _locationRequestCompleter = Completer<void>();
+    print("Waiting for ongoing location request to complete...");
+    await _locationRequestCompleter!.future;
+    // Then try again automatically
+    return _getCurrentLocation(); // retry
   }
 
+  _locationRequestCompleter = Completer<void>();
   final locationState = ref.read(locationProvider.notifier);
 
   try {
-    // Check if location service is enabled
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (!mounted) return;
@@ -116,10 +115,16 @@ Future<void> _getCurrentLocation() async {
       return;
     }
 
-    // Check and request permission
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+      try {
+        permission = await Geolocator.requestPermission();
+      } on PermissionRequestInProgressException {
+        print("Permission request already in progress. Waiting...");
+        await _locationRequestCompleter!.future;
+        return _getCurrentLocation(); // retry after wait
+      }
+
       if (permission == LocationPermission.denied) {
         if (!mounted) return;
         locationState.state = "تم رفض صلاحية الوصول إلى الموقع.";
@@ -128,7 +133,6 @@ Future<void> _getCurrentLocation() async {
       }
     }
 
-    // Handle permanently denied permissions
     if (permission == LocationPermission.deniedForever) {
       if (!mounted) return;
       locationState.state = "تم رفض الصلاحية بشكل دائم. الرجاء تعديل الإعدادات.";
@@ -154,24 +158,22 @@ Future<void> _getCurrentLocation() async {
       return;
     }
 
-    // Get current location
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     ).timeout(
       const Duration(seconds: 10),
       onTimeout: () {
-        throw Exception("Timeout أثناء جلب الموقع.");
+        throw TimeoutException("Timeout أثناء جلب الموقع.");
       },
     );
 
-    // Fetch the address (placemark) for the coordinates
     List<Placemark> placemarks = await placemarkFromCoordinates(
       position.latitude,
       position.longitude,
       localeIdentifier: 'en',
     );
 
-    Placemark place = placemarks.first;
+    final place = placemarks.first;
     final address =
         "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
 
@@ -183,7 +185,6 @@ Future<void> _getCurrentLocation() async {
       showLocation = true;
     });
 
-    // Start the fade transition animation
     _controller.forward();
     await Future.delayed(const Duration(seconds: 2));
 
@@ -192,18 +193,21 @@ Future<void> _getCurrentLocation() async {
       context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
-  } catch (e, stackTrace) {
-    print("Location error: $e");
-    print("Stack trace: $stackTrace");
+  } 
+  
+catch (e) {
+  print("Location error: $e");
 
+  bool isPermissionIssue = e.toString().contains("PERMISSION_DENIED") ||
+      e is PermissionRequestInProgressException ||
+      e.toString().contains("denied");
+
+  if (isPermissionIssue) {
     Position? lastKnown;
     try {
       lastKnown = await Geolocator.getLastKnownPosition();
-    } on PermissionRequestInProgressException catch (_) {
-      print("Permission request in progress. Skipping fallback.");
-      return;
-    } catch (e) {
-      print("Error fetching last known position: $e");
+    } catch (_) {
+      print("Error while fetching last known location");
     }
 
     if (lastKnown != null) {
@@ -226,30 +230,32 @@ Future<void> _getCurrentLocation() async {
         );
         return;
       } catch (e) {
-        print("Failed to fetch from last known: $e");
+        print("Failed to fetch from last known position: $e");
       }
     }
+  }
 
-    if (!mounted) return;
+  // If not a permission-related error or lastKnown failed
+  if (!mounted) return;
 
-    String errorMessage;
-    if (e is TimeoutException) {
-      errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
-    } else if (e.toString().contains("PERMISSION_DENIED")) {
-      errorMessage = "صلاحية الموقع مرفوضة. تحقق من إعدادات التطبيق.";
-    } else if (e.toString().contains("LocationServiceDisabledException")) {
-      errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من الإعدادات.";
-    } else {
-      errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
-    }
+  String errorMessage;
+  if (e is TimeoutException) {
+    errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
+  } else if (e.toString().contains("PERMISSION_DENIED")) {
+    errorMessage = "صلاحية الموقع مرفوضة. تحقق من إعدادات التطبيق.";
+  } else if (e.toString().contains("LocationServiceDisabledException")) {
+    errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من الإعدادات.";
+  } else {
+    errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
+  }
 
-    locationState.state = errorMessage;
-    setState(() {
-      isLoading = false;
-      showLocation = false;
-    });
-  } finally {
-    // Complete the location request when done
+  locationState.state = errorMessage;
+  setState(() {
+    isLoading = false;
+    showLocation = false;
+  });
+}
+  finally {
     _locationRequestCompleter?.complete();
     _locationRequestCompleter = null;
   }
