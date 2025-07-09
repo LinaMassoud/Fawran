@@ -8,6 +8,7 @@ import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
@@ -27,6 +28,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _phoneEmpty = false;
   bool _passwordEmpty = false;
   bool _submitted = false;
+@override
+void initState() {
+  super.initState();
+}
+
 
   @override
   void dispose() {

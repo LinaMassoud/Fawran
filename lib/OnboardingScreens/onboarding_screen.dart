@@ -1,5 +1,6 @@
 import 'package:fawran/screens/login_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 // Data class for onboarding content
 class OnboardingContent {
@@ -127,7 +128,43 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     _circle1Controller.repeat(reverse: true);
     _circle2Controller.repeat(reverse: true);
     _circle3Controller.repeat(reverse: true);
+      _checkLocationPermission();
+
   }
+
+  Future<void> _checkLocationPermission() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("صلاحية الموقع مرفوضة"),
+        content: const Text("يجب تفعيل صلاحية الموقع من إعدادات التطبيق."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Geolocator.openAppSettings();
+            },
+            child: const Text("فتح الإعدادات"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text("إلغاء"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
   @override
   void dispose() {
