@@ -1,3 +1,4 @@
+import 'package:fawran/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,43 +25,51 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   }
 
   // Method to fetch current location
-  Future<void> _getCurrentLocation() async {
-    try {
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+ Future<void> _getCurrentLocation() async {
+  try {
+    // Get current position
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
 
-      // Get the placemark (address)
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-        localeIdentifier: 'en',
-      );
-      Placemark place = placemarks.first;
+    // Get the placemark (address)
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+      localeIdentifier: 'en',
+    );
+    Placemark place = placemarks.first;
 
-      final address =
-          "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+    final address =
+        "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
 
-      // Update state with the fetched address
-      if (!mounted) return;
-      ref.read(locationProvider.notifier).state = address;
+    // Update state with the fetched address
+    if (!mounted) return;
+    ref.read(locationProvider.notifier).state = address;
 
-      setState(() {
-        isLoading = false;
-        showLocation = true;
-      });
-    } catch (e) {
-      // Handle any errors that occur while fetching location
-      if (!mounted) return;
+    setState(() {
+      isLoading = false;
+      showLocation = true;
+    });
 
-      ref.read(locationProvider.notifier).state = "حدث خطأ أثناء جلب الموقع.";
-      setState(() {
-        isLoading = false;
-        showLocation = false;
-      });
-    }
+    // Wait 2 seconds then navigate to HomeScreen
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) =>  HomeScreen()),
+    );
+  } catch (e) {
+    // Handle any errors that occur while fetching location
+    if (!mounted) return;
+
+    ref.read(locationProvider.notifier).state = "حدث خطأ أثناء جلب الموقع.";
+    setState(() {
+      isLoading = false;
+      showLocation = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
