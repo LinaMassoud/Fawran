@@ -123,7 +123,7 @@ final phoneRegex = RegExp(r'^05\d{8}$');
                     return 'national id is required';
                   if (!numberOnlyRegex.hasMatch(val))
                     return 'national id must not contain characters';
-                  if (val.length != 9) return 'national id must be 9 numbers';
+                  if (val.length != 10) return 'national id must be 9 numbers';
                   return null;
                 },
               ),
