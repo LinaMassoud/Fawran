@@ -22,6 +22,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
     with SingleTickerProviderStateMixin {
   bool isLoading = true;
   bool showLocation = false;
+bool _isRequestingPermission = false;
 
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
@@ -73,88 +74,98 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
     }
   }
 
+  Future<void> _showLocationServicesDialog() async {
+  await showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("خدمة الموقع موقفة"),
+      content: const Text("يرجى تفعيل خدمة الموقع من إعدادات الجهاز."),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Geolocator.openLocationSettings();
+          },
+          child: const Text("فتح الإعدادات"),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text("إلغاء"),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<void> _showPermissionDeniedDialog() async {
+  await showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("الصلاحيات مرفوضة"),
+      content: const Text("يجب تفعيل صلاحية الموقع من الإعدادات."),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Geolocator.openAppSettings();
+          },
+          child: const Text("فتح الإعدادات"),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text("إلغاء"),
+        ),
+      ],
+    ),
+  );
+}
+
+
  Future<void> _getCurrentLocation() async {
+  if (_isRequestingPermission) {
+    print("Permission request already in progress. Skipping.");
+    return;
+  }
+
+  _isRequestingPermission = true;
   final locationState = ref.read(locationProvider.notifier);
 
-  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  print("Location service enabled: $serviceEnabled");
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    print("Location service enabled: $serviceEnabled");
 
-  if (!serviceEnabled) {
-    if (!mounted) return;
-    locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
-    setState(() => isLoading = false);
-
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("خدمة الموقع موقفة"),
-        content: const Text("يرجى تفعيل خدمة الموقع من إعدادات الجهاز."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Geolocator.openLocationSettings();
-            },
-            child: const Text("فتح الإعدادات"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text("إلغاء"),
-          ),
-        ],
-      ),
-    );
-
-    return;
-  }
-
-  LocationPermission permission = await Geolocator.checkPermission();
-  print("Initial permission status: $permission");
-
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    print("Requested permission status: $permission");
-    if (permission == LocationPermission.denied) {
-      if (!mounted) return;
-      locationState.state = "تم رفض صلاحية الوصول إلى الموقع.";
+    if (!serviceEnabled) {
+      locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
       setState(() => isLoading = false);
+      await _showLocationServicesDialog();
       return;
     }
-  }
 
-  if (permission == LocationPermission.deniedForever) {
-    if (!mounted) return;
-    locationState.state =
-        "تم رفض الصلاحية بشكل دائم. الرجاء تعديل الإعدادات.";
-    setState(() => isLoading = false);
+    LocationPermission permission = await Geolocator.checkPermission();
+    print("Initial permission status: $permission");
 
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("الصلاحيات مرفوضة"),
-        content: const Text("يجب تفعيل صلاحية الموقع من الإعدادات."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Geolocator.openAppSettings();
-            },
-            child: const Text("فتح الإعدادات"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text("إلغاء"),
-          ),
-        ],
-      ),
-    );
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      print("Requested permission status: $permission");
 
-    return;
-  }
+      if (permission == LocationPermission.denied) {
+        locationState.state = "تم رفض صلاحية الوصول إلى الموقع.";
+        setState(() => isLoading = false);
+        return;
+      }
+    }
 
-  try {
+    if (permission == LocationPermission.deniedForever) {
+      locationState.state =
+          "تم رفض الصلاحية بشكل دائم. الرجاء تعديل الإعدادات.";
+      setState(() => isLoading = false);
+      await _showPermissionDeniedDialog();
+      return;
+    }
+
+    // Fetch current position
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     ).timeout(
@@ -166,14 +177,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
 
     print("Position: ${position.latitude}, ${position.longitude}");
 
+    // Get human-readable address
     List<Placemark> placemarks = await placemarkFromCoordinates(
       position.latitude,
       position.longitude,
       localeIdentifier: 'en',
     );
 
-    Placemark place = placemarks.first;
-
+    final place = placemarks.first;
     final address =
         "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
 
@@ -191,72 +202,78 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
   } catch (e, stackTrace) {
     print("Location error: $e");
-    print("Stack trace: $stackTrace");
-
-    Position? lastKnown;
-
-    try {
-      lastKnown = await Geolocator.getLastKnownPosition();
-    } on PermissionRequestInProgressException catch (_) {
-      print("Permission request already in progress. Skipping fallback.");
-      return;
-    } catch (e) {
-      print("Error fetching last known position: $e");
-    }
-
-    if (lastKnown != null) {
-      try {
-        await fetchNearbyPlaces(lastKnown);
-
-        if (!mounted) return;
-
-        setState(() {
-          isLoading = false;
-          showLocation = true;
-        });
-
-        _controller.forward();
-        await Future.delayed(const Duration(seconds: 2));
-
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-
-        return;
-      } catch (e) {
-        print("Failed to fetch nearby places from last known position: $e");
-      }
-    }
-
-    if (!mounted) return;
-
-    String errorMessage;
-
-    if (e is TimeoutException) {
-      errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
-    } else if (e is PermissionDeniedException ||
-        e.toString().contains("PERMISSION_DENIED")) {
-      errorMessage = "صلاحية الموقع مرفوضة. يرجى التحقق من إعدادات التطبيق.";
-    } else if (e.toString().contains("LocationServiceDisabledException")) {
-      errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من إعدادات الجهاز.";
-    } else {
-      errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
-    }
-
-    ref.read(locationProvider.notifier).state = errorMessage;
-
-    setState(() {
-      isLoading = false;
-      showLocation = false;
-    });
+    await _handleLocationError(e);
+  } finally {
+    _isRequestingPermission = false;
   }
 }
+Future<void> _handleLocationError(dynamic e) async {
+  final locationState = ref.read(locationProvider.notifier);
+
+  Position? lastKnown;
+
+  try {
+    lastKnown = await Geolocator.getLastKnownPosition();
+  } on PermissionRequestInProgressException catch (_) {
+    print("Permission request already in progress. Skipping fallback.");
+    return;
+  } catch (e) {
+    print("Error fetching last known position: $e");
+  }
+
+  if (lastKnown != null) {
+    try {
+      await fetchNearbyPlaces(lastKnown);
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+        showLocation = true;
+      });
+
+      _controller.forward();
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+
+      return;
+    } catch (e) {
+      print("Failed to fetch nearby places from last known position: $e");
+    }
+  }
+
+  if (!mounted) return;
+
+  String errorMessage;
+
+  if (e is TimeoutException) {
+    errorMessage = "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى.";
+  } else if (e is PermissionDeniedException ||
+      e.toString().contains("PERMISSION_DENIED")) {
+    errorMessage = "صلاحية الموقع مرفوضة. يرجى التحقق من إعدادات التطبيق.";
+  } else if (e.toString().contains("LocationServiceDisabledException")) {
+    errorMessage = "خدمة الموقع غير مفعلة. يرجى تفعيلها من إعدادات الجهاز.";
+  } else {
+    errorMessage = "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
+  }
+
+  locationState.state = errorMessage;
+
+  setState(() {
+    isLoading = false;
+    showLocation = false;
+  });
+}
+
 
   @override
   void dispose() {
