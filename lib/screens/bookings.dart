@@ -2,6 +2,7 @@ import 'package:fawran/providers/contractsProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final String? initialTab;
@@ -145,20 +146,20 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _buildHourlyContractCard(Map<String, dynamic> booking) {
+  Widget _buildHourlyContractCard(Map<String, dynamic> booking, AppLocalizations loc) {
     String getStatusText(String status) {
       final statusInt = int.parse(status);
         switch (statusInt) {
           case 0:
-            return "Not confirmed";
+            return loc.notConfirmed ?? "Not confirmed";
           case 1:
-            return "Confirmed";
+            return loc.confirmed ?? "Confirmed";
           case 2:
-            return "Cancelled";
+            return loc.cancelled ?? "Cancelled";
           case 3:
-            return "Paid";
+            return loc.paid ?? "Paid";
            default:
-           return "unKnown";  
+           return  "Unknown";  
         }
       }
     
@@ -209,9 +210,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     color: Colors.green.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    "Hourly Service",
-                    style: TextStyle(
+                  child: Text(
+                    loc.hourlyService ?? "Hourly Service",
+                    style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -237,14 +238,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            _infoRow("Service Contract ID",
+            _infoRow(loc.serviceContractId ?? "Service Contract ID",
                 booking["service_contract_id"]?.toString() ?? ""),
-            _infoRow("Contract ID", booking["contract_id"]?.toString() ?? ""),
-            _infoRow("Customer", booking["customer_display"] ?? ""),
-            _infoRow("Service", booking["service_id"]?.toString() ?? ""),
-            _infoRow("Total Price", "${booking["total_price"] ?? 0} Riyal"),
-            _infoRow("VAT", "${booking["vat_price"] ?? 0} Riyal"),
-            _infoRow("Start Date", formatDate(booking["contract_start_date"])),
+            _infoRow(loc.contractId ?? "Contract ID", booking["contract_id"]?.toString() ?? ""),
+            _infoRow(loc.customer ?? "Customer", booking["customer_display"] ?? ""),
+            _infoRow(loc.service ?? "Service", booking["service_id"]?.toString() ?? ""),
+            _infoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0} Riyal"),
+            _infoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}  Riyal"),
+            _infoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -253,7 +254,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                   onPressed: () {
                     // Placeholder
                   },
-                  child: const Text("Pay Now"),
+                  child: Text(loc.payNow ?? "Pay Now"),
                 ),
                 const SizedBox(width: 8),
                 TextButton(
@@ -267,7 +268,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                                 isHourly: false,
                               );
                         },
-                  child: const Text("Cancel"),
+                  child: Text(loc.cancel ?? "Cancel"),
                 ),
               ],
             ),
@@ -278,7 +279,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   List<Widget> _getFilteredContracts(
-      List<Map<String, dynamic>> permanent, List<Map<String, dynamic>> hourly) {
+      List<Map<String, dynamic>> permanent, List<Map<String, dynamic>> hourly, AppLocalizations loc) {
     List<Widget> contracts = [];
 
     if (_selectedTab == 'all' || _selectedTab == 'permanent') {
@@ -286,13 +287,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
 
     if (_selectedTab == 'all' || _selectedTab == 'hourly') {
-      contracts.addAll(hourly.map(_buildHourlyContractCard));
+      contracts.addAll(hourly.map((booking) => _buildHourlyContractCard(booking, loc)));
     }
 
     return contracts;
   }
 @override
 Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
   final state = ref.watch(contractsProvider);
   final notifier = ref.read(contractsProvider.notifier);
   final userId = ref.watch(authProvider);
@@ -360,7 +362,7 @@ Widget build(BuildContext context) {
             child: Builder(
               builder: (context) {
                 final filtered =
-                    _getFilteredContracts(state.permanent, state.hourly);
+                    _getFilteredContracts(state.permanent, state.hourly,loc);
                 if (filtered.isEmpty) {
                   return const Center(
                     child: Column(

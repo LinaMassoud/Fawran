@@ -11,6 +11,7 @@ import '../models/package_model.dart';
 import '../models/address_model.dart';
 import '../services/api_service.dart';
 import '../steps/address_selection_step.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class AddNewAddressScreen extends StatefulWidget {
   final PackageModel? package;
@@ -133,6 +134,10 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     return LatLng(24.6877, 46.7219); // Default Riyadh location
   }
 
+
+List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
+  return [loc.villa, loc.appartment];
+}
   void _onCityChanged(City? city) {
     setState(() {
       _selectedCity = city;
@@ -229,6 +234,8 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   Future<void> _createAddressAPI() async {
+  final loc = AppLocalizations.of(context)!;
+  
   if (_selectedLocation == null || _selectedDistrictCode == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -246,7 +253,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   // Validate apartment-specific fields if house type is Apartment
-  if (_selectedHouseType == 'Apartment') {
+  if (_selectedHouseType == loc.appartment) {
     if (_selectedFloorNumber == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Floor number is required for apartments')),
@@ -279,32 +286,32 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
         'https://maps.google.com/?q=${_selectedLocation!.latitude},${_selectedLocation!.longitude}';
 
     // Determine house type value (1 for Villa, 2 for Apartment)
-    int houseTypeValue = _selectedHouseType == 'Villa' ? 1 : 2;
+    int houseTypeValue = _selectedHouseType == loc.villa ? 1 : 2;
 
     // Parse building/house number
     int buildingNumber = int.tryParse(_houseNumberController.text) ?? 0;
 
     // Call API service
     final result = await ApiService.createAddress(
-  buildingName: _addressTitleController.text.isNotEmpty
-      ? _addressTitleController.text
-      : '',
-  buildingNumber: _houseNumberController.text, // Now passing string directly
-  cityCode: _selectedCityCode?.toString() ?? '',
-  districtId: _selectedDistrictCode?.toString() ?? '',
-  houseType: houseTypeValue,
-  createdBy: 1,
-  customerId: widget.user_id ?? '',
-  mapUrl: mapUrl,
-  latitude: _selectedLocation!.latitude,
-  longitude: _selectedLocation!.longitude,
-  apartmentNumber: _selectedHouseType == 'Apartment'
-      ? _apartmentNumberController.text // Now passing string directly
-      : null,
-  floorNumber: _selectedHouseType == 'Apartment'
-      ? _selectedFloorNumber
-      : null,
-);
+      buildingName: _addressTitleController.text.isNotEmpty
+          ? _addressTitleController.text
+          : '',
+      buildingNumber: _houseNumberController.text, // Now passing string directly
+      cityCode: _selectedCityCode?.toString() ?? '',
+      districtId: _selectedDistrictCode?.toString() ?? '',
+      houseType: houseTypeValue,
+      createdBy: 1,
+      customerId: widget.user_id ?? '',
+      mapUrl: mapUrl,
+      latitude: _selectedLocation!.latitude,
+      longitude: _selectedLocation!.longitude,
+      apartmentNumber: _selectedHouseType == loc.appartment
+          ? _apartmentNumberController.text // Now passing string directly
+          : null,
+      floorNumber: _selectedHouseType == loc.appartment
+          ? _selectedFloorNumber
+          : null,
+    );
 
     // Create newAddress object with correct property names
     final newAddress = {
@@ -514,29 +521,31 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   }
 
   bool _areAllFieldsValid() {
-    // Check basic required fields
-    if (_addressTitleController.text.trim().isEmpty ||
-        _selectedHouseType == null ||
-        _streetNameController.text.trim().isEmpty ||
-        _houseNumberController.text.trim().isEmpty ||
-        _fullAddressController.text.trim().isEmpty ||
-        _selectedLocation == null ||
-        _selectedCity == null ||
-        _selectedDistrictCode == null ||
-        _selectedDistrictCode!.isEmpty) {
+  final loc = AppLocalizations.of(context)!;
+  
+  // Check basic required fields
+  if (_addressTitleController.text.trim().isEmpty ||
+      _selectedHouseType == null ||
+      _streetNameController.text.trim().isEmpty ||
+      _houseNumberController.text.trim().isEmpty ||
+      _fullAddressController.text.trim().isEmpty ||
+      _selectedLocation == null ||
+      _selectedCity == null ||
+      _selectedDistrictCode == null ||
+      _selectedDistrictCode!.isEmpty) {
+    return false;
+  }
+
+  // Check apartment-specific fields if house type is Apartment
+  if (_selectedHouseType == loc.appartment) {
+    if (_selectedFloorNumber == null ||
+        _apartmentNumberController.text.trim().isEmpty) {
       return false;
     }
-
-    // Check apartment-specific fields if house type is Apartment
-    if (_selectedHouseType == 'Apartment') {
-      if (_selectedFloorNumber == null ||
-          _apartmentNumberController.text.trim().isEmpty) {
-        return false;
-      }
-    }
-
-    return true;
   }
+
+  return true;
+}
 
 
 // Add this new method to handle location selection and geocoding:
@@ -703,7 +712,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     );
   }
 
-  Widget _buildCityDropdown() {
+  Widget _buildCityDropdown(AppLocalizations loc) {
     if (_isLoadingCities) {
       return Container(
         width: double.infinity,
@@ -737,7 +746,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     }
 
     return _buildaCityDropdown(
-        'Please select your city',
+        loc.selectCity,
         _selectedCity, // This should now be a City object, not a String
         _cities, // This should now be a list of City objects
         _onCityChanged,
@@ -746,7 +755,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
         );
   }
 
-  Widget _buildDistrictDropdown() {
+  Widget _buildDistrictDropdown(AppLocalizations loc) {
     if (_isLoadingDistricts) {
       return Container(
         width: double.infinity,
@@ -779,7 +788,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
       );
     }
 
-    return _buildDropdown('Please select your District', _selectedDistrict,
+    return _buildDropdown(loc.selectDistrict, _selectedDistrict,
         _districts, _onDistrictChanged,
         enabled: _selectedCity != null && !_isLoadingDistricts);
   }
@@ -868,61 +877,63 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     );
   }
 
-  Widget _buildHouseTypeDropdown({bool enabled = true}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: enabled ? Colors.white : Colors.grey[100],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          hint: Text(
-            'Select house type',
-            style: TextStyle(
-              color: enabled ? Colors.grey[600] : Colors.grey[400],
-              fontSize: 16,
-            ),
+  Widget _buildHouseTypeDropdown({bool enabled = true, required AppLocalizations loc}) {
+  final localizedHouseTypes = _getLocalizedHouseTypes(loc);
+  
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        hint: Text(
+          loc.selectHouseType,
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
           ),
-          value: _selectedHouseType,
-          items: _houseTypes.map((String type) {
-            return DropdownMenuItem<String>(
-              value: type,
-              child: Text(
-                type,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: enabled ? Colors.black : Colors.grey[400],
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: enabled
-              ? (String? value) {
-                  setState(() {
-                    _selectedHouseType = value;
-                    // Clear apartment-specific fields when switching to Villa
-                    if (value == 'Villa') {
-                      _selectedFloorNumber = null;
-                      _apartmentNumberController.clear();
-                    }
-                    // Trigger validation update
-                    _onFieldChanged();
-                  });
-                }
-              : null,
-          icon: Icon(Icons.keyboard_arrow_down,
-              color: enabled ? Colors.grey[600] : Colors.grey[400]),
-          isExpanded: true,
         ),
+        value: _selectedHouseType,
+        items: localizedHouseTypes.map((String type) {
+          return DropdownMenuItem<String>(
+            value: type,
+            child: Text(
+              type,
+              style: TextStyle(
+                fontSize: 16,
+                color: enabled ? Colors.black : Colors.grey[400],
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: enabled
+            ? (String? value) {
+                setState(() {
+                  _selectedHouseType = value;
+                  // Clear apartment-specific fields when switching to Villa
+                  if (value == loc.villa) {
+                    _selectedFloorNumber = null;
+                    _apartmentNumberController.clear();
+                  }
+                  // Trigger validation update
+                  _onFieldChanged();
+                });
+              }
+            : null,
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
       ),
-    );
-  }
+    ),
+  );
+}
 
 // 5. Update the floor dropdown onChanged to trigger validation
-  Widget _buildFloorDropdown({bool enabled = true}) {
+  Widget _buildFloorDropdown({bool enabled = true,required AppLocalizations loc}) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -934,7 +945,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           hint: Text(
-            'Select floor *',
+            '${loc.selectFloor} *',
             style: TextStyle(
               color: enabled ? Colors.grey[600] : Colors.grey[400],
               fontSize: 16,
@@ -945,7 +956,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
             return DropdownMenuItem<int>(
               value: floor,
               child: Text(
-                'Floor $floor',
+                '${loc.floor} $floor',
                 style: TextStyle(
                   fontSize: 16,
                   color: enabled ? Colors.black : Colors.grey[400],
@@ -1001,7 +1012,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
     );
   }
 
-  Widget _buildMapSelector({bool enabled = true}) {
+  Widget _buildMapSelector({bool enabled = true,required AppLocalizations loc}) {
   return GestureDetector(
     onTap: enabled ? _openMapSelector : null,
     child: Container(
@@ -1037,7 +1048,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
           ] else ...[
             Expanded(
               child: Text(
-                _isMapCompleted ? 'Map selected' : 'Select on map',
+                _isMapCompleted ? loc.mapSelected : loc.selectMap,
                 style: TextStyle(
                   fontSize: 16,
                   color: enabled
@@ -1047,7 +1058,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
               ),
             ),
             Text(
-              'Edit',
+              loc.edit,
               style: TextStyle(
                 color: enabled ? Colors.grey[700] : Colors.grey[400],
                 fontSize: 16,
@@ -1063,6 +1074,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -1084,7 +1096,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                         ),
                         SizedBox(width: 15),
                         Text(
-                          'Insert Address',
+                          loc.insertAddress,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -1097,11 +1109,11 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
                     // Step 1: District
                     _buildStepIndicator(
-                        1, 'District *', _isDistrictCompleted, _currentStep >= 1),
+                        1, '${loc.district} *', _isDistrictCompleted, _currentStep >= 1),
                     SizedBox(height: 20),
-                    _buildCityDropdown(),
+                    _buildCityDropdown(loc),
                     SizedBox(height: 15),
-                    _buildDistrictDropdown(),
+                    _buildDistrictDropdown(loc),
 
                     SizedBox(height: 30),
                     Container(height: 1, color: Colors.grey[300]),
@@ -1109,20 +1121,20 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
 
                     // Step 2: Map
                     _buildStepIndicator(
-                        2, 'Map *', _isMapCompleted, _currentStep >= 2),
+                        2, '${loc.map} *', _isMapCompleted, _currentStep >= 2),
                     SizedBox(height: 20),
-                    _buildMapSelector(enabled: _isDistrictCompleted),
+                    _buildMapSelector(enabled: _isDistrictCompleted,loc: loc),
 
                     SizedBox(height: 30),
                     Container(height: 1, color: Colors.grey[300]),
                     SizedBox(height: 30),
 
                     // Step 3: Details
-                    _buildStepIndicator(3, 'Details', false, _currentStep >= 3),
+                    _buildStepIndicator(3, '${loc.details}', false, _currentStep >= 3),
                     SizedBox(height: 25),
 
                     Text(
-                      'Address Title *',
+                      '${loc.fullAddress} *',
                       style: TextStyle(
                         fontSize: 16,
                         color: _canProceedToDetails
@@ -1132,14 +1144,14 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                       ),
                     ),
                     SizedBox(height: 8),
-                    _buildTextField('Please give the address a name',
+                    _buildTextField('${loc.selectAddress}',
                         _addressTitleController,
                         enabled: _canProceedToDetails,maxLength: 50),
 
                     SizedBox(height: 20),
 
                     Text(
-                      'House Type *',
+                      '${loc.houseType} *',
                       style: TextStyle(
                         fontSize: 16,
                         color: _canProceedToDetails
@@ -1149,7 +1161,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                       ),
                     ),
                     SizedBox(height: 8),
-                    _buildHouseTypeDropdown(enabled: _canProceedToDetails),
+                    _buildHouseTypeDropdown(enabled: _canProceedToDetails,loc: loc),
 
                     SizedBox(height: 20),
 
@@ -1160,7 +1172,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Street Name *',
+                                '${loc.streetName} *',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: _canProceedToDetails
@@ -1171,7 +1183,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                               ),
                               SizedBox(height: 8),
                               _buildTextField(
-                                  'Street name', _streetNameController,
+                                  loc.streetName, _streetNameController,
                                   enabled: _canProceedToDetails,maxLength: 50),
                             ],
                           ),
@@ -1182,25 +1194,25 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _selectedHouseType == 'Villa'
-                                    ? 'House Number *'
-                                    : 'Building Number *',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _canProceedToDetails
-                                      ? Colors.grey[600]
-                                      : Colors.grey[400],
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              _selectedHouseType == loc.villa
+                                  ? '${loc.houseNum} *'
+                                  : '${loc.buildingNum} *',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: _canProceedToDetails
+                                    ? Colors.grey[600]
+                                    : Colors.grey[400],
+                                fontWeight: FontWeight.w500,
                               ),
-                              SizedBox(height: 8),
-                              _buildTextField(
-                                  _selectedHouseType == 'Villa'
-                                      ? 'House Number'
-                                      : 'Building Number',
-                                  _houseNumberController,
-                                  maxLength: 10,
-                                  enabled: _canProceedToDetails),
+                            ),
+                            SizedBox(height: 8),
+                            _buildTextField(
+                                _selectedHouseType == loc.villa
+                                    ? loc.houseNum
+                                    : loc.buildingNum,
+                                _houseNumberController,
+                                maxLength: 10,
+                                enabled: _canProceedToDetails),
                             ],
                           ),
                         ),
@@ -1208,7 +1220,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     ),
 
                     // Conditional apartment fields
-                    if (_selectedHouseType == 'Apartment') ...[
+                    if (_selectedHouseType == loc.appartment) ...[
                       SizedBox(height: 20),
                       Row(
                         children: [
@@ -1217,7 +1229,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Floor Number *',
+                                  '${loc.flooeNumber} *',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: _canProceedToDetails
@@ -1228,7 +1240,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                                 ),
                                 SizedBox(height: 8),
                                 _buildFloorDropdown(
-                                    enabled: _canProceedToDetails),
+                                    enabled: _canProceedToDetails,loc: loc),
                               ],
                             ),
                           ),
@@ -1238,7 +1250,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Apartment Number *',
+                                  '${loc.appartmentNumber} *',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: _canProceedToDetails
@@ -1248,7 +1260,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                                   ),
                                 ),
                                 SizedBox(height: 8),
-                                _buildTextField('Apartment Number',
+                                _buildTextField(loc.appartmentNumber,
                                     _apartmentNumberController,
                                     enabled: _canProceedToDetails,maxLength: 10),
                               ],
@@ -1261,7 +1273,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     SizedBox(height: 20),
 
                     Text(
-                      'Full Address *',
+                      '${loc.fullAddress} *',
                       style: TextStyle(
                         fontSize: 16,
                         color: _canProceedToDetails
@@ -1271,13 +1283,13 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                       ),
                     ),
                     SizedBox(height: 8),
-                    _buildTextField('Full Address', _fullAddressController,
+                    _buildTextField('${loc.fullAddress}', _fullAddressController,
                         maxLines: 3, enabled: _canProceedToDetails,maxLength: 100),
 
                     SizedBox(height: 20),
 
                     Text(
-                      'Notes',
+                      loc.notes,
                       style: TextStyle(
                         fontSize: 16,
                         color: _canProceedToDetails
@@ -1288,7 +1300,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                     ),
                     SizedBox(height: 8),
                     _buildTextField(
-                        'Unit Number, Entrance code etc..', _notesController,
+                        '${loc.selectNote}', _notesController,
                         maxLines: 2, enabled: _canProceedToDetails,maxLength: 100),
                   ],
                 ),
@@ -1314,7 +1326,7 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      'SAVE',
+                      loc.save,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,

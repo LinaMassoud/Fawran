@@ -40,5 +40,130 @@
   "privateDriver":"خدمة العاملة المنزلية\n7 أيام",
   "tenpercent":"خصم %10",
 
-  "welcome":"أهلا"
+  "welcome":"أهلا",
+
+  "designYourCard": "صمم بطاقتك",
+  "selectService":"اختر الخدمة",
+
+  "hourlyServices":"خدمات كل ساعة",
+
+  "addNewAddress":"إضافة عنوان جديد",
+
+  "selectAddressTitle": "حدد العنوان",
+  "next": "التالي",
+  "nationality": "جنسية",
+  "professionals": "كم عدد المحترفين الذين تحتاجهم",
+  "contractDuration": "مدة العقد",
+  "time": "وقت",
+  "durationOfVisit": "مدة الزيارة",
+  "visitsWeeksNumber": "عدد الزيارات في الاسبوع",
+  "date": "حدد التاريخ",
+
+  "select": "يختار",
+  "tapToSelect": "انقر للتحديد",
+  "dialogForPrevious": "الرجاء تحديد مدة العقد وعدد الزيارات في الأسبوع أولاً",
+  "selectNationality": "اختر الجنسية",
+  "selectContractDuration": "حدد مدة العقد",
+  "selectTimeSlot": "حدد فتحة زمنية",
+  "selectVisitDuration": "حدد فتحة زمنية",
+  "selectVisitsPerWeek": "اختر عدد الزيارات في الأسبوع",
+
+
+  "noOfEmployee":"عدد الموظفين",
+  "duration":"مدة",
+  "weeklyVisits":"الزيارات الأسبوعية",
+  "totalPrice":"السعر الإجمالي",
+  "packageDetails":"تفاصيل الحزمة",
+  "get":"يحصل",
+  "off":"عن",
+  "hours":"ساعات",
+  "weeks":"أسابيع",
+
+  "add":"يضيف",
+
+  "insertAddress":"أدخل العنوان",
+  "district":"يصرف",
+  "map":"رسم خريطة",
+  "details":"تفاصيل",
+  "addressTitle":"عنوان العنوان",
+  "houseType":"نوع المنزل",
+  "buildingNum":"رقم المبنى",
+  "streetName":"اسم الشارع",
+  "villa":"فيلا",
+  "appartment":"شقة",
+  "appartmentNumber":"رقم الشقة",
+  "flooeNumber":"رقم الطابق",
+  "fullAddress":"العنوان الكامل",
+  "houseNum":"رقم المنزل",
+  "floor":"أرضية",
+  "notes":"ملحوظات",
+
+  "selectCity":"الرجاء تحديد مدينتك",
+  "selectDistrict":"الرجاء تحديد منطقتك",
+  "selectMap":"اختر على الخريطة",
+  "selectAddress":"يرجى إعطاء العنوان اسمًا",
+  "selectHouseType":"اختر نوع المنزل",
+  "selectFloor":"اختر الكلمة",
+  "selectNote":"رقم الوحدة، رمز الدخول، إلخ",
+  "selectLocation":"حدد الموقع",
+  "mapSelected":"تم تحديد الخريطة",
+  "edit":"يحرر",
+  "save":"يحفظ",
+
+  "step":"خطوة",
+  "ofStep":"ل",
+
+  "selectDate":"حدد التاريخ",
+  "total":"المجموع",
+  "start":"يبدأ",
+
+  "congratulations":"تهانينا!",
+  "saved":"المحفوظة حتى الآن!",
+  "viewOrder":"عرض الطلب",
+
+  "orderSummary":"ملخص الطلب",
+  "serviceDetails":"تفاصيل الخدمة",
+  "startDate":"تاريخ البدء",
+  "workers":"العمال",
+  "finalPrice":"السعر النهائي",
+  "billingPayment":"الفواتير والدفع",
+  "coupons":"القسائم والعروض",
+  "paymentSummary":"ملخص الدفع",
+  "itemTotal":"إجمالي السلعة",
+  "packDiscount":"خصم الحزمة",
+
+  "month":"شهر",
+  "visitWeekly":"زيارة أسبوعية",
+
+  "savedSummary":"ياااي! لقد أنقذت",
+  "onFinalBill":"على الفاتورة النهائية",
+  "agreement":"أنا أوافق على ",
+  "termsAndCond":"الشروط والأحكام",
+  "close":"يغلق",
+
+
+  "proceedToPay":"المضي قدما في الدفع",
+
+  "done":"منتهي",
+  "totalIncVat":"الإجمالي (شامل ضريبة القيمة المضافة)",
+
+  "eastAsia":"شرق آسيا",
+  "africa":"الأفريقي",
+  "months":"شهور",
+  "month":"شهر",
+
+  "serviceContractId":"معرف عقد الخدمة",
+  "contractId":"معرف العقد",
+  "customer":"عميل",
+  "service":"خدمة",
+  "vat":"ضريبة",
+  "notConfirmed":"لم يتم تأكيده",
+  "confirmed":"مؤكد",
+  "cancelled":"تم الإلغاء",
+  "paid":"مدفوع",
+  "hourlyService": "خدمة كل ساعة",
+  "payNow": "ادفع الآن",
+  "cancel": "يلغي"
+
+
 }

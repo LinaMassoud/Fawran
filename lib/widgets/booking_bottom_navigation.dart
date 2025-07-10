@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class BookingBottomNavigation extends StatelessWidget {
   final double price;
@@ -16,6 +17,7 @@ class BookingBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -73,7 +75,7 @@ class BookingBottomNavigation extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    isLastStep ? 'Complete Booking' : 'Next',
+                    isLastStep ? 'Complete Booking' : loc.next,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,

@@ -2,6 +2,7 @@ import 'package:fawran/models/address_model.dart';
 import 'package:flutter/material.dart';
 import '../Fawran4Hours/add_new_address.dart';
 import '../widgets/booking_bottom_navigation.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class AddressSelectionStep extends StatelessWidget {
   final List<Address> addresses;
@@ -69,6 +70,7 @@ class AddressSelectionStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         Flexible(
@@ -92,7 +94,7 @@ class AddressSelectionStep extends StatelessWidget {
                         Icon(Icons.add, color: Colors.black, size: 20),
                         SizedBox(width: 10),
                         Text(
-                          'ADD NEW ADDRESS',
+                          loc.addNewAddress,
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -106,7 +108,7 @@ class AddressSelectionStep extends StatelessWidget {
                 ),
                 SizedBox(height: 35),
                 Text(
-                  'Select Address',
+                  loc.selectAddressTitle,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
