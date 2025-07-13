@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/package_model.dart';
+import 'package:fawran/generated/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 
 class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
@@ -650,13 +652,14 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           alignment: Alignment.centerLeft,
           child: Text(
-            'Select Date',
+            loc.selectDate,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -718,7 +721,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Total',
+                    loc.total,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade600,
@@ -754,7 +757,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Next',
+                    loc.next,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

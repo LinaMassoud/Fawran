@@ -8,6 +8,7 @@ import '../models/package_model.dart';
 import '../services/api_service.dart';
 import 'continuous_booking_overlay.dart';
 import 'order_summary_screen.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class Service {
   final int id;
@@ -576,7 +577,7 @@ Future<void> reloadServices() async {
     }
   }
 
-Widget _buildServiceSelector() {
+Widget _buildServiceSelector(AppLocalizations loc) {
   // Show loading while fetching services
   if (isLoadingServices) {
     return Container(
@@ -585,7 +586,7 @@ Widget _buildServiceSelector() {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Select Service',
+            loc.selectService,
             style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.bold,
@@ -621,7 +622,7 @@ Widget _buildServiceSelector() {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Select Service',
+            loc.selectService,
             style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.bold,
@@ -685,7 +686,7 @@ Widget _buildServiceSelector() {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Select Service',
+          loc.selectService,
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.bold,
@@ -739,6 +740,7 @@ void didChangeDependencies() {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Stack(
@@ -772,7 +774,7 @@ void didChangeDependencies() {
                   ),
                 ),
                 title: Text(
-                  "Hourly Services",
+                  loc.hourlyServices,
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20,
@@ -928,7 +930,7 @@ void didChangeDependencies() {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Service selector (only shows when multiple services)
-                          _buildServiceSelector(),
+                          _buildServiceSelector(loc),
 
                           // Service title
                           Text(
@@ -942,7 +944,7 @@ void didChangeDependencies() {
                           SizedBox(height: 16), // Consistent spacing
 
                           // Design your card button
-                          _buildDesignCardButton(),
+                          _buildDesignCardButton(loc),
                           SizedBox(
                               height: 32), // Spacing before package sections
 
@@ -957,6 +959,7 @@ void didChangeDependencies() {
                             isEastAsia: true,
                             sectionKey: eastAsiaKey,
                             searchKey: eastAsiaSearchKey,
+                            loc: loc,
                           ),
                           SizedBox(height: 40),
 
@@ -971,6 +974,7 @@ void didChangeDependencies() {
                             isEastAsia: false,
                             sectionKey: africanKey,
                             searchKey: africanSearchKey,
+                            loc: loc,
                           ),
                           SizedBox(height: completedBooking != null ? 120 : 20),
                         ],
@@ -1017,7 +1021,7 @@ void didChangeDependencies() {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'Congratulations! SAR${completedBooking!.discountAmount.toStringAsFixed(1)} saved so far!',
+                            '${loc.congratulations} SAR${completedBooking!.discountAmount.toStringAsFixed(1)} ${loc.saved} ',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -1073,7 +1077,7 @@ void didChangeDependencies() {
                               ),
                             ),
                             child: Text(
-                              'View Order',
+                              loc.viewOrder,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -1093,7 +1097,7 @@ void didChangeDependencies() {
   }
 
 
-void _showPackageDetailsOverlay(PackageModel package) {
+void _showPackageDetailsOverlay(PackageModel package, AppLocalizations loc) {
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -1119,7 +1123,7 @@ void _showPackageDetailsOverlay(PackageModel package) {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Package Details',
+                      loc.packageDetails,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -1191,7 +1195,7 @@ void _showPackageDetailsOverlay(PackageModel package) {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          'GET ${package.discountPercentage}% OFF',
+                          '${loc.get} ${package.discountPercentage}% ${loc.off}',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -1230,13 +1234,13 @@ void _showPackageDetailsOverlay(PackageModel package) {
                       ),
                       child: Column(
                         children: [
-                          _buildDetailRow('No of Employee', package.noOfEmployee.toString()),
+                          _buildDetailRow(loc.noOfEmployee, package.noOfEmployee.toString()),
                           SizedBox(height: 8),
-                          _buildDetailRow('Duration', '${package.duration} Hours'),
+                          _buildDetailRow(loc.duration, '${package.duration} ${loc.hours}'),
                           SizedBox(height: 8),
-                          _buildDetailRow('Weekly Visits', '${package.visitsWeekly}'),
+                          _buildDetailRow(loc.weeklyVisits, '${package.visitsWeekly}'),
                           SizedBox(height: 8),
-                          _buildDetailRow('Contract Duration', '${package.noOfWeeks.toString()} Weeks'),
+                          _buildDetailRow(loc.contractDuration, '${package.noOfWeeks.toString()} ${loc.weeks}'),
                         ],
                       ),
                     ),
@@ -1248,7 +1252,7 @@ void _showPackageDetailsOverlay(PackageModel package) {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Total Price:',
+                          '${loc.totalPrice}:',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -1307,7 +1311,7 @@ void _showPackageDetailsOverlay(PackageModel package) {
                           elevation: 2,
                         ),
                         child: Text(
-                          'Add',
+                          loc.add,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -1751,6 +1755,7 @@ Widget _buildDetailRow(String label, String value) {
     required bool isEastAsia,
     required GlobalKey sectionKey,
     required GlobalKey searchKey,
+    required AppLocalizations loc,
   }) {
     return Container(
       key: isSearchActive && searchQuery.isNotEmpty ? searchKey : sectionKey,
@@ -1857,7 +1862,7 @@ Widget _buildDetailRow(String label, String value) {
                   return Container(
                     width: 280, // Fixed width for each card
                     margin: EdgeInsets.only(right: 16),
-                    child: _buildCompactServiceCard(filteredPackages[index]),
+                    child: _buildCompactServiceCard(filteredPackages[index], loc),
                   );
                 },
               ),
@@ -1867,85 +1872,85 @@ Widget _buildDetailRow(String label, String value) {
     );
   }
 
-  Widget _buildDesignCardButton() {
-    return GestureDetector(
-      onTap: () {
-        // Show custom booking overlay when tapped
-        ContinuousBookingOverlay.showAsCustomOverlay(
-          context,
-          serviceId: selectedServiceId ??
-              widget
-                  .serviceId, // Use selectedServiceId instead of widget.serviceId
-          professionId: widget.professionId,
-          onBookingCompleted: (BookingData bookingData) {
-            // For custom bookings, navigate directly to OrderSummaryScreen
-            // instead of showing the bottom order view
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => OrderSummaryScreen(
-                  bookingData: bookingData,
-                  totalSavings: bookingData
-                      .discountAmount, // Use the actual discount from booking
-                  originalPrice: bookingData.originalPrice,
-                  onPaymentSuccess:
-                      _onPaymentSuccess, // Use the original price from booking
-                  customBooking: true,
-                ),
-              ),
-            );
-          },
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(16),
-        margin: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Icon(
-                Icons.add,
-                color: Colors.black,
-                size: 16,
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Design your card',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: Colors.grey[400],
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactServiceCard(PackageModel package) {
+  Widget _buildDesignCardButton(AppLocalizations loc) {
   return GestureDetector(
-    onTap: () => _showPackageDetailsOverlay(package), // Add this line
+    onTap: () {
+      // Show custom booking overlay when tapped
+      ContinuousBookingOverlay.showAsCustomOverlay(
+        context,
+        serviceId: selectedServiceId ??
+            widget
+                .serviceId, // Use selectedServiceId instead of widget.serviceId
+        professionId: widget.professionId,
+        onBookingCompleted: (BookingData bookingData) {
+          // For custom bookings, navigate directly to OrderSummaryScreen
+          // instead of showing the bottom order view
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderSummaryScreen(
+                bookingData: bookingData,
+                totalSavings: bookingData
+                    .discountAmount, // Use the actual discount from booking
+                originalPrice: bookingData.originalPrice,
+                onPaymentSuccess:
+                    _onPaymentSuccess, // Use the original price from booking
+                customBooking: true,
+              ),
+            ),
+          );
+        },
+      );
+    },
+    child: Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              Icons.add,
+              color: Colors.black,
+              size: 16,
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              loc.designYourCard,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: Colors.grey[400],
+            size: 20,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+  Widget _buildCompactServiceCard(PackageModel package, AppLocalizations loc) {
+  return GestureDetector(
+    onTap: () => _showPackageDetailsOverlay(package, loc), // Add this line
     child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -2023,7 +2028,7 @@ Widget _buildDetailRow(String label, String value) {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      'GET ${package.discountPercentage}% OFF',
+                      '${loc.get} ${package.discountPercentage}% ${loc.off}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -2058,7 +2063,7 @@ Widget _buildDetailRow(String label, String value) {
 
                   // Visit details
                   Text(
-                    '${package.visitsWeekly} weekly visit: ${package.duration} Hours',
+                    '${package.visitsWeekly} ${loc.weeklyVisits}: ${package.duration} ${loc.hours}',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

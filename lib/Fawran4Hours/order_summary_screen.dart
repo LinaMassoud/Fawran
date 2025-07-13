@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import '../services/api_service.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
   final BookingData bookingData;
@@ -61,7 +62,7 @@ Future<void> _fetchServiceTerms() async {
 }
 
 
-void _showTermsAndConditions() async {
+void _showTermsAndConditions(AppLocalizations loc) async {
   await _fetchServiceTerms();
   
   showDialog(
@@ -81,7 +82,7 @@ void _showTermsAndConditions() async {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Terms and Conditions',
+                    loc.termsAndCond,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -141,7 +142,7 @@ void _showTermsAndConditions() async {
                     padding: EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: Text(
-                    'Close',
+                    loc.close,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -220,6 +221,7 @@ Widget _buildFormattedTerms() {
 }
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -230,7 +232,7 @@ Widget _buildFormattedTerms() {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Order Summary',
+          loc.orderSummary,
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -249,7 +251,7 @@ Widget _buildFormattedTerms() {
                 children: [
                   // Service details section
                   Text(
-                    'Service details',
+                    loc.serviceDetails,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -295,10 +297,9 @@ Widget _buildFormattedTerms() {
                           ],
                         ),
                         SizedBox(height: 16),
-
                         // Service details rows
                         _buildDetailRow(
-                            'Start Date',
+                            loc.startDate,
                             _formatDate(
                                 widget.bookingData.selectedDates.isNotEmpty
                                     ? widget.bookingData.selectedDates.first
@@ -306,20 +307,21 @@ Widget _buildFormattedTerms() {
                         // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
                         _buildDetailRow(
-                            'Weekly visits', widget.bookingData.visitsPerWeek),
+                          loc.weeklyVisits, 
+                          _getLocalizedVisitsPerWeek(widget.bookingData.visitsPerWeek, loc)
+                      ),
                         SizedBox(height: 16),
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
                         _buildDetailRow(
-                            'Nationality',
-                            widget.bookingData
-                                .selectedNationality), // Use actual nationality instead of 'East Asia'
+                            loc.nationality,
+                            _getLocalizedNationality(widget.bookingData.selectedNationality, loc)), // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
                         _buildDetailRow(
-                            'Workers', '${widget.bookingData.workerCount}'),
+                            loc.workers, '${widget.bookingData.workerCount}'),
                         SizedBox(height: 12),
-                        _buildDetailRow('Contract Duration',
-                            widget.bookingData.contractDuration),
+                        _buildDetailRow(loc.contractDuration,
+                            _getLocalizedContractDurationSimple(widget.bookingData.contractDuration, loc)),
                         SizedBox(height: 16),
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
@@ -330,7 +332,7 @@ Widget _buildFormattedTerms() {
                           children: [
                             Expanded(
                               child: Text(
-                                "Final Price",
+                                loc.finalPrice,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
@@ -360,7 +362,7 @@ Widget _buildFormattedTerms() {
 
                   // Billing and payment section
                   Text(
-                    'Billing and payment',
+                    loc.billingPayment,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -419,7 +421,7 @@ Widget _buildFormattedTerms() {
                           SizedBox(width: 16),
                           Expanded(
                             child: Text(
-                              'Coupons and offers',
+                              loc.coupons,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -443,7 +445,7 @@ Widget _buildFormattedTerms() {
                   // Payment summary section - Hidden for custom bookings
                   if (!widget.customBooking) ...[
                     Text(
-                      'Payment summary',
+                      loc.paymentSummary,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -453,10 +455,10 @@ Widget _buildFormattedTerms() {
                     SizedBox(height: 16),
 
                     // Payment breakdown
-                    _buildPaymentRow('Item total',
+                    _buildPaymentRow(loc.itemTotal,
                         'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(1)}'),
                     SizedBox(height: 12),
-                    _buildPaymentRow('Pack discount',
+                    _buildPaymentRow(loc.packDiscount,
                         '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(1)}',
                         isDiscount: true),
                     SizedBox(height: 16),
@@ -479,7 +481,7 @@ Widget _buildFormattedTerms() {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'Yay! You have saved SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} on final bill',
+                            '${loc.savedSummary} SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} ${loc.onFinalBill}',
                             style: TextStyle(
                               color: Colors.green[700],
                               fontWeight: FontWeight.w600,
@@ -497,7 +499,7 @@ Widget _buildFormattedTerms() {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Total',
+                        loc.total,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -540,14 +542,14 @@ Widget _buildFormattedTerms() {
                           padding: EdgeInsets.only(top: 12),
                           child: RichText(
                             text: TextSpan(
-                              text: 'I agree to the ',
+                              text: loc.agreement,
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black87,
                               ),
                               children: [
                                 TextSpan(
-                                  text: 'Terms and Conditions',
+                                  text: loc.termsAndCond,
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.purple,
@@ -556,7 +558,7 @@ Widget _buildFormattedTerms() {
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      _showTermsAndConditions();
+                                      _showTermsAndConditions(loc);
                                     },
                                 ),
                               ],
@@ -646,7 +648,7 @@ Widget _buildFormattedTerms() {
                         elevation: 0,
                       ),
                       child: Text(
-                        'Proceed to pay',
+                        loc.proceedToPay,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -663,7 +665,45 @@ Widget _buildFormattedTerms() {
     );
   }
 
+String _getLocalizedVisitsPerWeek(String visitsPerWeek, AppLocalizations loc) {
+  // Extract number from the string (e.g., "visit weekly 1" -> "1")
+  final RegExp regExp = RegExp(r'\d+');
+  final match = regExp.firstMatch(visitsPerWeek);
+  if (match != null) {
+    final number = match.group(0);
+    // You may need to check if AppLocalizations has a method for this
+    // If not, you can create a simple mapping
+    return '$number ${loc.weeklyVisits}'; // or use a specific localization key if available
+  }
+  return visitsPerWeek; // fallback
+}
+
+String _getLocalizedNationality(String nationality, AppLocalizations loc) {
+  // Map English nationalities to localized versions
+  switch (nationality.toLowerCase()) {
+    case 'east asia':
+      return loc.eastAsia ?? 'شرق آسيا'; // fallback if localization doesn't exist
+    case 'african':
+      return loc.africa ?? 'جنوب آسيا';
+    default:
+      return nationality; // fallback to original if no mapping found
+  }
+}
+
+String _getLocalizedContractDurationSimple(String contractDuration, AppLocalizations loc) {
+  final RegExp regExp = RegExp(r'\d+');
+  final match = regExp.firstMatch(contractDuration);
+  if (match != null) {
+    final number = match.group(0);
+    // Use existing localization or create a formatted string
+    return '$number ${loc.month ?? 'شهر'}'; // fallback to Arabic "شهر"
+  }
+  return contractDuration;
+}
+
+
   Widget _buildDetailRow(String label, String value) {
+    print("Value from _buildDetailRow = ${value}");
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

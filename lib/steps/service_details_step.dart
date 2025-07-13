@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../models/profession_model.dart';
 import 'package:intl/intl.dart';
 import 'custom_date_selection.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class ServiceDetailsStep extends StatefulWidget {
   final String selectedNationality;
@@ -509,7 +510,7 @@ if (widget.onHourPriceChanged != null) {
 }
 
 // Add this method to build the Select Date field
-  Widget _buildSelectDateField() {
+  Widget _buildSelectDateField(AppLocalizations loc) {
     bool hasSelectedDates = _internalSelectedDates.isNotEmpty;
     bool canSelectDates =
         widget.contractDuration.isNotEmpty && widget.visitsPerWeek.isNotEmpty;
@@ -528,7 +529,7 @@ if (widget.onHourPriceChanged != null) {
                 border: Border.all(color: Colors.orange.withOpacity(0.3)),
               ),
               child: Text(
-                'Please select Contract Duration and Visits Per Week first',
+                loc.dialogForPrevious,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.orange[700],
@@ -547,7 +548,7 @@ if (widget.onHourPriceChanged != null) {
                   }
                 : () {
                     _showValidationMessage(
-                        'Please select Contract Duration and Visits Per Week first');
+                        loc.dialogForPrevious);
                   },
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -560,7 +561,7 @@ if (widget.onHourPriceChanged != null) {
                 children: [
                   Expanded(
                     child: Text(
-                      'Select Date',
+                      loc.date,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[600],
@@ -579,7 +580,7 @@ if (widget.onHourPriceChanged != null) {
                     )
                   else
                     Text(
-                      'Tap to select',
+                      loc.tapToSelect,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[500],
@@ -922,6 +923,7 @@ if (widget.onHourPriceChanged != null) {
   bool isEnabled = true,
   String? customTitle,
   bool isLoading = false,
+  required AppLocalizations loc,
 }) {
   // Check if value is empty or not in options
   bool hasValidValue = value.isNotEmpty && options.contains(value);
@@ -968,7 +970,7 @@ if (widget.onHourPriceChanged != null) {
                   )
                 else ...[
                   Text(
-                    hasValidValue ? value : 'Select',
+                    hasValidValue ? value : loc.select,
                     style: TextStyle(
                       fontSize: 16,
                       color: hasValidValue ? Colors.black : Colors.grey[500],
@@ -1113,11 +1115,11 @@ if (widget.onHourPriceChanged != null) {
   );
 }
 
-  Widget _buildVisitDurationField() {
+  Widget _buildVisitDurationField(AppLocalizations loc) {
     if (widget.isCustomBooking && widget.onVisitDurationChanged != null) {
       // Editable visit duration for custom booking - use loaded durations
       return _buildDropdownField(
-        'Duration of visit',
+        loc.durationOfVisit,
         widget.visitDuration,
         visitDurations,
         (value) {
@@ -1126,8 +1128,9 @@ if (widget.onHourPriceChanged != null) {
           _resetDependentFields('visitDuration'); 
           _calculatePriceFromAPI();
         },
-        customTitle: 'Select Visit Duration',
+        customTitle: loc.selectVisitDuration,
         isLoading: isLoadingVisitDurations,
+        loc: loc,
       );
     } else {
       // Read-only visit duration for package booking
@@ -1191,7 +1194,7 @@ if (widget.onHourPriceChanged != null) {
     }
   }
 
-  Widget _buildWorkerCountField() {
+  Widget _buildWorkerCountField(AppLocalizations loc) {
     return Container(
       margin: EdgeInsets.only(bottom: 15),
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -1203,7 +1206,7 @@ if (widget.onHourPriceChanged != null) {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'How many professionals do you need?',
+            loc.professionals,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -1277,6 +1280,7 @@ if (widget.onHourPriceChanged != null) {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     // Extended contract duration options
     final List<String> contractDurations = [
       '1 week',
@@ -1327,7 +1331,7 @@ if (widget.onHourPriceChanged != null) {
                             children: [
                               Text(
                                 widget.isCustomBooking
-                                    ? 'Design your card'
+                                    ? loc.designYourCard
                                     : '1 weekly visit:Cleaning Visit',
                                 style: TextStyle(
                                   fontSize: 22,
@@ -1365,7 +1369,7 @@ if (widget.onHourPriceChanged != null) {
 
                     // Form Fields
                     _buildDropdownField(
-                      'Nationality',
+                      loc.nationality,
                       widget.selectedNationality,
                       nationalities,
                       (value) {
@@ -1376,64 +1380,68 @@ if (widget.onHourPriceChanged != null) {
                         }
                       },
                       isEnabled: widget.isCustomBooking && widget.onNationalityChanged != null,
-                      customTitle: 'Select Nationality',
+                      customTitle: loc.selectNationality,
                       isLoading: isLoadingNationalities,
+                      loc: loc
                     ),
 
-                    _buildWorkerCountField(),
+                    _buildWorkerCountField(loc),
 
                     _buildDropdownField(
-  'Contract Duration',
-  widget.contractDuration,
-  contractDurations,
-  (value) {
-    widget.onContractDurationChanged(value);
-    _resetDependentFields('contractDuration'); // Add this line
-    if (widget.isCustomBooking) {
-      _calculatePriceFromAPI();
-    }
-  },
-  customTitle: 'Select Contract Duration',
-),
+                    loc.contractDuration,
+                    widget.contractDuration,
+                    contractDurations,
+                    (value) {
+                      widget.onContractDurationChanged(value);
+                      _resetDependentFields('contractDuration'); // Add this line
+                      if (widget.isCustomBooking) {
+                        _calculatePriceFromAPI();
+                      }
+                    },
+                    customTitle: loc.selectContractDuration,
+                    loc: loc, 
+                  ),
 
                     _buildDropdownField(
-  'Time',
-  widget.selectedTime,
-  timeSlots,
-  (value) {
-    if (widget.onTimeChanged != null) {
-      widget.onTimeChanged!(value);
-      _resetDependentFields('time'); // Add this line
-      _calculatePriceFromAPI();
-    }
-  },
-  isEnabled: widget.isCustomBooking && widget.onTimeChanged != null,
-  customTitle: 'Select Time Slot',
-  isLoading: isLoadingTimeSlots,
-),
+                      loc.time,
+                      widget.selectedTime,
+                      timeSlots,
+                      (value) {
+                        if (widget.onTimeChanged != null) {
+                          widget.onTimeChanged!(value);
+                          _resetDependentFields('time'); // Add this line
+                          _calculatePriceFromAPI();
+                        }
+                      },
+                      isEnabled: widget.isCustomBooking && widget.onTimeChanged != null,
+                      customTitle: loc.selectTimeSlot,
+                      isLoading: isLoadingTimeSlots,
+                      loc: loc,
+                    ),
 
 
-                    _buildVisitDurationField(),
+                    _buildVisitDurationField(loc),
 
                     _buildDropdownField(
-  'Visits week number',
-  widget.visitsPerWeek,
-  visitFrequencies,
-  (value) async {
-    widget.onVisitsPerWeekChanged(value);
-    _resetCalendarSelection(); // Keep this as it's the last field
-    
-    await Future.delayed(Duration(milliseconds: 100));
-    
-    if (widget.isCustomBooking) {
-      await _calculatePriceFromAPI();
-    }
-  },
-  customTitle: 'Select Visits Per Week',
-),
+                      loc.visitsWeeksNumber,
+                      widget.visitsPerWeek,
+                      visitFrequencies,
+                      (value) async {
+                        widget.onVisitsPerWeekChanged(value);
+                        _resetCalendarSelection(); // Keep this as it's the last field
+                        
+                        await Future.delayed(Duration(milliseconds: 100));
+                        
+                        if (widget.isCustomBooking) {
+                          await _calculatePriceFromAPI();
+                        }
+                      },
+                      customTitle: loc.selectVisitsPerWeek,
+                      loc: loc,
+                    ),
 
                     // Day Selection Widget - Auto-navigates when complete
-                    _buildSelectDateField(),
+                    _buildSelectDateField(loc),
                   ],
                 ),
               ),
@@ -1457,24 +1465,24 @@ if (widget.onHourPriceChanged != null) {
               child: Row(
                 children: [
                   // Count indicator
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${_internalSelectedDates.isNotEmpty ? _internalSelectedDates.length : widget.selectedDates.length}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // Container(
+                  //   width: 50,
+                  //   height: 50,
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.grey[300],
+                  //     shape: BoxShape.circle,
+                  //   ),
+                  //   child: Center(
+                  //     child: Text(
+                  //       '${_internalSelectedDates.isNotEmpty ? _internalSelectedDates.length : widget.selectedDates.length}',
+                  //       style: TextStyle(
+                  //         fontSize: 18,
+                  //         fontWeight: FontWeight.bold,
+                  //         color: Colors.black87,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
 
                   SizedBox(width: 16),
 
@@ -1484,7 +1492,7 @@ if (widget.onHourPriceChanged != null) {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Total (Inclusive of VAT)',
+                        loc.totalIncVat,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -1520,10 +1528,10 @@ if (widget.onHourPriceChanged != null) {
                         ),
                         child: Center(
                           child: Text(
-                            'Done',
+                            loc.done,
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class BookingStepHeader extends StatelessWidget {
   final bool showBackButton;
@@ -16,6 +17,7 @@ class BookingStepHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -44,7 +46,7 @@ class BookingStepHeader extends StatelessWidget {
           Expanded(
             child: Center(
               child: Text(
-                'Step $currentStep of $totalSteps',
+                '${loc.step} $currentStep ${loc.ofStep} $totalSteps',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

@@ -36,7 +36,132 @@
  "housemaidoffer":"House Maid \n 7 days",
   "privateDriver":"Private Driver \n 7 days",
   "tenpercent":" %10 OFF",
-    "welcome":"Welcome"
+    "welcome":"Welcome",
+
+  "designYourCard": "Design your card",
+
+  "selectService": "Select Service",
+
+  "hourlyServices": "Hourly Services",
+
+  "addNewAddress": "ADD NEW ADDRESS",
+
+  "selectAddressTitle": "Select Address",
+
+  "next": "Next",
+  "nationality": "Nationality",
+  "professionals": "How many professionals do you need",
+  "contractDuration": "Contract Duration",
+  "time": "Time",
+  "durationOfVisit": "Duration of visit",
+  "visitsWeeksNumber": "Visits week number",
+  "date": "Select Date",
+
+  "select": "Select",
+  "tapToSelect": "Tap to select",
+  "dialogForPrevious": "Please select Contract Duration and Visits Per Week first",
+  "selectNationality": "Select Nationality",
+  "selectContractDuration": "Select Contract Duration",
+  "selectTimeSlot": "Select Time Slot",
+  "selectVisitDuration": "Select Visit Duration",
+  "selectVisitsPerWeek": "Select Visits Per Week",
+
+  "noOfEmployee":"No of Employee",
+  "duration":"Duration",
+  "weeklyVisits":"Weekly Visits",
+  "totalPrice":"Total Price",
+  "packageDetails":"Package Details",
+  "get":"GET",
+  "off":"OFF",
+  "hours":"Hours",
+  "weeks":"Weeks",
+
+  "add":"Add",
+
+  "insertAddress":"Insert Address",
+  "district":"District",
+  "map":"Map",
+  "details":"Details",
+  "addressTitle":"Address Title",
+  "houseType":"House Type",
+  "buildingNum":"Building Number",
+  "streetName":"Street Name",
+  "villa":"Villa",
+  "appartment":"Appartment",
+  "appartmentNumber":"Appartment",
+  "flooeNumber":"Floor Number",
+  "fullAddress":"Full Address",
+  "houseNum":"House Number",
+  "floor":"Floor",
+  "notes":"Notes",
+
+  "selectCity":"Please select your city",
+  "selectDistrict":"Please select your District",
+  "selectMap":"Select on map",
+  "selectAddress":"Please give the address a name",
+  "selectHouseType":"Select House Type",
+  "selectFloor":"Select floor",
+  "selectNote":"Unit Number,Entrance code etc..",
+  "selectLocation":"Select Location",
+  "edit":"Edit",
+  "mapSelected":"Map selected",
+  "save":"Save",
+
+  "step":"Step",
+  "ofStep":"of",
+
+  "selectDate":"Select Date",
+  "total":"Total",
+  "start":"Start",
+
+  "congratulations":"Congratulations!",
+  "saved":"saved so far!",
+  "viewOrder":"View Order",
+
+  "orderSummary":"Order Summary",
+  "serviceDetails":"Service Details",
+  "startDate":"Start Date",
+  "workers":"Workers",
+  "finalPrice":"Final Price",
+  "billingPayment":"Billing and Payment",
+  "coupons":"Coupons and Offers",
+  "paymentSummary":"Payment Summary",
+  "itemTotal":"Item Total",
+  "packDiscount":"Pack Discount",
+
+  "month":"Month",
+  "visitWeekly":"Visit Weekly",
+
+  "savedSummary":"Yay! You have saved",
+  "onFinalBill":"on final bill",
+  "agreement":"I agree to the ",
+  "termsAndCond":"Terms and Conditions",
+  "close":"Close",
+
+
+  "proceedToPay":"Proceed to pay",
+
+  "done":"Done",
+  "totalIncVat":"Total (Inclusive of VAT)",
+
+  "eastAsia":"East Asia",
+  "africa":"African",
+  "months":"months",
+  "month":"month",
+
+  "serviceContractId":"Service Contract ID",
+  "contractId":"Contract ID",
+  "customer":"Customer",
+  "service":"Service",
+  "vat":"VAT",
+  "notConfirmed":"Not confirmed",
+  "confirmed":"Confirmed",
+  "cancelled":"Cancelled",
+  "paid":"Paid",
+  "hourlyService": "Hourly Service",
+  "payNow": "Pay Now",
+  "cancel": "Cancel"
+
 
 
 }
