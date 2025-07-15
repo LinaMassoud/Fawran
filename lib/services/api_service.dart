@@ -17,6 +17,8 @@ class ApiService {
       'http://fawran.ddns.net:8080/ords/emdad/fawran/service/packages';
   static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
+  static Future<bool>? _refreshTokenFuture;
+
   // Sign up API
   Future<Map<String, dynamic>?> signUp({
     required String userName,
@@ -403,6 +405,26 @@ class ApiService {
 }
 
   static Future<bool> refreshToken() async {
+    // If there's already a refresh in progress, wait for it to complete
+    if (_refreshTokenFuture != null) {
+      print('🔄 [REFRESH_TOKEN] Waiting for existing refresh to complete...');
+      return await _refreshTokenFuture!;
+    }
+
+    // Start the refresh process and store the future
+    _refreshTokenFuture = _performTokenRefresh();
+    
+    try {
+      final result = await _refreshTokenFuture!;
+      return result;
+    } finally {
+      // Clear the future when done
+      _refreshTokenFuture = null;
+    }
+  }
+
+  // Extract the actual refresh logic to a separate method
+  static Future<bool> _performTokenRefresh() async {
     try {
       final refreshToken = await _secureStorage.read(key: 'refresh_token');
 
@@ -515,9 +537,10 @@ class ApiService {
           retryCount: 1, // Prevent infinite retry loop
         );
       } else {
-        print('❌ [AUTH_REQUEST] Token refresh failed, clearing storage...');
-        // Clear all stored tokens if refresh fails
-        await _secureStorage.deleteAll();
+       print('❌ [AUTH_REQUEST] Token refresh failed, clearing only tokens...');
+      // Clear only authentication tokens, preserve user data
+      await _secureStorage.delete(key: 'token');
+      await _secureStorage.delete(key: 'refresh_token');
       }
     }
 
@@ -614,13 +637,13 @@ class ApiService {
           throw Exception('Contract creation failed: Invalid response format');
         }
       } else {
-        final errorData = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorData['message'] ?? 'Unknown error occurred',
-          'statusCode': response.statusCode,
-        };
-      }
+      final errorData = json.decode(response.body);
+      return {
+        'success': false,
+        'message': errorData['error'] ?? errorData['message'] ?? 'Unknown error occurred',
+        'statusCode': response.statusCode,
+      };
+    }
     } catch (e) {
       print('Error creating contract: $e');
       return {

@@ -13,6 +13,9 @@ class CustomDateSelectionStep extends StatefulWidget {
   final int maxSelectableDates;
   final bool showBottomNavigation;
   final int professionId;
+
+  final Function(List<String>)? onSelectedDaysChanged;
+final List<String> selectedDays;
   
   final double vatAmount;
   final double priceWithoutVat;
@@ -32,6 +35,8 @@ class CustomDateSelectionStep extends StatefulWidget {
     required this.maxSelectableDates,
     this.showBottomNavigation = true,
     required this.professionId,
+    this.selectedDays = const [],        // Add this line
+  this.onSelectedDaysChanged,  
   }) : super(key: key);
 
   @override
@@ -49,16 +54,18 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   int _visitsPerWeekCount = 0;
   Map<String, int> _weeklyVisitCounts = {};
   bool _isSelectingStartDate = true;
+  List<String> _localSelectedDays = [];
 
   @override
-  void initState() {
-    super.initState();
-    _currentMonth = DateTime.now();
-    _pageController = PageController();
-    _selectedDates = List.from(widget.selectedDates);
-    _calculateContractDetails();
-    _updateWeeklyVisitCounts();
-  }
+void initState() {
+  super.initState();
+  _currentMonth = DateTime.now();
+  _pageController = PageController();
+  _selectedDates = List.from(widget.selectedDates);
+  _localSelectedDays = List.from(widget.selectedDays);  // Add this line
+  _calculateContractDetails();
+  _updateWeeklyVisitCounts();
+}
 
   @override
   void didUpdateWidget(CustomDateSelectionStep oldWidget) {
@@ -108,6 +115,27 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     
     return totalDays;
   }
+
+  int _dayNameToWeekday(String dayName) {
+  switch (dayName.toLowerCase()) {
+    case 'monday':
+      return 1;
+    case 'tuesday':
+      return 2;
+    case 'wednesday':
+      return 3;
+    case 'thursday':
+      return 4;
+    case 'friday':
+      return 5;
+    case 'saturday':
+      return 6;
+    case 'sunday':
+      return 7;
+    default:
+      return 1;
+  }
+}
 
   void _calculateContractDetails() {
     // Parse contract duration
@@ -184,76 +212,182 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   }
 
   void _selectDate(DateTime date) {
-    setState(() {
-      // If we're still selecting the start date
-      if (_isSelectingStartDate) {
-        // Don't allow Friday as start date
+  setState(() {
+    // If we have selected days, handle auto-generated dates differently
+    if (_localSelectedDays.isNotEmpty && !_isSelectingStartDate) {
+      // Allow changing the start date
+      if (date == _userSelectedStartDate) {
+        _showStartDateChangeDialog();
+        return;
+      }
+      
+      // Allow deselecting auto-generated dates and selecting preferred dates within the same week
+      if (_selectedDates.contains(date)) {
+        // Allow deselection of auto-generated dates
+        _selectedDates.remove(date);
+        _updateWeeklyVisitCounts();
+        widget.onDatesChanged(_selectedDates);
+        _notifyPriceChange();
+        return;
+      } else {
+        // Allow manual selection within the same week if:
+        // 1. The date is within the contract period
+        // 2. The date is not a Friday
+        // 3. The week isn't already full
+        // 4. We haven't exceeded total visits
+        
         if (_isFriday(date)) {
           _showSnackBar('Friday is a holiday and cannot be selected');
           return;
         }
         
-        _userSelectedStartDate = date;
-        _selectedDates.clear();
-        _selectedDates.add(date);
-        _isSelectingStartDate = false;
-        _calculateContractDetails();
-        _updateWeeklyVisitCounts();
-        widget.onDatesChanged(_selectedDates);
-        _notifyPriceChange();
-        return;
-      }
-
-      // If clicking on the start date, allow user to change it
-      if (date == _userSelectedStartDate) {
-        setState(() {
-          _isSelectingStartDate = true;
-          _userSelectedStartDate = null;
-          _selectedDates.clear();
-          _contractStartDate = null;
-          _contractEndDate = null;
-          _weeklyVisitCounts.clear();
-          _calculateContractDetails();
-        });
-        widget.onDatesChanged(_selectedDates);
-        _notifyPriceChange();
-        return;
-      }
-
-      // Don't allow selecting Fridays for regular visits
-      if (_isFriday(date)) {
-        _showSnackBar('Friday is a holiday and cannot be selected');
-        return;
-      }
-
-      // Regular date selection for visits
-      if (_selectedDates.contains(date)) {
-        _selectedDates.remove(date);
-      } else {
+        // Check if date is within contract period
+        if (_contractStartDate != null && _contractEndDate != null) {
+          if (date.isBefore(_contractStartDate!) || date.isAfter(_contractEndDate!)) {
+            _showSnackBar('Date is outside the contract period');
+            return;
+          }
+        }
+        
         // Check if we've reached the total visit limit
         if (_selectedDates.length >= _totalAllowedVisits) {
           _showSnackBar('Maximum $_totalAllowedVisits visits allowed for this contract');
           return;
         }
-
+        
         // Check if the week is already full
         if (_isWeekFull(date)) {
           _showSnackBar('Maximum $_visitsPerWeekCount visits per week allowed');
           return;
         }
-
+        
+        // REMOVED: Check if the selected day matches the weekday of the date
+        // This was the main issue - we should allow any day in the week once user starts manual selection
+        
+        // Add the manually selected date
+        _selectedDates.add(date);
+        _selectedDates.sort();
+        _updateWeeklyVisitCounts();
+        widget.onDatesChanged(_selectedDates);
+        _notifyPriceChange();
+        return;
+      }
+    }
+    
+    // If we're still selecting the start date
+    if (_isSelectingStartDate) {
+      // Don't allow Friday as start date
+      if (_isFriday(date)) {
+        _showSnackBar('Friday is a holiday and cannot be selected');
+        return;
+      }
+      
+      _userSelectedStartDate = date;
+      _selectedDates.clear();
+      _isSelectingStartDate = false;
+      _calculateContractDetails();
+      
+      // Auto-select dates based on selected days after start date is chosen
+      if (_localSelectedDays.isNotEmpty) {
+        _autoSelectDatesBasedOnDays();
+      } else {
         _selectedDates.add(date);
       }
-      _selectedDates.sort();
+      
       _updateWeeklyVisitCounts();
-    });
-    
-    // Always notify parent of date changes
-    widget.onDatesChanged(_selectedDates);
-    
-    // Always notify parent of price changes
-    _notifyPriceChange();
+      widget.onDatesChanged(_selectedDates);
+      _notifyPriceChange();
+      return;
+    }
+
+    // If clicking on the start date, allow user to change it
+    if (date == _userSelectedStartDate) {
+      _showStartDateChangeDialog();
+      return;
+    }
+
+    // Don't allow selecting Fridays for regular visits
+    if (_isFriday(date)) {
+      _showSnackBar('Friday is a holiday and cannot be selected');
+      return;
+    }
+
+    // Regular date selection for visits (only when no days are selected)
+    if (_selectedDates.contains(date)) {
+      _selectedDates.remove(date);
+    } else {
+      // Check if we've reached the total visit limit
+      if (_selectedDates.length >= _totalAllowedVisits) {
+        _showSnackBar('Maximum $_totalAllowedVisits visits allowed for this contract');
+        return;
+      }
+
+      // Check if the week is already full
+      if (_isWeekFull(date)) {
+        _showSnackBar('Maximum $_visitsPerWeekCount visits per week allowed');
+        return;
+      }
+
+      _selectedDates.add(date);
+    }
+    _selectedDates.sort();
+    _updateWeeklyVisitCounts();
+  });
+  
+  // Always notify parent of date changes
+  widget.onDatesChanged(_selectedDates);
+  
+  // Always notify parent of price changes
+  _notifyPriceChange();
+}
+
+String _weekdayToName(int weekday) {
+  switch (weekday) {
+    case 1:
+      return 'Monday';
+    case 2:
+      return 'Tuesday';
+    case 3:
+      return 'Wednesday';
+    case 4:
+      return 'Thursday';
+    case 5:
+      return 'Friday';
+    case 6:
+      return 'Saturday';
+    case 7:
+      return 'Sunday';
+    default:
+      return 'Unknown';
   }
+}
+
+void _showStartDateChangeDialog() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Change Start Date'),
+        content: Text(
+          'Do you want to change your start date? This will reset all your selected visit dates.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _resetToStartDateSelection();
+            },
+            child: Text('Change Start Date'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -265,50 +399,206 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     );
   }
 
-  bool _isDateSelectable(DateTime date) {
-    final dateOnly = DateTime(date.year, date.month, date.day);
-    final today = DateTime.now();
-    final todayOnly = DateTime(today.year, today.month, today.day);
-    
-    // Never allow selecting Fridays
-    if (_isFriday(date)) {
-      return false;
-    }
-    
-    // If selecting start date, only allow today or future dates (excluding Fridays)
-    if (_isSelectingStartDate) {
-      return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
-    }
-    
-    // Always allow clicking on the start date to change it (if it's not Friday)
-    if (date == _userSelectedStartDate) {
-      return true;
-    }
-    
-    // Check if date is within contract period
-    if (_contractStartDate != null && _contractEndDate != null) {
-      if (dateOnly.isBefore(_contractStartDate!) || dateOnly.isAfter(_contractEndDate!)) {
-        return false;
+void _handleDayToggle(String day) {
+  setState(() {
+    if (_localSelectedDays.contains(day)) {
+      _localSelectedDays.remove(day);
+    } else {
+      if (_localSelectedDays.length < _visitsPerWeekCount) {
+        _localSelectedDays.add(day);
+      } else {
+        _showSnackBar('You can only select $_visitsPerWeekCount days per week');
+        return;
       }
     }
+  });
+  
+  // Update the parent widget with new selected days
+  if (widget.onSelectedDaysChanged != null) {
+    widget.onSelectedDaysChanged!(_localSelectedDays);
+  }
+  
+  // Auto-select dates if we have days selected
+  if (_localSelectedDays.isNotEmpty) {
+    _setStartDateFromSelectedDays(_localSelectedDays);
+  } else {
+    // Reset if no days are selected
+    _resetToStartDateSelection();
+  }
+}
 
-    // Check if date is already selected
-    if (_selectedDates.contains(date)) {
-      return true;
+// Set start date from selected days
+void _setStartDateFromSelectedDays([List<String>? selectedDays]) {
+  List<String> daysToUse = selectedDays ?? _localSelectedDays;
+  
+  if (daysToUse.isEmpty) {
+    return;
+  }
+
+  // Convert selected day names to weekday numbers
+  List<int> selectedWeekdays = daysToUse.map(_dayNameToWeekday).toList();
+  
+  // Find the first occurrence of any selected day from today onwards
+  DateTime today = DateTime.now();
+  DateTime searchDate = DateTime(today.year, today.month, today.day);
+  DateTime? firstSelectedDate;
+  
+  // Search for up to 14 days to find the first matching day
+  for (int i = 0; i < 14; i++) {
+    DateTime checkDate = searchDate.add(Duration(days: i));
+    // Skip Fridays
+    if (checkDate.weekday != 5 && selectedWeekdays.contains(checkDate.weekday)) {
+      firstSelectedDate = checkDate;
+      break;
     }
+  }
+  
+  if (firstSelectedDate != null) {
+    setState(() {
+      _userSelectedStartDate = firstSelectedDate;
+      _isSelectingStartDate = false;
+      _selectedDates.clear();
+      _calculateContractDetails();
+      
+      // Auto-select all dates based on the selected days
+      _autoSelectDatesBasedOnDays(daysToUse);
+    });
+  }
+}
 
-    // Check if we've reached the total visit limit
-    if (_selectedDates.length >= _totalAllowedVisits) {
-      return false;
+// Auto-select dates based on selected days
+void _autoSelectDatesBasedOnDays([List<String>? selectedDays]) {
+  List<String> daysToUse = selectedDays ?? _localSelectedDays;
+  
+  if (daysToUse.isEmpty || _userSelectedStartDate == null) {
+    return;
+  }
+
+  setState(() {
+    _selectedDates.clear();
+    
+    // Convert selected day names to weekday numbers
+    List<int> selectedWeekdays = daysToUse.map(_dayNameToWeekday).toList();
+    
+    // Start from the user-selected start date
+    DateTime currentDate = _userSelectedStartDate!;
+    int visitsAdded = 0;
+    
+    // First, add the start date itself
+    _selectedDates.add(currentDate);
+    visitsAdded++;
+    
+    // Move to next day for the loop
+    currentDate = currentDate.add(Duration(days: 1));
+    
+    // Loop through each day in the contract period
+    while (currentDate.isBefore(_contractEndDate!) || currentDate.isAtSameMomentAs(_contractEndDate!)) {
+      // Check if current date's weekday matches any selected days
+      if (selectedWeekdays.contains(currentDate.weekday)) {
+        // Skip Fridays
+        if (currentDate.weekday != 5) {
+          // Check if we haven't exceeded the total allowed visits
+          if (visitsAdded < _totalAllowedVisits) {
+            // Check if this week isn't already full
+            String weekKey = _getWeekKey(currentDate);
+            int weekCount = _selectedDates.where((date) => _getWeekKey(date) == weekKey).length;
+            
+            if (weekCount < _visitsPerWeekCount) {
+              _selectedDates.add(currentDate);
+              visitsAdded++;
+            }
+          }
+        }
+      }
+      
+      // Move to next day
+      currentDate = currentDate.add(Duration(days: 1));
+      
+      // Break if we've reached the maximum visits
+      if (visitsAdded >= _totalAllowedVisits) {
+        break;
+      }
     }
+    
+    _selectedDates.sort();
+    _updateWeeklyVisitCounts();
+  });
+  
+  widget.onDatesChanged(_selectedDates);
+  _notifyPriceChange();
+}
 
-    // Check if the week is already full
-    if (_isWeekFull(date)) {
-      return false;
-    }
+// Reset to start date selection
+void _resetToStartDateSelection() {
+  setState(() {
+    _isSelectingStartDate = true;
+    _userSelectedStartDate = null;
+    _selectedDates.clear();
+    _contractStartDate = null;
+    _contractEndDate = null;
+    _weeklyVisitCounts.clear();
+    _localSelectedDays.clear();
+    _calculateContractDetails();
+  });
+  widget.onDatesChanged(_selectedDates);
+  
+  // Notify parent widget that selected days are cleared
+  if (widget.onSelectedDaysChanged != null) {
+    widget.onSelectedDaysChanged!(_localSelectedDays);
+  }
+  
+  _notifyPriceChange();
+  _showSnackBar('Please select days and start date');
+}
 
+
+  bool _isDateSelectable(DateTime date) {
+  final dateOnly = DateTime(date.year, date.month, date.day);
+  final today = DateTime.now();
+  final todayOnly = DateTime(today.year, today.month, today.day);
+  
+  // Never allow selecting Fridays
+  if (_isFriday(date)) {
+    return false;
+  }
+  
+  // If selecting start date, only allow today or future dates (excluding Fridays)
+  if (_isSelectingStartDate) {
+    return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
+  }
+  
+  // Always allow clicking on the start date to change it (if it's not Friday)
+  if (date == _userSelectedStartDate) {
     return true;
   }
+  
+  // Check if date is within contract period
+  if (_contractStartDate != null && _contractEndDate != null) {
+    if (dateOnly.isBefore(_contractStartDate!) || dateOnly.isAfter(_contractEndDate!)) {
+      return false;
+    }
+  }
+
+  // Check if date is already selected (allow deselection)
+  if (_selectedDates.contains(date)) {
+    return true;
+  }
+
+  // REMOVED: If we have selected days, allow manual selection within those days
+  // This was blocking users from selecting other days in the week after deselecting a system-generated date
+
+  // Check if we've reached the total visit limit
+  if (_selectedDates.length >= _totalAllowedVisits) {
+    return false;
+  }
+
+  // Check if the week is already full
+  if (_isWeekFull(date)) {
+    return false;
+  }
+
+  return true;
+}
 
   String _formatPrice(double price) {
     return 'SAR ${price.toStringAsFixed(0)}';
@@ -335,6 +625,100 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     }
   }
 
+Widget _buildDaySelectionWidget() {
+  final days = [
+    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'
+  ];
+  
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            text: 'Please select ',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black,
+              fontWeight: FontWeight.w500,
+            ),
+            children: [
+              TextSpan(
+                text: '${_visitsPerWeekCount} days',
+                style: TextStyle(
+                  color: Colors.teal,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: days.map((day) {
+            bool isSelected = _localSelectedDays.contains(day);
+            bool isFriday = day == 'Friday';
+            
+            return GestureDetector(
+              onTap: isFriday ? null : () {
+                _handleDayToggle(day);
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isFriday 
+                      ? Colors.grey.shade100 
+                      : isSelected 
+                          ? Color(0xFF1E3A8A) 
+                          : Colors.white,
+                  border: Border.all(
+                    color: isFriday 
+                        ? Colors.grey.shade300 
+                        : isSelected 
+                            ? Color(0xFF1E3A8A) 
+                            : Colors.grey.shade300,
+                    width: 1.5,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  day,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isFriday 
+                        ? Colors.grey.shade400 
+                        : isSelected 
+                            ? Colors.white 
+                            : Colors.black,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        SizedBox(height: 16),
+        // Text(
+        //   _userSelectedStartDate != null 
+        //       ? 'Start date: ${DateFormat('MMM dd, yyyy').format(_userSelectedStartDate!)}'
+        //       : _localSelectedDays.isNotEmpty 
+        //           ? 'Start date will be set automatically'
+        //           : 'Please select days first',
+        //   style: TextStyle(
+        //     fontSize: 16,
+        //     fontWeight: FontWeight.w500,
+        //     color: _userSelectedStartDate != null 
+        //         ? Colors.green.shade700 
+        //         : Colors.grey.shade600,
+        //   ),
+        // ),
+      ],
+    ),
+  );
+}
   Widget _buildCalendarGrid(DateTime month) {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final firstDayOfMonth = DateTime(month.year, month.month, 1);
@@ -639,8 +1023,10 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
               ),
             ),
           ),
+
+          _buildDaySelectionWidget(),
         
-        _buildContractInfo(),
+        // _buildContractInfo(),
         
         Expanded(
           child: PageView.builder(
@@ -746,3 +1132,4 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
     );
   }
 }
+
