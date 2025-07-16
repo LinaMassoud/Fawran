@@ -26,9 +26,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   late final ProviderSubscription _subscription;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
-  final nameRegex = RegExp(r'^[a-zA-Z0-9\u0600-\u06FF]+$');
 
-  final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
+  final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF ]+$');
   final numberOnlyRegex = RegExp(r'^\d+$');
   final phoneRegex = RegExp(r'^05\d{8}$');
   final nationalIdRegex = RegExp(r'^[12]\d{9}$');
