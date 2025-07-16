@@ -30,9 +30,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
   final numberOnlyRegex = RegExp(r'^\d+$');
-final phoneRegex = RegExp(r'^05\d{8}$');
+  final phoneRegex = RegExp(r'^05\d{8}$');
+  final nationalIdRegex = RegExp(r'^[12]\d{9}$');
 
- @override
+  @override
   void initState() {
     super.initState();
   }
@@ -120,10 +121,9 @@ final phoneRegex = RegExp(r'^05\d{8}$');
                 icon: Icons.person,
                 validator: (val) {
                   if (val == null || val.isEmpty)
-                    return 'national id is required';
-                  if (!numberOnlyRegex.hasMatch(val))
-                    return 'national id must not contain characters';
-                  if (val.length != 10) return 'national id must be 9 numbers';
+                    return 'National ID is required';
+                  if (!nationalIdRegex.hasMatch(val))
+                    return 'National ID must be 10 digits and start with 1 or 2';
                   return null;
                 },
               ),
@@ -187,28 +187,31 @@ final phoneRegex = RegExp(r'^05\d{8}$');
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: authState.isLoading
-    ? null
-    : () {
-        // Trim all inputs before validation and usage
-        _firstNameController.text = _firstNameController.text.trim();
-        _middleNameController.text = _middleNameController.text.trim();
-        _lastNameController.text = _lastNameController.text.trim();
-        _nationalIdController.text = _nationalIdController.text.trim();
+                    ? null
+                    : () {
+                        // Trim all inputs before validation and usage
+                        _firstNameController.text =
+                            _firstNameController.text.trim();
+                        _middleNameController.text =
+                            _middleNameController.text.trim();
+                        _lastNameController.text =
+                            _lastNameController.text.trim();
+                        _nationalIdController.text =
+                            _nationalIdController.text.trim();
 
-        if (_formKey.currentState!.validate()) {
-          ref.read(authProvider.notifier).signUp(
-            userName: _phoneController.text,
-            firstName: _firstNameController.text,
-            middleName: _middleNameController.text,
-            lastName: _lastNameController.text,
-            phoneNumber: _phoneController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-            nationalId: _nationalIdController.text,
-          );
-        }
-      },
-
+                        if (_formKey.currentState!.validate()) {
+                          ref.read(authProvider.notifier).signUp(
+                                userName: _phoneController.text,
+                                firstName: _firstNameController.text,
+                                middleName: _middleNameController.text,
+                                lastName: _lastNameController.text,
+                                phoneNumber: _phoneController.text,
+                                email: _emailController.text,
+                                password: _passwordController.text,
+                                nationalId: _nationalIdController.text,
+                              );
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),
