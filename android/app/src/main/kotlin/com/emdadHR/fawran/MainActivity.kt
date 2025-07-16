@@ -1,4 +1,4 @@
-package com.example.fawran
+package com.emdadHR.fawran
 
 import io.flutter.embedding.android.FlutterActivity
 
