@@ -602,7 +602,7 @@ if (widget.onHourPriceChanged != null) {
           // Animated calendar container
           AnimatedContainer(
             duration: Duration(milliseconds: 300),
-            height: _showCalendar ? 600 : 0,
+            height: _showCalendar ? 650 : 0,
             curve: Curves.easeInOut,
             child: _showCalendar
                 ? Container(

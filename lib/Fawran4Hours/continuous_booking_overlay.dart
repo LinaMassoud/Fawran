@@ -547,7 +547,7 @@ void _updatePriceVat(double priceVat) {
   }
 
 
-Future<void> _createContract(BookingData bookingData) async {
+Future<Map<String, dynamic>> _createContract(BookingData bookingData) async {
   try {
     // Get required data from secure storage and state
     final userIdString = await _storage.read(key: 'user_id');
@@ -691,15 +691,27 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Failed to create contract'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
+        if (result['statusCode'] == 409) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'A service contract is already in pending status'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to create contract'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
       }
     }
+    
+    return result;
     
   } catch (e) {
     print('Error creating contract: $e');
@@ -713,6 +725,12 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
         ),
       );
     }
+    
+    return {
+      'success': false,
+      'message': 'Failed to create contract: ${e.toString()}',
+      'error': e.toString(),
+    };
   }
 }
 
@@ -752,12 +770,12 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
   print("bookingData total price after _completePurchase = ${bookingData.totalPrice}");
   
   // Create contract before closing overlay
-  await _createContract(bookingData);
+  final result = await _createContract(bookingData);
   
   await _animationController.reverse();
   Navigator.pop(context);
 
-  if (widget.onBookingCompleted != null) {
+  if (result['success'] == true && widget.onBookingCompleted != null) {
     widget.onBookingCompleted!(bookingData);
   }
 }

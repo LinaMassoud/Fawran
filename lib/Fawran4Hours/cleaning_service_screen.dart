@@ -48,31 +48,9 @@ class CleaningServiceScreen extends StatefulWidget {
 
 class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   // Global keys for navigation to specific sections
-  final GlobalKey eastAsiaKey = const GlobalObjectKey("eastAsia");
-  final GlobalKey africanKey = const GlobalObjectKey("african");
-  final GlobalKey searchResultsKey = const GlobalObjectKey("searchResults");
-  final GlobalKey eastAsiaSearchKey = const GlobalObjectKey("eastAsiaSearch");
-  final GlobalKey africanSearchKey = const GlobalObjectKey("africanSearch");
   final _storage = FlutterSecureStorage();
   // Package lists for different groups and shifts
-  List<PackageModel> eastAsiaPackages = [];
-  List<PackageModel> africanPackages = [];
-
-  
-
-  bool isEastAsiaLoading = true;
-  bool isAfricanLoading = true;
-  String? eastAsiaErrorMessage;
-  String? africanErrorMessage;
-
-  bool isSearchActive = false;
-  String searchQuery = '';
-  TextEditingController searchController = TextEditingController();
-  List<PackageModel> filteredEastAsiaPackages = [];
-  List<PackageModel> filteredAfricanPackages = [];
   // Shift selection state
-  int selectedEastAsiaShift = 1; // 1 = Morning, 2 = Evening
-  int selectedAfricanShift = 1; // 1 = Morning, 2 = Evening
 
   // Booking state management
   BookingData? completedBooking;
@@ -89,11 +67,15 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
   bool isLoadingServices = true;
 // NEW: Dynamic data from API
   List<dynamic> availableShifts = [];
-  List<dynamic> countryGroups = [];
   bool isLoadingShifts = true;
   bool isLoadingGroups = true;
-  String eastAsiaGroupName = 'East Asia';
-  String africanGroupName = 'African Pack';
+
+  Map<String, List<PackageModel>> packagesByGroup = {};
+  Map<String, bool> loadingStatesByGroup = {};
+  Map<String, String?> errorMessagesByGroup = {};
+  Map<String, List<PackageModel>> filteredPackagesByGroup = {};
+  Map<String, int> selectedShiftsByGroup = {};
+  List<dynamic> countryGroups = [];
 
   @override
   void initState() {
@@ -114,13 +96,20 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
       
       // Always ensure a service is selected
       if (availableServices.isNotEmpty) {
-        final matchingService = availableServices.firstWhere(
-          (service) => service.id == widget.serviceId,
-          orElse: () => availableServices.first,
-        );
+        // If serviceId is provided, try to find it; otherwise use first available
+        if (widget.serviceId != null) {
+          final matchingService = availableServices.firstWhere(
+            (service) => service.id == widget.serviceId,
+            orElse: () => availableServices.first,
+          );
+          selectedServiceId = matchingService.id;
+          selectedServiceName = matchingService.name;
+        } else {
+          // No serviceId provided, use first available service
+          selectedServiceId = availableServices.first.id;
+          selectedServiceName = availableServices.first.name;
+        }
         
-        selectedServiceId = matchingService.id;
-        selectedServiceName = matchingService.name;
         _setServiceTitle();
       }
       
@@ -133,10 +122,13 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
       // If API fails, create fallback services only as last resort
       if (availableServices.isEmpty) {
         availableServices = [
-          Service(id: widget.serviceId, name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'),
+          Service(
+            id: widget.serviceId ?? 1, // Use provided serviceId or default to 1
+            name: widget.serviceType.isNotEmpty ? widget.serviceType : 'FAWRAN Service'
+          ),
         ];
         
-        selectedServiceId = widget.serviceId;
+        selectedServiceId = widget.serviceId ?? 1;
         selectedServiceName = availableServices.first.name;
         _setServiceTitle();
       }
@@ -144,68 +136,55 @@ class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
     print('Error fetching services: $e');
   }
 }
-
-Future<void> reloadServices() async {
-  try {
-    setState(() => isLoadingServices = true);
-    
-    final List<dynamic> servicesList = await ApiService.fetchServices(
-      professionId: widget.professionId,
-    );
-
-    setState(() {
-      availableServices = servicesList.map((service) => Service.fromJson(service)).toList();
-      
-      // Try to maintain current selection if it exists in new data
-      if (availableServices.isNotEmpty) {
-        final currentSelection = availableServices.firstWhere(
-          (service) => service.id == selectedServiceId,
-          orElse: () => availableServices.first,
-        );
-        
-        selectedServiceId = currentSelection.id;
-        selectedServiceName = currentSelection.name;
-        _setServiceTitle();
-      }
-      
-      isLoadingServices = false;
-    });
-    
-    // Reload related data after services are updated
-    await _loadServiceShifts();
-    fetchEastAsiaPackages();
-    fetchAfricanPackages();
-    
-  } catch (e) {
-    setState(() {
-      isLoadingServices = false;
-    });
-    print('Error reloading services: $e');
-  }
-}
-
   Future<void> _initializeData() async {
-  // Set dynamic service title based on serviceId
   _setServiceTitle();
-
-  // CHANGED: Load services FIRST before other operations
   await fetchServices();
   
-  // Then load other data in parallel
   await Future.wait([
     _loadServiceShifts(),
     _loadCountryGroups(),
     _loadServicePackTitles(),
   ]);
 
-  // After loading shifts and groups, fetch packages
-  fetchEastAsiaPackages();
-  fetchAfricanPackages();
-
-  filteredEastAsiaPackages = eastAsiaPackages;
-  filteredAfricanPackages = africanPackages;
+  // Fetch packages for all groups dynamically
+  for (var group in countryGroups) {
+    final groupCode = group['group_code'].toString();
+    fetchPackagesForGroup(groupCode);
+  }
 
   _checkAndShowAutoOverlay();
+}
+
+
+Future<void> fetchPackagesForGroup(String groupCode) async {
+  try {
+    print('Fetching packages for group $groupCode with professionId: ${widget.professionId}, serviceId: ${selectedServiceId ?? widget.serviceId}');
+
+    setState(() {
+      loadingStatesByGroup[groupCode] = true;
+      errorMessagesByGroup[groupCode] = null;
+    });
+
+    final packages = await ApiService.fetchPackagesByGroup(
+      professionId: widget.professionId,
+      serviceId: selectedServiceId ?? widget.serviceId,
+      groupCode: groupCode,
+      // Always pass the shift parameter for all services
+      serviceShift: selectedShiftsByGroup[groupCode],
+    );
+
+    setState(() {
+      packagesByGroup[groupCode] = packages;
+      filteredPackagesByGroup[groupCode] = packages;
+      loadingStatesByGroup[groupCode] = false;
+    });
+  } catch (e) {
+    print('Error fetching packages for group $groupCode: $e');
+    setState(() {
+      errorMessagesByGroup[groupCode] = e.toString();
+      loadingStatesByGroup[groupCode] = false;
+    });
+  }
 }
 
   void _setServiceTitle() {
@@ -220,17 +199,26 @@ Future<void> reloadServices() async {
   } else {
     // Fallback logic when no services available
     String fallbackTitle;
-    switch (widget.serviceId) {
-      case 1:
-        fallbackTitle = 'FAWRAN 4 Hours';
-        break;
-      case 21:
-        fallbackTitle = 'FAWRAN 8 Hours';
-        break;
-      default:
-        fallbackTitle = widget.serviceType.isNotEmpty
-            ? widget.serviceType
-            : 'Fawran Service';
+    if (widget.serviceId != null) {
+      switch (widget.serviceId) {
+        case 1:
+          fallbackTitle = 'FAWRAN 4 Hours';
+          break;
+        case 21:
+          fallbackTitle = 'FAWRAN 8 Hours';
+          break;
+        case 62:
+          fallbackTitle = 'MaintenanceService';
+          break;
+        default:
+          fallbackTitle = widget.serviceType.isNotEmpty
+              ? widget.serviceType
+              : 'Service';
+      }
+    } else {
+      fallbackTitle = widget.serviceType.isNotEmpty
+          ? widget.serviceType
+          : 'Service';
     }
     
     setState(() {
@@ -238,7 +226,7 @@ Future<void> reloadServices() async {
     });
     
     if (selectedServiceId == null) {
-      selectedServiceId = widget.serviceId;
+      selectedServiceId = widget.serviceId ?? 1;
     }
   }
 }
@@ -278,10 +266,12 @@ Future<void> reloadServices() async {
         availableShifts = shifts;
         isLoadingShifts = false;
 
-        // Set default shift to first available shift
+        // Set default shift to first available shift for all groups
         if (shifts.isNotEmpty) {
-          selectedEastAsiaShift = shifts.first['id'];
-          selectedAfricanShift = shifts.first['id'];
+          for (var group in countryGroups) {
+            final groupCode = group['group_code'].toString();
+            selectedShiftsByGroup[groupCode] = shifts.first['id'];
+          }
         }
       });
     } catch (e) {
@@ -295,30 +285,23 @@ Future<void> reloadServices() async {
   try {
     setState(() => isLoadingGroups = true);
 
-    final groups =
-        await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+    final groups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
 
     setState(() {
       countryGroups = groups;
       isLoadingGroups = false;
 
-      // Update group names based on group_code (more reliable than string matching)
+      // Initialize dynamic data structures for each group
       for (var group in groups) {
         final groupCode = group['group_code'].toString();
+        final groupName = group['group_name'].toString();
         
-        switch (groupCode) {
-          case '2': // Based on your debug output, group_code "2" is East Asia
-            eastAsiaGroupName = group['group_name'];
-            break;
-          case '3': // Based on your debug output, group_code "3" is Africa
-            africanGroupName = group['group_name'];
-            break;
-          // Add more cases as needed
-          default:
-            // Handle unknown group codes
-            print('Unknown group code: $groupCode with name: ${group['group_name']}');
-            break;
-        }
+        // Initialize package lists and states
+        packagesByGroup[groupCode] = [];
+        loadingStatesByGroup[groupCode] = true;
+        errorMessagesByGroup[groupCode] = null;
+        filteredPackagesByGroup[groupCode] = [];
+        selectedShiftsByGroup[groupCode] = 1; // Default shift
       }
     });
   } catch (e) {
@@ -342,94 +325,7 @@ Future<void> reloadServices() async {
     }
   }
 
-  void _filterPackages(String query) {
-    setState(() {
-      searchQuery = query.toLowerCase();
-
-      if (query.isEmpty) {
-        filteredEastAsiaPackages = eastAsiaPackages;
-        filteredAfricanPackages = africanPackages;
-      } else {
-        filteredEastAsiaPackages = eastAsiaPackages.where((package) {
-          return package.packageName.toLowerCase().contains(searchQuery) ||
-              package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
-              package.timeDisplay.toLowerCase().contains(searchQuery) ||
-              package.durationDisplay.toLowerCase().contains(searchQuery) ||
-              package.visitsWeekly.toString().contains(searchQuery) ||
-              'cleaning'.contains(searchQuery) ||
-              'visit'.contains(searchQuery) ||
-              'hours'.contains(searchQuery);
-        }).toList();
-
-        filteredAfricanPackages = africanPackages.where((package) {
-          return package.packageName.toLowerCase().contains(searchQuery) ||
-              package.nationalityDisplay.toLowerCase().contains(searchQuery) ||
-              package.timeDisplay.toLowerCase().contains(searchQuery) ||
-              package.durationDisplay.toLowerCase().contains(searchQuery) ||
-              package.visitsWeekly.toString().contains(searchQuery) ||
-              'cleaning'.contains(searchQuery) ||
-              'visit'.contains(searchQuery) ||
-              'hours'.contains(searchQuery);
-        }).toList();
-
-        // Auto-scroll to search results after filtering
-        if (filteredEastAsiaPackages.isNotEmpty ||
-            filteredAfricanPackages.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToSearchResults();
-          });
-        }
-      }
-    });
-  }
-
-  void _scrollToSearchResults() {
-    GlobalKey? targetKey;
-
-    // Determine which section to scroll to based on search results
-    if (filteredEastAsiaPackages.isNotEmpty &&
-        filteredAfricanPackages.isNotEmpty) {
-      // Both have results, scroll to East Asia first
-      targetKey = eastAsiaSearchKey;
-    } else if (filteredEastAsiaPackages.isNotEmpty) {
-      // Only East Asia has results
-      targetKey = eastAsiaSearchKey;
-    } else if (filteredAfricanPackages.isNotEmpty) {
-      // Only African has results
-      targetKey = africanSearchKey;
-    }
-
-    // Scroll to the target section
-    if (targetKey != null) {
-      final context = targetKey.currentContext;
-      if (context != null) {
-        Scrollable.ensureVisible(
-          context,
-          duration: Duration(milliseconds: 800),
-          curve: Curves.easeInOut,
-          alignment: 0.0, // Scroll to top of the section
-        );
-      }
-    }
-  }
-
-  void _toggleSearch() {
-    setState(() {
-      isSearchActive = !isSearchActive;
-      if (!isSearchActive) {
-        searchController.clear();
-        searchQuery = '';
-        filteredEastAsiaPackages = eastAsiaPackages;
-        filteredAfricanPackages = africanPackages;
-      } else {
-        filteredEastAsiaPackages = eastAsiaPackages;
-        filteredAfricanPackages = africanPackages;
-      }
-    });
-  }
-
   void _onServiceChanged(int serviceId) {
-  // FIXED: Add null check and ensure the service exists
   final selectedService = availableServices.firstWhere(
     (service) => service.id == serviceId,
     orElse: () => availableServices.isNotEmpty ? availableServices.first : Service(id: widget.serviceId, name: widget.serviceType),
@@ -437,112 +333,33 @@ Future<void> reloadServices() async {
 
   setState(() {
     selectedServiceId = serviceId;
-    print("selectedServiceId on _onServiceChanged = $selectedServiceId");
     selectedServiceName = selectedService.name;
-    // Update the dynamic service title immediately
     _setServiceTitle();
   });
-  // Refresh shifts and packages when service changes
+  
   _loadServiceShifts().then((_) {
-    // After shifts are loaded, update the UI state and fetch packages
     setState(() {
-      // Force rebuild to ensure radio buttons remain visible
+      // Reset shift selections for all groups
+      for (var group in countryGroups) {
+        final groupCode = group['group_code'].toString();
+        selectedShiftsByGroup[groupCode] = availableShifts.isNotEmpty ? availableShifts.first['id'] : 1;
+      }
     });
-    fetchEastAsiaPackages();
-    fetchAfricanPackages();
+    
+    // Fetch packages for all groups
+    for (var group in countryGroups) {
+      final groupCode = group['group_code'].toString();
+      fetchPackagesForGroup(groupCode);
+    }
   });
 }
 
-  Future<void> fetchEastAsiaPackages() async {
-    try {
-      print(
-          'Fetching East Asia packages with professionId: ${widget.professionId}, serviceId: ${selectedServiceId ?? widget.serviceId}');
-
-      setState(() {
-        isEastAsiaLoading = true;
-        eastAsiaErrorMessage = null;
-      });
-
-      final packages = await ApiService.fetchEastAsiaPackages(
-        professionId: widget.professionId,
-        serviceId:
-            selectedServiceId ?? widget.serviceId, // Use selectedServiceId
-        serviceShift: (selectedServiceId ?? widget.serviceId) == 1
-            ? selectedEastAsiaShift
-            : null,
-      );
-
-      setState(() {
-        eastAsiaPackages = packages;
-        isEastAsiaLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching East Asia packages: $e');
-      setState(() {
-        eastAsiaErrorMessage = e.toString();
-        isEastAsiaLoading = false;
-      });
-    }
-
-    if (searchQuery.isEmpty) {
-      filteredEastAsiaPackages = eastAsiaPackages;
-    } else {
-      _filterPackages(searchQuery);
-    }
-  }
-
-// Update your fetchAfricanPackages method to use selectedServiceId
-  Future<void> fetchAfricanPackages() async {
-    try {
-      print(
-          'Fetching African packages with professionId: ${widget.professionId}, serviceId: ${selectedServiceId ?? widget.serviceId}');
-
-      setState(() {
-        isAfricanLoading = true;
-        africanErrorMessage = null;
-      });
-
-      final packages = await ApiService.fetchAfricanPackages(
-        professionId: widget.professionId,
-        serviceId:
-            selectedServiceId ?? widget.serviceId, // Use selectedServiceId
-        serviceShift: (selectedServiceId ?? widget.serviceId) == 1
-            ? selectedAfricanShift
-            : null,
-      );
-
-      setState(() {
-        africanPackages = packages;
-        isAfricanLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching African packages: $e');
-      setState(() {
-        africanErrorMessage = e.toString();
-        isAfricanLoading = false;
-      });
-    }
-
-    if (searchQuery.isEmpty) {
-      filteredAfricanPackages = africanPackages;
-    } else {
-      _filterPackages(searchQuery);
-    }
-  }
-
-  void _onEastAsiaShiftChanged(int shift) {
-    setState(() {
-      selectedEastAsiaShift = shift;
-    });
-    fetchEastAsiaPackages();
-  }
-
-  void _onAfricanShiftChanged(int shift) {
-    setState(() {
-      selectedAfricanShift = shift;
-    });
-    fetchAfricanPackages();
-  }
+void _onShiftChangedForGroup(String groupCode, int shift) {
+  setState(() {
+    selectedShiftsByGroup[groupCode] = shift;
+  });
+  fetchPackagesForGroup(groupCode);
+}
 
   void _onPaymentSuccess() {
     setState(() {
@@ -795,54 +612,9 @@ void didChangeDependencies() {
                         ),
                       ],
                     ),
-                    child: IconButton(
-                      icon: Icon(isSearchActive ? Icons.close : Icons.search,
-                          color: Colors.black),
-                      onPressed: _toggleSearch,
-                    ),
                   ),
                 ],
               ),
-              if (isSearchActive)
-                SliverToBoxAdapter(
-                  child: Container(
-                    color: Colors.white,
-                    padding: EdgeInsets.all(16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: TextField(
-                        controller: searchController,
-                        autofocus: true,
-                        onChanged: _filterPackages,
-                        decoration: InputDecoration(
-                          hintText: 'Search packages, duration, visits...',
-                          prefixIcon:
-                              Icon(Icons.search, color: Colors.grey[600]),
-                          suffixIcon: searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: Icon(Icons.clear,
-                                      color: Colors.grey[600]),
-                                  onPressed: () {
-                                    searchController.clear();
-                                    _filterPackages('');
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (isSearchActive && searchQuery.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: _buildSearchResultsHeader(),
-                ),
               // Main content
               SliverToBoxAdapter(
                 child: Column(
@@ -932,50 +704,48 @@ void didChangeDependencies() {
                           // Service selector (only shows when multiple services)
                           _buildServiceSelector(loc),
 
-                          // Service title
-                          Text(
-                            dynamicServiceTitle,
-                            style: TextStyle(
-                              fontSize: 25, // Match package section title size
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                          // Service title - only show if professionId is not 61
+                          if (widget.professionId != 61)
+                            Text(
+                              dynamicServiceTitle,
+                              style: TextStyle(
+                                fontSize: 25, // Match package section title size
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
-                          ),
+                          if (widget.professionId != 61)
+                            SizedBox(height: 16),
                           SizedBox(height: 16), // Consistent spacing
 
-                          // Design your card button
-                          _buildDesignCardButton(loc),
-                          SizedBox(
-                              height: 32), // Spacing before package sections
+                          // Design your card button - only show if professionId is not 61
+                          if (widget.professionId != 61) ...[
+                            _buildDesignCardButton(loc),
+                            SizedBox(height: 32), // Spacing before package sections
+                          ] else
+                            SizedBox(height: 16), // Spacing before package sections
 
-                          // East Asia Pack Section
-                          _buildPackageSection(
-                            sectionTitle: eastAsiaGroupName,
-                            packages: eastAsiaPackages,
-                            filteredPackages: filteredEastAsiaPackages,
-                            isLoading: isEastAsiaLoading,
-                            errorMessage: eastAsiaErrorMessage,
-                            onRetry: fetchEastAsiaPackages,
-                            isEastAsia: true,
-                            sectionKey: eastAsiaKey,
-                            searchKey: eastAsiaSearchKey,
-                            loc: loc,
-                          ),
-                          SizedBox(height: 40),
-
-                          // African Pack Section
-                          _buildPackageSection(
-                            sectionTitle: africanGroupName,
-                            packages: africanPackages,
-                            filteredPackages: filteredAfricanPackages,
-                            isLoading: isAfricanLoading,
-                            errorMessage: africanErrorMessage,
-                            onRetry: fetchAfricanPackages,
-                            isEastAsia: false,
-                            sectionKey: africanKey,
-                            searchKey: africanSearchKey,
-                            loc: loc,
-                          ),
+                          // Dynamic package sections
+                        ...countryGroups.map((group) {
+                          final groupCode = group['group_code'].toString();
+                          final groupName = group['group_name'].toString();
+                          
+                          return Column(
+                            children: [
+                              _buildPackageSection(
+                                sectionTitle: groupName,
+                                packages: packagesByGroup[groupCode] ?? [],
+                                filteredPackages: filteredPackagesByGroup[groupCode] ?? [],
+                                isLoading: loadingStatesByGroup[groupCode] ?? false,
+                                errorMessage: errorMessagesByGroup[groupCode],
+                                onRetry: () => fetchPackagesForGroup(groupCode),
+                                groupCode: groupCode,
+                                loc: loc,
+                              ),
+                              SizedBox(height: 40),
+                            ],
+                          );
+                        }).toList(),
                           SizedBox(height: completedBooking != null ? 120 : 20),
                         ],
                       ),
@@ -1296,7 +1066,7 @@ void _showPackageDetailsOverlay(PackageModel package, AppLocalizations loc) {
                           ContinuousBookingOverlay.showAsOverlay(
                             context,
                             package: package,
-                            selectedShift: selectedEastAsiaShift,
+                            selectedShift: selectedShiftsByGroup.values.isNotEmpty ? selectedShiftsByGroup.values.first : 1,
                             serviceId: selectedServiceId ?? widget.serviceId,
                             professionId: widget.professionId,
                             onBookingCompleted: _onBookingCompleted,
@@ -1355,20 +1125,7 @@ Widget _buildDetailRow(String label, String value) {
     ],
   );
 }
-
-  String _formatPackName(String packName) {
-    // Convert "East Asia Pack" to "East Asia\nPack" format
-    List<String> words = packName.split(' ');
-    if (words.length >= 2) {
-      // Take last word as second line, rest as first line
-      String lastWord = words.removeLast();
-      String firstLine = words.join(' ');
-      return '$firstLine\n$lastWord';
-    }
-    return packName;
-  }
-
-  Widget _buildShiftSelector(bool isEastAsia) {
+  Widget _buildShiftSelector(String groupCode) { // Changed from bool isEastAsia to String groupCode
   if (isLoadingShifts || availableShifts.isEmpty) {
     return Container(
       width: double.infinity,
@@ -1554,11 +1311,8 @@ Widget _buildDetailRow(String label, String value) {
   }
 
   // Multiple shifts available - show selector
-  int selectedShift =
-      isEastAsia ? selectedEastAsiaShift : selectedAfricanShift;
-  Function(int) onShiftChanged =
-      isEastAsia ? _onEastAsiaShiftChanged : _onAfricanShiftChanged;
-
+  int selectedShift = selectedShiftsByGroup[groupCode] ?? 1;
+  Function(int) onShiftChanged = (int shift) => _onShiftChangedForGroup(groupCode, shift);
   return Container(
     width: double.infinity,
     decoration: BoxDecoration(
@@ -1640,25 +1394,6 @@ Widget _buildDetailRow(String label, String value) {
     ),
   );
 }
-
-  Widget _buildSearchResultsHeader() {
-    if (!isSearchActive || searchQuery.isEmpty) return SizedBox.shrink();
-
-    int totalResults =
-        filteredEastAsiaPackages.length + filteredAfricanPackages.length;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Text(
-        'Found $totalResults result${totalResults != 1 ? 's' : ''} for "$searchQuery"',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.grey[600],
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
 
   Widget _buildServicePack(String title, String imagePath, Color color) {
     return Container(
@@ -1746,131 +1481,106 @@ Widget _buildDetailRow(String label, String value) {
   }
 
   Widget _buildPackageSection({
-    required String sectionTitle,
-    required List<PackageModel> packages,
-    required List<PackageModel> filteredPackages,
-    required bool isLoading,
-    required String? errorMessage,
-    required VoidCallback onRetry,
-    required bool isEastAsia,
-    required GlobalKey sectionKey,
-    required GlobalKey searchKey,
-    required AppLocalizations loc,
-  }) {
-    return Container(
-      key: isSearchActive && searchQuery.isNotEmpty ? searchKey : sectionKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Show section title only if there are results or no search is active
-          if (!isSearchActive ||
-              searchQuery.isEmpty ||
-              filteredPackages.isNotEmpty)
-            Text(
-              sectionTitle,
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+  required String sectionTitle,
+  required List<PackageModel> packages,
+  required List<PackageModel> filteredPackages,
+  required bool isLoading,
+  required String? errorMessage,
+  required VoidCallback onRetry,
+  required String groupCode,
+  required AppLocalizations loc,
+}) {
+  return Container(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Always show section title if not loading and no error
+        if (!isLoading && errorMessage == null)
+          Text(
+            sectionTitle,
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
+          ),
 
-          // Show search results count for this section
-          if (isSearchActive &&
-              searchQuery.isNotEmpty &&
-              filteredPackages.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(top: 8, bottom: 8),
-              child: Text(
-                '${filteredPackages.length} result${filteredPackages.length != 1 ? 's' : ''} found',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
+        // Always show shift selector if not loading and no error (regardless of filteredPackages)
+        if (!isLoading && errorMessage == null)
+          Column(
+            children: [
+              SizedBox(height: 16),
+              _buildShiftSelector(groupCode),
+              SizedBox(height: 20),
+            ],
+          ),
+
+        // Show loading, error, or packages
+        if (isLoading)
+          Center(child: CircularProgressIndicator())
+        else if (errorMessage != null)
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.red[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red[200]!),
             ),
-
-          // Show shift selector only if not searching or has results
-          if ((!isSearchActive ||
-              searchQuery.isEmpty ||
-              filteredPackages.isNotEmpty))
-            Column(
+            child: Column(
               children: [
-                SizedBox(height: 16),
-                _buildShiftSelector(isEastAsia),
-                SizedBox(height: 20),
+                Icon(Icons.error_outline, color: Colors.red, size: 40),
+                SizedBox(height: 12),
+                Text(
+                  errorMessage,
+                  style: TextStyle(color: Colors.red[700]),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: onRetry,
+                  child: Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
               ],
             ),
-
-          // Show loading, error, or packages
-          if (isLoading)
-            Center(child: CircularProgressIndicator())
-          else if (errorMessage != null)
-            Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red[200]!),
+          )
+        else if (filteredPackages.isEmpty)
+          Container(
+            padding: EdgeInsets.all(20),
+            child: Text(
+              'No ${sectionTitle.toLowerCase()} packages available for selected shift',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
               ),
-              child: Column(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 40),
-                  SizedBox(height: 12),
-                  Text(
-                    errorMessage,
-                    style: TextStyle(color: Colors.red[700]),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: onRetry,
-                    child: Text('Retry'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else if (isSearchActive &&
-              searchQuery.isNotEmpty &&
-              filteredPackages.isEmpty)
-            Container(
-              padding: EdgeInsets.all(20),
-              child: Text(
-                'No ${sectionTitle.toLowerCase()} packages match your search',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                  fontStyle: FontStyle.italic,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            )
-          else if (filteredPackages.isNotEmpty)
-            // HORIZONTAL SCROLLING CONTAINER
-            Container(
-              height: 320, // Fixed height for horizontal scroll
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                itemCount: filteredPackages.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 280, // Fixed width for each card
-                    margin: EdgeInsets.only(right: 16),
-                    child: _buildCompactServiceCard(filteredPackages[index], loc),
-                  );
-                },
-              ),
+              textAlign: TextAlign.center,
             ),
-        ],
-      ),
-    );
-  }
+          )
+        else if (filteredPackages.isNotEmpty)
+          // HORIZONTAL SCROLLING CONTAINER
+          Container(
+            height: 320, // Fixed height for horizontal scroll
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              itemCount: filteredPackages.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  width: 280, // Fixed width for each card
+                  margin: EdgeInsets.only(right: 16),
+                  child: _buildCompactServiceCard(filteredPackages[index], loc),
+                );
+              },
+            ),
+          ),
+      ],
+    ),
+  );
+}
 
   Widget _buildDesignCardButton(AppLocalizations loc) {
   return GestureDetector(
@@ -2108,7 +1818,7 @@ Widget _buildDetailRow(String label, String value) {
                           ContinuousBookingOverlay.showAsOverlay(
                             context,
                             package: package,
-                            selectedShift: selectedEastAsiaShift,
+                            selectedShift: selectedShiftsByGroup.values.isNotEmpty ? selectedShiftsByGroup.values.first : 1,
                             serviceId: selectedServiceId ?? widget.serviceId,
                             professionId: widget.professionId,
                             onBookingCompleted: _onBookingCompleted,
@@ -2141,21 +1851,8 @@ Widget _buildDetailRow(String label, String value) {
     ),
   );
 }
-
-  void _scrollToSection(GlobalKey key) {
-    final context = key.currentContext;
-    if (context != null) {
-      Scrollable.ensureVisible(
-        context,
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
   @override
   void dispose() {
-    searchController.dispose();
     super.dispose();
   }
 }
