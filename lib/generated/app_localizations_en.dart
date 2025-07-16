@@ -109,4 +109,308 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcome => 'Welcome';
+
+  @override
+  String get designYourCard => 'Design your card';
+
+  @override
+  String get selectService => 'Select Service';
+
+  @override
+  String get hourlyServices => 'Hourly Services';
+
+  @override
+  String get addNewAddress => 'ADD NEW ADDRESS';
+
+  @override
+  String get selectAddressTitle => 'Select Address';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get nationality => 'Nationality';
+
+  @override
+  String get professionals => 'How many professionals do you need';
+
+  @override
+  String get contractDuration => 'Contract Duration';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get durationOfVisit => 'Duration of visit';
+
+  @override
+  String get visitsWeeksNumber => 'Visits week number';
+
+  @override
+  String get date => 'Select Date';
+
+  @override
+  String get select => 'Select';
+
+  @override
+  String get tapToSelect => 'Tap to select';
+
+  @override
+  String get dialogForPrevious =>
+      'Please select Contract Duration and Visits Per Week first';
+
+  @override
+  String get selectNationality => 'Select Nationality';
+
+  @override
+  String get selectContractDuration => 'Select Contract Duration';
+
+  @override
+  String get selectTimeSlot => 'Select Time Slot';
+
+  @override
+  String get selectVisitDuration => 'Select Visit Duration';
+
+  @override
+  String get selectVisitsPerWeek => 'Select Visits Per Week';
+
+  @override
+  String get noOfEmployee => 'No of Employee';
+
+  @override
+  String get duration => 'Duration';
+
+  @override
+  String get weeklyVisits => 'Weekly Visits';
+
+  @override
+  String get totalPrice => 'Total Price';
+
+  @override
+  String get packageDetails => 'Package Details';
+
+  @override
+  String get get => 'GET';
+
+  @override
+  String get off => 'OFF';
+
+  @override
+  String get hours => 'Hours';
+
+  @override
+  String get weeks => 'Weeks';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get insertAddress => 'Insert Address';
+
+  @override
+  String get district => 'District';
+
+  @override
+  String get map => 'Map';
+
+  @override
+  String get details => 'Details';
+
+  @override
+  String get addressTitle => 'Address Title';
+
+  @override
+  String get houseType => 'House Type';
+
+  @override
+  String get buildingNum => 'Building Number';
+
+  @override
+  String get streetName => 'Street Name';
+
+  @override
+  String get villa => 'Villa';
+
+  @override
+  String get appartment => 'Appartment';
+
+  @override
+  String get appartmentNumber => 'Appartment';
+
+  @override
+  String get flooeNumber => 'Floor Number';
+
+  @override
+  String get fullAddress => 'Full Address';
+
+  @override
+  String get houseNum => 'House Number';
+
+  @override
+  String get floor => 'Floor';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get selectCity => 'Please select your city';
+
+  @override
+  String get selectDistrict => 'Please select your District';
+
+  @override
+  String get selectMap => 'Select on map';
+
+  @override
+  String get selectAddress => 'Please give the address a name';
+
+  @override
+  String get selectHouseType => 'Select House Type';
+
+  @override
+  String get selectFloor => 'Select floor';
+
+  @override
+  String get selectNote => 'Unit Number,Entrance code etc..';
+
+  @override
+  String get selectLocation => 'Select Location';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get mapSelected => 'Map selected';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get step => 'Step';
+
+  @override
+  String get ofStep => 'of';
+
+  @override
+  String get selectDate => 'Select Date';
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get congratulations => 'Congratulations!';
+
+  @override
+  String get saved => 'saved so far!';
+
+  @override
+  String get viewOrder => 'View Order';
+
+  @override
+  String get orderSummary => 'Order Summary';
+
+  @override
+  String get serviceDetails => 'Service Details';
+
+  @override
+  String get startDate => 'Start Date';
+
+  @override
+  String get workers => 'Workers';
+
+  @override
+  String get finalPrice => 'Final Price';
+
+  @override
+  String get billingPayment => 'Billing and Payment';
+
+  @override
+  String get coupons => 'Coupons and Offers';
+
+  @override
+  String get paymentSummary => 'Payment Summary';
+
+  @override
+  String get itemTotal => 'Item Total';
+
+  @override
+  String get packDiscount => 'Pack Discount';
+
+  @override
+  String get month => 'month';
+
+  @override
+  String get visitWeekly => 'Visit Weekly';
+
+  @override
+  String get savedSummary => 'Yay! You have saved';
+
+  @override
+  String get onFinalBill => 'on final bill';
+
+  @override
+  String get agreement => 'I agree to the ';
+
+  @override
+  String get termsAndCond => 'Terms and Conditions';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get proceedToPay => 'Proceed to pay';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get totalIncVat => 'Total (Inclusive of VAT)';
+
+  @override
+  String get eastAsia => 'East Asia';
+
+  @override
+  String get africa => 'African';
+
+  @override
+  String get months => 'months';
+
+  @override
+  String get serviceContractId => 'Service Contract ID';
+
+  @override
+  String get contractId => 'Contract ID';
+
+  @override
+  String get customer => 'Customer';
+
+  @override
+  String get service => 'Service';
+
+  @override
+  String get vat => 'VAT';
+
+  @override
+  String get notConfirmed => 'Not confirmed';
+
+  @override
+  String get confirmed => 'Confirmed';
+
+  @override
+  String get cancelled => 'Cancelled';
+
+  @override
+  String get paid => 'Paid';
+
+  @override
+  String get hourlyService => 'Hourly Service';
+
+  @override
+  String get payNow => 'Pay Now';
+
+  @override
+  String get cancel => 'Cancel';
 }
