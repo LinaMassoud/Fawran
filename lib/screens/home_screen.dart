@@ -134,21 +134,42 @@ class HomeScreen extends ConsumerWidget {
                     final profession = professions[index];
                     return GestureDetector(
                       onTap: () {
-                        ref.read(selectedProfessionProvider.notifier).state = profession;
-                        if (profession.services.length > 1) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const ServiceChoicePage()),
-                          );
-                        } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AddressSelectionScreen(
-                                header: profession.positionName,
+                        ref.read(selectedProfessionProvider.notifier).state =
+                            profession;
+
+                        final hasDomestic = profession.hasDomesticPackage;
+                        final serviceCount = profession.services.length;
+
+                        if (hasDomestic) {
+                          if (serviceCount > 1) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ServiceChoicePage()),
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddressSelectionScreen(
+                                  header: profession.positionName,
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          }
+                        } else {
+                          if (serviceCount <= 1) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CleaningServiceScreen(
+                                  professionId: profession.positionId,
+                                  serviceId: profession.services[0].id,
+                                ),
+                              ),
+                            );
+                          }
+                          // Optional: add a fallback or else branch if needed
                         }
                       },
                       child: Column(
@@ -160,7 +181,8 @@ class HomeScreen extends ConsumerWidget {
                               color: Colors.orange,
                               borderRadius: BorderRadius.circular(12),
                               image: DecorationImage(
-                                image: NetworkImage(getFullImageUrl(profession.image)),
+                                image: NetworkImage(
+                                    getFullImageUrl(profession.image)),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -209,8 +231,10 @@ class HomeScreen extends ConsumerWidget {
                             );
                           },
                         ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text("Error loading images: $e")),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) =>
+                      Center(child: Text("Error loading images: $e")),
                 ),
               ),
               const SizedBox(height: 20),
