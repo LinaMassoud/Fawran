@@ -43,6 +43,11 @@ class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
   String? _selectedHouseType;
   int? _selectedFloorNumber;
 
+  bool _useCurrentLocation = false;
+  bool _hasTriedCurrentLocation = false;
+bool _currentLocationFailed = false;
+bool _isGettingCurrentLocation = false;
+
   // Dropdown values
   City? _selectedCity;
   String? _selectedDistrict;
@@ -528,12 +533,18 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
       _selectedHouseType == null ||
       _streetNameController.text.trim().isEmpty ||
       _houseNumberController.text.trim().isEmpty ||
-      _fullAddressController.text.trim().isEmpty ||
-      _selectedLocation == null ||
-      _selectedCity == null ||
-      _selectedDistrictCode == null ||
-      _selectedDistrictCode!.isEmpty) {
+      _fullAddressController.text.trim().isEmpty) {
     return false;
+  }
+
+  // If not using current location, check location-specific fields
+  if (!_useCurrentLocation) {
+    if (_selectedLocation == null ||
+        _selectedCity == null ||
+        _selectedDistrictCode == null ||
+        _selectedDistrictCode!.isEmpty) {
+      return false;
+    }
   }
 
   // Check apartment-specific fields if house type is Apartment
@@ -602,6 +613,100 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
 
     _onMapCompleted();
   }
+
+
+void _toggleCurrentLocation() {
+  if (!_hasTriedCurrentLocation) {
+    // First time clicking - try to get current location
+    _getCurrentLocation();
+  } else if (_currentLocationFailed) {
+    // Only allow toggle back if current location failed
+    setState(() {
+      _useCurrentLocation = false;
+      _isDistrictCompleted = false;
+      _isMapCompleted = false;
+      _canProceedToDetails = false;
+      _currentStep = 1;
+    });
+  }
+  // If current location was successful, don't allow toggle back
+}
+
+Future<void> _getCurrentLocation() async {
+  setState(() {
+    _isGettingCurrentLocation = true;
+    _hasTriedCurrentLocation = true;
+  });
+
+  try {
+    // Check if location services are enabled
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Location services are disabled');
+    }
+
+    // Check location permissions
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('Location permissions are permanently denied');
+    }
+
+    // Get current position
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    // Success - set current location
+    setState(() {
+      _useCurrentLocation = true;
+      _currentLocationFailed = false;
+      _isGettingCurrentLocation = false;
+      _selectedLocation = LatLng(position.latitude, position.longitude);
+      
+      // Mark steps as completed
+      _isDistrictCompleted = true;
+      _isMapCompleted = true;
+      _canProceedToDetails = true;
+      _currentStep = 3;
+      
+      // Clear manual selection values
+      _selectedCity = null;
+      _selectedDistrict = null;
+      _selectedDistrictCode = null;
+      _districtMapData = null;
+    });
+
+    // Get address from coordinates
+    await _handleLocationSelection(LatLng(position.latitude, position.longitude));
+
+  } catch (e) {
+    // Current location failed - allow manual selection
+    setState(() {
+      _useCurrentLocation = false;
+      _currentLocationFailed = true;
+      _isGettingCurrentLocation = false;
+      _isDistrictCompleted = false;
+      _isMapCompleted = false;
+      _canProceedToDetails = false;
+      _currentStep = 1;
+    });
+
+    // Show error message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to get current location: ${e.toString()}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
 
   Future<void> _proceedToDetails() async {
     if (_selectedLocation == null) return;
@@ -876,7 +981,54 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
       ),
     );
   }
-
+  
+  Widget _buildCurrentLocationButton({required AppLocalizations loc}) {
+  return Container(
+    width: double.infinity,
+    margin: EdgeInsets.only(bottom: 20),
+    child: ElevatedButton.icon(
+      onPressed: _isGettingCurrentLocation ? null : _toggleCurrentLocation,
+      icon: _isGettingCurrentLocation
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : Icon(
+              _useCurrentLocation ? Icons.location_on : Icons.my_location,
+              color: Colors.white,
+            ),
+      label: Text(
+        _isGettingCurrentLocation
+            ? "Getting location..."
+            : _useCurrentLocation
+                ? "Current location selected"
+                : _currentLocationFailed
+                    ? "Manual Address Selection"
+                    : "Use Current Location",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _useCurrentLocation 
+            ? Colors.green 
+            : _currentLocationFailed 
+                ? Colors.orange 
+                : Color(0xFF1E3A8A),
+        padding: EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+  );
+}
   Widget _buildHouseTypeDropdown({bool enabled = true, required AppLocalizations loc}) {
   final localizedHouseTypes = _getLocalizedHouseTypes(loc);
   
@@ -1107,30 +1259,39 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
 
                     SizedBox(height: 30),
 
-                    // Step 1: District
-                    _buildStepIndicator(
-                        1, '${loc.district} *', _isDistrictCompleted, _currentStep >= 1),
-                    SizedBox(height: 20),
-                    _buildCityDropdown(loc),
-                    SizedBox(height: 15),
-                    _buildDistrictDropdown(loc),
+                    _buildCurrentLocationButton(loc: loc),
 
-                    SizedBox(height: 30),
-                    Container(height: 1, color: Colors.grey[300]),
-                    SizedBox(height: 30),
+                    if (!_useCurrentLocation) ...[
+  // Step 1: District
+  _buildStepIndicator(
+      1, '${loc.district} *', _isDistrictCompleted, _currentStep >= 1),
+  SizedBox(height: 20),
+  _buildCityDropdown(loc),
+  SizedBox(height: 15),
+  _buildDistrictDropdown(loc),
 
-                    // Step 2: Map
-                    _buildStepIndicator(
-                        2, '${loc.map} *', _isMapCompleted, _currentStep >= 2),
-                    SizedBox(height: 20),
-                    _buildMapSelector(enabled: _isDistrictCompleted,loc: loc),
+  SizedBox(height: 30),
+  Container(height: 1, color: Colors.grey[300]),
+  SizedBox(height: 30),
 
-                    SizedBox(height: 30),
-                    Container(height: 1, color: Colors.grey[300]),
-                    SizedBox(height: 30),
+  // Step 2: Map
+  _buildStepIndicator(
+      2, '${loc.map} *', _isMapCompleted, _currentStep >= 2),
+  SizedBox(height: 20),
+  _buildMapSelector(enabled: _isDistrictCompleted, loc: loc),
+
+  SizedBox(height: 30),
+  Container(height: 1, color: Colors.grey[300]),
+  SizedBox(height: 30),
+],
 
                     // Step 3: Details
-                    _buildStepIndicator(3, '${loc.details}', false, _currentStep >= 3),
+                    _buildStepIndicator(
+  _useCurrentLocation ? 1 : 3, 
+  '${loc.details}', 
+  false, 
+  _currentStep >= (_useCurrentLocation ? 1 : 3)
+),
                     SizedBox(height: 25),
 
                     Text(
@@ -1146,7 +1307,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                     SizedBox(height: 8),
                     _buildTextField('${loc.selectAddress}',
                         _addressTitleController,
-                        enabled: _canProceedToDetails,maxLength: 50),
+                        enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 50),
 
                     SizedBox(height: 20),
 
@@ -1161,7 +1322,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                       ),
                     ),
                     SizedBox(height: 8),
-                    _buildHouseTypeDropdown(enabled: _canProceedToDetails,loc: loc),
+                    _buildHouseTypeDropdown(enabled: _useCurrentLocation || _canProceedToDetails,loc: loc),
 
                     SizedBox(height: 20),
 
@@ -1184,7 +1345,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                               SizedBox(height: 8),
                               _buildTextField(
                                   loc.streetName, _streetNameController,
-                                  enabled: _canProceedToDetails,maxLength: 50),
+                                  enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 50),
                             ],
                           ),
                         ),
@@ -1212,7 +1373,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                                     : loc.buildingNum,
                                 _houseNumberController,
                                 maxLength: 10,
-                                enabled: _canProceedToDetails),
+                                enabled: _useCurrentLocation || _canProceedToDetails),
                             ],
                           ),
                         ),
@@ -1240,7 +1401,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                                 ),
                                 SizedBox(height: 8),
                                 _buildFloorDropdown(
-                                    enabled: _canProceedToDetails,loc: loc),
+                                    enabled: _useCurrentLocation || _canProceedToDetails,loc: loc),
                               ],
                             ),
                           ),
@@ -1262,7 +1423,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                                 SizedBox(height: 8),
                                 _buildTextField(loc.appartmentNumber,
                                     _apartmentNumberController,
-                                    enabled: _canProceedToDetails,maxLength: 10),
+                                    enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 10),
                               ],
                             ),
                           ),
@@ -1284,7 +1445,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                     ),
                     SizedBox(height: 8),
                     _buildTextField('${loc.fullAddress}', _fullAddressController,
-                        maxLines: 3, enabled: _canProceedToDetails,maxLength: 100),
+                        maxLines: 3, enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 100),
 
                     SizedBox(height: 20),
 
@@ -1301,7 +1462,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
                     SizedBox(height: 8),
                     _buildTextField(
                         '${loc.selectNote}', _notesController,
-                        maxLines: 2, enabled: _canProceedToDetails,maxLength: 100),
+                        maxLines: 2, enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 100),
                   ],
                 ),
               ),

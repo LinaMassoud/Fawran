@@ -705,7 +705,7 @@ void didChangeDependencies() {
                           _buildServiceSelector(loc),
 
                           // Service title - only show if professionId is not 61
-                          if (widget.professionId != 61)
+                          if (widget.serviceId != 62)
                             Text(
                               dynamicServiceTitle,
                               style: TextStyle(
@@ -714,12 +714,12 @@ void didChangeDependencies() {
                                 color: Colors.black87,
                               ),
                             ),
-                          if (widget.professionId != 61)
+                          if (widget.serviceId != 62)
                             SizedBox(height: 16),
                           SizedBox(height: 16), // Consistent spacing
 
                           // Design your card button - only show if professionId is not 61
-                          if (widget.professionId != 61) ...[
+                          if (widget.serviceId != 62) ...[
                             _buildDesignCardButton(loc),
                             SizedBox(height: 32), // Spacing before package sections
                           ] else
