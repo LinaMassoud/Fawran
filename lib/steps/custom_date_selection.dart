@@ -7,9 +7,9 @@ class CustomDateSelectionStep extends StatefulWidget {
   final Function(double)? onTotalPriceChanged;
   final VoidCallback? onNextPressed;
   final double pricePerVisit;
-  final String contractDuration;
+  final int contractDuration;
   final int workerCount;
-  final String visitsPerWeek;
+  final int visitsPerWeek;
   final int maxSelectableDates;
   final bool showBottomNavigation;
   final int professionId;
@@ -138,48 +138,38 @@ void initState() {
 }
 
   void _calculateContractDetails() {
-    // Parse contract duration
-    int durationInWeeks = 0;
-    String duration = widget.contractDuration.toLowerCase();
-    
-    if (duration.contains('year')) {
-      int years = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-      durationInWeeks = years * 52;
-    } else if (duration.contains('month')) {
-      int months = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-      durationInWeeks = months * 4;
-    } else if (duration.contains('week')) {
-      durationInWeeks = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-    }
+  // Contract duration is now directly in weeks
+  int durationInWeeks = widget.contractDuration;
 
-    // Parse visits per week (excluding Fridays)
-    _visitsPerWeekCount = int.tryParse(widget.visitsPerWeek.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-    
-    // Ensure visits per week doesn't exceed working days (6 days max)
-    if (_visitsPerWeekCount > _getWorkingDaysPerWeek()) {
-      _visitsPerWeekCount = _getWorkingDaysPerWeek();
-    }
-
-    // Calculate total allowed visits based on working days only
-    _totalAllowedVisits = durationInWeeks * _visitsPerWeekCount;
-
-    // Only set default dates if user hasn't selected a start date
-    if (_userSelectedStartDate == null) {
-      final today = DateTime.now();
-      DateTime proposedStartDate = DateTime(today.year, today.month, today.day);
-      
-      // If today is Friday, move to the next working day (Saturday)
-      while (_isFriday(proposedStartDate)) {
-        proposedStartDate = proposedStartDate.add(Duration(days: 1));
-      }
-      
-      _contractStartDate = proposedStartDate;
-      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
-    } else {
-      _contractStartDate = _userSelectedStartDate;
-      _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
-    }
+  // Visits per week is now directly an int
+  _visitsPerWeekCount = widget.visitsPerWeek;
+  
+  // Ensure visits per week doesn't exceed working days (6 days max)
+  if (_visitsPerWeekCount > _getWorkingDaysPerWeek()) {
+    _visitsPerWeekCount = _getWorkingDaysPerWeek();
   }
+
+  // Calculate total allowed visits based on working days only
+  _totalAllowedVisits = durationInWeeks * _visitsPerWeekCount;
+
+  // Only set default dates if user hasn't selected a start date
+  if (_userSelectedStartDate == null) {
+    final today = DateTime.now();
+    DateTime proposedStartDate = DateTime(today.year, today.month, today.day);
+    
+    // If today is Friday, move to the next working day (Saturday)
+    while (_isFriday(proposedStartDate)) {
+      proposedStartDate = proposedStartDate.add(Duration(days: 1));
+    }
+    
+    _contractStartDate = proposedStartDate;
+    _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+  } else {
+    _contractStartDate = _userSelectedStartDate;
+    _contractEndDate = _contractStartDate!.add(Duration(days: durationInWeeks * 7));
+  }
+}
+
 
   void _updateWeeklyVisitCounts() {
     _weeklyVisitCounts.clear();

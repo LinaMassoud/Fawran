@@ -117,10 +117,10 @@ bool _isCompletingPurchase = false;
   // Service Details Data (with defaults for custom booking)
   String selectedNationality = 'East Asia';
   late int workerCount;
-  late String contractDuration;
+  late int contractDuration;
   String selectedTime = 'Morning';
   late String visitDuration;
-  late String visitsPerWeek;
+  late int visitsPerWeek;
   late double hourPrice; // New field for custom booking
 
 double? _hourPrice;
@@ -140,20 +140,18 @@ double? _hourPrice;
     if (widget.isCustomBooking) {
       // Default values for custom booking - set to null/empty for placeholders
       workerCount = 1; // Keep this as it's handled by number selection
-      contractDuration = ''; // Empty string for placeholder
+      contractDuration = 0; // Empty string for placeholder
       visitDuration = ''; // Empty string for placeholder
-      visitsPerWeek = ''; // Empty string for placeholder
+      visitsPerWeek = 0; // Empty string for placeholder
       selectedNationality = ''; // Empty string for placeholder
       selectedTime = ''; // Empty string for placeholder
       hourPrice = 32.0; // Default hourly rate
     } else {
       // Initialize from package (existing functionality)
       workerCount = widget.package!.noOfEmployee;
-      contractDuration =
-          '${widget.package!.noOfMonth} month${widget.package!.noOfMonth > 1 ? 's' : ''}';
+       contractDuration = widget.package!.noOfWeeks ?? (widget.package!.noOfMonth * 4);
       visitDuration = '${widget.package!.duration} hours';
-      visitsPerWeek =
-          '${widget.package!.visitsWeekly} visit${widget.package!.visitsWeekly > 1 ? 's' : ''} weekly';
+      visitsPerWeek = widget.package!.visitsWeekly; 
       selectedNationality = widget.package!.nationalityDisplay;
       selectedTime = _getTimeFromShift(widget.selectedShift.toString());
       hourPrice = widget.package!.hourPrice;
@@ -500,7 +498,7 @@ void _updatePriceVat(double priceVat) {
     }
   }
 
-  void _updateContractDuration(String newDuration) {
+  void _updateContractDuration(int newDuration) {
     setState(() {
       contractDuration = newDuration;
     });
@@ -510,7 +508,7 @@ void _updatePriceVat(double priceVat) {
     }
   }
 
-  void _updateVisitsPerWeek(String newVisitsPerWeek) {
+  void _updateVisitsPerWeek(int newVisitsPerWeek) {
     setState(() {
       visitsPerWeek = newVisitsPerWeek;
     });
@@ -572,28 +570,12 @@ Future<Map<String, dynamic>> _createContract(BookingData bookingData) async {
         : int.tryParse(widget.package!.duration) ?? 4;
     
     int weeklyVisit = widget.isCustomBooking
-        ? (visitsPerWeek.isEmpty ? 1 : int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1)
+        ? (visitsPerWeek == 0 ? 1 : visitsPerWeek)
         : widget.package!.visitsWeekly;
     
-    int contractPeriod;
-if (widget.isCustomBooking) {
-  if (contractDuration.isEmpty) {
-    contractPeriod = 4; // Default 1 month = 4 weeks
-  } else {
-    int duration = int.tryParse(contractDuration.split(' ')[0]) ?? 1;
-    if (contractDuration.contains('month')) {
-      contractPeriod = duration * 4; // Convert months to weeks
-    } else if (contractDuration.contains('week')) {
-      contractPeriod = duration; // Already in weeks
-    } else if (contractDuration.contains('year')) {
-      contractPeriod = duration * 52; // Convert years to weeks
-    } else {
-      contractPeriod = duration * 4; // Default to treating as months
-    }
-  }
-} else {
-  contractPeriod = widget.package!.noOfWeeks ?? (widget.package!.noOfMonth * 4);// Convert package months to weeks
-}
+    int contractPeriod = widget.isCustomBooking
+        ? (contractDuration == 0 ? 4 : contractDuration)
+        : widget.package!.noOfWeeks ?? (widget.package!.noOfMonth * 4);
     
     // Use package data for non-custom bookings, calculate for custom bookings
     int visitShift;
@@ -796,20 +778,13 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
     print(
         'Duration of Visit: $durationOfVisit hours (from string: "$visitDuration")');
 
-    int contractMonths = contractDuration.isEmpty
-        ? 1
-        : (int.tryParse(contractDuration.split(' ')[0]) ?? 1);
-    double contractDurationInWeeks = contractMonths * 4.0;
-    print(
-        'Contract Duration: $contractMonths months = $contractDurationInWeeks weeks (from string: "$contractDuration")');
+    double contractDurationInWeeks = contractDuration == 0 ? 4.0 : contractDuration.toDouble();
+  print('Contract Duration: $contractDurationInWeeks weeks');
 
-    int visitsPerWeekCount = visitsPerWeek.isEmpty
-        ? 1
-        : (int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1);
-    print(
-        'Visits Per Week: $visitsPerWeekCount (from string: "$visitsPerWeek")');
-    print('Worker Count: $workerCount');
-    print('Hour Price: $hourPrice');
+    int visitsPerWeekCount = visitsPerWeek == 0 ? 1 : visitsPerWeek;
+  print('Visits Per Week: $visitsPerWeekCount');
+  print('Worker Count: $workerCount');
+  print('Hour Price: $hourPrice');
 
     // Rest of the calculation remains the same...
     double basePrice = hourPrice *
@@ -863,22 +838,9 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
         ? 4.0
         : (double.tryParse(visitDuration.split(' ')[0]) ?? 4.0);
 
-    int contractMonths = contractDuration.isEmpty
-        ? 1
-        : (int.tryParse(contractDuration.split(' ')[0]) ?? 1);
-    double contractDurationInWeeks;
+    double contractDurationInWeeks = contractDuration == 0 ? 4.0 : contractDuration.toDouble();
 
-    if (contractDuration.contains('week')) {
-      contractDurationInWeeks = contractMonths.toDouble();
-    } else if (contractDuration.contains('year')) {
-      contractDurationInWeeks = contractMonths * 52.0;
-    } else {
-      contractDurationInWeeks = contractMonths * 4.0;
-    }
-
-    int visitsPerWeekCount = visitsPerWeek.isEmpty
-        ? 1
-        : (int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1);
+    int visitsPerWeekCount = visitsPerWeek == 0 ? 1 : visitsPerWeek;
     // Rest of the calculation remains the same...
     double totalContractPrice = hourPrice *
         durationOfVisit *
@@ -904,13 +866,8 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
     double durationOfVisit = visitDuration.isEmpty
         ? 4.0
         : (double.tryParse(visitDuration.split(' ')[0]) ?? 4.0);
-    int contractMonths = contractDuration.isEmpty
-        ? 1
-        : (int.tryParse(contractDuration.split(' ')[0]) ?? 1);
-    double contractDurationInWeeks = contractMonths * 4.0;
-    int visitsPerWeekCount = visitsPerWeek.isEmpty
-        ? 1
-        : (int.tryParse(visitsPerWeek.split(' ')[0]) ?? 1);
+    double contractDurationInWeeks = contractDuration == 0 ? 4.0 : contractDuration.toDouble();
+    int visitsPerWeekCount = visitsPerWeek == 0 ? 1 : visitsPerWeek;
 
     double basePrice = hourPrice *
         durationOfVisit *
@@ -1085,7 +1042,6 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                       maxSelectableDates: workerCount,
                                       selectedDays: selectedDays,
                                       workerCount: workerCount,
-                                      contractDuration: contractDuration,
                                       totalPrice: widget.isCustomBooking
                                           ? _calculateTotalPrice()
                                           : widget.package!.finalPrice!

@@ -665,17 +665,8 @@ Widget _buildFormattedTerms() {
     );
   }
 
-String _getLocalizedVisitsPerWeek(String visitsPerWeek, AppLocalizations loc) {
-  // Extract number from the string (e.g., "visit weekly 1" -> "1")
-  final RegExp regExp = RegExp(r'\d+');
-  final match = regExp.firstMatch(visitsPerWeek);
-  if (match != null) {
-    final number = match.group(0);
-    // You may need to check if AppLocalizations has a method for this
-    // If not, you can create a simple mapping
-    return '$number ${loc.weeklyVisits}'; // or use a specific localization key if available
-  }
-  return visitsPerWeek; // fallback
+String _getLocalizedVisitsPerWeek(int visitsPerWeek, AppLocalizations loc) {
+  return '$visitsPerWeek ${loc.weeklyVisits}';
 }
 
 String _getLocalizedNationality(String nationality, AppLocalizations loc) {
@@ -690,15 +681,10 @@ String _getLocalizedNationality(String nationality, AppLocalizations loc) {
   }
 }
 
-String _getLocalizedContractDurationSimple(String contractDuration, AppLocalizations loc) {
-  final RegExp regExp = RegExp(r'\d+');
-  final match = regExp.firstMatch(contractDuration);
-  if (match != null) {
-    final number = match.group(0);
-    // Use existing localization or create a formatted string
-    return '$number ${loc.month ?? 'شهر'}'; // fallback to Arabic "شهر"
-  }
-  return contractDuration;
+String _getLocalizedContractDurationSimple(int contractDuration, AppLocalizations loc) {
+  // Convert weeks to months (assuming 4 weeks = 1 month)
+  int months = (contractDuration / 4).round();
+  return '$months ${loc.month ?? 'شهر'}';
 }
 
 

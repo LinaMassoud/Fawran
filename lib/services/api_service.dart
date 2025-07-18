@@ -226,6 +226,7 @@ class ApiService {
     }
   }
 
+
   static Future<List<PackageModel>> fetchServicePackages({
     required int professionId,
     required int serviceId,
@@ -548,6 +549,50 @@ class ApiService {
 
     return response;
   }
+
+
+
+static Future<List<dynamic>> fetchContractDurations() async {
+  try {
+    final url = '$_baseUrl/contract-durations';
+
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
+
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body);
+      return decodedData;
+    } else {
+      throw Exception(
+          'Failed to load contract durations. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error loading contract durations: $e');
+  }
+}
+
+static Future<List<dynamic>> fetchHourlyVisits() async {
+  try {
+    final url = '$_baseUrl/hourly-visits';
+
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
+
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body);
+      return decodedData;
+    } else {
+      throw Exception(
+          'Failed to load hourly visits. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error loading hourly visits: $e');
+  }
+}
 
   static Future<Map<String, dynamic>> createContract({
     required int customerId,
