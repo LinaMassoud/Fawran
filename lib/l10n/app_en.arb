@@ -160,7 +160,24 @@
   "paid":"Paid",
   "hourlyService": "Hourly Service",
   "payNow": "Pay Now",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+
+  "noPhoneNumber": "No phone number",
+  "loading": "Loading...",
+  "user": "User",
+  "myAddresses": "My Addresses",
+  "myInformation": "My Information",
+  "myContracts": "My contracts",
+  "aboutCompany": "About the Company",
+  "ticketsSupport": "Tickets support",
+  "companyBranches": "Company Branches",
+  "socialMediaLinks": "Social Media Links",
+  "faq": "Frequently Asked Questions (FAQ)",
+  "logout": "Logout",
+  "logoutConfirmation": "Are you sure you want to logout?",
+
+  "userID": "User ID",
+  "notProvided": "Not provided"
 
 
 

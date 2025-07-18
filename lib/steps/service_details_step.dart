@@ -162,10 +162,17 @@ double _apiPriceVat = 0.0;
     }
 
     setState(() {
-      visitDurations =
-          availableDurations.isNotEmpty ? availableDurations : [];
+      visitDurations = availableDurations.isNotEmpty ? availableDurations : [];
       isLoadingVisitDurations = false;
     });
+
+    // AUTO-SELECT: If there's exactly one duration and it's not already selected, select it
+    if (availableDurations.length == 1 && 
+        widget.visitDuration != availableDurations.first &&
+        widget.onVisitDurationChanged != null) {
+      widget.onVisitDurationChanged!(availableDurations.first);
+      _calculatePriceFromAPI();
+    }
   } catch (e) {
     print('Error loading visit durations: $e');
     setState(() {
@@ -182,7 +189,7 @@ void _resetDependentFields(String changedField) {
     case 'nationality':
       // Reset all fields below nationality
       if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
       widget.onVisitsPerWeekChanged('');
       widget.onContractDurationChanged('');
       break;
@@ -190,18 +197,18 @@ void _resetDependentFields(String changedField) {
       // Reset all fields below worker count
       widget.onContractDurationChanged('');
       if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
       widget.onVisitsPerWeekChanged('');
       break;
     case 'contractDuration':
       // Reset fields below contract duration
       if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
       widget.onVisitsPerWeekChanged('');
       break;
     case 'time':
       // Reset fields below time
-      if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
+      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
       widget.onVisitsPerWeekChanged('');
       break;
     case 'visitDuration':
@@ -1116,83 +1123,74 @@ if (widget.onHourPriceChanged != null) {
 }
 
   Widget _buildVisitDurationField(AppLocalizations loc) {
-    if (widget.isCustomBooking && widget.onVisitDurationChanged != null) {
-      // Editable visit duration for custom booking - use loaded durations
-      return _buildDropdownField(
-        loc.durationOfVisit,
-        widget.visitDuration,
-        visitDurations,
-        (value) {
-          // Call the callback
-          widget.onVisitDurationChanged!(value);
-          _resetDependentFields('visitDuration'); 
-          _calculatePriceFromAPI();
-        },
-        customTitle: loc.selectVisitDuration,
-        isLoading: isLoadingVisitDurations,
-        loc: loc,
-      );
-    } else {
-      // Read-only visit duration for package booking
-      bool hasValidDuration = widget.visitDuration.isNotEmpty;
+  // Always show as read-only field since duration is auto-selected
+  bool hasValidDuration = widget.visitDuration.isNotEmpty;
 
-      return Container(
-        margin: EdgeInsets.only(bottom: 15),
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!, width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Duration of visit',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+  return Container(
+    margin: EdgeInsets.only(bottom: 15),
+    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: Colors.white,
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            loc.durationOfVisit,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
             ),
-            if (hasValidDuration)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.visitDuration.replaceAll(RegExp(r'\s*hours?'), ''),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'Hours',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              )
-            else
+          ),
+        ),
+        if (isLoadingVisitDurations)
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+            ),
+          )
+        else if (hasValidDuration)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text(
-                'Not selected',
+                widget.visitDuration.replaceAll(RegExp(r'\s*hours?'), '').replaceAll(RegExp(r'\s*ساعات'), ''),
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[500],
-                  fontWeight: FontWeight.w400,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-          ],
-        ),
-      );
-    }
-  }
+              SizedBox(width: 6),
+              Text(
+                widget.visitDuration.contains('ساعات') ? 'ساعات' : 'Hours',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          )
+        else
+          Text(
+            'Loading...',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[500],
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+      ],
+    ),
+  );
+}
 
   Widget _buildWorkerCountField(AppLocalizations loc) {
     return Container(

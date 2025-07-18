@@ -163,7 +163,24 @@
   "paid":"مدفوع",
   "hourlyService": "خدمة كل ساعة",
   "payNow": "ادفع الآن",
-  "cancel": "يلغي"
+  "cancel": "يلغي",
+
+  "noPhoneNumber": "لا يوجد رقم هاتف",
+  "loading": "جاري التحميل...",
+  "user": "المستخدم",
+  "myAddresses": "عناويني",
+  "myInformation": "معلوماتي",
+  "myContracts": "عقودي",
+  "aboutCompany": "عن الشركة",
+  "ticketsSupport": "دعم التذاكر",
+  "companyBranches": "فروع الشركة",
+  "socialMediaLinks": "روابط وسائل التواصل الاجتماعي",
+  "faq": "الأسئلة الشائعة",
+  "logout": "تسجيل الخروج",
+  "logoutConfirmation": "هل أنت متأكد من تسجيل الخروج؟",
+
+  "userID": "معرف المستخدم",
+  "notProvided": "غير مقدم"
 
 
 }
