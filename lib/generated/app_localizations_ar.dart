@@ -413,4 +413,49 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cancel => 'يلغي';
+
+  @override
+  String get noPhoneNumber => 'لا يوجد رقم هاتف';
+
+  @override
+  String get loading => 'جاري التحميل...';
+
+  @override
+  String get user => 'المستخدم';
+
+  @override
+  String get myAddresses => 'عناويني';
+
+  @override
+  String get myInformation => 'معلوماتي';
+
+  @override
+  String get myContracts => 'عقودي';
+
+  @override
+  String get aboutCompany => 'عن الشركة';
+
+  @override
+  String get ticketsSupport => 'دعم التذاكر';
+
+  @override
+  String get companyBranches => 'فروع الشركة';
+
+  @override
+  String get socialMediaLinks => 'روابط وسائل التواصل الاجتماعي';
+
+  @override
+  String get faq => 'الأسئلة الشائعة';
+
+  @override
+  String get logout => 'تسجيل الخروج';
+
+  @override
+  String get logoutConfirmation => 'هل أنت متأكد من تسجيل الخروج؟';
+
+  @override
+  String get userID => 'معرف المستخدم';
+
+  @override
+  String get notProvided => 'غير مقدم';
 }

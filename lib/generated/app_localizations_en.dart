@@ -413,4 +413,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancel => 'Cancel';
+
+  @override
+  String get noPhoneNumber => 'No phone number';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get user => 'User';
+
+  @override
+  String get myAddresses => 'My Addresses';
+
+  @override
+  String get myInformation => 'My Information';
+
+  @override
+  String get myContracts => 'My contracts';
+
+  @override
+  String get aboutCompany => 'About the Company';
+
+  @override
+  String get ticketsSupport => 'Tickets support';
+
+  @override
+  String get companyBranches => 'Company Branches';
+
+  @override
+  String get socialMediaLinks => 'Social Media Links';
+
+  @override
+  String get faq => 'Frequently Asked Questions (FAQ)';
+
+  @override
+  String get logout => 'Logout';
+
+  @override
+  String get logoutConfirmation => 'Are you sure you want to logout?';
+
+  @override
+  String get userID => 'User ID';
+
+  @override
+  String get notProvided => 'Not provided';
 }
