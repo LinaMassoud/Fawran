@@ -1,4 +1,4 @@
-class PackageModel {
+class DomesticPackageModel {
   final int packageId;
   final String packageName;
   final String packageType;
@@ -7,7 +7,7 @@ class PackageModel {
   final double contractAmount;
   final double finalInvoice;
 
-  PackageModel({
+  DomesticPackageModel({
     required this.packageId,
     required this.packageName,
     required this.packageType,
@@ -17,8 +17,8 @@ class PackageModel {
     required this.finalInvoice,
   });
 
-  factory PackageModel.fromJson(Map<String, dynamic> json) {
-    return PackageModel(
+  factory DomesticPackageModel.fromJson(Map<String, dynamic> json) {
+    return DomesticPackageModel(
       packageId: json['package_domestic_id'],
       packageName: json['package_name'],
       packageType: json['package_type'],
