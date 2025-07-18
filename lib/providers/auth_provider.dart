@@ -106,7 +106,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       _setUserId(userId);
     } else {
       state = state.copyWith(
-          isLoading: false, errorMessage: 'Sign up failed. Please try again.');
+          isLoading: false, errorMessage: response?['error']??  'Sign up failed. Please try again.');
     }
   }
 
