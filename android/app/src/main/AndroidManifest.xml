@@ -4,6 +4,8 @@
     <!-- Permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    
 
     <!-- Intent queries for text sharing -->
     <queries>
@@ -16,8 +18,13 @@
     <application
         android:label="fawran"
         android:icon="@mipmap/ic_launcher"
-        android:requestLegacyExternalStorage="true">
+        android:requestLegacyExternalStorage="true"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="true"
+        
+        >
 
+        
         <!-- Your Google Maps API key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
