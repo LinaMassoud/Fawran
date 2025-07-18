@@ -4,8 +4,8 @@ class BookingData {
   final double originalPrice; // Changed from discountPrice to originalPrice
   final String selectedAddress;
   final int workerCount;
-  final String contractDuration;
-  final String visitsPerWeek;
+  final int contractDuration;
+  final int visitsPerWeek;
   final String selectedNationality;
   final String packageName;
 

@@ -9,14 +9,14 @@ import 'package:fawran/generated/app_localizations.dart';
 class ServiceDetailsStep extends StatefulWidget {
   final String selectedNationality;
   final int workerCount;
-  final String contractDuration;
+  final int contractDuration; // Changed from String to int (weeks)
   final String selectedTime;
   final String visitDuration;
-  final String visitsPerWeek;
+  final int visitsPerWeek; // Changed from String to int (visits number)
   final List<String> selectedDays;
-  final Function(String) onContractDurationChanged;
+  final Function(int) onContractDurationChanged; // Changed from String to int
   final Function(int) onWorkerCountChanged;
-  final Function(String) onVisitsPerWeekChanged;
+  final Function(int) onVisitsPerWeekChanged; // Changed from String to int
   final Function(List<String>) onSelectedDaysChanged;
   final VoidCallback? onSelectDatePressed;
   final VoidCallback? onDonePressed;
@@ -25,7 +25,7 @@ class ServiceDetailsStep extends StatefulWidget {
   final double totalPrice;
   final List<DateTime> selectedDates;
   final double? discountPercentage;
-  final int serviceId; // Add this line
+  final int serviceId;
   final int professionId;
   final double pricePerVisit;
 
@@ -44,10 +44,10 @@ class ServiceDetailsStep extends StatefulWidget {
     Key? key,
     this.selectedNationality = '',
     required this.workerCount,
-    this.contractDuration = '',
+    this.contractDuration = 0, // Changed default from '' to 0
     this.selectedTime = '',
     this.visitDuration = '',
-    this.visitsPerWeek = '',
+    this.visitsPerWeek = 0, // Changed default from '' to 0
     this.selectedDays = const [],
     required this.onContractDurationChanged,
     required this.onWorkerCountChanged,
@@ -68,7 +68,7 @@ class ServiceDetailsStep extends StatefulWidget {
     required this.serviceId,
     required this.professionId,
     this.pricePerVisit = 0.0,
-    this.onTotalPriceChanged, // Add this line
+    this.onTotalPriceChanged,
     this.onPricePerVisitChanged,
     this.onHourPriceChanged,
     this.onPriceVatChanged,
@@ -77,7 +77,6 @@ class ServiceDetailsStep extends StatefulWidget {
   @override
   _ServiceDetailsStepState createState() => _ServiceDetailsStepState();
 }
-
 class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
   final List<String> weekDays = [
     'Sunday',
@@ -95,6 +94,11 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
   bool isLoadingNationalities = false;
   bool isLoadingTimeSlots = false;
   bool isLoadingVisitDurations = false;
+
+  List<Map<String, dynamic>> contractDurations = [];
+  List<Map<String, dynamic>> hourlyVisits = [];
+  bool isLoadingContractDurations = false;
+  bool isLoadingHourlyVisits = false;
 
   double _apiHourPrice = 0.0;
 
@@ -117,9 +121,53 @@ double _apiPriceVat = 0.0;
       _loadCountryGroups();
       _loadServiceShifts();
       _loadVisitDurations(); // Add this call
+      _loadContractDurations(); // Add this
+      _loadHourlyVisits();
     }
   }
 
+
+Future<void> _loadContractDurations() async {
+    setState(() {
+      isLoadingContractDurations = true;
+    });
+
+    try {
+      final response = await ApiService.fetchContractDurations();
+      if (response is List && response.isNotEmpty) {
+        setState(() {
+          contractDurations = response.cast<Map<String, dynamic>>();
+          isLoadingContractDurations = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading contract durations: $e');
+      setState(() {
+        isLoadingContractDurations = false;
+      });
+    }
+  }
+
+  Future<void> _loadHourlyVisits() async {
+    setState(() {
+      isLoadingHourlyVisits = true;
+    });
+
+    try {
+      final response = await ApiService.fetchHourlyVisits();
+      if (response is List && response.isNotEmpty) {
+        setState(() {
+          hourlyVisits = response.cast<Map<String, dynamic>>();
+          isLoadingHourlyVisits = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading hourly visits: $e');
+      setState(() {
+        isLoadingHourlyVisits = false;
+      });
+    }
+  }
   Future<void> _loadVisitDurations() async {
   setState(() {
     isLoadingVisitDurations = true;
@@ -185,279 +233,261 @@ double _apiPriceVat = 0.0;
 
 
 void _resetDependentFields(String changedField) {
-  switch (changedField) {
-    case 'nationality':
-      // Reset all fields below nationality
-      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
-      widget.onVisitsPerWeekChanged('');
-      widget.onContractDurationChanged('');
-      break;
-    case 'workerCount':
-      // Reset all fields below worker count
-      widget.onContractDurationChanged('');
-      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
-      widget.onVisitsPerWeekChanged('');
-      break;
-    case 'contractDuration':
-      // Reset fields below contract duration
-      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
-      widget.onVisitsPerWeekChanged('');
-      break;
-    case 'time':
-      // Reset fields below time
-      // Remove: if (widget.onVisitDurationChanged != null) widget.onVisitDurationChanged!('');
-      widget.onVisitsPerWeekChanged('');
-      break;
-    case 'visitDuration':
-      // Reset fields below visit duration
-      widget.onVisitsPerWeekChanged('');
-      break;
+    switch (changedField) {
+      case 'nationality':
+        // Reset all fields below nationality
+        if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
+        widget.onContractDurationChanged(0); // Changed from '' to 0
+        break;
+      case 'workerCount':
+        // Reset all fields below worker count
+        widget.onContractDurationChanged(0); // Changed from '' to 0
+        if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
+        break;
+      case 'contractDuration':
+        // Reset fields below contract duration
+        if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
+        break;
+      case 'time':
+        // Reset fields below time
+        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
+        break;
+      case 'visitDuration':
+        // Reset fields below visit duration
+        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
+        break;
+    }
+    
+    // Always reset calendar and dates for any field change
+    _resetCalendarSelection();
   }
-  
-  // Always reset calendar and dates for any field change
-  _resetCalendarSelection();
-}
 
 
 
 
 Future<void> _calculatePriceFromAPI() async {
-  print('🔍 DEBUG: Starting _calculatePriceFromAPI calculation');
-  
-  // Check if all required fields are selected
-  print('🔍 DEBUG: Checking required fields:');
-  print('  - selectedNationality: "${widget.selectedNationality}" (isEmpty: ${widget.selectedNationality.isEmpty})');
-  print('  - contractDuration: "${widget.contractDuration}" (isEmpty: ${widget.contractDuration.isEmpty})');
-  print('  - selectedTime: "${widget.selectedTime}" (isEmpty: ${widget.selectedTime.isEmpty})');
-  print('  - visitDuration: "${widget.visitDuration}" (isEmpty: ${widget.visitDuration.isEmpty})');
-  print('  - visitsPerWeek: "${widget.visitsPerWeek}" (isEmpty: ${widget.visitsPerWeek.isEmpty})');
-  print('  - workerCount: ${widget.workerCount} (is <= 0: ${widget.workerCount <= 0})');
-  
-  if (widget.selectedNationality.isEmpty ||
-      widget.contractDuration.isEmpty ||
-      widget.selectedTime.isEmpty ||
-      widget.visitDuration.isEmpty ||
-      widget.visitsPerWeek.isEmpty ||
-      widget.workerCount <= 0) {
-    print('❌ DEBUG: Missing required fields, exiting calculation');
-    return;
-  }
-
-  print('✅ DEBUG: All required fields are present, proceeding with calculation');
-  
-  setState(() {
-    _isCalculatingPrice = true;
-  });
-  print('🔄 DEBUG: Set _isCalculatingPrice to true');
-
-  try {
-    // Extract duration from visit duration string (e.g., "4 hours" -> 4)
-    print('🔍 DEBUG: Extracting duration from visitDuration: "${widget.visitDuration}"');
-    final durationMatch = RegExp(r'(\d+)').firstMatch(widget.visitDuration);
-    final duration = durationMatch != null ? int.parse(durationMatch.group(1)!) : 4;
-    print('🔍 DEBUG: Extracted duration: $duration hours (match found: ${durationMatch != null})');
-
-    // Extract number of weeks from contract duration
-    print('🔍 DEBUG: Processing contract duration: "${widget.contractDuration}"');
-    int numberOfWeeks = 0;
-    if (widget.contractDuration.toLowerCase().contains('week')) {
-      numberOfWeeks = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-      print('🔍 DEBUG: Contract contains "week", extracted: $numberOfWeeks weeks');
-    } else if (widget.contractDuration.toLowerCase().contains('month')) {
-      int months = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-      numberOfWeeks = months * 4;
-      print('🔍 DEBUG: Contract contains "month", extracted: $months months = $numberOfWeeks weeks');
-    } else if (widget.contractDuration.toLowerCase().contains('year')) {
-      int years = int.tryParse(widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-      numberOfWeeks = years * 52;
-      print('🔍 DEBUG: Contract contains "year", extracted: $years years = $numberOfWeeks weeks');
-    }
-    print('🔍 DEBUG: Final numberOfWeeks: $numberOfWeeks');
-
-    // Extract number of visits per week
-    print('🔍 DEBUG: Extracting visits per week from: "${widget.visitsPerWeek}"');
-    final visitsMatch = RegExp(r'(\d+)').firstMatch(widget.visitsPerWeek);
-    final numberOfVisits = visitsMatch != null ? int.parse(visitsMatch.group(1)!) : 1;
-    print('🔍 DEBUG: Extracted numberOfVisits: $numberOfVisits (match found: ${visitsMatch != null})');
-
-    // Get group code from nationality
-    print('🔍 DEBUG: Fetching group code for nationality: "${widget.selectedNationality}"');
-    String groupCode = '2'; // Default fallback
-    print('🔍 DEBUG: Default groupCode set to: $groupCode');
+    print('🔍 DEBUG: Starting _calculatePriceFromAPI calculation');
     
-    try {
-      print('🌐 DEBUG: Calling ApiService.fetchCountryGroups with serviceId: ${widget.serviceId}');
-      final countryGroups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
-      print('🔍 DEBUG: Received ${countryGroups.length} country groups from API');
-      
-      final matchingGroup = countryGroups.firstWhere(
-        (group) {
-          final groupName = group['group_name']?.toString().toLowerCase();
-          final selectedNat = widget.selectedNationality.toLowerCase();
-          print('🔍 DEBUG: Comparing group_name "$groupName" with selected "$selectedNat"');
-          return groupName == selectedNat;
-        },
-        orElse: () {
-          print('🔍 DEBUG: No matching group found, using default');
-          return {'group_code': '2'};
-        },
-      );
-      groupCode = matchingGroup['group_code'].toString();
-      print('✅ DEBUG: Final groupCode: $groupCode');
-    } catch (e) {
-      print('❌ DEBUG: Error fetching group code: $e');
-      print('🔍 DEBUG: Using default groupCode: $groupCode');
-    }
-
-    // Get shift ID from selected time
-    print('🔍 DEBUG: Fetching shift ID for selected time: "${widget.selectedTime}"');
-    int shiftId = 1; // Default fallback
-    print('🔍 DEBUG: Default shiftId set to: $shiftId');
+    // Check if all required fields are selected
+    print('🔍 DEBUG: Checking required fields:');
+    print('  - selectedNationality: "${widget.selectedNationality}" (isEmpty: ${widget.selectedNationality.isEmpty})');
+    print('  - contractDuration: ${widget.contractDuration} (is <= 0: ${widget.contractDuration <= 0})');
+    print('  - selectedTime: "${widget.selectedTime}" (isEmpty: ${widget.selectedTime.isEmpty})');
+    print('  - visitDuration: "${widget.visitDuration}" (isEmpty: ${widget.visitDuration.isEmpty})');
+    print('  - visitsPerWeek: ${widget.visitsPerWeek} (is <= 0: ${widget.visitsPerWeek <= 0})');
+    print('  - workerCount: ${widget.workerCount} (is <= 0: ${widget.workerCount <= 0})');
     
-    try {
-      print('🌐 DEBUG: Calling ApiService.fetchServiceShifts with serviceId: ${widget.serviceId}');
-      final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
-      print('🔍 DEBUG: Received ${serviceShifts.length} service shifts from API');
-      
-      final matchingShift = serviceShifts.firstWhere(
-        (shift) {
-          final serviceShifts = shift['service_shifts']?.toString().toLowerCase();
-          final selectedTime = widget.selectedTime.toLowerCase();
-          print('🔍 DEBUG: Comparing service_shifts "$serviceShifts" with selected "$selectedTime"');
-          return serviceShifts == selectedTime;
-        },
-        orElse: () {
-          print('🔍 DEBUG: No matching shift found, using default');
-          return {'shift_id': 1};
-        },
-      );
-      shiftId = int.parse(matchingShift['id'].toString());
-      print('✅ DEBUG: Final shiftId: $shiftId');
-    } catch (e) {
-      print('❌ DEBUG: Error fetching shift ID: $e');
-      print('🔍 DEBUG: Using default shiftId: $shiftId');
+    if (widget.selectedNationality.isEmpty ||
+        widget.contractDuration <= 0 ||
+        widget.selectedTime.isEmpty ||
+        widget.visitDuration.isEmpty ||
+        widget.visitsPerWeek <= 0 ||
+        widget.workerCount <= 0) {
+      print('❌ DEBUG: Missing required fields, exiting calculation');
+      return;
     }
 
-    // Call the calculate price API
-    print('🌐 DEBUG: Calling ApiService.calculatePackagePrice with parameters:');
-    print('  - serviceId: ${widget.serviceId}');
-    print('  - duration: $duration');
-    print('  - groupCode: $groupCode');
-    print('  - numberOfWeeks: $numberOfWeeks');
-    print('  - numberOfVisits: $numberOfVisits');
-    print('  - shiftId: $shiftId');
-    print('  - numberOfWorkers: ${widget.workerCount}');
-    
-    final response = await ApiService.calculatePackagePrice(
-      serviceId: widget.serviceId,
-      duration: duration,
-      groupCode: groupCode,
-      numberOfWeeks: numberOfWeeks,
-      numberOfVisits: numberOfVisits,
-      shiftId: shiftId,
-      numberOfWorkers: widget.workerCount,
-    );
-
-    print('🔍 DEBUG: API response received: $response');
-    print('🔍 DEBUG: Response is null: ${response == null}');
-
-    if (response != null) {
-      final pricePerVisit = response['price_per_visit']?.toDouble() ?? 0.0;
-      final totalPrice = response['total_price']?.toDouble() ?? 0.0;
-      final finalPrice = response['final_price']?.toDouble() ?? 0.0; // Price with VAT
-      final hourPrice = response['hour_price']?.toDouble() ?? 0.0;
-      final priceVat = response['price_vat']?.toDouble() ?? 0.0;
-      
-      print('🔍 DEBUG: Extracted from response:');
-      print('  - price_per_visit: $pricePerVisit (without VAT)');
-      print('  - total_price: $totalPrice (without VAT)');
-      print('  - final_price: $finalPrice (with VAT)');
-      print('  - hour_price: $hourPrice');
-      print('  - price_vat: $priceVat');
-      
-      // Calculate VAT amount and final price per visit
-      final vatAmount = finalPrice - totalPrice;
-      final finalPricePerVisit = finalPrice; // This is already the price with VAT per visit
-      
-      print('🔍 DEBUG: Calculated VAT values:');
-      print('  - VAT amount per visit: $vatAmount');
-      print('  - Final price per visit (with VAT): $finalPricePerVisit');
-      print('  - Hour price: $hourPrice');
-      print('  - Price VAT from API: $priceVat'); 
-      
-      setState(() {
-        _apiPricePerVisit = pricePerVisit; // Without VAT
-        _apiTotalPrice = totalPrice; // Without VAT
-        _apiFinalPricePerVisit = finalPricePerVisit; // With VAT
-        _vatAmount = vatAmount; // VAT amount per visit
-        _apiHourPrice = hourPrice;
-        _apiPriceVat = priceVat; 
-        _isCalculatingPrice = false;
-      });
-      
-      print('✅ DEBUG: Updated state with new prices');
-      print('🔄 DEBUG: Set _isCalculatingPrice to false');
-
-if (widget.onPricePerVisitChanged != null) {
-  widget.onPricePerVisitChanged!(_apiPricePerVisit); // Pass price with VAT
-  print('✅ DEBUG: Called onPricePerVisitChanged callback with: $_apiPricePerVisit');
-}
-
-if (widget.onHourPriceChanged != null) {
-      widget.onHourPriceChanged!(_apiHourPrice);
-      print('✅ DEBUG: Called onHourPriceChanged callback with: $_apiHourPrice');
-    }
-
-    if (widget.onPriceVatChanged != null) {
-    widget.onPriceVatChanged!(_apiPriceVat);
-    print('✅ DEBUG: Called onPriceVatChanged callback with: $_apiPriceVat');
-  }
-      // Update parent with the new price per visit if callback is available
-      print('🔍 DEBUG: Checking callback and selected dates:');
-      print('  - onTotalPriceChanged is null: ${widget.onTotalPriceChanged == null}');
-      print('  - _internalSelectedDates.length: ${_internalSelectedDates.length}');
-      
-      if (widget.onTotalPriceChanged != null && _internalSelectedDates.isNotEmpty) {
-        // Use final price per visit (with VAT) for calculation
-        double calculatedTotal = _internalSelectedDates.length * _apiFinalPricePerVisit;
-        print('🔍 DEBUG: Calculated total with VAT: ${_internalSelectedDates.length} dates × $_apiFinalPricePerVisit = $calculatedTotal');
-        
-        widget.onTotalPriceChanged!(calculatedTotal);
-        print('✅ DEBUG: Called onTotalPriceChanged callback with: $calculatedTotal');
-        
-        setState(() {
-          _calculatedTotalPrice = calculatedTotal;
-        });
-        print('✅ DEBUG: Updated _calculatedTotalPrice to: $calculatedTotal');
-      } else {
-        print('⏭️ DEBUG: Skipping callback - either callback is null or no dates selected');
-      }
-    } else {
-      print('❌ DEBUG: API returned null response, throwing exception');
-      throw Exception('API returned null response');
-    }
-  } catch (e) {
-    print('❌ DEBUG: Exception caught in _calculatePriceFromAPI: $e');
-    print('🔍 DEBUG: Exception type: ${e.runtimeType}');
+    print('✅ DEBUG: All required fields are present, proceeding with calculation');
     
     setState(() {
-      _isCalculatingPrice = false;
-      // Fallback to widget's pricePerVisit if API fails
-      _apiPricePerVisit = widget.pricePerVisit;
-      _apiFinalPricePerVisit = widget.pricePerVisit; // Assume no VAT in fallback
-      _vatAmount = 0.0;
+      _isCalculatingPrice = true;
     });
+    print('🔄 DEBUG: Set _isCalculatingPrice to true');
+
+    try {
+      // Extract duration from visit duration string (e.g., "4 hours" -> 4)
+      print('🔍 DEBUG: Extracting duration from visitDuration: "${widget.visitDuration}"');
+      final durationMatch = RegExp(r'(\d+)').firstMatch(widget.visitDuration);
+      final duration = durationMatch != null ? int.parse(durationMatch.group(1)!) : 4;
+      print('🔍 DEBUG: Extracted duration: $duration hours (match found: ${durationMatch != null})');
+
+      // Use contractDuration directly (it's already in weeks)
+      final numberOfWeeks = widget.contractDuration;
+      print('🔍 DEBUG: Contract duration in weeks: $numberOfWeeks');
+
+      // Use visitsPerWeek directly (it's already the number of visits)
+      final numberOfVisits = widget.visitsPerWeek;
+      print('🔍 DEBUG: Number of visits per week: $numberOfVisits');
+
+      // Get group code from nationality
+      print('🔍 DEBUG: Fetching group code for nationality: "${widget.selectedNationality}"');
+      String groupCode = '2'; // Default fallback
+      print('🔍 DEBUG: Default groupCode set to: $groupCode');
+      
+      try {
+        print('🌐 DEBUG: Calling ApiService.fetchCountryGroups with serviceId: ${widget.serviceId}');
+        final countryGroups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+        print('🔍 DEBUG: Received ${countryGroups.length} country groups from API');
+        
+        final matchingGroup = countryGroups.firstWhere(
+          (group) {
+            final groupName = group['group_name']?.toString().toLowerCase();
+            final selectedNat = widget.selectedNationality.toLowerCase();
+            print('🔍 DEBUG: Comparing group_name "$groupName" with selected "$selectedNat"');
+            return groupName == selectedNat;
+          },
+          orElse: () {
+            print('🔍 DEBUG: No matching group found, using default');
+            return {'group_code': '2'};
+          },
+        );
+        groupCode = matchingGroup['group_code'].toString();
+        print('✅ DEBUG: Final groupCode: $groupCode');
+      } catch (e) {
+        print('❌ DEBUG: Error fetching group code: $e');
+        print('🔍 DEBUG: Using default groupCode: $groupCode');
+      }
+
+      // Get shift ID from selected time
+      print('🔍 DEBUG: Fetching shift ID for selected time: "${widget.selectedTime}"');
+      int shiftId = 1; // Default fallback
+      print('🔍 DEBUG: Default shiftId set to: $shiftId');
+      
+      try {
+        print('🌐 DEBUG: Calling ApiService.fetchServiceShifts with serviceId: ${widget.serviceId}');
+        final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
+        print('🔍 DEBUG: Received ${serviceShifts.length} service shifts from API');
+        
+        final matchingShift = serviceShifts.firstWhere(
+          (shift) {
+            final serviceShifts = shift['service_shifts']?.toString().toLowerCase();
+            final selectedTime = widget.selectedTime.toLowerCase();
+            print('🔍 DEBUG: Comparing service_shifts "$serviceShifts" with selected "$selectedTime"');
+            return serviceShifts == selectedTime;
+          },
+          orElse: () {
+            print('🔍 DEBUG: No matching shift found, using default');
+            return {'shift_id': 1};
+          },
+        );
+        shiftId = int.parse(matchingShift['id'].toString());
+        print('✅ DEBUG: Final shiftId: $shiftId');
+      } catch (e) {
+        print('❌ DEBUG: Error fetching shift ID: $e');
+        print('🔍 DEBUG: Using default shiftId: $shiftId');
+      }
+
+      // Call the calculate price API
+      print('🌐 DEBUG: Calling ApiService.calculatePackagePrice with parameters:');
+      print('  - serviceId: ${widget.serviceId}');
+      print('  - duration: $duration');
+      print('  - groupCode: $groupCode');
+      print('  - numberOfWeeks: $numberOfWeeks');
+      print('  - numberOfVisits: $numberOfVisits');
+      print('  - shiftId: $shiftId');
+      print('  - numberOfWorkers: ${widget.workerCount}');
+      
+      final response = await ApiService.calculatePackagePrice(
+        serviceId: widget.serviceId,
+        duration: duration,
+        groupCode: groupCode,
+        numberOfWeeks: numberOfWeeks,
+        numberOfVisits: numberOfVisits,
+        shiftId: shiftId,
+        numberOfWorkers: widget.workerCount,
+      );
+
+      print('🔍 DEBUG: API response received: $response');
+      print('🔍 DEBUG: Response is null: ${response == null}');
+
+      if (response != null) {
+        final pricePerVisit = response['price_per_visit']?.toDouble() ?? 0.0;
+        final totalPrice = response['total_price']?.toDouble() ?? 0.0;
+        final finalPrice = response['final_price']?.toDouble() ?? 0.0; // Price with VAT
+        final hourPrice = response['hour_price']?.toDouble() ?? 0.0;
+        final priceVat = response['price_vat']?.toDouble() ?? 0.0;
+        
+        print('🔍 DEBUG: Extracted from response:');
+        print('  - price_per_visit: $pricePerVisit (without VAT)');
+        print('  - total_price: $totalPrice (without VAT)');
+        print('  - final_price: $finalPrice (with VAT)');
+        print('  - hour_price: $hourPrice');
+        print('  - price_vat: $priceVat');
+        
+        // Calculate VAT amount and final price per visit
+        final vatAmount = finalPrice - totalPrice;
+        final finalPricePerVisit = finalPrice; // This is already the price with VAT per visit
+        
+        print('🔍 DEBUG: Calculated VAT values:');
+        print('  - VAT amount per visit: $vatAmount');
+        print('  - Final price per visit (with VAT): $finalPricePerVisit');
+        print('  - Hour price: $hourPrice');
+        print('  - Price VAT from API: $priceVat'); 
+        
+        setState(() {
+          _apiPricePerVisit = pricePerVisit; // Without VAT
+          _apiTotalPrice = totalPrice; // Without VAT
+          _apiFinalPricePerVisit = finalPricePerVisit; // With VAT
+          _vatAmount = vatAmount; // VAT amount per visit
+          _apiHourPrice = hourPrice;
+          _apiPriceVat = priceVat; 
+          _isCalculatingPrice = false;
+        });
+        
+        print('✅ DEBUG: Updated state with new prices');
+        print('🔄 DEBUG: Set _isCalculatingPrice to false');
+
+        if (widget.onPricePerVisitChanged != null) {
+          widget.onPricePerVisitChanged!(_apiPricePerVisit); // Pass price with VAT
+          print('✅ DEBUG: Called onPricePerVisitChanged callback with: $_apiPricePerVisit');
+        }
+
+        if (widget.onHourPriceChanged != null) {
+          widget.onHourPriceChanged!(_apiHourPrice);
+          print('✅ DEBUG: Called onHourPriceChanged callback with: $_apiHourPrice');
+        }
+
+        if (widget.onPriceVatChanged != null) {
+          widget.onPriceVatChanged!(_apiPriceVat);
+          print('✅ DEBUG: Called onPriceVatChanged callback with: $_apiPriceVat');
+        }
+
+        // Update parent with the new price per visit if callback is available
+        print('🔍 DEBUG: Checking callback and selected dates:');
+        print('  - onTotalPriceChanged is null: ${widget.onTotalPriceChanged == null}');
+        print('  - _internalSelectedDates.length: ${_internalSelectedDates.length}');
+        
+        if (widget.onTotalPriceChanged != null && _internalSelectedDates.isNotEmpty) {
+          // Use final price per visit (with VAT) for calculation
+          double calculatedTotal = _internalSelectedDates.length * _apiFinalPricePerVisit;
+          print('🔍 DEBUG: Calculated total with VAT: ${_internalSelectedDates.length} dates × $_apiFinalPricePerVisit = $calculatedTotal');
+          
+          widget.onTotalPriceChanged!(calculatedTotal);
+          print('✅ DEBUG: Called onTotalPriceChanged callback with: $calculatedTotal');
+          
+          setState(() {
+            _calculatedTotalPrice = calculatedTotal;
+          });
+          print('✅ DEBUG: Updated _calculatedTotalPrice to: $calculatedTotal');
+        } else {
+          print('⏭️ DEBUG: Skipping callback - either callback is null or no dates selected');
+        }
+      } else {
+        print('❌ DEBUG: API returned null response, throwing exception');
+        throw Exception('API returned null response');
+      }
+    } catch (e) {
+      print('❌ DEBUG: Exception caught in _calculatePriceFromAPI: $e');
+      print('🔍 DEBUG: Exception type: ${e.runtimeType}');
+      
+      setState(() {
+        _isCalculatingPrice = false;
+        // Fallback to widget's pricePerVisit if API fails
+        _apiPricePerVisit = widget.pricePerVisit;
+        _apiFinalPricePerVisit = widget.pricePerVisit; // Assume no VAT in fallback
+        _vatAmount = 0.0;
+      });
+      
+      print('🔄 DEBUG: Set _isCalculatingPrice to false');
+      print('🔄 DEBUG: Fallback to widget.pricePerVisit: ${widget.pricePerVisit}');
+      print('✅ DEBUG: Updated prices to fallback values');
+    }
     
-    print('🔄 DEBUG: Set _isCalculatingPrice to false');
-    print('🔄 DEBUG: Fallback to widget.pricePerVisit: ${widget.pricePerVisit}');
-    print('✅ DEBUG: Updated prices to fallback values');
+    print('🏁 DEBUG: _calculatePriceFromAPI method completed');
   }
-  
-  print('🏁 DEBUG: _calculatePriceFromAPI method completed');
-}
 
 
 
@@ -519,8 +549,7 @@ if (widget.onHourPriceChanged != null) {
 // Add this method to build the Select Date field
   Widget _buildSelectDateField(AppLocalizations loc) {
     bool hasSelectedDates = _internalSelectedDates.isNotEmpty;
-    bool canSelectDates =
-        widget.contractDuration.isNotEmpty && widget.visitsPerWeek.isNotEmpty;
+    bool canSelectDates = widget.contractDuration > 0 && widget.visitsPerWeek > 0;
 
     return Container(
       margin: EdgeInsets.only(bottom: 15),
@@ -671,75 +700,50 @@ if (widget.onHourPriceChanged != null) {
   }
 
   bool _isValidDateSelection() {
-  // Check if all required fields are selected
-  if (widget.contractDuration.isEmpty || 
-      widget.visitsPerWeek.isEmpty ||
-      widget.selectedNationality.isEmpty ||
-      widget.selectedTime.isEmpty ||
-      widget.visitDuration.isEmpty ||
-      widget.workerCount <= 0) {
-    return false;
-  }
+    // Check if all required fields are selected
+    if (widget.contractDuration <= 0 || 
+        widget.visitsPerWeek <= 0 ||
+        widget.selectedNationality.isEmpty ||
+        widget.selectedTime.isEmpty ||
+        widget.visitDuration.isEmpty ||
+        widget.workerCount <= 0) {
+      return false;
+    }
 
-  // Check if dates are actually selected
-  if (_internalSelectedDates.isEmpty) {
-    return false;
-  }
+    // Check if dates are actually selected
+    if (_internalSelectedDates.isEmpty) {
+      return false;
+    }
 
-  // Calculate the expected total number of visits
-  int expectedTotalVisits = _getMaxSelectableDates();
-  
-  // Validate that the user has selected exactly the expected number of dates
-  bool hasCorrectDateCount = _internalSelectedDates.length == expectedTotalVisits;
-  
-  // Also ensure the total price is calculated
-  bool hasTotalPrice = _calculatedTotalPrice > 0;
-  
-  return hasCorrectDateCount && hasTotalPrice;
-}
+    // Calculate the expected total number of visits
+    int expectedTotalVisits = _getMaxSelectableDates();
+    
+    // Validate that the user has selected exactly the expected number of dates
+    bool hasCorrectDateCount = _internalSelectedDates.length == expectedTotalVisits;
+    
+    // Also ensure the total price is calculated
+    bool hasTotalPrice = _calculatedTotalPrice > 0;
+    
+    return hasCorrectDateCount && hasTotalPrice;
+  }
 
 
 
 // Add this method to calculate max selectable dates
   int _getMaxSelectableDates() {
-  // Parse contract duration
-  int durationInWeeks = 0;
-  if (widget.contractDuration.toLowerCase().contains('year')) {
-    int years = int.tryParse(
-            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
-        1;
-    durationInWeeks = years * 52; // 52 weeks in a year
-  } else if (widget.contractDuration.toLowerCase().contains('month')) {
-    int months = int.tryParse(
-            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
-        1;
-    durationInWeeks = months * 4;
-  } else if (widget.contractDuration.toLowerCase().contains('week')) {
-    durationInWeeks = int.tryParse(
-            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
-        1;
-  } else {
-    // Fallback: assume weeks
-    durationInWeeks = int.tryParse(
-            widget.contractDuration.replaceAll(RegExp(r'[^0-9]'), '')) ??
-        1;
+    // Use contract duration (weeks) and visits per week directly
+    int durationInWeeks = widget.contractDuration > 0 ? widget.contractDuration : 1;
+    int visitsPerWeekCount = widget.visitsPerWeek > 0 ? widget.visitsPerWeek : 1;
+
+    int maxDates = durationInWeeks * visitsPerWeekCount;
+    
+    // Optional: Add a reasonable limit for very long contracts
+    // Uncomment the line below if you want to limit to 365 dates maximum
+    // maxDates = maxDates > 365 ? 365 : maxDates;
+    
+    return maxDates;
   }
 
-  // Parse visits per week
-  int visitsPerWeekCount =
-      int.tryParse(widget.visitsPerWeek.replaceAll(RegExp(r'[^0-9]'), '')) ??
-          1;
-
-  // For 1 year contracts, we might want to limit the max selectable dates
-  // to prevent performance issues with the calendar
-  int maxDates = durationInWeeks * visitsPerWeekCount;
-  
-  // Optional: Add a reasonable limit for very long contracts
-  // Uncomment the line below if you want to limit to 365 dates maximum
-  // maxDates = maxDates > 365 ? 365 : maxDates;
-  
-  return maxDates;
-}
 
   Future<void> _loadCountryGroups() async {
     setState(() {
@@ -794,12 +798,8 @@ if (widget.onHourPriceChanged != null) {
   }
 
   int _getMaxSelectableDays() {
-    // Extract number from visits per week string (e.g., "2 visits weekly" -> 2)
-    final match = RegExp(r'^(\d+)').firstMatch(widget.visitsPerWeek);
-    if (match != null) {
-      return int.parse(match.group(1)!);
-    }
-    return 1; // Default to 1 if parsing fails
+    // Use the visits per week value directly
+    return widget.visitsPerWeek > 0 ? widget.visitsPerWeek : 1;
   }
 
   Widget _buildDaySelectionWidget() {
@@ -1071,13 +1071,6 @@ if (widget.onHourPriceChanged != null) {
                         await result;
                       }
                       
-                      // REMOVE THIS SECTION - the reset is now handled in _resetDependentFields
-                      // // ADD THIS: Always reset calendar after any dropdown selection
-                      // // This ensures calendar is reset even if the callback doesn't do it
-                      // await Future.delayed(Duration(milliseconds: 100));
-                      // if (mounted) {
-                      //   _resetCalendarSelection();
-                      // }
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -1279,35 +1272,6 @@ if (widget.onHourPriceChanged != null) {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    // Extended contract duration options
-    final List<String> contractDurations = [
-      '1 week',
-      '2 weeks',
-      '3 weeks',
-      '1 month', // 4 weeks
-      '5 weeks',
-      '6 weeks',
-      '7 weeks',
-      '2 months', // 8 weeks
-      '9 weeks',
-      '10 weeks',
-      '3 months', // 12 weeks
-      '4 months',
-      '5 months',
-      '6 months',
-      '1 year'
-    ];
-
-    // Extended visit frequency options
-    final List<String> visitFrequencies = [
-      '1 visit weekly',
-      '2 visits weekly',
-      '3 visits weekly',
-      '4 visits weekly',
-      '5 visits weekly',
-      '6 visits weekly'
-    ];
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
@@ -1386,19 +1350,31 @@ if (widget.onHourPriceChanged != null) {
                     _buildWorkerCountField(loc),
 
                     _buildDropdownField(
-                    loc.contractDuration,
-                    widget.contractDuration,
-                    contractDurations,
-                    (value) {
-                      widget.onContractDurationChanged(value);
-                      _resetDependentFields('contractDuration'); // Add this line
-                      if (widget.isCustomBooking) {
-                        _calculatePriceFromAPI();
-                      }
-                    },
-                    customTitle: loc.selectContractDuration,
-                    loc: loc, 
-                  ),
+                      loc.contractDuration,
+                      widget.contractDuration > 0 
+                          ? contractDurations.firstWhere(
+                              (item) => item['weeks'] == widget.contractDuration,
+                              orElse: () => {'label': 'Unknown'}
+                            )['label'] ?? 'Unknown'
+                          : '',
+                      contractDurations.map((item) => item['label'] as String).toList(),
+                      (value) {
+                        // Find the selected item and get its weeks value
+                        final selectedItem = contractDurations.firstWhere(
+                          (item) => item['label'] == value,
+                          orElse: () => {'weeks': 0}
+                        );
+                        final weeks = selectedItem['weeks'] as int;
+                        widget.onContractDurationChanged(weeks);
+                        _resetDependentFields('contractDuration');
+                        if (widget.isCustomBooking) {
+                          _calculatePriceFromAPI();
+                        }
+                      },
+                      customTitle: loc.selectContractDuration,
+                      isLoading: isLoadingContractDurations,
+                      loc: loc,
+                    ),
 
                     _buildDropdownField(
                       loc.time,
@@ -1422,11 +1398,22 @@ if (widget.onHourPriceChanged != null) {
 
                     _buildDropdownField(
                       loc.visitsWeeksNumber,
-                      widget.visitsPerWeek,
-                      visitFrequencies,
+                      widget.visitsPerWeek > 0
+                          ? hourlyVisits.firstWhere(
+                              (item) => item['visits_number'] == widget.visitsPerWeek,
+                              orElse: () => {'label': 'Unknown'}
+                            )['label'] ?? 'Unknown'
+                          : '',
+                      hourlyVisits.map((item) => item['label'] as String).toList(),
                       (value) async {
-                        widget.onVisitsPerWeekChanged(value);
-                        _resetCalendarSelection(); // Keep this as it's the last field
+                        // Find the selected item and get its visits_number value
+                        final selectedItem = hourlyVisits.firstWhere(
+                          (item) => item['label'] == value,
+                          orElse: () => {'visits_number': 0}
+                        );
+                        final visitsNumber = selectedItem['visits_number'] as int;
+                        widget.onVisitsPerWeekChanged(visitsNumber);
+                        _resetCalendarSelection();
                         
                         await Future.delayed(Duration(milliseconds: 100));
                         
@@ -1435,6 +1422,7 @@ if (widget.onHourPriceChanged != null) {
                         }
                       },
                       customTitle: loc.selectVisitsPerWeek,
+                      isLoading: isLoadingHourlyVisits,
                       loc: loc,
                     ),
 
@@ -1462,25 +1450,6 @@ if (widget.onHourPriceChanged != null) {
             child: SafeArea(
               child: Row(
                 children: [
-                  // Count indicator
-                  // Container(
-                  //   width: 50,
-                  //   height: 50,
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.grey[300],
-                  //     shape: BoxShape.circle,
-                  //   ),
-                  //   child: Center(
-                  //     child: Text(
-                  //       '${_internalSelectedDates.isNotEmpty ? _internalSelectedDates.length : widget.selectedDates.length}',
-                  //       style: TextStyle(
-                  //         fontSize: 18,
-                  //         fontWeight: FontWeight.bold,
-                  //         color: Colors.black87,
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
 
                   SizedBox(width: 16),
 
