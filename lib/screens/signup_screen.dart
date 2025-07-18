@@ -30,6 +30,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF]+$');
   final numberOnlyRegex = RegExp(r'^\d+$');
+final nationalityRegex = RegExp(r'^[1-2]\d{9}$');
+
 final phoneRegex = RegExp(r'^05\d{8}$');
 
  @override
@@ -121,9 +123,9 @@ final phoneRegex = RegExp(r'^05\d{8}$');
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return 'national id is required';
-                  if (!numberOnlyRegex.hasMatch(val))
+                  if (!nationalityRegex.hasMatch(val))
                     return 'national id must not contain characters';
-                  if (val.length != 10) return 'national id must be 9 numbers';
+                  if (val.length != 10) return 'national id must be 10 numbers';
                   return null;
                 },
               ),
