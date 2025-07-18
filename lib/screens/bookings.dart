@@ -147,39 +147,24 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Widget _buildHourlyContractCard(Map<String, dynamic> booking, AppLocalizations loc) {
-    String getStatusText(String status) {
-      final statusInt = int.parse(status);
-        switch (statusInt) {
-          case 0:
-            return loc.notConfirmed ?? "Not confirmed";
-          case 1:
-            return loc.confirmed ?? "Confirmed";
-          case 2:
-            return loc.cancelled ?? "Cancelled";
-          case 3:
-            return loc.paid ?? "Paid";
-           default:
-           return  "Unknown";  
-        }
-      }
+   String status = booking["status"] ?? "success";
     
 
-    Color getStatusColor(dynamic status) {
-      
-      if (status == null) return Colors.grey;
-      final statusInt = int.parse(status);
-        switch (statusInt) {
-          case 0:
-            return Colors.orange;
-          case 1:
-            return Colors.blue;
-          case 2:
-            return Colors.red;
-          case 3:
-            return Colors.green;
-        
-      }
-      return Colors.grey;
+  
+    Color statusColor = Colors.grey;
+    switch (status.toLowerCase()) {
+      case "active":
+        statusColor = Colors.green;
+        break;
+      case "pending":
+        statusColor = Colors.orange;
+        break;
+      case "cancelled":
+      case "canceled":
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.blue;
     }
 
     String formatDate(String? dateStr) {
@@ -223,13 +208,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: getStatusColor(booking["status"]).withOpacity(0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    getStatusText(booking["status"]),
+                    status,
                     style: TextStyle(
-                      color: getStatusColor(booking["status"]),
+                      color: statusColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),

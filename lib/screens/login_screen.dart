@@ -68,7 +68,7 @@ void initState() {
       if (next.isLoggedIn && next.isVerified) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LocationScreen()),
+          MaterialPageRoute(builder: (context) => HomeScreen()),
         );
       } else if (next.isLoggedIn && !next.isVerified) {
         Navigator.pushReplacement(

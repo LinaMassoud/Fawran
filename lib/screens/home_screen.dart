@@ -2,9 +2,11 @@ import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/package_model.dart';
 import 'package:fawran/providers/auth_provider.dart';
+import 'package:fawran/providers/contractsProvider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/providers/location_provider.dart';
+import 'package:fawran/providers/notification_provider.dart';
 import 'package:fawran/providers/sliderprovider.dart';
 import 'package:fawran/providers/userNameProvider.dart';
 import 'package:fawran/screens/select_address.dart';
@@ -22,7 +24,8 @@ final phoneNumberProvider = FutureProvider<String>((ref) async {
 });
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const  HomeScreen({Key? key}) : super(key: key);
+
 
   String getFullImageUrl(String imagePath) {
     String sanitizedPath = imagePath.replaceAll('\\', '/');
@@ -39,7 +42,9 @@ class HomeScreen extends ConsumerWidget {
     final userNameAsync = ref.watch(userNameProvider);
     final loc = AppLocalizations.of(context)!;
     final isArabic = currentLocale.languageCode == 'ar';
-    
+
+final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
+
     final examplePackage = PackageModel(
       groupCode: "GRP001",
       serviceShift: "Evening",
@@ -131,6 +136,34 @@ class HomeScreen extends ConsumerWidget {
           child: ListView(
             children: [
               const SizedBox(height: 16),
+               if (hasUnconfirmedContracts)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD), // light blue
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.warning_amber_rounded,
+                        color: Colors.blueAccent),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "You have unconfirmed contracts",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1A237E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
               professionsAsync.when(
                 data: (professions) => GridView.builder(
                   shrinkWrap: true,
@@ -376,200 +409,117 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSideDrawer(BuildContext context, WidgetRef ref, 
-    AsyncValue<String> userNameAsync, AppLocalizations loc, bool isArabic) {
+
+Widget _buildSideDrawer(
+  BuildContext context,
+  WidgetRef ref,
+  AsyncValue<String> userNameAsync,
+  AppLocalizations loc,
+  bool isArabic,
+) {
   final phoneNumberAsync = ref.watch(phoneNumberProvider);
+ final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
+
   return Drawer(
-    child: Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFE3F2FD), // Light blue background similar to screenshot
-      ),
-      child: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // Header Section
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-            child: Column(
-              children: [
-                // User avatar
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFB8B8B8),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                // User name
-                userNameAsync.when(
-                data: (name) => Column(
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: Color(0xFF2C3E50),
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    phoneNumberAsync.when(
-                      data: (phoneNumber) => Text(
-                        phoneNumber.isEmpty ? loc.noPhoneNumber : phoneNumber,
-                        style: const TextStyle(
-                          color: Color(0xFF7F8C8D),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      loading: () => Text(
-                        loc.loading,
-                        style: const TextStyle(
-                          color: Color(0xFF7F8C8D),
-                          fontSize: 14,
-                        ),
-                      ),
-                      error: (_, __) => Text(
-                        loc.noPhoneNumber,
-                        style: const TextStyle(
-                          color: Color(0xFF7F8C8D),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                loading: () => Text(
-                  loc.loading,
-                  style: const TextStyle(color: Color(0xFF2C3E50)),
-                ),
-                error: (_, __) => Text(
-                  loc.user,
-                  style: const TextStyle(color: Color(0xFF2C3E50)),
-                ),
+    backgroundColor: Colors.white,
+    child: SafeArea(
+      child: Column(
+        children: [
+          const SizedBox(height: 30),
+          // Avatar
+          const CircleAvatar(
+            radius: 40,
+            backgroundColor: Color(0xFFE0E0E0),
+            child: Icon(Icons.person, size: 40, color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          // User name centered
+          userNameAsync.when(
+            data: (name) => Text(
+              name,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
               ),
-              ],
+              textAlign: TextAlign.center,
+            ),
+            loading: () => const Text("..."),
+            error: (_, __) => Text(loc.user),
+          ),
+          const SizedBox(height: 20),
+
+          // Menu Items (Expanded to push logout to bottom)
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              children: [
+                _buildDrawerItem(
+                  icon: Icons.location_on,
+                  title: loc.myAddresses,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressDisplayScreen()));
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.person_outline,
+                  title: loc.myInformation,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const UserDetailsScreen()));
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.business,
+                  title: loc.aboutCompany,
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to about company
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.store,
+                  title: loc.companyBranches,
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to branches
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.share,
+                  title: loc.socialMediaLinks,
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to social media
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.help_outline,
+                  title: loc.faq,
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to FAQ
+                  },
+                ),
+     _buildDrawerItem(
+  icon: Icons.assignment,
+  title: loc.myContracts,
+  showNotification: hasUnconfirmedContracts,
+  onTap: () {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, '/bookings');
+  },
+),           ],
             ),
           ),
-          
-          // Menu Items
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.location_on,
-            iconColor: const Color(0xFFFF9800),
-            title: loc.myAddresses,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AddressDisplayScreen(),
-                ),
-              );
-            },
-          ),
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.person_outline,
-            iconColor: const Color(0xFFFF9800),
-            title: loc.myInformation,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserDetailsScreen(),
-                ),
-              );
-            },
-          ),
-          _buildDrawerItem(
-          context: context,
-          icon: Icons.assignment,
-          iconColor: const Color(0xFFFF9800),
-          title: loc.myContracts,
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/bookings');
-          },
-        ),
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.business,
-            iconColor: const Color(0xFFFF9800),
-            title: loc.aboutCompany,
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to About Company screen
-            },
-          ),
 
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.support_agent,
-            iconColor: const Color(0xFFFF9800),
-            title: loc.ticketsSupport,
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to Support screen
-            },
-          ),
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.store,
-            iconColor: const Color(0xFFFF9800),
-            title: loc.companyBranches,
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to Company Branches screen
-            },
-          ),
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.share,
-            iconColor: const Color(0xFFFF9800),
-            title: loc.socialMediaLinks,
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to Social Media screen
-            },
-          ),
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.help_outline,
-            iconColor: const Color(0xFFFF9800),
-            title: loc.faq,
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to FAQ screen
-            },
-          ),
-          
-          // Logout Button - now part of the scrollable list
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-            child: ListTile(
-              leading: const Icon(
-                Icons.logout,
-                color: Color(0xFFE74C3C),
-                size: 24,
-              ),
-              title: Text(
-                loc.logout,
-                style: const TextStyle(
-                  color: Color(0xFFE74C3C),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+          // Logout
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildDrawerItem(
+              icon: Icons.logout,
+              title: loc.logout,
               onTap: () {
                 Navigator.pop(context);
                 _showLogoutDialog(context, ref);
@@ -579,38 +529,52 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
     ),
-  )
   );
 }
 
-  Widget _buildDrawerItem({
-    required BuildContext context,
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      child: ListTile(
-        leading: Icon(
+Widget _buildDrawerItem({
+  required IconData icon,
+  required String title,
+  required VoidCallback onTap,
+  bool showNotification = false,
+}) {
+  return ListTile(
+    leading: Stack(
+      alignment: Alignment.topRight,
+      children: [
+        Icon(
           icon,
-          color: iconColor,
-          size: 24,
+          color: Colors.blue,
+          size: 22,
         ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFF2C3E50),
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+        if (showNotification)
+          const Positioned(
+            right: -2,
+            top: -2,
+            child: CircleAvatar(
+              radius: 5,
+              backgroundColor: Colors.red,
+            ),
           ),
-        ),
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      ],
+    ),
+    title: Text(
+      title,
+      style: const TextStyle(
+        color: Colors.black87,
+        fontSize: 15,
+        fontWeight: FontWeight.normal,
       ),
-    );
-  }
+    ),
+    trailing: const Icon(
+      Icons.arrow_forward_ios,
+      size: 16,
+      color: Colors.grey,
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+    onTap: onTap,
+  );
+}
 
   Future<void> _logout(WidgetRef ref) async {
     const storage = FlutterSecureStorage();

@@ -1,25 +1,22 @@
 import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
-import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/localProvider.dart';
-import 'package:fawran/screens/AuthCheckingScreen.dart';
 import 'package:fawran/screens/bookings.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/launchScreen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/select_address.dart';
-import 'package:fawran/screens/serviceChoice.dart';
 import 'package:fawran/screens/userProfile.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'providers/auth_provider.dart';
-import '../Fawran4Hours/fawran_services_display.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized(); 
     await dotenv.load();
 
   runApp(

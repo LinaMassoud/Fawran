@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:fawran/models/ProffesionModel.dart';
+import 'package:fawran/models/domestic_package_model.dart';
 import 'package:fawran/models/labour.dart';
 import 'package:fawran/models/sliderItem.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -694,6 +695,48 @@ class ApiService {
       };
     }
   }
+static Future<Map<String, dynamic>> fetchPermPackages({
+    required int positionId,
+    required int? nationality,
+    required int? cityCode,
+  }) async {
+    try {
+      final url =
+          '$_baseUrl/domestic_packages/$positionId?nationality=$nationality&city_id=$cityCode';
+
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      print('📦 [FETCH_PACKAGES] Status: ${response.statusCode}');
+      print('📦 [FETCH_PACKAGES] Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List decoded = jsonDecode(response.body) as List;
+        final packages = decoded.map((e) => DomesticPackageModel.fromJson(e)).toList();
+
+
+        return {
+          'success': true,
+          'data': packages,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to load packages.',
+        };
+      }
+    } catch (e) {
+      print('💥 [FETCH_PACKAGES] Error: $e');
+      return {
+        'success': false,
+        'message': 'Error loading packages. Please check your connection.',
+      };
+    }
+  }
+
+
 
   static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
     required String userId,

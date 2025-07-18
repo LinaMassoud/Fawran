@@ -1,6 +1,7 @@
 import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/contractsProvider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
+import 'package:fawran/screens/laborerProfile.dart';
 import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -303,81 +304,84 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
             ],
 
             // STEP 4: SELECT DRIVER (only if from App)
-            if (selectedLaborSource == "app") ...[
-              sectionHeader(
-                  "Step 4: Choose ${selectedProfession?.positionName}"),
-              laborersAsync.when(
-                data: (drivers) {
-                  if (drivers.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24.0, vertical: 48),
-                        child: Column(
-                          children: [
-                            Icon(Icons.groups_outlined,
-                                size: 64, color: Colors.grey[400]),
-                            const SizedBox(height: 16),
-                            Text("No Available Laborers",
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[700])),
-                            const SizedBox(height: 8),
-                            Text(
-                                "There are currently no laborers available. Please check back later.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 16, color: Colors.grey[500])),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
+        if (selectedLaborSource == "app") ...[
+  sectionHeader("Step 4: Choose ${selectedProfession?.positionName}"),
+  laborersAsync.when(
+    data: (drivers) {
+      if (drivers.isEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48),
+            child: Column(
+              children: [
+                Icon(Icons.groups_outlined, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text("No Available Laborers",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+                const SizedBox(height: 8),
+                Text("There are currently no laborers available. Please check back later.",
+                    textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+              ],
+            ),
+          ),
+        );
+      }
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: drivers.length,
-                    itemBuilder: (c, i) {
-                      final d = drivers[i];
-                      final sel = selectedLaborId == d.personId;
-                      return Card(
-                        color: sel ? Colors.blue[50] : Colors.white,
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            radius: 24,
-                            backgroundImage: selectedProfession?.positionId == 7
-                                ? const AssetImage(
-                                    'assets/images/default_maid.jpg')
-                                : const AssetImage(
-                                        'assets/images/default_avatar.jpg')
-                                    as ImageProvider,
-                          ),
-                          title: Text(d.employeeName),
-                          subtitle:
-                              Text("Employee Number: ${d.employeeNumber}"),
-                          trailing: Radio<int>(
-                            value: d.personId,
-                            groupValue: selectedLaborId,
-                            onChanged: (v) {
-                              setState(() => selectedLaborId = v);
-                              ref.read(selectedLaborerProvider.notifier).state =
-                                  d;
-                              checkCarAvailability();
-                            },
-                          ),
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: drivers.length,
+        itemBuilder: (c, i) {
+          final d = drivers[i];
+          final sel = selectedLaborId == d.personId;
+          return Card(
+            color: sel ? Colors.blue[50] : Colors.white,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              leading: CircleAvatar(
+                radius: 24,
+                backgroundImage: selectedProfession?.positionId == 7
+                    ? const AssetImage('assets/images/default_maid.jpg')
+                    : const AssetImage('assets/images/default_avatar.jpg') as ImageProvider,
+              ),
+              title: Text(d.employeeName),
+              subtitle: Text("Employee Number: ${d.employeeNumber}"),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.info_outline),
+                    onPressed: () {
+                      // Navigate to the profile page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LaborProfilePage(laborer: d),
                         ),
                       );
                     },
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
-              )
-            ],
+                  ),
+                  Radio<int>(
+                    value: d.personId,
+                    groupValue: selectedLaborId,
+                    onChanged: (v) {
+                      setState(() => selectedLaborId = v);
+                      ref.read(selectedLaborerProvider.notifier).state = d;
+                      checkCarAvailability();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+    loading: () => const Center(child: CircularProgressIndicator()),
+    error: (e, _) => Center(child: Text('Error: $e')),
+  )
+],
+
 
             // STEP 5: PICKUP / DELIVERY (conditionally shown as Step 4 or 5)
             if ((selectedLaborSource == "company") ||

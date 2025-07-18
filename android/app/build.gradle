@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.fawran"
+    namespace = "com.emdadHR.fawran"
     compileSdk = 35
     ndkVersion = "25.1.8937393"
 
