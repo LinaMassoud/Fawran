@@ -6,6 +6,7 @@ import 'package:fawran/models/labour.dart';
 import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/nationality_provider.dart';
+import 'package:fawran/services/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
@@ -13,18 +14,12 @@ final selectedLaborerProvider = StateProvider<Laborer?>((ref) => null);
 
 final laborersProvider = FutureProvider<List<Laborer>>((ref) async {
   final profession = ref.watch(selectedProfessionProvider);
-  final nationlaty = ref.watch(selectedNationalityProvider);
+  final nationality = ref.watch(selectedNationalityProvider);
 
-  if (profession == null) return [];
+  if (profession == null || nationality == null) return [];
 
-  final response = await http.get(Uri.parse(
-      'http://fawran.ddns.net:8080/ords/emdad/fawran/available-domestic-workers/${profession.positionId}/${nationlaty}'));
-
-  if (response.statusCode == 200) {
-    final items = jsonDecode(response.body) as List;
-    final m = items.map((e) => Laborer.fromJson(e)).toList();
-    return m;
-  } else {
-    throw Exception('Failed to load laborers');
-  }
+  return await ApiService.fetchLaborers(
+    professionId: profession.positionId,
+    nationality: nationality,
+  );
 });

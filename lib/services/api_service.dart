@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:fawran/models/ProffesionModel.dart';
+import 'package:fawran/models/labour.dart';
 import 'package:fawran/models/sliderItem.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -727,6 +728,9 @@ class ApiService {
 
         return data.cast<Map<String, dynamic>>();
       } else  if(response.statusCode == 204){
+  
+  
+  
   final List<dynamic> data = json.decode("[]");
         print(
             '✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
@@ -1188,7 +1192,7 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> fetchNationalities({
+  static Future<List<dynamic>> fetchNationalities({
     required int professionId,
     required String cityCode,
   }) async {
@@ -1211,6 +1215,32 @@ class ApiService {
       throw Exception('Error fetching nationalities: $e');
     }
   }
+  static Future<List<Laborer>> fetchLaborers({
+    required int professionId,
+    required int nationality,
+  }) async {
+    try {
+      final url = '$_baseUrl/available-domestic-workers/$professionId/$nationality';
+
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((e) => Laborer.fromJson(e)).toList();
+      } else {
+        throw Exception(
+            'Failed to fetch laborers. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching laborers: $e');
+    }
+  }
+
+
+
 }
 
 Map<String, dynamic>? safeJsonDecode(String jsonString) {

@@ -40,80 +40,113 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
 
     final selectedProfession = ref.watch(selectedProfessionProvider);
 
-    Future<void> submitOrder() async {
+ Future<void> submitOrder() async {
+  setState(() {
+    isLoading = true;
+  });
+
+  final userId = await _storage.read(key: 'user_id') ?? '';
+
+  // 🔍 Step 1: Check for "not confirmed" contracts
+  try {
+    final contracts = await ApiService.fetchPermanentContracts(userId: userId);
+
+    final hasNotConfirmedContracts = contracts.any((contract) {
+      final status = contract['status']?.toString().toLowerCase();
+      return status == 'not confirmed';
+    });
+
+    if (hasNotConfirmedContracts) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You have an unconfirmed contract. Please confirm or cancel it before creating a new one."),
+        ),
+      );
       setState(() {
-        isLoading = true;
+        isLoading = false;
       });
-      final userId = await _storage.read(key: 'user_id') ?? '';
-
-      final selectedPackage = ref.read(selectedPackageProvider);
-      final selectedNationalityData = ref
-          .read(nationalitiesProvider)
-          .asData
-          ?.value
-          .firstWhere((n) => n?.id == selectedNationality);
-
-      if (selectedPackage == null || selectedNationalityData == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Missing required data.")),
-        );
-        setState(() {
-          isLoading = false;
-        });
-        return;
-      }
-
-      final double deliveryCharge = pickupOption == "delivery" ? 50.0 : 0.0;
-      final double amountToPay = selectedPackage.vatAmount +
-          selectedPackage.contractAmount +
-          deliveryCharge;
-
-      final requestBody = {
-        "customer_id": userId,
-        "profession_id": selectedProfession?.positionId,
-        "profession_name": selectedProfession?.positionName,
-        "nationality_id": selectedNationalityData.id,
-        "nationality": selectedNationalityData.name,
-        "package_id": selectedPackage.packageId,
-        "package_name": selectedPackage.packageName,
-        "period_days": selectedPackage.contractDays,
-        "tax_rate": 15.0,
-        "final_price": selectedPackage.finalInvoice,
-        "delivery_charge": deliveryCharge,
-        "amount_to_pay": amountToPay,
-        "vat_amount": selectedPackage.vatAmount
-      };
-
-      try {
-        final response = await ref
-            .read(contractsProvider.notifier)
-            .createPermanentContract(requestBody);
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Order submitted successfully!")),
-          );
-          setState(() {
-            isLoading = false;
-          });
-          Navigator.pushReplacementNamed(context, '/bookings');
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Submission failed: ${response.body}")),
-          );
-        }
-      } catch (e) {
-        setState(() {
-          isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error submitting order: $e")),
-        );
-      }
+      return;
     }
+  } catch (e) {
+    setState(() {
+      isLoading = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error checking existing contracts: $e")),
+    );
+    return;
+  }
+
+  // 🔧 Prepare form data
+  final selectedPackage = ref.read(selectedPackageProvider);
+  final selectedNationalityData = ref
+      .read(nationalitiesProvider)
+      .asData
+      ?.value
+      .firstWhere((n) => n?.id == selectedNationality);
+
+  if (selectedPackage == null || selectedNationalityData == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Missing required data.")),
+    );
+    setState(() {
+      isLoading = false;
+    });
+    return;
+  }
+
+  final double deliveryCharge = pickupOption == "delivery" ? 50.0 : 0.0;
+  final double amountToPay = selectedPackage.vatAmount +
+      selectedPackage.contractAmount +
+      deliveryCharge;
+
+  final requestBody = {
+    "customer_id": userId,
+    "profession_id": selectedProfession?.positionId,
+    "profession_name": selectedProfession?.positionName,
+    "nationality_id": selectedNationalityData.id,
+    "nationality": selectedNationalityData.name,
+    "package_id": selectedPackage.packageId,
+    "package_name": selectedPackage.packageName,
+    "period_days": selectedPackage.contractDays,
+    "tax_rate": 15.0,
+    "final_price": selectedPackage.finalInvoice,
+    "delivery_charge": deliveryCharge,
+    "amount_to_pay": amountToPay,
+    "vat_amount": selectedPackage.vatAmount
+  };
+
+  // 🚀 Submit contract
+  try {
+    final response = await ref
+        .read(contractsProvider.notifier)
+        .createPermanentContract(requestBody);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Order submitted successfully!")),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      Navigator.pushReplacementNamed(context, '/bookings');
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Submission failed: ${response.body}")),
+      );
+    }
+  } catch (e) {
+    setState(() {
+      isLoading = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error submitting order: $e")),
+    );
+  }
+}
 
     return Scaffold(
       appBar: AppBar(
