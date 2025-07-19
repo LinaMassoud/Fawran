@@ -18,6 +18,7 @@ import '../steps/date_selection_step.dart';
 import '../widgets/booking_step_header.dart';
 import '../providers/address_provider.dart';
 import '../providers/auth_provider.dart';
+import 'package:flashy_flushbar/flashy_flushbar.dart';
 
 class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   final PackageModel? package; // Made optional
@@ -173,8 +174,25 @@ double? _hourPrice;
 
     // Fetch addresses from API
     _fetchAddresses();
-  }
 
+    _initializeNationality();
+  }
+void _initializeNationality() async {
+  if (!widget.isCustomBooking && widget.package != null) {
+    // Wait for country groups to be fully loaded
+    await PackageModel.preloadCountryGroups(serviceId: widget.serviceId);
+    
+    // Get the updated nationality display from API
+    final apiNationality = await widget.package!.getNationalityDisplay(serviceId: widget.serviceId);
+    
+    // Update the state if different from fallback
+    if (mounted && apiNationality != selectedNationality) {
+      setState(() {
+        selectedNationality = apiNationality;
+      });
+    }
+  }
+}
   // Fetch addresses from API
 Future<void> _fetchAddresses() async {
   try {
@@ -446,12 +464,32 @@ void _updatePriceVat(double priceVat) {
     
     // Show success message if needed
     if (result['message'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message']),
-          backgroundColor: Colors.green,
-        ),
-      );
+      FlashyFlushbar(
+  leadingWidget: const Icon(
+    Icons.check_circle_outline,
+    color: Colors.white,
+    size: 24,
+  ),
+  message: result['message'],
+  duration: const Duration(seconds: 3),
+  trailingWidget: IconButton(
+    icon: const Icon(
+      Icons.close,
+      color: Colors.white,
+      size: 20,
+    ),
+    onPressed: () {
+      FlashyFlushbar.cancel();
+    },
+  ),
+  isDismissible: true,
+  backgroundColor: Colors.green,
+  messageStyle: const TextStyle(
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+  ),
+).show();
     }
   }
 }
@@ -665,30 +703,87 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
 
     if (mounted) {
       if (result['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Contract created successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
+        FlashyFlushbar(
+          leadingWidget: const Icon(
+            Icons.check_circle_outline,
+            color: Colors.white,
+            size: 24,
           ),
-        );
+          message: result['message'] ?? 'Contract created successfully',
+          duration: const Duration(seconds: 3),
+          trailingWidget: IconButton(
+            icon: const Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 20,
+            ),
+            onPressed: () {
+              FlashyFlushbar.cancel();
+            },
+          ),
+          isDismissible: true,
+          backgroundColor: Colors.green,
+          messageStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ).show();
       } else {
         if (result['statusCode'] == 409) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message'] ?? 'A service contract is already in pending status'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 5),
+          FlashyFlushbar(
+            leadingWidget: const Icon(
+              Icons.warning_outlined,
+              color: Colors.white,
+              size: 24,
             ),
-          );
+            message: result['message'] ?? 'A service contract is already in pending status',
+            duration: const Duration(seconds: 5),
+            trailingWidget: IconButton(
+              icon: const Icon(
+                Icons.close,
+                color: Colors.white,
+                size: 20,
+              ),
+              onPressed: () {
+                FlashyFlushbar.cancel();
+              },
+            ),
+            isDismissible: true,
+            backgroundColor: Colors.orange,
+            messageStyle: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ).show();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message'] ?? 'Failed to create contract'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 5),
+          FlashyFlushbar(
+            leadingWidget: const Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 24,
             ),
-          );
+            message: result['message'] ?? 'Failed to create contract',
+            duration: const Duration(seconds: 5),
+            trailingWidget: IconButton(
+              icon: const Icon(
+                Icons.close,
+                color: Colors.white,
+                size: 20,
+              ),
+              onPressed: () {
+                FlashyFlushbar.cancel();
+              },
+            ),
+            isDismissible: true,
+            backgroundColor: Colors.red,
+            messageStyle: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ).show();
         }
       }
     }
@@ -699,13 +794,32 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
     print('Error creating contract: $e');
     
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create contract: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 5),
+      FlashyFlushbar(
+      leadingWidget: const Icon(
+        Icons.error_outline,
+        color: Colors.white,
+        size: 24,
+      ),
+      message: 'Failed to create contract: ${e.toString()}',
+      duration: const Duration(seconds: 5),
+      trailingWidget: IconButton(
+        icon: const Icon(
+          Icons.close,
+          color: Colors.white,
+          size: 20,
         ),
-      );
+        onPressed: () {
+          FlashyFlushbar.cancel();
+        },
+      ),
+      isDismissible: true,
+      backgroundColor: Colors.red,
+      messageStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+    ).show();
     }
     
     return {
