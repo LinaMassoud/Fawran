@@ -440,56 +440,44 @@ void _updatePriceVat(double priceVat) {
     // First refresh the addresses list to get the actual address with proper ID
     await _fetchAddresses();
     
-    // Then try to select the newly created address
-    if (result["newAddress"] != null && result["displayAddress"] != null) {
-      final add = result["newAddress"];
-      final displayAdd = result["displayAddress"];
+    // Select the newly created address by finding the one with the highest addressId
+    if (addresses.isNotEmpty) {
+      // Find the address with the highest addressId (most recently created)
+      final latestAddress = addresses.reduce((current, next) => 
+        current.addressId > next.addressId ? current : next);
       
-      // Create a search pattern to find the newly created address
-      final expectedCardText = '${displayAdd?['city'] ?? ''} - ${displayAdd?['district']?.districtName ?? ''}';
-      
-      // Find the address in the refreshed list that matches our new address
-      final newAddress = addresses.firstWhere(
-        (address) => address.cardText.toLowerCase().contains(expectedCardText.toLowerCase()) ||
-                    (address.cityCode.toString() == add?['city']?.toString() && 
-                     address.districtCode == add?['districtCode']?.toString()),
-        orElse: () => addresses.isNotEmpty ? addresses.last : addresses.first,
-      );
-      
-      // Set the selected address using the proper address from the API
-      if (addresses.isNotEmpty) {
-        ref.read(selectedAddressProvider.notifier).state = newAddress;
-      }
+      // Set the selected address to the latest one
+      ref.read(selectedAddressProvider.notifier).state = latestAddress;
     }
     
     // Show success message if needed
     if (result['message'] != null) {
       FlashyFlushbar(
-  leadingWidget: const Icon(
-    Icons.check_circle_outline,
-    color: Colors.white,
-    size: 24,
-  ),
-  message: result['message'],
-  duration: const Duration(seconds: 3),
-  trailingWidget: IconButton(
-    icon: const Icon(
-      Icons.close,
-      color: Colors.white,
-      size: 20,
-    ),
-    onPressed: () {
-      FlashyFlushbar.cancel();
-    },
-  ),
-  isDismissible: true,
-  backgroundColor: Colors.green,
-  messageStyle: const TextStyle(
-    color: Colors.white,
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-  ),
-).show();
+        leadingWidget: const Icon(
+          Icons.check_circle_outline,
+          color: Colors.white,
+          size: 24,
+        ),
+        message: result['message'],
+        duration: const Duration(seconds: 3),
+        trailingWidget: IconButton(
+          icon: const Icon(
+            Icons.close,
+            color: Colors.white,
+            size: 20,
+          ),
+          onPressed: () {
+            FlashyFlushbar.cancel();
+          },
+        ),
+        isDismissible: true,
+        backgroundColor: Colors.green,
+        messageStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ).show();
     }
   }
 }
