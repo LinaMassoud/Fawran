@@ -29,8 +29,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF ]+$');
   final numberOnlyRegex = RegExp(r'^\d+$');
-  final phoneRegex = RegExp(r'^05\d{8}$');
-final nationalIdRegex = RegExp(r'^[12]{2}\d{8}$');
+  final phoneRegex = RegExp(r'^\+?[0-9\s\-\(\)]{7,20}$');
+  final nationalIdRegex = RegExp(r'^[12]{2}\d{8}$');
 
   @override
   void initState() {
