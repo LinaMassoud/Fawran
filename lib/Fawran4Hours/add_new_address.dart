@@ -12,6 +12,7 @@ import '../models/address_model.dart';
 import '../services/api_service.dart';
 import '../steps/address_selection_step.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:flashy_flushbar/flashy_flushbar.dart';
 
 class AddNewAddressScreen extends StatefulWidget {
   final PackageModel? package;
@@ -122,6 +123,37 @@ bool _isGettingCurrentLocation = false;
     return _availableCities;
   }
 
+
+
+
+void _showFlushbar(String message, {Color backgroundColor = Colors.orange, IconData icon = Icons.info_outline}) {
+  FlashyFlushbar(
+    leadingWidget: Icon(
+      icon,
+      color: Colors.white,
+      size: 24,
+    ),
+    message: message,
+    duration: const Duration(seconds: 3),
+    trailingWidget: IconButton(
+      icon: const Icon(
+        Icons.close,
+        color: Colors.white,
+        size: 20,
+      ),
+      onPressed: () {
+        FlashyFlushbar.cancel();
+      },
+    ),
+    isDismissible: true,
+    backgroundColor: backgroundColor,
+    messageStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+  ).show();
+}
   List<District> get _districts {
     final seenCodes = <String>{};
     final uniqueDistricts = _availableDistricts.where((district) {
@@ -242,34 +274,24 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
   final loc = AppLocalizations.of(context)!;
   
   if (_selectedLocation == null || _selectedDistrictCode == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text('Missing required location or district information')),
-    );
+    _showFlushbar('Missing required location or district information', backgroundColor: Colors.red, icon: Icons.error_outline);
     return;
   }
 
   // Validate house type selection
   if (_selectedHouseType == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Please select a house type')),
-    );
+    _showFlushbar('Please select a house type', backgroundColor: Colors.red, icon: Icons.error_outline);
     return;
   }
 
   // Validate apartment-specific fields if house type is Apartment
   if (_selectedHouseType == loc.appartment) {
     if (_selectedFloorNumber == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Floor number is required for apartments')),
-      );
+      _showFlushbar('Floor number is required for apartments', backgroundColor: Colors.red, icon: Icons.error_outline);
       return;
     }
     if (_apartmentNumberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Apartment number is required for apartments')),
-      );
+      _showFlushbar('Apartment number is required for apartments', backgroundColor: Colors.red, icon: Icons.error_outline);
       return;
     }
   }
@@ -302,8 +324,12 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
           ? _addressTitleController.text
           : '',
       buildingNumber: _houseNumberController.text, // Now passing string directly
-      cityCode: _selectedCityCode?.toString() ?? '',
-      districtId: _selectedDistrictCode?.toString() ?? '',
+      cityCode: _useCurrentLocation 
+    ? _selectedCityCode?.toString() ?? ''  // Use validated city code
+    : _selectedCityCode?.toString() ?? '',
+districtId: _useCurrentLocation
+    ? _selectedDistrictCode?.toString() ?? ''  // Use validated district code  
+    : _selectedDistrictCode?.toString() ?? '',
       houseType: houseTypeValue,
       createdBy: 1,
       customerId: widget.user_id ?? '',
@@ -352,12 +378,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
 
     if (result['success']) {
       // Success - Return result to parent screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message']),
-          backgroundColor: Colors.green,
-        ),
-      );
+      _showFlushbar(result['message'], backgroundColor: Colors.green, icon: Icons.check_circle_outline);
 
       // Return success result to parent screen with newAddress included
       Navigator.of(context).pop({
@@ -370,12 +391,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
       
     } else {
       // Error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message']),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showFlushbar(result['message'], backgroundColor: Colors.red, icon: Icons.error_outline);
     }
   } catch (e) {
     // Hide loading indicator if still showing
@@ -384,13 +400,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
     }
 
     print('Exception creating address: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            'Network error. Please check your connection and try again.'),
-        backgroundColor: Colors.red,
-      ),
-    );
+    _showFlushbar('Network error. Please check your connection and try again.', backgroundColor: Colors.red, icon: Icons.wifi_off);
   }
 }
 
@@ -412,11 +422,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
     setState(() {
       _isLoadingDistrictMap = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content:
-              Text('Failed to load district map data. Please try again.')),
-    );
+    _showFlushbar('Failed to load district map data. Please try again.', backgroundColor: Colors.red, icon: Icons.error_outline);
   }
 }
 
@@ -436,9 +442,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
     setState(() {
       _isLoadingCities = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load cities. Please try again.')),
-    );
+    _showFlushbar('Failed to load cities. Please try again.', backgroundColor: Colors.red, icon: Icons.error_outline);
   }
 }
 
@@ -458,9 +462,7 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
     setState(() {
       _isLoadingDistricts = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load districts. Please try again.')),
-    );
+    _showFlushbar('Failed to load districts. Please try again.', backgroundColor: Colors.red, icon: Icons.error_outline);
   }
 }
 
@@ -470,17 +472,13 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
   
   // Don't open map if still loading district map data
   if (_isLoadingDistrictMap) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Please wait while map data is loading...')),
-    );
+    _showFlushbar('Please wait while map data is loading...', backgroundColor: Colors.blue, icon: Icons.hourglass_empty);
     return;
   }
   
   // Don't open map if district map data is not available yet
   if (_selectedDistrictCode != null && _districtMapData == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Map data not available. Please try again.')),
-    );
+    _showFlushbar('Map data not available. Please try again.', backgroundColor: Colors.red, icon: Icons.error_outline);
     return;
   }
 
@@ -619,17 +617,8 @@ void _toggleCurrentLocation() {
   if (!_hasTriedCurrentLocation) {
     // First time clicking - try to get current location
     _getCurrentLocation();
-  } else if (_currentLocationFailed) {
-    // Only allow toggle back if current location failed
-    setState(() {
-      _useCurrentLocation = false;
-      _isDistrictCompleted = false;
-      _isMapCompleted = false;
-      _canProceedToDetails = false;
-      _currentStep = 1;
-    });
   }
-  // If current location was successful, don't allow toggle back
+  // Remove the else conditions - don't allow toggling back
 }
 
 Future<void> _getCurrentLocation() async {
@@ -663,31 +652,91 @@ Future<void> _getCurrentLocation() async {
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    // Success - set current location
-    setState(() {
-      _useCurrentLocation = true;
-      _currentLocationFailed = false;
-      _isGettingCurrentLocation = false;
-      _selectedLocation = LatLng(position.latitude, position.longitude);
-      
-      // Mark steps as completed
-      _isDistrictCompleted = true;
-      _isMapCompleted = true;
-      _canProceedToDetails = true;
-      _currentStep = 3;
-      
-      // Clear manual selection values
-      _selectedCity = null;
-      _selectedDistrict = null;
-      _selectedDistrictCode = null;
-      _districtMapData = null;
-    });
+    // Validate coordinates with API
+    final validationResult = await ApiService.validateCoordinates(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    );
 
-    // Get address from coordinates
-    await _handleLocationSelection(LatLng(position.latitude, position.longitude));
+    if (validationResult['success'] && validationResult['data']['valid']) {
+      // Coordinates are valid - proceed with current location
+      final districtData = validationResult['data'];
+      
+      // Extract city code and district code from validation response
+      final cityCode = int.tryParse(districtData['city_code']);
+      final districtCode = districtData['district_code'];
+      
+      setState(() {
+        _useCurrentLocation = true;
+        _currentLocationFailed = false;
+        _isGettingCurrentLocation = false;
+        _selectedLocation = LatLng(position.latitude, position.longitude);
+        
+        // Set the validated district and city codes from API response
+        _selectedDistrictCode = districtCode;
+        _selectedCityCode = cityCode;
+        
+        // Mark steps as completed for current location
+        _isDistrictCompleted = true;
+        _isMapCompleted = true;
+        _canProceedToDetails = true;
+        _currentStep = 3;
+      });
+
+      // Load cities and districts for the validated location
+      if (cityCode != null && cityCode > 0) {
+        // Load cities first (if not already loaded)
+        if (_availableCities.isEmpty) {
+          await _fetchCitiesFromAPI(widget.serviceId ?? 1);
+        }
+        
+        // Find and set the selected city
+        final selectedCity = _availableCities.firstWhere(
+          (city) => city.cityCode == cityCode,
+          orElse: () => City(cityCode: cityCode, cityName: ''),
+        );
+        
+        // Load districts for this city
+        await _fetchDistrictsFromAPI(cityCode);
+        
+        // Update the selected city after districts are loaded
+        setState(() {
+          _selectedCity = selectedCity;
+          // Find the district name for display
+          final selectedDistrict = _availableDistricts.firstWhere(
+            (district) => district.districtCode == districtCode,
+            orElse: () => District(districtCode: districtCode, districtName: ''),
+          );
+          _selectedDistrict = selectedDistrict.districtName;
+        });
+      }
+
+      // Get address from coordinates for display
+      await _handleLocationSelection(LatLng(position.latitude, position.longitude));
+
+      // Show success message
+      _showFlushbar('Current location validated successfully', backgroundColor: Colors.green, icon: Icons.check_circle_outline);
+
+    } else {
+      // Coordinates are not valid - fall back to manual selection
+      setState(() {
+        _useCurrentLocation = false;
+        _currentLocationFailed = true;
+        _isGettingCurrentLocation = false;
+        _isDistrictCompleted = false;
+        _isMapCompleted = false;
+        _canProceedToDetails = false;
+        _currentStep = 1;
+      });
+
+      // Show error message about invalid location
+      String errorMessage = validationResult['message'] ?? 'Location not in service area';
+          
+      _showFlushbar('$errorMessage. Please select address manually.', backgroundColor: Colors.orange, icon: Icons.location_off);
+    }
 
   } catch (e) {
-    // Current location failed - allow manual selection
+    // GPS/Permission error - allow manual selection
     setState(() {
       _useCurrentLocation = false;
       _currentLocationFailed = true;
@@ -699,12 +748,7 @@ Future<void> _getCurrentLocation() async {
     });
 
     // Show error message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to get current location: ${e.toString()}'),
-        backgroundColor: Colors.red,
-      ),
-    );
+    _showFlushbar('Failed to get current location: ${e.toString()}', backgroundColor: Colors.red, icon: Icons.location_disabled);
   }
 }
 
@@ -983,6 +1027,11 @@ Future<void> _getCurrentLocation() async {
   }
   
   Widget _buildCurrentLocationButton({required AppLocalizations loc}) {
+  // Don't show the button if current location failed and user hasn't tried again
+  if (_currentLocationFailed && _hasTriedCurrentLocation) {
+    return SizedBox.shrink(); // This removes the button completely
+  }
+
   return Container(
     width: double.infinity,
     margin: EdgeInsets.only(bottom: 20),
@@ -993,38 +1042,38 @@ Future<void> _getCurrentLocation() async {
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
-                color: Colors.white,
+                color: Colors.grey[600],
                 strokeWidth: 2,
               ),
             )
           : Icon(
               _useCurrentLocation ? Icons.location_on : Icons.my_location,
-              color: Colors.white,
+              color: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
             ),
       label: Text(
         _isGettingCurrentLocation
             ? "Getting location..."
             : _useCurrentLocation
                 ? "Current location selected"
-                : _currentLocationFailed
-                    ? "Manual Address Selection"
-                    : "Use Current Location",
+                : "Use Current Location",
         style: TextStyle(
-          color: Colors.white,
+          color: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: _useCurrentLocation 
-            ? Colors.green 
-            : _currentLocationFailed 
-                ? Colors.orange 
-                : Color(0xFF1E3A8A),
+        backgroundColor: _useCurrentLocation ? Color(0xFF1E3A8A) : Colors.white,
+        foregroundColor: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
+        side: BorderSide(
+          color: Color(0xFF1E3A8A),
+          width: 2,
+        ),
         padding: EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        elevation: _useCurrentLocation ? 2 : 0,
       ),
     ),
   );

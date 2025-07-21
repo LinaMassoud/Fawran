@@ -314,7 +314,7 @@ Widget _buildFormattedTerms() {
                         Container(height: 1, color: Colors.grey[300]),
                         SizedBox(height: 16),
                         _buildDetailRow(
-                            loc.nationality,
+                            loc.service,
                             _getLocalizedNationality(widget.bookingData.selectedNationality, loc)), // Use actual nationality instead of 'East Asia'
                         SizedBox(height: 12),
                         _buildDetailRow(
@@ -681,10 +681,18 @@ String _getLocalizedNationality(String nationality, AppLocalizations loc) {
   }
 }
 
+
+
 String _getLocalizedContractDurationSimple(int contractDuration, AppLocalizations loc) {
-  // Convert weeks to months (assuming 4 weeks = 1 month)
-  int months = (contractDuration / 4).round();
-  return '$months ${loc.month ?? 'شهر'}';
+  // Check if contract duration is exactly divisible by 4
+  if (contractDuration % 4 == 0 && contractDuration >= 4) {
+    // Convert weeks to months (4 weeks = 1 month)
+    int months = contractDuration ~/ 4; // Use integer division
+    return '$months ${loc.month ?? 'شهر'}';
+  } else {
+    // Display as weeks for any duration not exactly divisible by 4
+    return '$contractDuration ${loc.weeks ?? 'أسابيع'}';
+  }
 }
 
 

@@ -1,3 +1,4 @@
+import '../services/api_service.dart';
 class PackageModel {
   final String groupCode;
   final String serviceShift;
@@ -17,6 +18,9 @@ class PackageModel {
   final double vatAmount; // Changed to double to match JSON
   final double finalPrice;
   final int? noOfWeeks; // Added missing field, nullable
+
+  static Map<String, List<dynamic>> _countryGroupsCache = {};
+  static Map<String, String> _groupCodeToNameCache = {};
 
   PackageModel({
     required this.groupCode,
@@ -99,12 +103,81 @@ class PackageModel {
     return 0.0;
   }
 
-  // Helper methods to get display values
-  String get nationalityDisplay {
+  static Future<void> preloadCountryGroups({required int serviceId}) async {
+    try {
+      final cacheKey = serviceId.toString();
+      if (_countryGroupsCache.containsKey(cacheKey)) {
+        return; // Already cached
+      }
+
+      final countryGroups = await ApiService.fetchCountryGroups(serviceId: serviceId);
+      _countryGroupsCache[cacheKey] = countryGroups;
+
+      // Build the group code to name mapping
+      for (var group in countryGroups) {
+        final groupCode = group['group_code']?.toString();
+        final groupName = group['group_name']?.toString() ?? group['name']?.toString();
+        
+        if (groupCode != null && groupName != null) {
+          _groupCodeToNameCache[groupCode] = groupName;
+        }
+      }
+    } catch (e) {
+      print('Error preloading country groups: $e');
+      // Continue with fallback values if API fails
+    }
+  }
+
+  // Async method to get nationality display from API
+  Future<String> getNationalityDisplay({required int serviceId}) async {
+    try {
+      // Check if we have cached data for this service
+      final cacheKey = serviceId.toString();
+      if (!_countryGroupsCache.containsKey(cacheKey)) {
+        await preloadCountryGroups(serviceId: serviceId);
+      }
+
+      // Try to get from cache first
+      final cachedName = _groupCodeToNameCache[groupCode];
+      if (cachedName != null) {
+        return cachedName;
+      }
+
+      // If not in cache, fetch fresh data
+      final countryGroups = await ApiService.fetchCountryGroups(serviceId: serviceId);
+      
+      for (var group in countryGroups) {
+        final code = group['group_code']?.toString();
+        if (code == groupCode) {
+          final name = group['group_name']?.toString() ?? 
+                      group['name']?.toString() ?? 
+                      'Unknown';
+          
+          // Cache for future use
+          _groupCodeToNameCache[groupCode] = name;
+          return name;
+        }
+      }
+
+      // Fallback if not found
+      return _getFallbackNationalityDisplay();
+    } catch (e) {
+      print('Error fetching nationality display: $e');
+      return _getFallbackNationalityDisplay();
+    }
+  }
+
+  // Synchronous fallback method (original hardcoded logic)
+  String _getFallbackNationalityDisplay() {
     if (groupCode == '2') return 'East Asia';      
     if (groupCode == '3') return 'African';        
-    if (groupCode == '1') return 'South Asia';     
+    if (groupCode == '9') return 'South Asia';     
     return 'East Asia'; // default
+  }
+
+  // Synchronous getter for backward compatibility (uses cached data)
+  String get nationalityDisplay {
+    return _groupCodeToNameCache[groupCode] ?? _getFallbackNationalityDisplay();
   }
 
   String get timeDisplay {

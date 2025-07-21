@@ -407,6 +407,59 @@ class ApiService {
   }
 }
 
+
+static Future<Map<String, dynamic>> validateCoordinates({
+  required double latitude,
+  required double longitude,
+}) async {
+  try {
+    final url = '$_baseUrl/district-by-coordinates';
+    
+    final requestBody = json.encode({
+      'lat': latitude,
+      'lng': longitude,
+    });
+
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: url,
+      body: requestBody,
+    );
+
+    print('📍 [COORDINATE_VALIDATION] Response status: ${response.statusCode}');
+    print('📍 [COORDINATE_VALIDATION] Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      return {
+        'success': true,
+        'data': responseData,
+      };
+    } else {
+      // Parse the error response to get the actual message
+      try {
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to validate coordinates',
+          'data': errorData,
+        };
+      } catch (parseError) {
+        return {
+          'success': false,
+          'message': 'Failed to validate coordinates',
+        };
+      }
+    }
+  } catch (e) {
+    print('💥 [COORDINATE_VALIDATION] Error: $e');
+    return {
+      'success': false,
+      'message': 'Network error occurred',
+    };
+  }
+}
+
   static Future<bool> refreshToken() async {
     // If there's already a refresh in progress, wait for it to complete
     if (_refreshTokenFuture != null) {
@@ -906,22 +959,13 @@ static Future<Map<String, dynamic>> fetchPermPackages({
       }
       
        else {
-        print("HTTP Error Details:");
-        print("Status Code: ${response.statusCode}");
-        print("Reason Phrase: ${response.reasonPhrase}");
         print("Error Response Body: ${response.body}");
         throw Exception(
             "Failed to load hourly contracts: ${response.statusCode}");
       }
     } catch (e) {
       print("💥 [HOURLY_CONTRACTS] Error fetching hourly contracts: $e");
-      print("Error Type: ${e.runtimeType}");
-      if (e is http.ClientException) {
-        print("Network Error Details: ${e.message}");
-      }
       throw Exception("Error fetching hourly contracts: $e");
-    } finally {
-      print("=== END HOURLY CONTRACTS DEBUG ===\n");
     }
   }
 

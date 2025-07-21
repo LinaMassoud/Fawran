@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/package_model.dart';
+import 'package:flashy_flushbar/flashy_flushbar.dart';
 
 class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
@@ -512,14 +513,33 @@ void _setStartDateFromSelectedDays([List<String>? selectedDays]) {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.orange,
-        duration: Duration(seconds: 2),
+  FlashyFlushbar(
+    leadingWidget: const Icon(
+      Icons.info_outline,
+      color: Colors.white,
+      size: 24,
+    ),
+    message: message,
+    duration: const Duration(seconds: 2),
+    trailingWidget: IconButton(
+      icon: const Icon(
+        Icons.close,
+        color: Colors.white,
+        size: 20,
       ),
-    );
-  }
+      onPressed: () {
+        FlashyFlushbar.cancel();
+      },
+    ),
+    isDismissible: true,
+    backgroundColor: Colors.orange,
+    messageStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+  ).show();
+}
 
   bool _isDateSelectable(DateTime date) {
     final dateOnly = DateTime(date.year, date.month, date.day);

@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flashy_flushbar/flashy_flushbar.dart';
 
 
 void main() async{
@@ -47,6 +48,7 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
+      builder: FlashyFlushbarProvider.init(),
       home: const LaunchScreen(),
       routes: {
         // '/login' key routes to LoginScreen widget
