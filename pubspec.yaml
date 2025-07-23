@@ -27,6 +27,9 @@ dependencies:
   flutter_inappwebview: ^6.1.5  
   youtube_player_iframe: ^5.2.1
   permission_handler: ^11.0.1
+  flashy_flushbar: ^1.0.2
+  url_launcher: ^6.3.2
+  font_awesome_flutter: ^10.0.0
 
 
 dev_dependencies:

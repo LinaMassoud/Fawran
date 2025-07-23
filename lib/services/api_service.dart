@@ -226,7 +226,6 @@ class ApiService {
     }
   }
 
-
   static Future<List<PackageModel>> fetchServicePackages({
     required int professionId,
     required int serviceId,
@@ -345,120 +344,121 @@ class ApiService {
   }
 
   static Future<List<City>> fetchCities(int serviceId, {WidgetRef? ref}) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/service_cities/$serviceId',
-    );
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/service_cities/$serviceId',
+      );
 
-    if (response.statusCode == 200) {
-      List<dynamic> citiesJson = json.decode(response.body);
-      List<City> cities =
-          citiesJson.map((city) => City.fromJson(city)).toList();
-      return cities;
-    } else {
-      throw Exception('Failed to load cities');
+      if (response.statusCode == 200) {
+        List<dynamic> citiesJson = json.decode(response.body);
+        List<City> cities =
+            citiesJson.map((city) => City.fromJson(city)).toList();
+        return cities;
+      } else {
+        throw Exception('Failed to load cities');
+      }
+    } catch (e) {
+      throw Exception('Error fetching cities: $e');
     }
-  } catch (e) {
-    throw Exception('Error fetching cities: $e');
   }
-}
 
-  static Future<List<District>> fetchDistricts(int cityCode, {WidgetRef? ref}) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/districts/$cityCode',
-    );
+  static Future<List<District>> fetchDistricts(int cityCode,
+      {WidgetRef? ref}) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/districts/$cityCode',
+      );
 
-    if (response.statusCode == 200) {
-      List<dynamic> districtsJson = json.decode(response.body);
-      List<District> districts = districtsJson
-          .map((district) => District.fromJson(district))
-          .toList();
-      return districts;
-    } else {
-      throw Exception('Failed to load districts');
+      if (response.statusCode == 200) {
+        List<dynamic> districtsJson = json.decode(response.body);
+        List<District> districts = districtsJson
+            .map((district) => District.fromJson(district))
+            .toList();
+        return districts;
+      } else {
+        throw Exception('Failed to load districts');
+      }
+    } catch (e) {
+      throw Exception('Error fetching districts: $e');
     }
-  } catch (e) {
-    throw Exception('Error fetching districts: $e');
   }
-}
 
   static Future<DistrictMapResponse> fetchDistrictMapData(
-  String districtCode, {
-  WidgetRef? ref,
-}) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/districts/info/$districtCode',
-    );
+    String districtCode, {
+    WidgetRef? ref,
+  }) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/districts/info/$districtCode',
+      );
 
-    if (response.statusCode == 200) {
-      final districtMapResponse =
-          DistrictMapResponse.fromJson(json.decode(response.body));
-      return districtMapResponse;
-    } else {
-      throw Exception('Failed to load district map data');
-    }
-  } catch (e) {
-    throw Exception('Error fetching district map data: $e');
-  }
-}
-
-
-static Future<Map<String, dynamic>> validateCoordinates({
-  required double latitude,
-  required double longitude,
-}) async {
-  try {
-    final url = '$_baseUrl/district-by-coordinates';
-    
-    final requestBody = json.encode({
-      'lat': latitude,
-      'lng': longitude,
-    });
-
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: url,
-      body: requestBody,
-    );
-
-    print('📍 [COORDINATE_VALIDATION] Response status: ${response.statusCode}');
-    print('📍 [COORDINATE_VALIDATION] Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      return {
-        'success': true,
-        'data': responseData,
-      };
-    } else {
-      // Parse the error response to get the actual message
-      try {
-        final errorData = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorData['message'] ?? 'Failed to validate coordinates',
-          'data': errorData,
-        };
-      } catch (parseError) {
-        return {
-          'success': false,
-          'message': 'Failed to validate coordinates',
-        };
+      if (response.statusCode == 200) {
+        final districtMapResponse =
+            DistrictMapResponse.fromJson(json.decode(response.body));
+        return districtMapResponse;
+      } else {
+        throw Exception('Failed to load district map data');
       }
+    } catch (e) {
+      throw Exception('Error fetching district map data: $e');
     }
-  } catch (e) {
-    print('💥 [COORDINATE_VALIDATION] Error: $e');
-    return {
-      'success': false,
-      'message': 'Network error occurred',
-    };
   }
-}
+
+  static Future<Map<String, dynamic>> validateCoordinates({
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final url = '$_baseUrl/district-by-coordinates';
+
+      final requestBody = json.encode({
+        'lat': latitude,
+        'lng': longitude,
+      });
+
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: url,
+        body: requestBody,
+      );
+
+      print(
+          '📍 [COORDINATE_VALIDATION] Response status: ${response.statusCode}');
+      print('📍 [COORDINATE_VALIDATION] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return {
+          'success': true,
+          'data': responseData,
+        };
+      } else {
+        // Parse the error response to get the actual message
+        try {
+          final errorData = json.decode(response.body);
+          return {
+            'success': false,
+            'message': errorData['message'] ?? 'Failed to validate coordinates',
+            'data': errorData,
+          };
+        } catch (parseError) {
+          return {
+            'success': false,
+            'message': 'Failed to validate coordinates',
+          };
+        }
+      }
+    } catch (e) {
+      print('💥 [COORDINATE_VALIDATION] Error: $e');
+      return {
+        'success': false,
+        'message': 'Network error occurred',
+      };
+    }
+  }
 
   static Future<bool> refreshToken() async {
     // If there's already a refresh in progress, wait for it to complete
@@ -469,7 +469,7 @@ static Future<Map<String, dynamic>> validateCoordinates({
 
     // Start the refresh process and store the future
     _refreshTokenFuture = _performTokenRefresh();
-    
+
     try {
       final result = await _refreshTokenFuture!;
       return result;
@@ -593,59 +593,57 @@ static Future<Map<String, dynamic>> validateCoordinates({
           retryCount: 1, // Prevent infinite retry loop
         );
       } else {
-       print('❌ [AUTH_REQUEST] Token refresh failed, clearing only tokens...');
-      // Clear only authentication tokens, preserve user data
-      await _secureStorage.delete(key: 'token');
-      await _secureStorage.delete(key: 'refresh_token');
+        print('❌ [AUTH_REQUEST] Token refresh failed, clearing only tokens...');
+        // Clear only authentication tokens, preserve user data
+        await _secureStorage.delete(key: 'token');
+        await _secureStorage.delete(key: 'refresh_token');
       }
     }
 
     return response;
   }
 
+  static Future<List<dynamic>> fetchContractDurations() async {
+    try {
+      final url = '$_baseUrl/contract-durations';
 
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
 
-static Future<List<dynamic>> fetchContractDurations() async {
-  try {
-    final url = '$_baseUrl/contract-durations';
-
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
-
-    if (response.statusCode == 200) {
-      final decodedData = json.decode(response.body);
-      return decodedData;
-    } else {
-      throw Exception(
-          'Failed to load contract durations. Status code: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception(
+            'Failed to load contract durations. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading contract durations: $e');
     }
-  } catch (e) {
-    throw Exception('Error loading contract durations: $e');
   }
-}
 
-static Future<List<dynamic>> fetchHourlyVisits() async {
-  try {
-    final url = '$_baseUrl/hourly-visits';
+  static Future<List<dynamic>> fetchHourlyVisits() async {
+    try {
+      final url = '$_baseUrl/hourly-visits';
 
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
 
-    if (response.statusCode == 200) {
-      final decodedData = json.decode(response.body);
-      return decodedData;
-    } else {
-      throw Exception(
-          'Failed to load hourly visits. Status code: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception(
+            'Failed to load hourly visits. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading hourly visits: $e');
     }
-  } catch (e) {
-    throw Exception('Error loading hourly visits: $e');
   }
-}
 
   static Future<Map<String, dynamic>> createContract({
     required int customerId,
@@ -737,13 +735,15 @@ static Future<List<dynamic>> fetchHourlyVisits() async {
           throw Exception('Contract creation failed: Invalid response format');
         }
       } else {
-      final errorData = json.decode(response.body);
-      return {
-        'success': false,
-        'message': errorData['error'] ?? errorData['message'] ?? 'Unknown error occurred',
-        'statusCode': response.statusCode,
-      };
-    }
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['error'] ??
+              errorData['message'] ??
+              'Unknown error occurred',
+          'statusCode': response.statusCode,
+        };
+      }
     } catch (e) {
       print('Error creating contract: $e');
       return {
@@ -793,7 +793,8 @@ static Future<List<dynamic>> fetchHourlyVisits() async {
       };
     }
   }
-static Future<Map<String, dynamic>> fetchPermPackages({
+
+  static Future<Map<String, dynamic>> fetchPermPackages({
     required int positionId,
     required int? nationality,
     required int? cityCode,
@@ -812,8 +813,8 @@ static Future<Map<String, dynamic>> fetchPermPackages({
 
       if (response.statusCode == 200) {
         final List decoded = jsonDecode(response.body) as List;
-        final packages = decoded.map((e) => DomesticPackageModel.fromJson(e)).toList();
-
+        final packages =
+            decoded.map((e) => DomesticPackageModel.fromJson(e)).toList();
 
         return {
           'success': true,
@@ -833,8 +834,6 @@ static Future<Map<String, dynamic>> fetchPermPackages({
       };
     }
   }
-
-
 
   static Future<List<Map<String, dynamic>>> fetchPermanentContracts({
     required String userId,
@@ -861,24 +860,19 @@ static Future<Map<String, dynamic>> fetchPermPackages({
             '📦 [PERMANENT_CONTRACTS] Raw response length: ${rawJson.length}');
 
         // Fix missing price_before_vat fields (e.g. "price_before_vat":,)
-      
 
         final List<dynamic> data = json.decode(rawJson);
         print(
             '✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
 
         return data.cast<Map<String, dynamic>>();
-      } else  if(response.statusCode == 204){
-  
-  
-  
-  final List<dynamic> data = json.decode("[]");
+      } else if (response.statusCode == 204) {
+        final List<dynamic> data = json.decode("[]");
         print(
             '✅ [PERMANENT_CONTRACTS] Successfully fetched ${data.length} contracts');
 
         return data.cast<Map<String, dynamic>>();
-      }
-      else{
+      } else {
         print(
             '❌ [PERMANENT_CONTRACTS] Failed with status: ${response.statusCode}');
         throw Exception(
@@ -953,12 +947,9 @@ static Future<Map<String, dynamic>> fetchPermPackages({
             throw Exception("Failed to parse hourly contracts response");
           }
         }
-      }
-      else if(response.statusCode ==204){
+      } else if (response.statusCode == 204) {
         return [];
-      }
-      
-       else {
+      } else {
         print("Error Response Body: ${response.body}");
         throw Exception(
             "Failed to load hourly contracts: ${response.statusCode}");
@@ -984,7 +975,9 @@ static Future<Map<String, dynamic>> fetchPermPackages({
   static Future<void> cancelHourlyContract(String contractServiceId) async {
     final url = "$_baseUrl/hourly/contracts/cancel";
 
-    Map<String, dynamic> requestBody = {"service_contract_id": contractServiceId};
+    Map<String, dynamic> requestBody = {
+      "service_contract_id": contractServiceId
+    };
 
     final response = await makeAuthenticatedRequest(
         method: 'put', url: url, body: json.encode(requestBody));
@@ -1185,6 +1178,27 @@ static Future<Map<String, dynamic>> fetchPermPackages({
     }
   }
 
+  static Future<List<dynamic>> fetchFAQs() async {
+    try {
+      final url = '$_baseUrl/faq';
+
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        return decodedData;
+      } else {
+        throw Exception(
+            'Failed to load FAQs. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading FAQs: $e');
+    }
+  }
+
   static Future<Map<String, dynamic>?> validateWorkersHourly({
     required int positionId,
     required String nationalityId,
@@ -1347,12 +1361,14 @@ static Future<Map<String, dynamic>> fetchPermPackages({
       throw Exception('Error fetching nationalities: $e');
     }
   }
+
   static Future<List<Laborer>> fetchLaborers({
     required int professionId,
     required int nationality,
   }) async {
     try {
-      final url = '$_baseUrl/available-domestic-workers/$professionId/$nationality';
+      final url =
+          '$_baseUrl/available-domestic-workers/$professionId/$nationality';
 
       final response = await makeAuthenticatedRequest(
         method: 'GET',
@@ -1370,9 +1386,6 @@ static Future<Map<String, dynamic>> fetchPermPackages({
       throw Exception('Error fetching laborers: $e');
     }
   }
-
-
-
 }
 
 Map<String, dynamic>? safeJsonDecode(String jsonString) {

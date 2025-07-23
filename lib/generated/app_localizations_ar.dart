@@ -448,6 +448,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get faq => 'الأسئلة الشائعة';
 
   @override
+  String get privacyPolicy => 'سياسة الخصوصية';
+
+  @override
   String get logout => 'تسجيل الخروج';
 
   @override
