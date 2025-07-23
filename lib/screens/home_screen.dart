@@ -9,13 +9,16 @@ import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/providers/notification_provider.dart';
 import 'package:fawran/providers/sliderprovider.dart';
 import 'package:fawran/providers/userNameProvider.dart';
+import 'package:fawran/screens/FaqScreen.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/serviceChoice.dart';
+import 'package:fawran/screens/socialMediaLinks.dart';
 import 'package:fawran/screens/user_details.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/screens/address_display_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Move the phoneNumberProvider outside the class
 final phoneNumberProvider = FutureProvider<String>((ref) async {
@@ -24,8 +27,7 @@ final phoneNumberProvider = FutureProvider<String>((ref) async {
 });
 
 class HomeScreen extends ConsumerWidget {
-  const  HomeScreen({Key? key}) : super(key: key);
-
+  const HomeScreen({Key? key}) : super(key: key);
 
   String getFullImageUrl(String imagePath) {
     String sanitizedPath = imagePath.replaceAll('\\', '/');
@@ -43,7 +45,7 @@ class HomeScreen extends ConsumerWidget {
     final loc = AppLocalizations.of(context)!;
     final isArabic = currentLocale.languageCode == 'ar';
 
-final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
+    final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
 
     final examplePackage = PackageModel(
       groupCode: "GRP001",
@@ -101,7 +103,6 @@ final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
               loading: () => Text(loc.welcome),
               error: (_, __) => Text(loc.welcome),
             ),
-            
             Row(
               children: [
                 const Icon(Icons.location_on, color: Colors.grey, size: 18),
@@ -136,34 +137,34 @@ final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
           child: ListView(
             children: [
               const SizedBox(height: 16),
-               if (hasUnconfirmedContracts)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3F2FD), // light blue
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.warning_amber_rounded,
-                        color: Colors.blueAccent),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "You have unconfirmed contracts",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF1A237E),
-                        ),
-                      ),
+              if (hasUnconfirmedContracts)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD), // light blue
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
+                    child: Row(
+                      children: const [
+                        Icon(Icons.warning_amber_rounded,
+                            color: Colors.blueAccent),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "You have unconfirmed contracts",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF1A237E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
               professionsAsync.when(
                 data: (professions) => GridView.builder(
                   shrinkWrap: true,
@@ -409,176 +410,214 @@ final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
     );
   }
 
+  Widget _buildSideDrawer(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<String> userNameAsync,
+    AppLocalizations loc,
+    bool isArabic,
+  ) {
+    final phoneNumberAsync = ref.watch(phoneNumberProvider);
+    final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
 
-Widget _buildSideDrawer(
-  BuildContext context,
-  WidgetRef ref,
-  AsyncValue<String> userNameAsync,
-  AppLocalizations loc,
-  bool isArabic,
-) {
-  final phoneNumberAsync = ref.watch(phoneNumberProvider);
- final hasUnconfirmedContracts = ref.watch(hasUnconfirmedContractsProvider);
-
-  return Drawer(
-    backgroundColor: Colors.white,
-    child: SafeArea(
-      child: Column(
-        children: [
-          const SizedBox(height: 30),
-          // Avatar
-          const CircleAvatar(
-            radius: 40,
-            backgroundColor: Color(0xFFE0E0E0),
-            child: Icon(Icons.person, size: 40, color: Colors.white),
-          ),
-          const SizedBox(height: 12),
-          // User name centered
-          userNameAsync.when(
-            data: (name) => Text(
-              name,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 30),
+            // Avatar
+            const CircleAvatar(
+              radius: 40,
+              backgroundColor: Color(0xFFE0E0E0),
+              child: Icon(Icons.person, size: 40, color: Colors.white),
+            ),
+            const SizedBox(height: 12),
+            // User name centered
+            userNameAsync.when(
+              data: (name) => Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
+              loading: () => const Text("..."),
+              error: (_, __) => Text(loc.user),
             ),
-            loading: () => const Text("..."),
-            error: (_, __) => Text(loc.user),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Menu Items (Expanded to push logout to bottom)
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              children: [
-                _buildDrawerItem(
-                  icon: Icons.location_on,
-                  title: loc.myAddresses,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressDisplayScreen()));
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.person_outline,
-                  title: loc.myInformation,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const UserDetailsScreen()));
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.business,
-                  title: loc.aboutCompany,
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to about company
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.store,
-                  title: loc.companyBranches,
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to branches
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.share,
-                  title: loc.socialMediaLinks,
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to social media
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.help_outline,
-                  title: loc.faq,
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to FAQ
-                  },
-                ),
-     _buildDrawerItem(
-  icon: Icons.assignment,
-  title: loc.myContracts,
-  showNotification: hasUnconfirmedContracts,
-  onTap: () {
-    Navigator.pop(context);
-    Navigator.pushNamed(context, '/bookings');
-  },
-),           ],
-            ),
-          ),
+            // Menu Items (Expanded to push logout to bottom)
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                children: [
+                  _buildDrawerItem(
+                    icon: Icons.location_on,
+                    title: loc.myAddresses,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const AddressDisplayScreen()));
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.person_outline,
+                    title: loc.myInformation,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const UserDetailsScreen()));
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.business,
+                    title: loc.aboutCompany,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      const url = 'https://emdadhr.com/#/about';
+                      final Uri uri = Uri.parse(url);
 
-          // Logout
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildDrawerItem(
-              icon: Icons.logout,
-              title: loc.logout,
-              onTap: () {
-                Navigator.pop(context);
-                _showLogoutDialog(context, ref);
-              },
+                      // Open the external link
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        throw 'Could not launch $url';
+                      }
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.store,
+                    title: loc.companyBranches,
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Navigate to branches
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.share,
+                    title: loc.socialMediaLinks,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SocialMediaPage()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.help_outline,
+                    title: loc.faq,
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const FAQPage()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.assignment,
+                    title: loc.myContracts,
+                    showNotification: hasUnconfirmedContracts,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/bookings');
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.lock,
+                    title: loc.privacyPolicy,
+                    onTap: () async {
+                      Navigator.pop(context); // Close the drawer
+                      const url = 'https://emdadhr.com/#/PrivacyPolicy';
+                      final Uri uri = Uri.parse(url);
+
+                      // Open the external link
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        throw 'Could not launch $url';
+                      }
+                    },
+                  )
+                ],
+              ),
             ),
+
+            // Logout
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildDrawerItem(
+                icon: Icons.logout,
+                title: loc.logout,
+                onTap: () {
+                  Navigator.pop(context);
+                  _showLogoutDialog(context, ref);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool showNotification = false,
+  }) {
+    return ListTile(
+      leading: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          Icon(
+            icon,
+            color: Colors.blue,
+            size: 22,
           ),
+          if (showNotification)
+            const Positioned(
+              right: -2,
+              top: -2,
+              child: CircleAvatar(
+                radius: 5,
+                backgroundColor: Colors.red,
+              ),
+            ),
         ],
       ),
-    ),
-  );
-}
-
-Widget _buildDrawerItem({
-  required IconData icon,
-  required String title,
-  required VoidCallback onTap,
-  bool showNotification = false,
-}) {
-  return ListTile(
-    leading: Stack(
-      alignment: Alignment.topRight,
-      children: [
-        Icon(
-          icon,
-          color: Colors.blue,
-          size: 22,
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black87,
+          fontSize: 15,
+          fontWeight: FontWeight.normal,
         ),
-        if (showNotification)
-          const Positioned(
-            right: -2,
-            top: -2,
-            child: CircleAvatar(
-              radius: 5,
-              backgroundColor: Colors.red,
-            ),
-          ),
-      ],
-    ),
-    title: Text(
-      title,
-      style: const TextStyle(
-        color: Colors.black87,
-        fontSize: 15,
-        fontWeight: FontWeight.normal,
       ),
-    ),
-    trailing: const Icon(
-      Icons.arrow_forward_ios,
-      size: 16,
-      color: Colors.grey,
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-    onTap: onTap,
-  );
-}
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: Colors.grey,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      onTap: onTap,
+    );
+  }
 
   Future<void> _logout(WidgetRef ref) async {
     const storage = FlutterSecureStorage();
-    
+
     // Clear secure storage
     await storage.deleteAll();
 

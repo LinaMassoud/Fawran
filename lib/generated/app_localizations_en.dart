@@ -448,6 +448,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get faq => 'Frequently Asked Questions (FAQ)';
 
   @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
   String get logout => 'Logout';
 
   @override
