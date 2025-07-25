@@ -1100,6 +1100,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                       visitDuration: visitDuration,
                                       visitsPerWeek: visitsPerWeek,
                                       selectedDays: selectedDays,
+                                      selectedAddress: selectedAddress,
                                       onContractDurationChanged:
                                           _updateContractDuration,
                                       onWorkerCountChanged: _updateWorkerCount,
@@ -1137,6 +1138,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                     )
                                   : DateSelectionStep(
                                       selectedDates: selectedDates,
+                                      selectedAddress: selectedAddress,
                                       onDatesChanged: _updateSelectedDates,
                                       onNextPressed: selectedDates.isNotEmpty
                                           ? _completePurchase
@@ -1155,7 +1157,6 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                       package: widget.package,
                                       professionId: widget.professionId,
                                     ),
-                              // Page 2: Date Selection (custom booking only)
                             ],
                           ),
                         ),

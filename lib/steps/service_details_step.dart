@@ -5,6 +5,7 @@ import '../models/profession_model.dart';
 import 'package:intl/intl.dart';
 import 'custom_date_selection.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import '../models/address_model.dart';
 
 class ServiceDetailsStep extends StatefulWidget {
   final String selectedNationality;
@@ -28,6 +29,7 @@ class ServiceDetailsStep extends StatefulWidget {
   final int serviceId;
   final int professionId;
   final double pricePerVisit;
+  final Address? selectedAddress;
 
   // New parameters for custom booking support
   final bool isCustomBooking;
@@ -49,6 +51,7 @@ class ServiceDetailsStep extends StatefulWidget {
     this.visitDuration = '',
     this.visitsPerWeek = 0, // Changed default from '' to 0
     this.selectedDays = const [],
+    this.selectedAddress,
     required this.onContractDurationChanged,
     required this.onWorkerCountChanged,
     required this.onVisitsPerWeekChanged,
