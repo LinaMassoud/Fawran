@@ -56,7 +56,7 @@ class MyApp extends ConsumerWidget {
         '/profile': (context) => const UserProfileScreen(),
         '/bookings': (context) => const BookingsScreen(),
         '/location': (context) => const LocationScreen(),
-        '/home':(contex)=> HomeScreen(),
+        '/home':(contex)=> RedesignedHomeScreen(),
         '/hourly':(context)=>CleaningServiceScreen(),
         '/selectAddress':(context)=>AddressSelectionScreen()
 

@@ -28,6 +28,8 @@
   "home": "home",
   "top_requested":"Top Requested Services",
   "saving_packages": "Saving Packages",
+    "ourServices":"خدماتنا",
+
 
   "fetching_location" : "fetching your location...",
   "currentLocation" : "📍 currentLocation:",

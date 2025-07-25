@@ -128,7 +128,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     _circle1Controller.repeat(reverse: true);
     _circle2Controller.repeat(reverse: true);
     _circle3Controller.repeat(reverse: true);
-      _checkLocationPermission();
+    //  _checkLocationPermission();
 
   }
 

@@ -254,6 +254,12 @@ abstract class AppLocalizations {
   /// **'Saving Packages'**
   String get saving_packages;
 
+  /// No description provided for @ourServices.
+  ///
+  /// In en, this message translates to:
+  /// **'خدماتنا'**
+  String get ourServices;
+
   /// No description provided for @fetching_location.
   ///
   /// In en, this message translates to:

@@ -87,6 +87,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saving_packages => 'Saving Packages';
 
   @override
+  String get ourServices => 'خدماتنا';
+
+  @override
   String get fetching_location => 'fetching your location...';
 
   @override

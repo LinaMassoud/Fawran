@@ -68,7 +68,11 @@ void initState() {
       if (next.isLoggedIn && next.isVerified) {
         Navigator.pushReplacement(
           context,
+<<<<<<< Updated upstream
           MaterialPageRoute(builder: (context) => HomeScreen()),
+=======
+          MaterialPageRoute(builder: (context) => RedesignedHomeScreen()),
+>>>>>>> Stashed changes
         );
       } else if (next.isLoggedIn && !next.isVerified) {
         Navigator.pushReplacement(

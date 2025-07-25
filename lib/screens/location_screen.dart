@@ -139,7 +139,7 @@ Future<void> _getCurrentLocation({bool isRetry = false}) async {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      MaterialPageRoute(builder: (context) => const RedesignedHomeScreen()),
     );
   } catch (e, stackTrace) {
     print("Error: $e");
@@ -161,7 +161,7 @@ Future<void> _getCurrentLocation({bool isRetry = false}) async {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const RedesignedHomeScreen()),
         );
         return;
       }

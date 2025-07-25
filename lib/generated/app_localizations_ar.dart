@@ -87,6 +87,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get saving_packages => 'حزم التوفير';
 
   @override
+  String get ourServices => 'خدماتنا';
+
+  @override
   String get fetching_location => 'جارِ الحصول على موقعك الحالي...';
 
   @override
