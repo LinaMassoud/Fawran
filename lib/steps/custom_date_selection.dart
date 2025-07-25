@@ -56,6 +56,7 @@ class _CustomDateSelectionStepState extends State<CustomDateSelectionStep> {
   Map<String, int> _weeklyVisitCounts = {};
   bool _isSelectingStartDate = true;
   List<String> _localSelectedDays = [];
+  bool _isSnackBarShowing = false;
 
   @override
 void initState() {
@@ -381,6 +382,10 @@ void _showStartDateChangeDialog() {
 }
 
   void _showSnackBar(String message) {
+  if (_isSnackBarShowing) return; // Prevent multiple snackbars
+  
+  _isSnackBarShowing = true;
+  
   FlashyFlushbar(
     leadingWidget: const Icon(
       Icons.info_outline,
@@ -397,6 +402,7 @@ void _showStartDateChangeDialog() {
       ),
       onPressed: () {
         FlashyFlushbar.cancel();
+        _isSnackBarShowing = false;
       },
     ),
     isDismissible: true,
@@ -407,6 +413,23 @@ void _showStartDateChangeDialog() {
       fontWeight: FontWeight.w500,
     ),
   ).show();
+  
+  // Reset the flag after the duration + a small buffer
+  Future.delayed(Duration(seconds: 3), () {
+    _isSnackBarShowing = false;
+  });
+}
+
+// Add this new method for showing snackbar with shake animation
+void _showSnackBarWithShake(String message) {
+  if (_isSnackBarShowing) {
+    // Create a subtle shake animation for the existing snackbar
+    // You can implement this by adding a key to your snackbar and animating it
+    // For now, we'll just return to prevent multiple snackbars
+    return;
+  }
+  
+  _showSnackBar(message);
 }
 
 void _handleDayToggle(String day) {
@@ -417,7 +440,10 @@ void _handleDayToggle(String day) {
       if (_localSelectedDays.length < _visitsPerWeekCount) {
         _localSelectedDays.add(day);
       } else {
-        _showSnackBar('You can only select $_visitsPerWeekCount days per week');
+        // Show snackbar with shake animation only if not already showing
+        if (!_isSnackBarShowing) {
+          _showSnackBarWithShake('You can only select $_visitsPerWeekCount days per week');
+        }
         return;
       }
     }

@@ -1162,54 +1162,58 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>?> validateWorkersHourly({
-    required int positionId,
-    required String nationalityId,
-    required int numWorkers,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) async {
-    print('🔍 [validateWorkersHourly] Starting validation...');
-    // ... existing print statements ...
+  required int positionId,
+  required String nationalityId,
+  required int numWorkers,
+  required DateTime startDate,
+  required DateTime endDate,
+  required int shiftId,
+  required String cityCode,
+  required String districtId,
+  List<String>? appointmentDates,
+}) async {
+  print('🔍 [validateWorkersHourly] Starting validation...');
 
-    try {
-      final url = '$_baseUrl/validate-workers';
+  try {
+    final url = '$_baseUrl/validate-workers';
 
-      final requestBody = {
-        "position_id": positionId,
-        "sector_type": "H",
-        "nationality_group": nationalityId,
-        "num_workers": numWorkers,
-        "start_date": DateFormat('MM-dd-yyyy').format(startDate),
-        "end_date": DateFormat('MM-dd-yyyy').format(endDate),
-      };
+    final requestBody = {
+      "sector_type": "H",
+      "position_id": positionId,
+      "num_workers": numWorkers,
+      "start_date": DateFormat('MM-dd-yyyy').format(startDate),
+      "end_date": DateFormat('MM-dd-yyyy').format(endDate),
+      "shift_id": shiftId ?? 1,
+      "nationality_id": nationalityId,
+      "city_code": cityCode ?? "1",
+      "district_id": districtId ?? "18",
+      if (appointmentDates != null) "appointment_dates": appointmentDates,
+    };
 
-      print(
-          '📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
+    print('📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
 
-      final response = await makeAuthenticatedRequest(
-        method: 'POST',
-        url: url,
-        body: json.encode(requestBody),
-      ).timeout(Duration(seconds: 30));
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: url,
+      body: json.encode(requestBody),
+    ).timeout(Duration(seconds: 30));
 
-      print(
-          '📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
+    print('📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
 
-      if (response.statusCode == 200) {
-        print('✅ [validateWorkersHourly] Request successful');
-        final responseData = json.decode(response.body);
-        return responseData as Map<String, dynamic>?;
-      } else {
-        print(
-            '❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
-        throw Exception(
-            'Failed to validate workers. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('💥 [validateWorkersHourly] Error: $e');
-      throw Exception('Error validating workers: $e');
+    if (response.statusCode == 200) {
+      print('✅ [validateWorkersHourly] Request successful');
+      final responseData = json.decode(response.body);
+      print('📥 [validateWorkersHourly] Response data: $responseData');
+      return responseData as Map<String, dynamic>?;
+    } else {
+      print('❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
+      throw Exception('Failed to validate workers. Status code: ${response.statusCode}');
     }
+  } catch (e) {
+    print('💥 [validateWorkersHourly] Error: $e');
+    throw Exception('Error validating workers: $e');
   }
+}
 
   static Future<List<PackageModel>> fetchEastAsiaPackages({
     required int professionId,

@@ -1,7 +1,10 @@
+import 'package:fawran/providers/address_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/package_model.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
+import '../models/address_model.dart';
+import '../services/api_service.dart';
 
 class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
@@ -16,11 +19,13 @@ class DateSelectionStep extends StatefulWidget {
   final bool isCustomBooking;
   final double pricePerVisit;
   final PackageModel? package;
-  final int professionId; 
+  final int professionId;
+  final Address? selectedAddress;
 
   const DateSelectionStep({
     Key? key,
     required this.selectedDates,
+    this.selectedAddress,
     required this.onDatesChanged,
     this.onNextPressed,
     this.maxSelectableDates = 10,
@@ -51,6 +56,7 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   Map<String, int> _weeklyVisitCounts = {}; // Track visits per week
   bool _isSelectingStartDate = true;
   List<String> _localSelectedDays = [];
+  bool _isSnackBarShowing = false;
 
   @override
   void initState() {
@@ -215,6 +221,93 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   widget.onDatesChanged(_selectedDates);
 }
 
+
+Future<void> _validateAndProceed() async {
+  if (_selectedDates.isEmpty || _isSelectingStartDate || widget.selectedAddress == null) {
+    _showSnackBar('Please complete all selections before proceeding');
+    return;
+  }
+
+  try {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Validating workers availability...'),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Prepare appointment dates in MM-dd-yyyy format
+    List<String> appointmentDates = _selectedDates
+        .map((date) => DateFormat('MM-dd-yyyy').format(date))
+        .toList();
+
+    // Get start and end dates from selected dates
+    DateTime startDate = _selectedDates.first;
+    DateTime endDate = _selectedDates.last;
+
+    // Call the validation API
+    final validationResult = await ApiService.validateWorkersHourly(
+      positionId: widget.professionId,
+      nationalityId: widget.package!.groupCode,
+      numWorkers: widget.workerCount,
+      startDate: startDate,
+      endDate: endDate,
+      shiftId: int.parse(widget.package!.serviceShift),
+      appointmentDates: appointmentDates,
+      cityCode: widget.selectedAddress!.cityCode.toString(),
+      districtId: widget.selectedAddress!.districtCode,
+    );
+
+    // Close loading dialog
+    Navigator.of(context).pop();
+
+    if (validationResult != null) {
+      // Check if the validation response indicates workers are available
+      bool isValid = validationResult['valid'] == true;
+      int availableWorkers = validationResult['available_workers'] ?? 0;
+      
+      if (isValid && availableWorkers >= widget.workerCount) {
+        // Validation successful, proceed to next step
+        if (widget.onNextPressed != null) {
+          widget.onNextPressed!();
+        }
+      } else {
+        // Validation failed - show specific error message
+        String errorMessage;
+        if (!isValid) {
+          errorMessage = 'Worker validation failed. No workers available for the selected dates and times.';
+        } else {
+          errorMessage = 'Only $availableWorkers worker(s) available, but you need ${widget.workerCount}.';
+        }
+        _showSnackBar(errorMessage);
+      }
+    } else {
+      // API returned null response
+      _showSnackBar('Worker validation failed. Please try again.');
+    }
+
+  } catch (e) {
+    // Close loading dialog if still open
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    }
+    
+    // Show error message
+    _showSnackBar('Error validating workers: ${e.toString()}');
+    print('Worker validation error: $e');
+  }
+}
+
 // Add this widget to build the day selection UI (like in your image)
 Widget _buildDaySelectionWidget() {
   final days = [
@@ -319,7 +412,10 @@ void _handleDayToggle(String day) {
       if (_localSelectedDays.length < _visitsPerWeekCount) {
         _localSelectedDays.add(day);
       } else {
-        _showSnackBar('You can only select $_visitsPerWeekCount days per week');
+        // Show snackbar with shake animation only if not already showing
+        if (!_isSnackBarShowing) {
+          _showSnackBarWithShake('You can only select $_visitsPerWeekCount days per week');
+        }
         return;
       }
     }
@@ -513,6 +609,10 @@ void _setStartDateFromSelectedDays([List<String>? selectedDays]) {
   }
 
   void _showSnackBar(String message) {
+  if (_isSnackBarShowing) return; // Prevent multiple snackbars
+  
+  _isSnackBarShowing = true;
+  
   FlashyFlushbar(
     leadingWidget: const Icon(
       Icons.info_outline,
@@ -529,6 +629,7 @@ void _setStartDateFromSelectedDays([List<String>? selectedDays]) {
       ),
       onPressed: () {
         FlashyFlushbar.cancel();
+        _isSnackBarShowing = false;
       },
     ),
     isDismissible: true,
@@ -539,6 +640,23 @@ void _setStartDateFromSelectedDays([List<String>? selectedDays]) {
       fontWeight: FontWeight.w500,
     ),
   ).show();
+  
+  // Reset the flag after the duration + a small buffer
+  Future.delayed(Duration(seconds: 3), () {
+    _isSnackBarShowing = false;
+  });
+}
+
+// Add this new method for showing snackbar with shake animation
+void _showSnackBarWithShake(String message) {
+  if (_isSnackBarShowing) {
+    // Create a subtle shake animation for the existing snackbar
+    // You can implement this by adding a key to your snackbar and animating it
+    // For now, we'll just return to prevent multiple snackbars
+    return;
+  }
+  
+  _showSnackBar(message);
 }
 
   bool _isDateSelectable(DateTime date) {
@@ -928,32 +1046,34 @@ Widget build(BuildContext context) {
             ),
             Spacer(),
             Container(
-              width: 120,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _selectedDates.isNotEmpty &&
-                        !_isSelectingStartDate &&
-                        widget.onNextPressed != null
-                    ? widget.onNextPressed
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF1E3A8A),
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 0,
+            width: 120,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _selectedDates.isNotEmpty &&
+                      !_isSelectingStartDate &&
+                      // widget.selectedAddress != null
+                      widget.onNextPressed != null
+                  // ? _validateAndProceed // Changed from widget.onNextPressed to _validateAndProceed
+                  ? widget.onNextPressed
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF1E3A8A),
+                disabledBackgroundColor: Colors.grey.shade300,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
                 ),
-                child: Text(
-                  'Next',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Next',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
               ),
-            )
+            ),
+          )
           ],
         ),
       ),
