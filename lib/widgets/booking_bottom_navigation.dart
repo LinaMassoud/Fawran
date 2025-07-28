@@ -50,7 +50,7 @@ class BookingBottomNavigation extends StatelessWidget {
                   'SAR ${price.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 24,
-                    color: Colors.orange,
+                    color: Color(0xFFF2582A),
                     fontWeight: FontWeight.bold,
                   ),
                 ),

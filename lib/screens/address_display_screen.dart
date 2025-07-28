@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Add this import
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/address_model.dart';
 import 'package:fawran/services/api_service.dart';
@@ -198,17 +199,17 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.location_off, size: 60, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            const Text(
-              'No addresses found',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            // Display SVG image
+            SvgPicture.asset(
+              'assets/images/no_addresses_found.svg',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Please add a new address to get started',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
+            const SizedBox(height: 24),
+            
+            
+            
           ],
         ),
       );
