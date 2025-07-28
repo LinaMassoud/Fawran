@@ -133,6 +133,20 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
   }
 
+  // Helper method to check if contract is cancelled
+  bool _isContractCancelled(Map<String, dynamic> contract, bool isHourly) {
+    final statusId = contract["status_id"];
+    if (statusId == null) return false;
+    
+    // For hourly contracts: status_id 2 means cancelled
+    // For permanent contracts: status_id 3 means cancelled
+    if (isHourly) {
+      return statusId.toString() == "2";
+    } else {
+      return statusId.toString() == "3";
+    }
+  }
+
   Widget _buildStatusBadge(String status) {
     Color backgroundColor = Colors.grey.shade200;
     Color textColor = Colors.grey.shade700;
@@ -256,6 +270,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
   Widget _buildPermanentContractCard(Map<String, dynamic> booking) {
     String status = booking["status"] ?? "success";
+    bool isCancelled = _isContractCancelled(booking, false); // false for permanent contracts
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -301,7 +316,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           _buildInfoRow("Status", status),
           
           // Show cancelled time if status is cancelled
-          if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
+          if (isCancelled)
             _buildInfoRow(
               "Cancelled Time",
               _formatDeadlineTime(booking["time_info"], status)
@@ -330,7 +345,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: status == "cancelled" || status == "canceled"
+                onPressed: isCancelled
                     ? null
                     : () {
                         ref
@@ -343,9 +358,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 child: Text(
                   "Cancel",
                   style: TextStyle(
-                    color: status == "cancelled" || status == "canceled" 
+                    color: isCancelled 
                         ? Colors.grey 
-                        : const Color(0xFF757575),
+                        : const Color(0xFF2196F3), // Same blue color as Pay Now
                     fontWeight: FontWeight.w500,
                     fontSize: 14,
                   ),
@@ -360,6 +375,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
   Widget _buildHourlyContractCard(Map<String, dynamic> booking, AppLocalizations loc) {
     String status = booking["status"] ?? "success";
+    bool isCancelled = _isContractCancelled(booking, true); // true for hourly contracts
 
     String formatDate(String? dateStr) {
       if (dateStr == null || dateStr.isEmpty) return "Not specified";
@@ -416,7 +432,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           _buildInfoRow("Status", status),
           
           // Show cancelled time if status is cancelled
-          if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
+          if (isCancelled)
             _buildInfoRow(
               "Cancelled Time",
               _formatDeadlineTime(booking["time_info"], status)
@@ -443,7 +459,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: booking["status"] == "2"
+                onPressed: isCancelled
                     ? null
                     : () {
                         ref
@@ -456,9 +472,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 child: Text(
                   loc.cancel ?? "Cancel",
                   style: TextStyle(
-                    color: booking["status"] == "2" 
+                    color: isCancelled 
                         ? Colors.grey 
-                        : const Color(0xFF757575),
+                        : const Color(0xFF2196F3), // Same blue color as Pay Now
                     fontWeight: FontWeight.w500,
                     fontSize: 14,
                   ),
