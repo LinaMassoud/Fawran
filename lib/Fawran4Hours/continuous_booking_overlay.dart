@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:ui';
+import 'dart:async';
 // Import your existing screens
 import 'cleaning_service_screen.dart'; // PackageModel
 import 'add_new_address.dart';
@@ -450,36 +452,88 @@ void _updatePriceVat(double priceVat) {
       ref.read(selectedAddressProvider.notifier).state = latestAddress;
     }
     
-    // Show success message if needed
+    // Show success message with blurred background if needed
     if (result['message'] != null) {
-      FlashyFlushbar(
-        leadingWidget: const Icon(
-          Icons.check_circle_outline,
-          color: Colors.white,
-          size: 24,
-        ),
-        message: result['message'],
-        duration: const Duration(seconds: 3),
-        trailingWidget: IconButton(
-          icon: const Icon(
-            Icons.close,
-            color: Colors.white,
-            size: 20,
-          ),
-          onPressed: () {
-            FlashyFlushbar.cancel();
-          },
-        ),
-        isDismissible: true,
-        backgroundColor: Colors.green,
-        messageStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ).show();
+      _showSuccessDialog(result['message']);
     }
   }
+}
+
+void _showSuccessDialog(String message) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierColor: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+    builder: (BuildContext context) {
+      return BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0), // Blur effect
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Success checkmark icon
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Success message
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Optional: Auto-dismiss after 2 seconds
+                  // You can remove this if you want manual dismissal only
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  // Auto-dismiss after 2 seconds (optional)
+  Timer(const Duration(seconds: 2), () {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  });
 }
 
   // New methods for updating service details in custom booking

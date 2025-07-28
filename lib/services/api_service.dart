@@ -14,7 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiService {
   static const String _baseUrl =
-      'http://fawran.ddns.net:8080/ords/emdad/fawran';
+      'http://5.195.129.137:8080/ords/emdad/fawran';
   static const String packagesBaseUrl =
       'http://fawran.ddns.net:8080/ords/emdad/fawran/service/packages';
   static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();

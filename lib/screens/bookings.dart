@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:async';
 import '../providers/auth_provider.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final String? initialTab;
@@ -117,22 +118,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _infoRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "$title: ",
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
-
   String _formatDeadlineTime(String? timeInfo, String status) {
     if (timeInfo == null || timeInfo.isEmpty) return "Not specified";
     
@@ -148,88 +133,122 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
   }
 
-  Widget _buildHeaderWithBadges(String serviceType, String status, String? timeInfo, Color serviceTypeColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Time left badge at the top (only for "not confirmed" status)
-        if (status.toLowerCase() == "not confirmed" && timeInfo != null && timeInfo.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: Colors.red.shade100,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade300, width: 1),
-            ),
-            child: Text(
-              "Time remaining for payment - $timeInfo",
-              style: TextStyle(
-                color: Colors.red.shade700,
-                fontWeight: FontWeight.bold,
-                fontSize: 11,
-              ),
-            ),
-          ),
-        
-        // Service type and status badges row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: serviceTypeColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                serviceType,
-                style: TextStyle(
-                  color: serviceTypeColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            _buildStatusBadge(status),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildStatusBadge(String status) {
-    Color statusColor = Colors.grey;
+    Color backgroundColor = Colors.grey.shade200;
+    Color textColor = Colors.grey.shade700;
+    String statusText = status;
+    
     switch (status.toLowerCase()) {
       case "active":
-        statusColor = Colors.green;
+        backgroundColor = const Color(0xFFE8F5E8); // Light green background
+        textColor = const Color(0xFF1EAC1E); // --Done-green
+        statusText = "Confirmed";
         break;
       case "pending":
-        statusColor = Colors.orange;
+        backgroundColor = const Color(0xFFFFF3E0); // Light orange background
+        textColor = const Color(0xFFFFA200); // --Main-Orange
         break;
       case "cancelled":
       case "canceled":
-        statusColor = Colors.red;
+        backgroundColor = const Color(0xFFFFEBEE); // Light red background
+        textColor = const Color(0xFFE53935);
+        statusText = "Cancelled";
         break;
       case "not confirmed":
-        statusColor = Colors.orange;
+        backgroundColor = const Color(0xFFFFF3E0); // Light orange background
+        textColor = const Color(0xFFFFA200); // --Main-Orange
+        statusText = "Not Confirmed";
         break;
       default:
-        statusColor = Colors.blue;
+        backgroundColor = const Color(0xFFE8F5E8); // Light green background
+        textColor = const Color(0xFF1EAC1E); // --Done-green
+        statusText = "Confirmed";
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(15),
       ),
       child: Text(
-        status,
+        statusText,
         style: TextStyle(
-          color: statusColor,
-          fontWeight: FontWeight.bold,
+          color: textColor,
+          fontWeight: FontWeight.w500,
           fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceTypeBadge(String serviceType, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Text(
+        serviceType,
+        style: const TextStyle(
+          color: Color(0xFF1E49A0),
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeRemainingBadge(String? timeInfo, String status) {
+    if (status.toLowerCase() != "not confirmed" || timeInfo == null || timeInfo.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Text(
+        "Time remaining for payment - $timeInfo",
+        style: TextStyle(
+          color: Colors.red.shade700,
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: "$label: ",
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Colors.black,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+                color: Colors.black,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -238,62 +257,103 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   Widget _buildPermanentContractCard(Map<String, dynamic> booking) {
     String status = booking["status"] ?? "success";
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with badges
-            _buildHeaderWithBadges("Permanent Service", status, booking["time_info"], Colors.blue),
-            const SizedBox(height: 12),
-            
-            _infoRow("Contract ID", booking["contract_id"] ?? ""),
-            _infoRow("Nationality", booking["nationality_name"] ?? ""),
-            _infoRow("Profession", booking["profession_name"] ?? ""),
-            _infoRow("Package", booking["package_name"] ?? ""),
-            _infoRow("Days", booking["period_days"].toString()),
-            _infoRow("Vat", "${booking["vat_amount"]} Riyal"),
-            _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
-            if (booking["delivery_charges"] > 0)
-              _infoRow("Delivery", booking["delivery_charges"].toString()),
-            
-            // Show cancelled time below other info if status is cancelled
-            if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
-              _infoRow(
-                "Cancelled Time",
-                _formatDeadlineTime(booking["time_info"], status)
-              ),
-            
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    // Payment logic
-                  },
-                  child: const Text("Pay Now"),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: status == "cancelled" || status == "canceled"
-                      ? null
-                      : () {
-                          ref
-                              .read(contractsProvider.notifier)
-                              .cancelPermContract(
-                                booking["contract_id"].toString(),
-                                isHourly: false,
-                              );
-                        },
-                  child: const Text("Cancel"),
-                ),
-              ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // Time remaining badge
+          _buildTimeRemainingBadge(booking["time_info"], status),
+          // Header with service type and status badges
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildServiceTypeBadge("Permanent Service", const Color(0xFFD9F0F9)),
+              _buildStatusBadge(status),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Contract details
+          _buildInfoRow("Service Contract ID", booking["contract_id"] ?? ""),
+          _buildInfoRow("Contract ID", booking["contract_id"] ?? ""),
+          _buildInfoRow("Customer", booking["nationality_name"] ?? ""),
+          _buildInfoRow("Service ID", booking["profession_name"] ?? ""),
+          _buildInfoRow("Total Price", "${booking["amount_to_pay"] ?? 0}"),
+          _buildInfoRow("VAT", "${booking["vat_amount"] ?? 0}"),
+          _buildInfoRow("Start Date", booking["period_days"]?.toString() ?? ""),
+          _buildInfoRow("Status", status),
+          
+          // Show cancelled time if status is cancelled
+          if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
+            _buildInfoRow(
+              "Cancelled Time",
+              _formatDeadlineTime(booking["time_info"], status)
             ),
-          ],
-        ),
+          
+          const SizedBox(height: 16),
+          
+          
+          
+          // Action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  // Payment logic
+                },
+                child: const Text(
+                  "Pay Now",
+                  style: TextStyle(
+                    color: Color(0xFF2196F3),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: status == "cancelled" || status == "canceled"
+                    ? null
+                    : () {
+                        ref
+                            .read(contractsProvider.notifier)
+                            .cancelPermContract(
+                              booking["contract_id"].toString(),
+                              isHourly: false,
+                            );
+                      },
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: status == "cancelled" || status == "canceled" 
+                        ? Colors.grey 
+                        : const Color(0xFF757575),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -311,69 +371,138 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       }
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with badges
-            _buildHeaderWithBadges(
-              loc.hourlyService ?? "Hourly Service", 
-              status, 
-              booking["time_info"], 
-              Colors.green
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // Time remaining badge
+          _buildTimeRemainingBadge(booking["time_info"], status),
+          // Header with service type and status badges
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildServiceTypeBadge(loc.hourlyService ?? "Hourly Service", const Color(0xFFD9F0F9)),
+              _buildStatusBadge(status),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Contract details
+          _buildInfoRow(loc.serviceContractId ?? "Service Contract ID",
+              booking["service_contract_id"]?.toString() ?? ""),
+          _buildInfoRow(loc.contractId ?? "Contract ID", booking["contract_id"]?.toString() ?? ""),
+          _buildInfoRow(loc.customer ?? "Customer", booking["customer_display"] ?? ""),
+          _buildInfoRow(loc.service ?? "Service ID", booking["service_id"]?.toString() ?? ""),
+          _buildInfoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0}"),
+          _buildInfoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}"),
+          _buildInfoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
+          _buildInfoRow("Status", status),
+          
+          // Show cancelled time if status is cancelled
+          if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
+            _buildInfoRow(
+              "Cancelled Time",
+              _formatDeadlineTime(booking["time_info"], status)
             ),
-            const SizedBox(height: 12),
-            
-            _infoRow(loc.serviceContractId ?? "Service Contract ID",
-                booking["service_contract_id"]?.toString() ?? ""),
-            _infoRow(loc.contractId ?? "Contract ID", booking["contract_id"]?.toString() ?? ""),
-            _infoRow(loc.customer ?? "Customer", booking["customer_display"] ?? ""),
-            _infoRow(loc.service ?? "Service", booking["service_id"]?.toString() ?? ""),
-            _infoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0} Riyal"),
-            _infoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}  Riyal"),
-            _infoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
-            
-            // Show cancelled time below start date if status is cancelled
-            if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
-              _infoRow(
-                "Cancelled Time",
-                _formatDeadlineTime(booking["time_info"], status)
+          
+          const SizedBox(height: 16),
+          
+          // Action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  // Payment logic
+                },
+                child: Text(
+                  loc.payNow ?? "Pay Now",
+                  style: const TextStyle(
+                    color: Color(0xFF2196F3),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
               ),
-            
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    // Payment logic
-                  },
-                  child: Text(loc.payNow ?? "Pay Now"),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: booking["status"] == "2"
+                    ? null
+                    : () {
+                        ref
+                            .read(contractsProvider.notifier)
+                            .cancelHourlyContract(
+                              booking["service_contract_id"].toString(),
+                              isHourly: false,
+                            );
+                      },
+                child: Text(
+                  loc.cancel ?? "Cancel",
+                  style: TextStyle(
+                    color: booking["status"] == "2" 
+                        ? Colors.grey 
+                        : const Color(0xFF757575),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: booking["status"] == "2"
-                      ? null
-                      : () {
-                          ref
-                              .read(contractsProvider.notifier)
-                              .cancelHourlyContract(
-                                booking["service_contract_id"].toString(),
-                                isHourly: false,
-                              );
-                        },
-                  child: Text(loc.cancel ?? "Cancel"),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
+
+ Widget _buildEmptyState() {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Use SVG image from assets instead of icon
+        SvgPicture.asset(
+          'assets/images/empty_bookings.svg', // Update this path to match your SVG file location
+          width: 200, // Adjust size as needed
+          height: 200,
+        ),
+        const SizedBox(height: 24),
+        Text(
+          "No bookings found",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Your bookings will appear here",
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade500,
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   List<Widget> _getFilteredContracts(
       List<Map<String, dynamic>> permanent, List<Map<String, dynamic>> hourly, AppLocalizations loc) {
@@ -391,100 +520,268 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    final state = ref.watch(contractsProvider);
-    final notifier = ref.read(contractsProvider.notifier);
-    final userId = ref.watch(authProvider);
+Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
+  final state = ref.watch(contractsProvider);
+  final notifier = ref.read(contractsProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Bookings"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pushReplacementNamed('/home');
-          },
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
+    body: Column(
+      children: [
+        // Header with gradient background
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [-0.2734, 0.7524, 1.0],
+              colors: [
+                Color(0xFF1E49A0), // #1E49A0
+                Color(0xD1D9F0F9), // rgba(217, 240, 249, 0.82)
+                Color(0x00F5FCFF), // rgba(245, 252, 255, 0)
+              ],
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
               children: [
-                Expanded(
-                  child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(
-                        value: 'all',
-                        label: Text(
-                          'All',
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
+                // App bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF10295C), size: 18),
+                          onPressed: () {
+                            Navigator.of(context).pushReplacementNamed('/home');
+                          },
                         ),
                       ),
-                      ButtonSegment(
-                        value: 'permanent',
-                        label: Text(
-                          'Permanent',
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            "My Booking",
+                            style: const TextStyle(
+                              color: Color(0xFF10295C),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 28,
+                            ),
+                          ),
                         ),
                       ),
-                      ButtonSegment(
-                        value: 'hourly',
-                        label: Text(
-                          'Hourly',
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                      ),
+                      const SizedBox(width: 40),
                     ],
-                    selected: {_selectedTab},
-                    onSelectionChanged: (Set<String> selection) {
-                      setState(() {
-                        _selectedTab = selection.first;
-                      });
-                    },
                   ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+        
+        // Content area with tab selector overlapping header
+        Expanded(
+          child: Transform.translate(
+            offset: const Offset(0, -15),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    spreadRadius: 0,
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Tab selector - overlapping the header
+                  Container(
+  margin: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+  padding: const EdgeInsets.all(4), // Reduced from 6 to 4
+  decoration: BoxDecoration(
+    color: const Color(0xFFE0EAFF), // Light blue background
+    borderRadius: BorderRadius.circular(50),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.08),
+        spreadRadius: 0,
+        blurRadius: 12,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _selectedTab = 'all'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12), // Reduced from 16 to 10
+            decoration: BoxDecoration(
+              color: _selectedTab == 'all' 
+                  ? Colors.white
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(50),
+              boxShadow: _selectedTab == 'all' ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  spreadRadius: 0,
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ] : null,
+            ),
+            child: Text(
+              'All',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _selectedTab == 'all' 
+                    ? const Color(0xFF10295C) // --Main-Blue
+                    : const Color(0xFF9CA3AF),
+                fontWeight: _selectedTab == 'all' 
+                    ? FontWeight.w700 
+                    : FontWeight.w500,
+                fontSize: 14, // Reduced from 16 to 14
+              ),
+            ),
+          ),
+        ),
+      ),
+      Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _selectedTab = 'permanent'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12), // Reduced from 16 to 10
+            decoration: BoxDecoration(
+              color: _selectedTab == 'permanent' 
+                  ? Colors.white
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(50),
+              boxShadow: _selectedTab == 'permanent' ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  spreadRadius: 0,
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ] : null,
+            ),
+            child: Text(
+              'Permanent',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _selectedTab == 'permanent' 
+                    ? const Color(0xFF10295C) // --Main-Blue
+                    : const Color(0xFF9CA3AF),
+                fontWeight: _selectedTab == 'permanent' 
+                    ? FontWeight.w700 
+                    : FontWeight.w500,
+                fontSize: 14, // Reduced from 16 to 14
+              ),
+            ),
+          ),
+        ),
+      ),
+      Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _selectedTab = 'hourly'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12), // Reduced from 16 to 10
+            decoration: BoxDecoration(
+              color: _selectedTab == 'hourly' 
+                  ? Colors.white
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(50),
+              boxShadow: _selectedTab == 'hourly' ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  spreadRadius: 0,
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ] : null,
+            ),
+            child: Text(
+              'Hourly',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _selectedTab == 'hourly' 
+                    ? const Color(0xFF10295C) // --Main-Blue
+                    : const Color(0xFF9CA3AF),
+                fontWeight: _selectedTab == 'hourly' 
+                    ? FontWeight.w700 
+                    : FontWeight.w500,
+                fontSize: 14, // Reduced from 16 to 14
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+                
+                // Contracts list
+                Expanded(
+                  child: state.isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(color: Color(0xFF1A365D))
+                        )
+                      : RefreshIndicator(
+                          onRefresh: notifier.fetchContracts,
+                          color: const Color(0xFF1A365D),
+                          child: Builder(
+                            builder: (context) {
+                              final filtered = _getFilteredContracts(state.permanent, state.hourly, loc);
+                              if (filtered.isEmpty) {
+                                return SingleChildScrollView(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  child: SizedBox(
+                                    height: MediaQuery.of(context).size.height * 0.6,
+                                    child: _buildEmptyState(),
+                                  ),
+                                );
+                              }
+
+                              return ListView(
+                                padding: const EdgeInsets.fromLTRB(0, 16, 0, 100),
+                                children: filtered,
+                              );
+                            },
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
         ),
-      ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: notifier.fetchContracts,
-              child: Builder(
-                builder: (context) {
-                  final filtered = _getFilteredContracts(state.permanent, state.hourly, loc);
-                  if (filtered.isEmpty) {
-                    return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            "No bookings found",
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView(children: filtered);
-                },
-              ),
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: notifier.fetchContracts,
-        tooltip: 'Refresh',
-        child: const Icon(Icons.refresh),
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: notifier.fetchContracts,
+      tooltip: 'Refresh',
+      backgroundColor: const Color(0xFF1A365D),
+      foregroundColor: Colors.white,
+      elevation: 4,
+      child: const Icon(Icons.refresh),
+    ),
+  );
+}
 }
