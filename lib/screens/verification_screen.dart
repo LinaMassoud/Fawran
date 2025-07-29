@@ -105,10 +105,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SignUpScreen()),
-            );
+            Navigator.pop(context);
           },
         ),
       ),

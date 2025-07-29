@@ -31,6 +31,8 @@ dependencies:
   url_launcher: ^6.3.2
   font_awesome_flutter: ^10.0.0
   flutter_local_notifications: ^17.0.0
+  checkout_flutter: ^1.0.0
+  confetti: ^0.7.0
 
 
 dev_dependencies:

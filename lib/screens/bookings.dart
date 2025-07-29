@@ -1,4 +1,7 @@
+import 'package:checkout_flutter/checkout_flutter.dart';
+import 'package:confetti/confetti.dart';
 import 'package:fawran/providers/contractsProvider.dart';
+import 'package:fawran/screens/payment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -17,7 +20,12 @@ class BookingsScreen extends ConsumerStatefulWidget {
 class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   String _selectedTab = 'all';
   Timer? _deadlineTimer;
-  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  String _checkoutStatus = 'Ready to checkout';
+
+  final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
+  final ConfettiController _confettiController =
+      ConfettiController(duration: const Duration(seconds: 3));
 
   @override
   void initState() {
@@ -33,25 +41,189 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   @override
   void dispose() {
     _deadlineTimer?.cancel();
+    _confettiController.dispose();
+
     super.dispose();
+  }
+
+  Future<void> _startCheckout() async {
+    try {
+      setState(() {
+        _checkoutStatus = 'Starting checkout...';
+      });
+      Map<String, dynamic> configurations = {
+        "hashString": "",
+        "language": "ar",
+        "themeMode": "light",
+        "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "Mada"],
+        "paymentType": "ALL",
+        "selectedCurrency": "SAR",
+        "supportedCurrencies": "SAR",
+        "supportedPaymentTypes": [],
+        "supportedRegions": [],
+        "supportedSchemes": [],
+        "supportedCountries": [],
+        "gateway": {
+          "publicKey": "pk_test_pLd7nzHMmgBXUqNFP1E0SWOZ",
+          "merchantId": "",
+        },
+        "customer": {
+          "firstName": "Android",
+          "lastName": "Test",
+          "email": "example@gmail.com",
+          "phone": {"countryCode": "965", "number": "55567890"},
+        },
+        "transaction": {
+          "mode": "charge",
+          "charge": {
+            "saveCard": true,
+            "auto": {"type": "VOID", "time": 100},
+            "redirect": {
+              "url": "https://demo.staging.tap.company/v2/sdk/checkout",
+            },
+            "threeDSecure": true,
+            "subscription": {
+              "type": "SCHEDULED",
+              "amount_variability": "FIXED",
+              "txn_count": 0,
+            },
+            "airline": {
+              "reference": {"booking": ""},
+            },
+          },
+        },
+        "amount": "5",
+        "order": {
+          "id": "",
+          "currency": "SAR",
+          "amount": "5",
+          "items": [
+            {
+              "amount": "5",
+              "currency": "SAR",
+              "name": "Lina Massoud",
+              "quantity": 1,
+              "description": "Lina Massoud",
+            },
+          ],
+        },
+        "cardOptions": {
+          "showBrands": true,
+          "showLoadingState": true,
+          "collectHolderName": true,
+          "preLoadCardName": "",
+          "cardNameEditable": true,
+          "cardFundingSource": "all",
+          "saveCardOption": "all",
+          "forceLtr": false,
+          "alternativeCardInputs": {"cardScanner": false, "cardNFC": false},
+        },
+        "isApplePayAvailableOnClient": true,
+      };
+
+      // Call startCheckout function directly
+      final success = await startCheckout(
+        configurations: configurations,
+        onReady: () {
+          setState(() {
+            _checkoutStatus = 'Checkout is ready!';
+          });
+          print('Checkout is ready!');
+        },
+        onSuccess: (data) {
+          setState(() {
+            _checkoutStatus = 'Payment successful: $data';
+          });
+          print('Payment successful: $data');
+          _confettiController.play();
+          _showSuccessDialog();
+        },
+        onError: (error) {
+          setState(() {
+            _checkoutStatus = 'Payment failed: $error';
+          });
+          print('Payment failed: $error');
+        },
+        onClose: () {
+          setState(() {
+            _checkoutStatus = 'Checkout closed';
+          });
+          print('Checkout closed');
+        },
+        onCancel: () {
+          setState(() {
+            _checkoutStatus = 'Checkout cancelled';
+          });
+          print('Checkout cancelled (Android)');
+        },
+      );
+
+      if (!success) {
+        setState(() {
+          _checkoutStatus = 'Failed to start checkout';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _checkoutStatus = 'Error: $e';
+      });
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text('🎉 Payment Successful!'),
+              content: const Text('Thank you for your purchase.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 100,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                numberOfParticles: 30,
+                gravity: 0.3,
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _initializeNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
 
     const InitializationSettings initializationSettings =
         InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsIOS,
-        );
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
 
     await _notifications.initialize(initializationSettings);
   }
@@ -65,7 +237,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   void _checkDeadlines() {
     final state = ref.read(contractsProvider);
     final allContracts = [...state.permanent, ...state.hourly];
-    
+
     for (var contract in allContracts) {
       if (contract["status"]?.toLowerCase() == "not confirmed") {
         final minutesLeft = _extractMinutesLeft(contract["time_info"]);
@@ -78,26 +250,27 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
   int? _extractMinutesLeft(String? timeInfo) {
     if (timeInfo == null || timeInfo.isEmpty) return null;
-    
+
     final regex = RegExp(r'(\d+)\s*minutes?\s*left', caseSensitive: false);
     final match = regex.firstMatch(timeInfo);
-    
+
     if (match != null) {
       return int.tryParse(match.group(1) ?? '');
     }
     return null;
   }
 
-  Future<void> _showDeadlineNotification(Map<String, dynamic> contract, int minutesLeft) async {
+  Future<void> _showDeadlineNotification(
+      Map<String, dynamic> contract, int minutesLeft) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-          'deadline_channel',
-          'Deadline Notifications',
-          channelDescription: 'Notifications for contract deadlines',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        );
+      'deadline_channel',
+      'Deadline Notifications',
+      channelDescription: 'Notifications for contract deadlines',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
         DarwinNotificationDetails();
@@ -107,8 +280,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       iOS: iOSPlatformChannelSpecifics,
     );
 
-    final contractId = contract["contract_id"] ?? contract["service_contract_id"];
-    
+    final contractId =
+        contract["contract_id"] ?? contract["service_contract_id"];
+
     await _notifications.show(
       contractId.hashCode,
       'Contract Deadline Alert',
@@ -135,7 +309,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
   String _formatDeadlineTime(String? timeInfo, String status) {
     if (timeInfo == null || timeInfo.isEmpty) return "Not specified";
-    
+
     if (status.toLowerCase() == "not confirmed") {
       return timeInfo;
     } else {
@@ -148,12 +322,15 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
   }
 
-  Widget _buildHeaderWithBadges(String serviceType, String status, String? timeInfo, Color serviceTypeColor) {
+  Widget _buildHeaderWithBadges(String serviceType, String status,
+      String? timeInfo, Color serviceTypeColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Time left badge at the top (only for "not confirmed" status)
-        if (status.toLowerCase() == "not confirmed" && timeInfo != null && timeInfo.isNotEmpty)
+        if (status.toLowerCase() == "not confirmed" &&
+            timeInfo != null &&
+            timeInfo.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             margin: const EdgeInsets.only(bottom: 8),
@@ -171,7 +348,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               ),
             ),
           ),
-        
+
         // Service type and status badges row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -246,9 +423,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header with badges
-            _buildHeaderWithBadges("Permanent Service", status, booking["time_info"], Colors.blue),
+            _buildHeaderWithBadges(
+                "Permanent Service", status, booking["time_info"], Colors.blue),
             const SizedBox(height: 12),
-            
+
             _infoRow("Contract ID", booking["contract_id"] ?? ""),
             _infoRow("Nationality", booking["nationality_name"] ?? ""),
             _infoRow("Profession", booking["profession_name"] ?? ""),
@@ -258,22 +436,19 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             _infoRow("Price", "${booking["amount_to_pay"]} Riyal"),
             if (booking["delivery_charges"] > 0)
               _infoRow("Delivery", booking["delivery_charges"].toString()),
-            
+
             // Show cancelled time below other info if status is cancelled
-            if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
-              _infoRow(
-                "Cancelled Time",
-                _formatDeadlineTime(booking["time_info"], status)
-              ),
-            
+            if (status.toLowerCase() == "cancelled" ||
+                status.toLowerCase() == "canceled")
+              _infoRow("Cancelled Time",
+                  _formatDeadlineTime(booking["time_info"], status)),
+
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () {
-                    // Payment logic
-                  },
+                  onPressed: _startCheckout,
                   child: const Text("Pay Now"),
                 ),
                 const SizedBox(width: 8),
@@ -298,7 +473,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _buildHourlyContractCard(Map<String, dynamic> booking, AppLocalizations loc) {
+  Widget _buildHourlyContractCard(
+      Map<String, dynamic> booking, AppLocalizations loc) {
     String status = booking["status"] ?? "success";
 
     String formatDate(String? dateStr) {
@@ -319,38 +495,36 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header with badges
-            _buildHeaderWithBadges(
-              loc.hourlyService ?? "Hourly Service", 
-              status, 
-              booking["time_info"], 
-              Colors.green
-            ),
+            _buildHeaderWithBadges(loc.hourlyService ?? "Hourly Service",
+                status, booking["time_info"], Colors.green),
             const SizedBox(height: 12),
-            
+
             _infoRow(loc.serviceContractId ?? "Service Contract ID",
                 booking["service_contract_id"]?.toString() ?? ""),
-            _infoRow(loc.contractId ?? "Contract ID", booking["contract_id"]?.toString() ?? ""),
-            _infoRow(loc.customer ?? "Customer", booking["customer_display"] ?? ""),
-            _infoRow(loc.service ?? "Service", booking["service_id"]?.toString() ?? ""),
-            _infoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0} Riyal"),
+            _infoRow(loc.contractId ?? "Contract ID",
+                booking["contract_id"]?.toString() ?? ""),
+            _infoRow(
+                loc.customer ?? "Customer", booking["customer_display"] ?? ""),
+            _infoRow(loc.service ?? "Service",
+                booking["service_id"]?.toString() ?? ""),
+            _infoRow(loc.totalPrice ?? "Total Price",
+                "${booking["total_price"] ?? 0} Riyal"),
             _infoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}  Riyal"),
-            _infoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
-            
+            _infoRow(loc.startDate ?? "Start Date",
+                formatDate(booking["contract_start_date"])),
+
             // Show cancelled time below start date if status is cancelled
-            if (status.toLowerCase() == "cancelled" || status.toLowerCase() == "canceled")
-              _infoRow(
-                "Cancelled Time",
-                _formatDeadlineTime(booking["time_info"], status)
-              ),
-            
+            if (status.toLowerCase() == "cancelled" ||
+                status.toLowerCase() == "canceled")
+              _infoRow("Cancelled Time",
+                  _formatDeadlineTime(booking["time_info"], status)),
+
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () {
-                    // Payment logic
-                  },
+                  onPressed: _startCheckout,
                   child: Text(loc.payNow ?? "Pay Now"),
                 ),
                 const SizedBox(width: 8),
@@ -375,8 +549,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  List<Widget> _getFilteredContracts(
-      List<Map<String, dynamic>> permanent, List<Map<String, dynamic>> hourly, AppLocalizations loc) {
+  List<Widget> _getFilteredContracts(List<Map<String, dynamic>> permanent,
+      List<Map<String, dynamic>> hourly, AppLocalizations loc) {
     List<Widget> contracts = [];
 
     if (_selectedTab == 'all' || _selectedTab == 'permanent') {
@@ -384,7 +558,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
 
     if (_selectedTab == 'all' || _selectedTab == 'hourly') {
-      contracts.addAll(hourly.map((booking) => _buildHourlyContractCard(booking, loc)));
+      contracts.addAll(
+          hourly.map((booking) => _buildHourlyContractCard(booking, loc)));
     }
 
     return contracts;
@@ -459,13 +634,15 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               onRefresh: notifier.fetchContracts,
               child: Builder(
                 builder: (context) {
-                  final filtered = _getFilteredContracts(state.permanent, state.hourly, loc);
+                  final filtered =
+                      _getFilteredContracts(state.permanent, state.hourly, loc);
                   if (filtered.isEmpty) {
                     return const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.receipt_long, size: 64, color: Colors.grey),
+                          Icon(Icons.receipt_long,
+                              size: 64, color: Colors.grey),
                           SizedBox(height: 16),
                           Text(
                             "No bookings found",

@@ -15,10 +15,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
 
-
-void main() async{
-  WidgetsFlutterBinding.ensureInitialized(); 
-    await dotenv.load();
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load();
 
   runApp(
     const ProviderScope(
@@ -56,10 +55,9 @@ class MyApp extends ConsumerWidget {
         '/profile': (context) => const UserProfileScreen(),
         '/bookings': (context) => const BookingsScreen(),
         '/location': (context) => const LocationScreen(),
-        '/home':(contex)=> HomeScreen(),
-        '/hourly':(context)=>CleaningServiceScreen(),
-        '/selectAddress':(context)=>AddressSelectionScreen()
-
+        '/home': (contex) => HomeScreen(),
+        '/hourly': (context) => CleaningServiceScreen(),
+        '/selectAddress': (context) => AddressSelectionScreen()
 
         // '/profile' key routes to UserProfileScreen widget
       },
