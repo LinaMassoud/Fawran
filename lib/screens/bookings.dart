@@ -1,7 +1,6 @@
 import 'package:checkout_flutter/checkout_flutter.dart';
 import 'package:confetti/confetti.dart';
 import 'package:fawran/providers/contractsProvider.dart';
-import 'package:fawran/screens/payment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
