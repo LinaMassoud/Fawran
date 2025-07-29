@@ -51,6 +51,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       setState(() {
         _checkoutStatus = 'Starting checkout...';
       });
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
       Map<String, dynamic> configurations = {
         "hashString": "",
         "language": "ar",
@@ -125,6 +132,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       final success = await startCheckout(
         configurations: configurations,
         onReady: () {
+          Navigator.of(context).pop();
           setState(() {
             _checkoutStatus = 'Checkout is ready!';
           });
@@ -139,18 +147,21 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           _showSuccessDialog();
         },
         onError: (error) {
+          Navigator.of(context).pop();
           setState(() {
             _checkoutStatus = 'Payment failed: $error';
           });
           print('Payment failed: $error');
         },
         onClose: () {
+          Navigator.of(context).pop();
           setState(() {
             _checkoutStatus = 'Checkout closed';
           });
           print('Checkout closed');
         },
         onCancel: () {
+          Navigator.of(context).pop();
           setState(() {
             _checkoutStatus = 'Checkout cancelled';
           });
@@ -159,11 +170,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       );
 
       if (!success) {
+        Navigator.of(context).pop();
         setState(() {
           _checkoutStatus = 'Failed to start checkout';
         });
       }
     } catch (e) {
+      Navigator.of(context).pop();
       setState(() {
         _checkoutStatus = 'Error: $e';
       });
@@ -412,7 +425,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _buildPermanentContractCard(Map<String, dynamic> booking) {
+  Widget _buildPermanentContractCard(
+      Map<String, dynamic> booking, AppLocalizations loc) {
     String status = booking["status"] ?? "success";
 
     return Card(
@@ -448,8 +462,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: _startCheckout,
-                  child: const Text("Pay Now"),
+                  onPressed: status.toLowerCase() == "cancelled" ||
+                          status.toLowerCase() == "canceled"
+                      ? null
+                      : _startCheckout,
+                  child: Text(loc.payNow ?? "Pay Now"),
                 ),
                 const SizedBox(width: 8),
                 TextButton(
@@ -463,7 +480,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                                 isHourly: false,
                               );
                         },
-                  child: const Text("Cancel"),
+                  child: Text(loc.cancel ?? "Cancel"),
                 ),
               ],
             ),
@@ -524,7 +541,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: _startCheckout,
+                  onPressed: status.toLowerCase() == "cancelled" ||
+                          status.toLowerCase() == "canceled"
+                      ? null
+                      : _startCheckout,
                   child: Text(loc.payNow ?? "Pay Now"),
                 ),
                 const SizedBox(width: 8),
@@ -554,7 +574,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     List<Widget> contracts = [];
 
     if (_selectedTab == 'all' || _selectedTab == 'permanent') {
-      contracts.addAll(permanent.map(_buildPermanentContractCard));
+      contracts.addAll(permanent
+          .map((permanent) => _buildPermanentContractCard(permanent, loc)));
     }
 
     if (_selectedTab == 'all' || _selectedTab == 'hourly') {
