@@ -117,6 +117,8 @@ bool _isCompletingPurchase = false;
   String? addressError;
   List<String> selectedDays = [];
 
+  List<int>? _validatedWorkerIds;
+
   // Service Details Data (with defaults for custom booking)
   String selectedNationality = 'East Asia';
   late int workerCount;
@@ -578,6 +580,13 @@ void _showSuccessDialog(String message) {
     }
   }
 
+  void _onWorkerValidationSuccess(List<int> workerIds) {
+  setState(() {
+    _validatedWorkerIds = workerIds;
+  });
+  print('✅ Worker IDs received in overlay: $workerIds');
+}
+
   void _updateContractDuration(int newDuration) {
     setState(() {
       contractDuration = newDuration;
@@ -741,6 +750,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
       visitCalendar: visitCalendar.isNotEmpty ? visitCalendar : null,
       packageId: !widget.isCustomBooking && widget.package != null ? widget.package!.packageId : null,
       appointments: appointments.isNotEmpty ? appointments : null,
+      workerIds: _validatedWorkerIds,
     );
 
     if (mounted) {
@@ -1188,7 +1198,8 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                           _updateTotalPriceFromServiceDetails,
                                       onPricePerVisitChanged: _updatePricePerVisit,
                                       onHourPriceChanged: _updateHourPrice,
-                                      onPriceVatChanged: _updatePriceVat, 
+                                      onPriceVatChanged: _updatePriceVat,
+                                      onWorkerIdsChanged: _onWorkerValidationSuccess, 
                                     )
                                   : DateSelectionStep(
                                       selectedDates: selectedDates,
@@ -1210,6 +1221,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                           : 0.0,
                                       package: widget.package,
                                       professionId: widget.professionId,
+                                      onWorkerValidationSuccess: _onWorkerValidationSuccess,
                                     ),
                             ],
                           ),

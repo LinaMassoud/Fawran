@@ -10,6 +10,7 @@ class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
   final Function(List<DateTime>) onDatesChanged;
   final Function(List<String>)? onSelectedDaysChanged;
+  final Function(List<int>)? onWorkerValidationSuccess;
   final VoidCallback? onNextPressed;
   final int maxSelectableDates;
   final List<String> selectedDays;
@@ -37,7 +38,8 @@ class DateSelectionStep extends StatefulWidget {
     this.pricePerVisit = 0.0,
     this.package,
     required this.professionId,
-    this.onSelectedDaysChanged, 
+    this.onSelectedDaysChanged,
+    this.onWorkerValidationSuccess,
   }) : super(key: key);
 
   @override
@@ -231,20 +233,14 @@ Future<void> _validateAndProceed() async {
   try {
     // Show loading indicator
     showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text('Validating workers availability...'),
-            ],
-          ),
-        );
-      },
+  context: context,
+  barrierDismissible: false,
+  builder: (BuildContext context) {
+    return Center(
+      child: CircularProgressIndicator(),
     );
+  },
+);
 
     // Prepare appointment dates in MM-dd-yyyy format
     List<String> appointmentDates = _selectedDates
@@ -259,7 +255,7 @@ Future<void> _validateAndProceed() async {
     final validationResult = await ApiService.validateWorkersHourly(
       positionId: widget.professionId,
       nationalityId: widget.package!.groupCode,
-      numWorkers: widget.workerCount,
+      numWorkers: widget.package!.noOfEmployee,
       startDate: startDate,
       endDate: endDate,
       shiftId: int.parse(widget.package!.serviceShift),
@@ -272,12 +268,26 @@ Future<void> _validateAndProceed() async {
     Navigator.of(context).pop();
 
     if (validationResult != null) {
-      // Check if the validation response indicates workers are available
+      // Extract validation data from the new API response format
       bool isValid = validationResult['valid'] == true;
       int availableWorkers = validationResult['available_workers'] ?? 0;
+      List<int>? workerIds;
+      
+      // Extract worker_ids if present
+      if (validationResult['worker_ids'] != null) {
+        workerIds = List<int>.from(validationResult['worker_ids']);
+      }
       
       if (isValid && availableWorkers >= widget.workerCount) {
         // Validation successful, proceed to next step
+        print('✅ Worker validation successful. Available workers: $availableWorkers, Worker IDs: $workerIds');
+        
+        // Pass worker IDs back to parent widget if callback is provided
+        // You'll need to add this callback to the widget constructor
+        if (widget.onWorkerValidationSuccess != null && workerIds != null) {
+          widget.onWorkerValidationSuccess!(workerIds);
+        }
+        
         if (widget.onNextPressed != null) {
           widget.onNextPressed!();
         }
@@ -285,15 +295,17 @@ Future<void> _validateAndProceed() async {
         // Validation failed - show specific error message
         String errorMessage;
         if (!isValid) {
-          errorMessage = 'Worker validation failed. No workers available for the selected dates and times.';
+          errorMessage = 'No workers are available for the selected dates and times.';
         } else {
           errorMessage = 'Only $availableWorkers worker(s) available, but you need ${widget.workerCount}.';
         }
         _showSnackBar(errorMessage);
+        print('❌ Worker validation failed: $errorMessage');
       }
     } else {
       // API returned null response
       _showSnackBar('Worker validation failed. Please try again.');
+      print('❌ Worker validation API returned null response');
     }
 
   } catch (e) {
@@ -304,7 +316,7 @@ Future<void> _validateAndProceed() async {
     
     // Show error message
     _showSnackBar('Error validating workers: ${e.toString()}');
-    print('Worker validation error: $e');
+    print('💥 Worker validation error: $e');
   }
 }
 
@@ -1051,10 +1063,8 @@ Widget build(BuildContext context) {
             child: ElevatedButton(
               onPressed: _selectedDates.isNotEmpty &&
                       !_isSelectingStartDate &&
-                      // widget.selectedAddress != null
-                      widget.onNextPressed != null
-                  // ? _validateAndProceed // Changed from widget.onNextPressed to _validateAndProceed
-                  ? widget.onNextPressed
+                      widget.selectedAddress != null
+                  ? _validateAndProceed // Changed from widget.onNextPressed to _validateAndProceed
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF1E3A8A),
