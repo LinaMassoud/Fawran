@@ -60,7 +60,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       );
       Map<String, dynamic> configurations = {
         "hashString": "",
-        "language": "ar",
+        "language": "en",
         "themeMode": "light",
         "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "Mada"],
         "paymentType": "ALL",
@@ -103,10 +103,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         "order": {
           "id": "",
           "currency": "SAR",
-          "amount": "5",
+          "amount": "3200",
           "items": [
             {
-              "amount": "5",
+              "amount": "3200",
               "currency": "SAR",
               "name": "Lina Massoud",
               "quantity": 1,
@@ -147,21 +147,18 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           _showSuccessDialog();
         },
         onError: (error) {
-          Navigator.of(context).pop();
           setState(() {
             _checkoutStatus = 'Payment failed: $error';
           });
           print('Payment failed: $error');
         },
         onClose: () {
-          Navigator.of(context).pop();
           setState(() {
             _checkoutStatus = 'Checkout closed';
           });
           print('Checkout closed');
         },
         onCancel: () {
-          Navigator.of(context).pop();
           setState(() {
             _checkoutStatus = 'Checkout cancelled';
           });
@@ -170,13 +167,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       );
 
       if (!success) {
-        Navigator.of(context).pop();
         setState(() {
           _checkoutStatus = 'Failed to start checkout';
         });
       }
     } catch (e) {
-      Navigator.of(context).pop();
       setState(() {
         _checkoutStatus = 'Error: $e';
       });
