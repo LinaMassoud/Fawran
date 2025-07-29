@@ -64,7 +64,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "Mada"],
         "paymentType": "ALL",
         "selectedCurrency": "SAR",
-        "supportedCurrencies": "SAR",
+        "supportedCurrencies": ["SAR"],
         "supportedPaymentTypes": [],
         "supportedRegions": [],
         "supportedSchemes": [],
@@ -77,7 +77,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           "firstName": "Android",
           "lastName": "Test",
           "email": "example@gmail.com",
-          "phone": {"countryCode": "965", "number": "55567890"},
+          "phone": {"countryCode": "966", "number": "555123456"},
         },
         "transaction": {
           "mode": "charge",

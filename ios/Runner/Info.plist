@@ -47,5 +47,73 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- ADD THESE ESSENTIAL ENTRIES FOR TAP PAYMENT -->
+	
+	<!-- Network Security Configuration -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>tap.company</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<key>staging.tap.company</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	
+	<!-- URL Schemes for Payment Redirects -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.emdadHR.fawran</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fawran</string>
+				<string>tap-payment</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- Camera and Photo Library for Payment Methods -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan payment cards</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to select payment card images</string>
+	
+	<!-- Face ID for Payment Authentication -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to authenticate payments</string>
+	
+	<!-- Background Modes for Payment Processing -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>background-fetch</string>
+		<string>background-processing</string>
+	</array>
+	
+	<!-- Prevent App from being killed during payment -->
+	<key>UIApplicationExitsOnSuspend</key>
+	<false/>
+	
 </dict>
 </plist>
