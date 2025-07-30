@@ -407,7 +407,8 @@ Widget _buildServiceSelector(AppLocalizations loc) {
             style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              fontFamily: 'Poppins',
+              color: Color(0xFF091735),
             ),
           ),
           SizedBox(height: 16),
@@ -455,7 +456,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
               children: availableServices
                   .map(
                     (service) => Container(
-                      margin: EdgeInsets.only(right: 5),
+                      margin: EdgeInsets.only(right: 2),
                       child: GestureDetector(
                         onTap: () => _onServiceChanged(service.id),
                         child: Row(
@@ -469,14 +470,15 @@ Widget _buildServiceSelector(AppLocalizations loc) {
                                   _onServiceChanged(value);
                                 }
                               },
-                              activeColor: Colors.purple,
+                              activeColor: Color(0xFF1E49A0),
                             ),
                             Text(
                               service.name,
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Poppins',
+                                color: Color(0xFF768090),
                               ),
                             ),
                           ],
@@ -527,7 +529,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
               TextButton(
                 onPressed: fetchServices,
                 child: Text('Retry'),
-                style: TextButton.styleFrom(foregroundColor: Colors.purple),
+                style: TextButton.styleFrom(foregroundColor: Color(0xFF10295C)),
               ),
             ],
           ),
@@ -537,11 +539,6 @@ Widget _buildServiceSelector(AppLocalizations loc) {
     ),
   );
 }
-
-
-
-
-
 
 @override
 void didChangeDependencies() {
@@ -555,68 +552,57 @@ void didChangeDependencies() {
   }
 }
 
-  @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              // Sticky App Bar Header
-              SliverAppBar(
-                backgroundColor: Colors.white,
-                elevation: 2,
-                pinned: true,
-                floating: false,
-                snap: false,
-                expandedHeight: 0,
-                toolbarHeight: 70,
-                leading: Container(
-                  margin: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.black),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+ @override
+Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
+  return Scaffold(
+    backgroundColor: Colors.grey[100],
+    body: Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            // Sticky Header with overlap
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 0,
+              toolbarHeight: 75,
+              backgroundColor: Color(0xFF10295C),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
                 ),
-                title: Text(
-                  loc.hourlyServices,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                centerTitle: false,
-                actions: [
-                  Container(
-                    margin: EdgeInsets.only(right: 8, top: 10, bottom: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ),
-              // Main content
-              SliverToBoxAdapter(
+              leading: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.arrow_back_ios,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+              title: Text(
+                loc.hourlyServices,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              centerTitle: true,
+              elevation: 0,
+              // Add floating behavior for overlap effect
+              floating: false,
+              snap: false,
+            ),
+            
+            // Add negative margin to create overlap
+            SliverToBoxAdapter(
+              child: Transform.translate(
+                offset: Offset(0, -40), // Negative offset to create overlap
                 child: Column(
                   children: [
                     // Header Section with Video/Image
@@ -628,13 +614,20 @@ void didChangeDependencies() {
                             width: double.infinity,
                             height: 300,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.zero,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(24), // Add top border radius
+                                topRight: Radius.circular(24),
+                              ),
                               child: Image.asset(
-                                'assets/images/cleaning_hero.jpg',
+                                'assets/images/cleaning_hero1.jpg',
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(24),
+                                        topRight: Radius.circular(24),
+                                      ),
                                       gradient: LinearGradient(
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
@@ -660,6 +653,10 @@ void didChangeDependencies() {
                             width: double.infinity,
                             height: 300,
                             decoration: BoxDecoration(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(24),
+                                topRight: Radius.circular(24),
+                              ),
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
@@ -674,7 +671,7 @@ void didChangeDependencies() {
                             left: 20,
                             bottom: 40,
                             child: Text(
-                              'Scrub Away\ntough stains',
+                              'Scrub Away\ntough Stains',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -697,7 +694,7 @@ void didChangeDependencies() {
                     // Main content with consistent padding
                     Container(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20), // Consistent padding
+                          horizontal: 10, vertical: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -709,43 +706,43 @@ void didChangeDependencies() {
                             Text(
                               dynamicServiceTitle,
                               style: TextStyle(
-                                fontSize: 25, // Match package section title size
+                                fontSize: 25,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
                           if (widget.serviceId != 62)
                             SizedBox(height: 16),
-                          SizedBox(height: 16), // Consistent spacing
+                          SizedBox(height: 16),
 
                           // Design your card button - only show if professionId is not 61
                           if (widget.serviceId != 62) ...[
                             _buildDesignCardButton(loc),
-                            SizedBox(height: 32), // Spacing before package sections
+                            SizedBox(height: 32),
                           ] else
-                            SizedBox(height: 16), // Spacing before package sections
+                            SizedBox(height: 16),
 
                           // Dynamic package sections
-                        ...countryGroups.map((group) {
-                          final groupCode = group['group_code'].toString();
-                          final groupName = group['group_name'].toString();
-                          
-                          return Column(
-                            children: [
-                              _buildPackageSection(
-                                sectionTitle: groupName,
-                                packages: packagesByGroup[groupCode] ?? [],
-                                filteredPackages: filteredPackagesByGroup[groupCode] ?? [],
-                                isLoading: loadingStatesByGroup[groupCode] ?? false,
-                                errorMessage: errorMessagesByGroup[groupCode],
-                                onRetry: () => fetchPackagesForGroup(groupCode),
-                                groupCode: groupCode,
-                                loc: loc,
-                              ),
-                              SizedBox(height: 40),
-                            ],
-                          );
-                        }).toList(),
+                          ...countryGroups.map((group) {
+                            final groupCode = group['group_code'].toString();
+                            final groupName = group['group_name'].toString();
+                            
+                            return Column(
+                              children: [
+                                _buildPackageSection(
+                                  sectionTitle: groupName,
+                                  packages: packagesByGroup[groupCode] ?? [],
+                                  filteredPackages: filteredPackagesByGroup[groupCode] ?? [],
+                                  isLoading: loadingStatesByGroup[groupCode] ?? false,
+                                  errorMessage: errorMessagesByGroup[groupCode],
+                                  onRetry: () => fetchPackagesForGroup(groupCode),
+                                  groupCode: groupCode,
+                                  loc: loc,
+                                ),
+                                SizedBox(height: 40),
+                              ],
+                            );
+                          }).toList(),
                           SizedBox(height: completedBooking != null ? 120 : 20),
                         ],
                       ),
@@ -753,118 +750,118 @@ void didChangeDependencies() {
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
 
-          // Bottom Order View - Show when booking is completed
-          if (completedBooking != null)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Congratulations banner
-                    Container(
-                      width: double.infinity,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      color: Colors.green,
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.local_offer,
+        // Bottom Order View - Show when booking is completed
+        if (completedBooking != null)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Congratulations banner
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    color: Colors.green,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.local_offer,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '${loc.congratulations} SAR${completedBooking!.discountAmount.toStringAsFixed(1)} ${loc.saved} ',
+                          style: TextStyle(
                             color: Colors.white,
-                            size: 20,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            '${loc.congratulations} SAR${completedBooking!.discountAmount.toStringAsFixed(1)} ${loc.saved} ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
 
-                    // Price and View Order section
-                    Container(
-                      padding: EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'SAR ${completedBooking!.totalPrice}',
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
+                  // Price and View Order section
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'SAR ${completedBooking!.totalPrice}',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
                                     ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'SAR ${completedBooking!.originalPrice}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[800],
-                                        decoration: TextDecoration.lineThrough,
-                                      ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'SAR ${completedBooking!.originalPrice}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[800],
+                                      decoration: TextDecoration.lineThrough,
                                     ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: _viewOrder,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF10295C),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 25, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
                             ),
                           ),
-                          ElevatedButton(
-                            onPressed: _viewOrder,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 25, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                            ),
-                            child: Text(
-                              loc.viewOrder,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          child: Text(
+                            loc.viewOrder,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-        ],
-      ),
-    );
-  }
+          ),
+      ],
+    ),
+  );
+}
 
 
 void _showPackageDetailsOverlay(PackageModel package, AppLocalizations loc) {
@@ -1073,7 +1070,7 @@ void _showPackageDetailsOverlay(PackageModel package, AppLocalizations loc) {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
+                          backgroundColor: Color(0xFF10295C),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
@@ -1284,7 +1281,8 @@ Widget _buildDetailRow(String label, String value) {
                   shiftName,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold, // Made bold
+                    fontFamily: 'Poppins',
                     color: Colors.black,
                   ),
                   textAlign: TextAlign.center,
@@ -1300,7 +1298,8 @@ Widget _buildDetailRow(String label, String value) {
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.bold, // Made bold
+                fontFamily: 'Poppins',
               ),
               textDirection: _isArabicText(deliveryTime) ? TextDirection.rtl : TextDirection.ltr,
             ),
@@ -1316,7 +1315,7 @@ Widget _buildDetailRow(String label, String value) {
   return Container(
     width: double.infinity,
     decoration: BoxDecoration(
-      color: Colors.grey[200],
+      color: Color(0xFFE0EAFF), // Changed to --White-Blue color
       borderRadius: BorderRadius.circular(25),
     ),
     child: Row(
@@ -1362,7 +1361,7 @@ Widget _buildDetailRow(String label, String value) {
                           shiftName,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold, // Made bold
                             color: isSelected ? Colors.black : Colors.grey[600],
                           ),
                           textAlign: TextAlign.center,
@@ -1379,7 +1378,7 @@ Widget _buildDetailRow(String label, String value) {
                       style: TextStyle(
                         fontSize: 11,
                         color: isSelected ? Colors.grey[700] : Colors.grey[500],
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.bold, // Made bold
                       ),
                       textAlign: TextAlign.center,
                       textDirection: _isArabicText(deliveryTime) ? TextDirection.rtl : TextDirection.ltr,
@@ -1614,43 +1613,32 @@ Widget _buildDetailRow(String label, String value) {
     },
     child: Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16),
-      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16), // Reduced vertical padding
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 2), // Added horizontal margin
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(30), // More rounded corners like in image
+        border: Border.all(
+          color: Color(0xFF1E49A0), // --Second-blue color
+          width: 1.5,
+        ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center, // Center the content
         children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(
-              Icons.add,
-              color: Colors.black,
-              size: 16,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              loc.designYourCard,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-          ),
           Icon(
-            Icons.chevron_right,
-            color: Colors.grey[400],
+            Icons.add,
+            color: Color(0xFF1E49A0), // --Second-blue color
             size: 20,
+          ),
+          SizedBox(width: 8),
+          Text(
+            loc.designYourCard,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600, // Slightly bolder
+              color: Color(0xFF1E49A0), // --Second-blue color
+            ),
           ),
         ],
       ),
@@ -1758,13 +1746,14 @@ Widget _buildDetailRow(String label, String value) {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Package name - truncated
+                  // Package name - truncated with Poppins font
                   Text(
                     package.packageName,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
+                      fontFamily: 'Poppins',
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -1782,15 +1771,15 @@ Widget _buildDetailRow(String label, String value) {
                   ),
                   SizedBox(height: 4),
 
-                  // Price row
+                  // Price row with bolder text
                   Row(
                     children: [
                       Text(
                         'SAR ${package.finalPrice}',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          fontWeight: FontWeight.w800, // Made more bold
+                          color: Color(0xFFF2582A),
                         ),
                       ),
                       SizedBox(width: 6),
@@ -1800,6 +1789,7 @@ Widget _buildDetailRow(String label, String value) {
                           fontSize: 12,
                           color: Colors.grey[600],
                           decoration: TextDecoration.lineThrough,
+                          fontWeight: FontWeight.w700, // Made more bold
                         ),
                       ),
                     ],
@@ -1825,7 +1815,7 @@ Widget _buildDetailRow(String label, String value) {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
+                          backgroundColor: Color(0xFF10295C),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
@@ -1833,7 +1823,7 @@ Widget _buildDetailRow(String label, String value) {
                           elevation: 0,
                         ),
                         child: Text(
-                          'Add',
+                          loc.add,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,

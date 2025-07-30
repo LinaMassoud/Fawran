@@ -378,7 +378,7 @@ districtId: _useCurrentLocation
 
     if (result['success']) {
       // Success - Return result to parent screen
-      _showFlushbar(result['message'], backgroundColor: Colors.green, icon: Icons.check_circle_outline);
+      // _showFlushbar(result['message'], backgroundColor: Colors.green, icon: Icons.check_circle_outline);
 
       // Return success result to parent screen with newAddress included
       Navigator.of(context).pop({
@@ -1055,7 +1055,7 @@ Future<void> _getCurrentLocation() async {
             ? "Getting location..."
             : _useCurrentLocation
                 ? "Current location selected"
-                : "Use Current Location",
+                : "Auto Select Location",
         style: TextStyle(
           color: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
           fontSize: 16,
@@ -1071,7 +1071,7 @@ Future<void> _getCurrentLocation() async {
         ),
         padding: EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30),
         ),
         elevation: _useCurrentLocation ? 2 : 0,
       ),
@@ -1274,284 +1274,360 @@ Future<void> _getCurrentLocation() async {
 }
 
   @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Main Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with back arrow
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Icon(Icons.arrow_back, size: 24),
+Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
+    body: Column(
+      children: [
+        // Header with gradient background
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [-0.2734, 0.7524, 1.0],
+              colors: [
+                Color(0xFF1E49A0), // #1E49A0
+                Color(0xD1D9F0F9), // rgba(217, 240, 249, 0.82)
+                Color(0x00F5FCFF), // rgba(245, 252, 255, 0)
+              ],
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // App bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        SizedBox(width: 15),
-                        Text(
-                          loc.insertAddress,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF10295C), size: 18),
+                          onPressed: () => Navigator.pop(context),
                         ),
-                      ],
-                    ),
-
-                    SizedBox(height: 30),
-
-                    _buildCurrentLocationButton(loc: loc),
-
-                    if (!_useCurrentLocation) ...[
-  // Step 1: District
-  _buildStepIndicator(
-      1, '${loc.district} *', _isDistrictCompleted, _currentStep >= 1),
-  SizedBox(height: 20),
-  _buildCityDropdown(loc),
-  SizedBox(height: 15),
-  _buildDistrictDropdown(loc),
-
-  SizedBox(height: 30),
-  Container(height: 1, color: Colors.grey[300]),
-  SizedBox(height: 30),
-
-  // Step 2: Map
-  _buildStepIndicator(
-      2, '${loc.map} *', _isMapCompleted, _currentStep >= 2),
-  SizedBox(height: 20),
-  _buildMapSelector(enabled: _isDistrictCompleted, loc: loc),
-
-  SizedBox(height: 30),
-  Container(height: 1, color: Colors.grey[300]),
-  SizedBox(height: 30),
-],
-
-                    // Step 3: Details
-                    _buildStepIndicator(
-  _useCurrentLocation ? 1 : 3, 
-  '${loc.details}', 
-  false, 
-  _currentStep >= (_useCurrentLocation ? 1 : 3)
-),
-                    SizedBox(height: 25),
-
-                    Text(
-                      '${loc.fullAddress} *',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _canProceedToDetails
-                            ? Colors.grey[600]
-                            : Colors.grey[400],
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    _buildTextField('${loc.selectAddress}',
-                        _addressTitleController,
-                        enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 50),
-
-                    SizedBox(height: 20),
-
-                    Text(
-                      '${loc.houseType} *',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _canProceedToDetails
-                            ? Colors.grey[600]
-                            : Colors.grey[400],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    _buildHouseTypeDropdown(enabled: _useCurrentLocation || _canProceedToDetails,loc: loc),
-
-                    SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${loc.streetName} *',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _canProceedToDetails
-                                      ? Colors.grey[600]
-                                      : Colors.grey[400],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              _buildTextField(
-                                  loc.streetName, _streetNameController,
-                                  enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 50),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                              _selectedHouseType == loc.villa
-                                  ? '${loc.houseNum} *'
-                                  : '${loc.buildingNum} *',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: _canProceedToDetails
-                                    ? Colors.grey[600]
-                                    : Colors.grey[400],
-                                fontWeight: FontWeight.w500,
-                              ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            loc.insertAddress,
+                            style: const TextStyle(
+                              color: Color(0xFF10295C),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 28,
                             ),
-                            SizedBox(height: 8),
-                            _buildTextField(
-                                _selectedHouseType == loc.villa
-                                    ? loc.houseNum
-                                    : loc.buildingNum,
-                                _houseNumberController,
-                                maxLength: 10,
-                                enabled: _useCurrentLocation || _canProceedToDetails),
-                            ],
                           ),
                         ),
-                      ],
-                    ),
-
-                    // Conditional apartment fields
-                    if (_selectedHouseType == loc.appartment) ...[
-                      SizedBox(height: 20),
-                      Row(
+                      ),
+                      const SizedBox(width: 40),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+        
+        // Content area with rounded corners overlapping header
+        Expanded(
+          child: Transform.translate(
+            offset: const Offset(0, -15),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    spreadRadius: 0,
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Main Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${loc.flooeNumber} *',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: _canProceedToDetails
-                                        ? Colors.grey[600]
-                                        : Colors.grey[400],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                _buildFloorDropdown(
-                                    enabled: _useCurrentLocation || _canProceedToDetails,loc: loc),
-                              ],
+                          _buildCurrentLocationButton(loc: loc),
+
+                          if (!_useCurrentLocation) ...[
+                            // Step 1: District
+                            _buildStepIndicator(
+                                1, '${loc.district} *', _isDistrictCompleted, _currentStep >= 1),
+                            const SizedBox(height: 20),
+                            _buildCityDropdown(loc),
+                            const SizedBox(height: 15),
+                            _buildDistrictDropdown(loc),
+
+                            const SizedBox(height: 30),
+                            Container(height: 1, color: Colors.grey[300]),
+                            const SizedBox(height: 30),
+
+                            // Step 2: Map
+                            _buildStepIndicator(
+                                2, '${loc.map} *', _isMapCompleted, _currentStep >= 2),
+                            const SizedBox(height: 20),
+                            _buildMapSelector(enabled: _isDistrictCompleted, loc: loc),
+
+                            const SizedBox(height: 30),
+                            Container(height: 1, color: Colors.grey[300]),
+                            const SizedBox(height: 30),
+                          ],
+
+                          // Step 3: Details
+                          _buildStepIndicator(
+                            _useCurrentLocation ? 1 : 3, 
+                            '${loc.details}', 
+                            false, 
+                            _currentStep >= (_useCurrentLocation ? 1 : 3)
+                          ),
+                          const SizedBox(height: 25),
+
+                          Text(
+                            '${loc.fullAddress} *',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: _canProceedToDetails
+                                  ? Colors.grey[600]
+                                  : Colors.grey[400],
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${loc.appartmentNumber} *',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: _canProceedToDetails
-                                        ? Colors.grey[600]
-                                        : Colors.grey[400],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                _buildTextField(loc.appartmentNumber,
-                                    _apartmentNumberController,
-                                    enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 10),
-                              ],
+                          const SizedBox(height: 8),
+                          _buildTextField('${loc.selectAddress}',
+                              _addressTitleController,
+                              enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 50),
+
+                          const SizedBox(height: 20),
+
+                          Text(
+                            '${loc.houseType} *',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: _canProceedToDetails
+                                  ? Colors.grey[600]
+                                  : Colors.grey[400],
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          _buildHouseTypeDropdown(enabled: _useCurrentLocation || _canProceedToDetails, loc: loc),
+
+                          const SizedBox(height: 20),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${loc.streetName} *',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: _canProceedToDetails
+                                            ? Colors.grey[600]
+                                            : Colors.grey[400],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildTextField(
+                                        loc.streetName, _streetNameController,
+                                        enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 50),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _selectedHouseType == loc.villa
+                                          ? '${loc.houseNum} *'
+                                          : '${loc.buildingNum} *',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: _canProceedToDetails
+                                            ? Colors.grey[600]
+                                            : Colors.grey[400],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildTextField(
+                                        _selectedHouseType == loc.villa
+                                            ? loc.houseNum
+                                            : loc.buildingNum,
+                                        _houseNumberController,
+                                        maxLength: 10,
+                                        enabled: _useCurrentLocation || _canProceedToDetails),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Conditional apartment fields
+                          if (_selectedHouseType == loc.appartment) ...[
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${loc.flooeNumber} *',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: _canProceedToDetails
+                                              ? Colors.grey[600]
+                                              : Colors.grey[400],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildFloorDropdown(
+                                          enabled: _useCurrentLocation || _canProceedToDetails, loc: loc),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${loc.appartmentNumber} *',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: _canProceedToDetails
+                                              ? Colors.grey[600]
+                                              : Colors.grey[400],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildTextField(loc.appartmentNumber,
+                                          _apartmentNumberController,
+                                          enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 10),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+
+                          const SizedBox(height: 20),
+
+                          Text(
+                            '${loc.fullAddress} *',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: _canProceedToDetails
+                                  ? Colors.grey[600]
+                                  : Colors.grey[400],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTextField('${loc.fullAddress}', _fullAddressController,
+                              maxLines: 3, enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 100),
+
+                          const SizedBox(height: 20),
+
+                          Text(
+                            loc.notes,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: _canProceedToDetails
+                                  ? Colors.grey[600]
+                                  : Colors.grey[400],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTextField(
+                              '${loc.selectNote}', _notesController,
+                              maxLines: 2, enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 100),
                         ],
                       ),
-                    ],
-
-                    SizedBox(height: 20),
-
-                    Text(
-                      '${loc.fullAddress} *',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _canProceedToDetails
-                            ? Colors.grey[600]
-                            : Colors.grey[400],
-                        fontWeight: FontWeight.w500,
-                      ),
                     ),
-                    SizedBox(height: 8),
-                    _buildTextField('${loc.fullAddress}', _fullAddressController,
-                        maxLines: 3, enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 100),
-
-                    SizedBox(height: 20),
-
-                    Text(
-                      loc.notes,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _canProceedToDetails
-                            ? Colors.grey[600]
-                            : Colors.grey[400],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    _buildTextField(
-                        '${loc.selectNote}', _notesController,
-                        maxLines: 2, enabled: _useCurrentLocation || _canProceedToDetails,maxLength: 100),
-                  ],
-                ),
-              ),
-            ),
-
-            // Bottom Button
-            Container(
-              padding: EdgeInsets.all(20),
-              color: Colors.white,
-              child: GestureDetector(
-                onTap: (_canProceedToDetails && _areAllFieldsValid())
-                    ? _saveAddress
-                    : null,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: (_canProceedToDetails && _areAllFieldsValid())
-                        ? Color(0xFF1E3A8A)
-                        : Colors.grey[400],
-                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(
-                    child: Text(
-                      loc.save,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
+
+                  // Bottom Button
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 0,
+                          blurRadius: 10,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    child: GestureDetector(
+                      onTap: (_canProceedToDetails && _areAllFieldsValid())
+                          ? _saveAddress
+                          : null,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: (_canProceedToDetails && _areAllFieldsValid())
+                              ? const Color(0xFF1E3A8A)
+                              : Colors.grey[400],
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Center(
+                          child: Text(
+                            loc.save,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 }
 
