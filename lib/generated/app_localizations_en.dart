@@ -111,7 +111,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcome => 'Welcome';
 
   @override
-  String get designYourCard => 'Design your card';
+  String get designYourCard => 'Design Your Card';
 
   @override
   String get selectService => 'Select Service';
@@ -202,7 +202,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weeks => 'Weeks';
 
   @override
-  String get add => 'Add';
+  String get add => 'ADD';
 
   @override
   String get insertAddress => 'Insert Address';
@@ -304,7 +304,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get congratulations => 'Congratulations!';
 
   @override
-  String get saved => 'saved so far!';
+  String get saved => 'saved!';
 
   @override
   String get viewOrder => 'View Order';

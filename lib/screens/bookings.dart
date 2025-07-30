@@ -511,9 +511,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () {
-                  // Payment logic
-                },
+                onPressed: status.toLowerCase() == "cancelled" ||
+                        status.toLowerCase() == "canceled"
+                    ? null
+                    : _startCheckout,
                 child: const Text(
                   "Pay Now",
                   style: TextStyle(
@@ -628,9 +629,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () {
-                  // Payment logic
-                },
+                onPressed: isCancelled
+                    ? null
+                    : () {
+                        ref.read(contractsProvider.notifier).cancelPermContract(
+                              booking["contract_id"].toString(),
+                              isHourly: false,
+                            );
+                      },
                 child: Text(
                   loc.payNow ?? "Pay Now",
                   style: const TextStyle(
@@ -708,8 +714,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     List<Widget> contracts = [];
 
     if (_selectedTab == 'all' || _selectedTab == 'permanent') {
-      contracts.addAll(permanent
-          .map((permanent) => _buildPermanentContractCard(permanent, loc)));
+      contracts.addAll(
+          permanent.map((permanent) => _buildPermanentContractCard(permanent)));
     }
 
     if (_selectedTab == 'all' || _selectedTab == 'hourly') {

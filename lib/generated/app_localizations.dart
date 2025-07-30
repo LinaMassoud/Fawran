@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// No description provided for @designYourCard.
   ///
   /// In en, this message translates to:
-  /// **'Design your card'**
+  /// **'Design Your Card'**
   String get designYourCard;
 
   /// No description provided for @selectService.
@@ -485,7 +485,7 @@ abstract class AppLocalizations {
   /// No description provided for @add.
   ///
   /// In en, this message translates to:
-  /// **'Add'**
+  /// **'ADD'**
   String get add;
 
   /// No description provided for @insertAddress.
@@ -689,7 +689,7 @@ abstract class AppLocalizations {
   /// No description provided for @saved.
   ///
   /// In en, this message translates to:
-  /// **'saved so far!'**
+  /// **'saved!'**
   String get saved;
 
   /// No description provided for @viewOrder.
