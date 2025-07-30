@@ -7,6 +7,9 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import '../services/api_service.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:checkout_flutter/checkout_flutter.dart';
+import 'package:confetti/confetti.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
   final BookingData bookingData;
@@ -34,6 +37,23 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   bool _isLoadingTerms = false; 
   String _termsContent = '';
 
+  late ConfettiController _confettiController;
+  String _checkoutStatus = '';
+  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+
+
+
+@override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
 
 Future<void> _fetchServiceTerms() async {
   setState(() {
@@ -109,7 +129,7 @@ void _showTermsAndConditions(AppLocalizations loc) async {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           CircularProgressIndicator(
-                            color: Colors.purple,
+                            color: Color(0xFF10295C),
                           ),
                           SizedBox(height: 16),
                           Text(
@@ -134,7 +154,7 @@ void _showTermsAndConditions(AppLocalizations loc) async {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
+                    backgroundColor: Color(0xFF10295C),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
@@ -177,7 +197,7 @@ Widget _buildFormattedTerms() {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: Colors.purple,
+                    color: Color(0xFF10295C),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -433,7 +453,7 @@ Widget _buildFormattedTerms() {
                           SizedBox(width: 8),
                           Icon(
                             Icons.chevron_right,
-                            color: Colors.purple,
+                            color: Color(0xFF10295C),
                             size: 20,
                           ),
                         ],
@@ -529,7 +549,7 @@ Widget _buildFormattedTerms() {
                           _agreeToTerms = value ?? false;
                         });
                       },
-                      activeColor: Colors.purple,
+                      activeColor: Color(0xFF10295C),
                     ),
                     Expanded(
                       child: GestureDetector(
@@ -552,7 +572,7 @@ Widget _buildFormattedTerms() {
                                   text: loc.termsAndCond,
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: Colors.purple,
+                                    color: Color(0xFF10295C),
                                     decoration: TextDecoration.underline,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -634,13 +654,12 @@ Widget _buildFormattedTerms() {
                     child: ElevatedButton(
                       onPressed: _agreeToTerms
                           ? () {
-                              // Handle proceed to pay
-                              _showPaymentSuccess();
+                              _startCheckout(); // This replaces _showPaymentSuccess()
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            _agreeToTerms ? Colors.purple : Colors.grey[400],
+                            _agreeToTerms ? Color(0xFF10295C) : Colors.grey[400],
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
@@ -827,92 +846,343 @@ String _getLocalizedContractDurationSimple(int contractDuration, AppLocalization
     }
   }
 
-  void _showPaymentSuccess() {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+  Future<void> _startCheckout() async {
+    try {
+      setState(() {
+        _checkoutStatus = 'Starting checkout...';
+      });
+      
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(),
         ),
-        contentPadding: EdgeInsets.all(24), // Add proper padding
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center, // Center align all content
+      );
+
+      // Get customer information from secure storage
+      final firstName = await _secureStorage.read(key: 'first_name') ?? 'Customer';
+      final lastName = await _secureStorage.read(key: 'last_name') ?? '';
+      final phoneNumber = await _secureStorage.read(key: 'phone_number') ?? '555123456';
+      final userId = await _secureStorage.read(key: 'user_id') ?? '';
+
+      // Generate unique order ID
+      // final orderId = DateTime.now().millisecondsSinceEpoch.toString();
+      
+      Map<String, dynamic> configurations = {
+        "hashString": "",
+        "language": "en",
+        "themeMode": "light",
+        "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "MADA","GOOGLE_PAY","STC_PAY"],
+        "paymentType": "ALL",
+        "selectedCurrency": "SAR",
+        "supportedCurrencies": ["SAR"],
+        "supportedPaymentTypes": [],
+        "supportedRegions": [],
+        "supportedSchemes": [],
+        "supportedCountries": [],
+        "gateway": {
+          "publicKey": "pk_test_pLd7nzHMmgBXUqNFP1E0SWOZ",
+          "merchantId": "",
+        },
+        "customer": {
+          "firstName": firstName,
+          "lastName": lastName,
+          "email": "customer@example.com",
+          "phone": {"countryCode": "965", "number": phoneNumber},
+        },
+        "transaction": {
+          "mode": "charge",
+          "charge": {
+            "saveCard": true,
+            "auto": {"type": "VOID", "time": 100},
+            "redirect": {
+              "url": "https://demo.staging.tap.company/v2/sdk/checkout",
+            },
+            "threeDSecure": true,
+            "subscription": {
+              "type": "SCHEDULED",
+              "amount_variability": "FIXED",
+              "txn_count": 0,
+            },
+            "airline": {
+              "reference": {"booking": ""},
+            },
+          },
+        },
+        "amount": widget.bookingData.totalPrice.toString(),
+        "order": {
+          "id": "",
+          "currency": "SAR",
+          "amount": widget.bookingData.totalPrice.toString(),
+          "items": [
+            {
+              "amount": widget.bookingData.totalPrice.toString(),
+              "currency": "SAR",
+              "name": widget.bookingData.packageName,
+              "quantity": 1,
+              "description": "${widget.bookingData.packageName} - ${widget.bookingData.workerCount} workers for ${widget.bookingData.contractDuration} weeks",
+            },
+          ],
+        },
+        "cardOptions": {
+          "showBrands": true,
+          "showLoadingState": true,
+          "collectHolderName": true,
+          "preLoadCardName": "",
+          "cardNameEditable": true,
+          "cardFundingSource": "all",
+          "saveCardOption": "all",
+          "forceLtr": false,
+          "alternativeCardInputs": {"cardScanner": false, "cardNFC": false},
+        },
+        "isApplePayAvailableOnClient": true,
+      };
+
+      // Call startCheckout function directly
+      final success = await startCheckout(
+        configurations: configurations,
+        onReady: () {
+          Navigator.of(context).pop(); // Close loading dialog
+          setState(() {
+            _checkoutStatus = 'Checkout is ready!';
+          });
+          print('Checkout is ready!');
+        },
+        onSuccess: (data) {
+          setState(() {
+            _checkoutStatus = 'Payment successful: $data';
+          });
+          print('Payment successful: $data');
+          _confettiController.play();
+          _showPaymentSuccessDialog();
+        },
+        onError: (error) {
+          Navigator.of(context).pop(); // Close loading dialog if still open
+          setState(() {
+            _checkoutStatus = 'Payment failed: $error';
+          });
+          print('Payment failed: $error');
+          _showPaymentErrorDialog(error.toString());
+        },
+        onClose: () {
+          Navigator.of(context).pop(); // Close loading dialog if still open
+          setState(() {
+            _checkoutStatus = 'Checkout closed';
+          });
+          print('Checkout closed');
+        },
+        onCancel: () {
+          Navigator.of(context).pop(); // Close loading dialog if still open
+          setState(() {
+            _checkoutStatus = 'Checkout cancelled';
+          });
+          print('Checkout cancelled (Android)');
+        },
+      );
+
+      if (!success) {
+        Navigator.of(context).pop(); // Close loading dialog
+        setState(() {
+          _checkoutStatus = 'Failed to start checkout';
+        });
+        _showPaymentErrorDialog('Failed to start checkout');
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // Close loading dialog
+      setState(() {
+        _checkoutStatus = 'Error: $e';
+      });
+      _showPaymentErrorDialog(e.toString());
+    }
+  }
+
+  void _showPaymentSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Stack(
+          alignment: Alignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.green,
-                shape: BoxShape.circle,
+            AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 40,
-              ),
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Order Created Successfully!',
-              textAlign: TextAlign.center, // Add text alignment
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Create order successfully. Kindly pay within 60 minutes otherwise order will be cancelled.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog first
-                  
-                  // Call the callback to notify parent about successful payment
-                  if (widget.onPaymentSuccess != null) {
-                    widget.onPaymentSuccess!();
-                  }
-                  
-                  // Navigate to BookingsScreen and remove all previous routes
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) => BookingsScreen(initialTab: 'hourly'),
+              contentPadding: EdgeInsets.all(24),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
                     ),
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 40,
+                    ),
                   ),
-                ),
-                child: Text(
-                  'Done',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  SizedBox(height: 24),
+                  Text(
+                    '🎉 Payment Successful!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Your order has been confirmed successfully. Thank you for your purchase!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the dialog first
+                        
+                        // Call the callback to notify parent about successful payment
+                        if (widget.onPaymentSuccess != null) {
+                          widget.onPaymentSuccess!();
+                        }
+                        
+                        // Navigate to BookingsScreen and remove all previous routes
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) => BookingsScreen(initialTab: 'hourly'),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF10295C),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: Text(
+                        'Done',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 100,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                numberOfParticles: 30,
+                gravity: 0.3,
               ),
             ),
           ],
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
+
+  void _showPaymentErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          contentPadding: EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+              SizedBox(height: 24),
+              Text(
+                'Payment Failed',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Sorry, your payment could not be processed. Please try again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Error: $error',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.red[400],
+                ),
+              ),
+              SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                  child: Text(
+                    'Try Again',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'custom_date_selection.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import '../models/address_model.dart';
+import 'package:flashy_flushbar/flashy_flushbar.dart';
 
 class ServiceDetailsStep extends StatefulWidget {
   final String selectedNationality;
@@ -19,6 +20,7 @@ class ServiceDetailsStep extends StatefulWidget {
   final Function(int) onWorkerCountChanged;
   final Function(int) onVisitsPerWeekChanged; // Changed from String to int
   final Function(List<String>) onSelectedDaysChanged;
+  final Function(List<int>)? onWorkerIdsChanged;
   final VoidCallback? onSelectDatePressed;
   final VoidCallback? onDonePressed;
   final VoidCallback? onNextPressed;
@@ -56,6 +58,7 @@ class ServiceDetailsStep extends StatefulWidget {
     required this.onWorkerCountChanged,
     required this.onVisitsPerWeekChanged,
     required this.onSelectedDaysChanged,
+    this.onWorkerIdsChanged,
     this.onSelectDatePressed,
     this.onDonePressed,
     this.onNextPressed,
@@ -112,10 +115,14 @@ class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
   double _apiPricePerVisit = 0.0;
 double _apiTotalPrice = 0.0;
 bool _isCalculatingPrice = false;
+bool _isValidatingWorkers = false;
+List<int> _validatedWorkerIds = [];
 
 double _apiFinalPricePerVisit = 0.0; // Price per visit with VAT
 double _vatAmount = 0.0;
 double _apiPriceVat = 0.0;
+
+bool _isSnackBarShowing = false;
 
   @override
   void initState() {
@@ -492,6 +499,138 @@ Future<void> _calculatePriceFromAPI() async {
     print('🏁 DEBUG: _calculatePriceFromAPI method completed');
   }
 
+
+Future<bool> _validateWorkers() async {
+  print('🔍 [_validateWorkers] Starting worker validation...');
+  
+  // Check if all required fields are selected
+  if (!_isValidDateSelection()) {
+    print('❌ [_validateWorkers] Invalid date selection, skipping validation');
+    return false;
+  }
+
+  setState(() {
+    _isValidatingWorkers = true;
+  });
+  
+
+  try {
+    // Get shift ID from selected time
+    int shiftId = 1; // Default fallback
+    try {
+      final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
+      final matchingShift = serviceShifts.firstWhere(
+        (shift) => shift['service_shifts']?.toString().toLowerCase() == widget.selectedTime.toLowerCase(),
+        orElse: () => {'id': 1},
+      );
+      shiftId = int.parse(matchingShift['id'].toString());
+    } catch (e) {
+      print('❌ [_validateWorkers] Error fetching shift ID: $e');
+    }
+
+    // Get nationality ID (group code) from selected nationality
+    String nationalityId = '2'; // Default fallback
+    try {
+      final countryGroups = await ApiService.fetchCountryGroups(serviceId: widget.serviceId);
+      final matchingGroup = countryGroups.firstWhere(
+        (group) => group['group_name']?.toString().toLowerCase() == widget.selectedNationality.toLowerCase(),
+        orElse: () => {'group_code': '2'},
+      );
+      nationalityId = matchingGroup['group_code'].toString();
+    } catch (e) {
+      print('❌ [_validateWorkers] Error fetching nationality ID: $e');
+    }
+
+    // Get start and end dates from selected dates
+    if (_internalSelectedDates.isEmpty) {
+      print('❌ [_validateWorkers] No dates selected');
+      return false;
+    }
+
+    final startDate = _internalSelectedDates.first;
+    final endDate = _internalSelectedDates.last;
+
+    // Convert selected dates to appointment dates format
+    final appointmentDates = _internalSelectedDates
+        .map((date) => DateFormat('MM-dd-yyyy').format(date))
+        .toList();
+
+    // Get address details - you might need to adjust these based on your address model
+    String cityCode = '1'; // Default
+    String districtId = '18'; // Default
+    
+    if (widget.selectedAddress != null) {
+      // Adjust these based on your Address model structure
+      cityCode = widget.selectedAddress!.cityCode.toString();
+      districtId = widget.selectedAddress!.districtCode;
+    }
+
+    print('🔍 [_validateWorkers] Validation parameters:');
+    print('  - positionId: ${widget.professionId}');
+    print('  - nationalityId: $nationalityId');
+    print('  - numWorkers: ${widget.workerCount}');
+    print('  - startDate: ${DateFormat('MM-dd-yyyy').format(startDate)}');
+    print('  - endDate: ${DateFormat('MM-dd-yyyy').format(endDate)}');
+    print('  - shiftId: $shiftId');
+    print('  - cityCode: $cityCode');
+    print('  - districtId: $districtId');
+    print('  - appointmentDates: $appointmentDates');
+
+    // Call the validation API
+    final validationResult = await ApiService.validateWorkersHourly(
+      positionId: widget.professionId,
+      nationalityId: nationalityId,
+      numWorkers: widget.workerCount,
+      startDate: startDate,
+      endDate: endDate,
+      shiftId: shiftId,
+      cityCode: cityCode,
+      districtId: districtId,
+      appointmentDates: appointmentDates,
+    );
+
+    print('📥 [_validateWorkers] Validation result: $validationResult');
+
+    if (validationResult != null) {
+      final isValid = validationResult['valid'] == true;
+      final availableWorkers = validationResult['available_workers'] ?? 0;
+      final workerIds = (validationResult['worker_ids'] as List?)?.cast<int>() ?? [];
+
+      print('✅ [_validateWorkers] Validation complete:');
+      print('  - Valid: $isValid');
+      print('  - Available workers: $availableWorkers');
+      print('  - Worker IDs: $workerIds');
+
+      if (isValid && availableWorkers > 0) {
+        setState(() {
+          _validatedWorkerIds = workerIds;
+        });
+
+        // Pass worker IDs back to parent
+        if (widget.onWorkerIdsChanged != null) {
+          widget.onWorkerIdsChanged!(workerIds);
+        }
+
+        return true;
+      } else {
+        // Show error message for no available workers
+        _showValidationMessage('No workers available for the selected time and dates. Please try different options.');
+        return false;
+      }
+    } else {
+      print('❌ [_validateWorkers] Validation API returned null');
+      return false;
+    }
+  } catch (e) {
+    print('💥 [_validateWorkers] Error during validation: $e');
+    _showValidationMessage('Error validating worker availability. Please try again.');
+    return false;
+  } finally {
+    setState(() {
+      _isValidatingWorkers = false;
+    });
+  }
+}
 
 
   void _resetCalendarSelection() {
@@ -1118,6 +1257,20 @@ Future<void> _calculatePriceFromAPI() async {
   );
 }
 
+Future<void> _handleDonePressed() async {
+  if (!_isValidDateSelection()) {
+    _showValidationMessage('Please complete all required fields and select dates.');
+    return;
+  }
+
+  // Validate workers before proceeding
+  final isValidWorkers = await _validateWorkers();
+  
+  if (isValidWorkers && widget.onDonePressed != null) {
+    widget.onDonePressed!();
+  }
+}
+
   Widget _buildVisitDurationField(AppLocalizations loc) {
   // Always show as read-only field since duration is auto-selected
   bool hasValidDuration = widget.visitDuration.isNotEmpty;
@@ -1263,14 +1416,43 @@ Future<void> _calculatePriceFromAPI() async {
   }
 
   void _showValidationMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.orange,
-        duration: Duration(seconds: 2),
+  if (_isSnackBarShowing) return; // Prevent multiple snackbars
+  
+  _isSnackBarShowing = true;
+  
+  FlashyFlushbar(
+    leadingWidget: const Icon(
+      Icons.info_outline,
+      color: Colors.white,
+      size: 24,
+    ),
+    message: message,
+    duration: const Duration(seconds: 2),
+    trailingWidget: IconButton(
+      icon: const Icon(
+        Icons.close,
+        color: Colors.white,
+        size: 20,
       ),
-    );
-  }
+      onPressed: () {
+        FlashyFlushbar.cancel();
+        _isSnackBarShowing = false;
+      },
+    ),
+    isDismissible: true,
+    backgroundColor: Colors.orange,
+    messageStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+  ).show();
+  
+  // Reset the flag after the duration + a small buffer
+  Future.delayed(Duration(seconds: 3), () {
+    _isSnackBarShowing = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1486,25 +1668,33 @@ Future<void> _calculatePriceFromAPI() async {
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap:
-                          _isValidDateSelection() ? widget.onDonePressed : null,
+                      onTap: _isValidDateSelection() && !_isValidatingWorkers ? _handleDonePressed : null,
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: _isValidDateSelection()
+                          color: (_isValidDateSelection() && !_isValidatingWorkers)
                               ? Color(0xFF1E3A8A)
                               : Colors.grey[400],
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: Center(
-                          child: Text(
-                            loc.done,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: _isValidatingWorkers
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  loc.done,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ),
                     ),

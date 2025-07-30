@@ -10,6 +10,7 @@ import 'dart:io'; // for SocketException
 import 'dart:async'; // for TimeoutException
 import 'package:intl/intl.dart';
 import '../models/address_model.dart';
+import '../models/promotion_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiService {
@@ -668,6 +669,7 @@ class ApiService {
     String? visitCalendar,
     int? packageId,
     List<String>? appointments,
+    List<int>? workerIds,
   }) async {
     try {
       // Prepare request body
@@ -701,6 +703,11 @@ class ApiService {
       if (packageId != null) {
         requestBody["package_id"] = packageId;
       }
+
+      if (workerIds != null && workerIds.isNotEmpty) {
+      requestBody["worker_ids"] = workerIds;
+      print('Including worker IDs in contract creation: $workerIds');
+    }
 
       if (appointments != null && appointments.isNotEmpty) {
         requestBody["appointments"] = appointments;
@@ -753,6 +760,28 @@ class ApiService {
       };
     }
   }
+
+
+  static Future<List<PromotionModel>> getValidPromotions(String cityName) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: '$_baseUrl/get-valid-promotions-by-city',
+      body: json.encode({'city_name': cityName}),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => PromotionModel.fromJson(json)).toList();
+    } else {
+      print('Failed to load promotions: ${response.statusCode}');
+      return [];
+    }
+  } catch (e) {
+    print('Error fetching promotions: $e');
+    return [];
+  }
+}
 
   static Future<http.Response> createPermanentContract({
     required Map<String, dynamic> requestBody,
