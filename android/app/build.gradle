@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.emdadHR.fawran"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
@@ -31,6 +31,7 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

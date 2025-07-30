@@ -2,6 +2,8 @@
     package="com.emdadHR.fawran">
 
     <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -59,6 +61,8 @@
         <!-- Add this if you want to support background location access -->
         <service android:name="com.google.android.gms.location.FusedLocationProviderService"
             android:permission="android.permission.ACCESS_FINE_LOCATION" />
+            <service android:name="company.tap.sdk.payment.PaymentService" android:enabled="true" android:exported="true"/>
+
 
     </application>
 </manifest>
