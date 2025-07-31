@@ -1,4 +1,5 @@
 import 'package:fawran/screens/login_screen.dart';
+import 'package:fawran/OnboardingScreens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
@@ -24,6 +25,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
+  bool _showSplash = true;
 
   // Different content for each onboarding screen
   final List<OnboardingContent> _onboardingData = [
@@ -60,6 +62,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.initState();
     _pageController = PageController();
     _checkLocationPermission();
+  }
+
+  void _handleSplashComplete() {
+    if (mounted) {
+      setState(() {
+        _showSplash = false;
+      });
+    }
   }
 
   Future<void> _checkLocationPermission() async {
@@ -118,8 +128,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildOnboardingScreen() {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -129,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // SVG Background Image
           Positioned.fill(
             child: SvgPicture.asset(
-              'assets/images/onboarding_background.svg', // Replace with your SVG file path
+              'assets/images/onboarding_background.svg',
               fit: BoxFit.cover,
               width: screenWidth,
               height: screenHeight,
@@ -333,6 +342,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      child: _showSplash 
+          ? SplashScreen(
+              duration: const Duration(seconds: 3),
+              onSplashComplete: _handleSplashComplete,
+            )
+          : _buildOnboardingScreen(),
     );
   }
 }

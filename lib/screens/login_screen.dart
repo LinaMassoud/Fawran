@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
-
+import 'package:fawran/OnboardingScreens/splash_screen.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 
@@ -68,7 +68,13 @@ void initState() {
       if (next.isLoggedIn && next.isVerified) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LocationScreen()),
+          MaterialPageRoute(
+            builder: (context) => SplashScreen(
+              duration: const Duration(seconds: 3),
+              nextScreen: const HomeScreen(),
+              autoNavigate: true,
+            ),
+          ),
         );
       } else if (next.isLoggedIn && !next.isVerified) {
         Navigator.pushReplacement(
