@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'login_screen.dart';
-import 'location_screen.dart'; // Replace with your actual location screen import
+import 'package:fawran/OnboardingScreens/splash_screen.dart';
 
 class LaunchScreen extends StatefulWidget {
   const LaunchScreen({super.key});
@@ -15,40 +15,74 @@ class LaunchScreen extends StatefulWidget {
 
 class _LaunchScreenState extends State<LaunchScreen> {
   final _secureStorage = const FlutterSecureStorage();
+  bool _isLoading = true;
+  Widget? _nextScreen;
 
   @override
   void initState() {
     super.initState();
-    _checkFirstLaunch();
+    _determineNextScreen();
   }
 
-  Future<void> _checkFirstLaunch() async {
+  Future<void> _determineNextScreen() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
 
     if (isFirstLaunch) {
       await prefs.setBool('isFirstLaunch', false);
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-      );
+      setState(() {
+        _nextScreen = const OnboardingScreen();
+        _isLoading = false;
+      });
     } else {
       String? token = await _secureStorage.read(key: 'token');
       if (token != null && token.isNotEmpty) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) =>const  LocationScreen()),
-        );
+        setState(() {
+          _nextScreen = const HomeScreen();
+          _isLoading = false;
+        });
       } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
+        setState(() {
+          _nextScreen = const LoginScreen();
+          _isLoading = false;
+        });
       }
+    }
+  }
+
+  void _navigateToNextScreen() {
+    if (_nextScreen != null) {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => _nextScreen!,
+          transitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    if (_isLoading) {
+      return SplashScreen(
+        duration: const Duration(seconds: 2), 
+        onSplashComplete: () {
+          if (!_isLoading) {
+            _navigateToNextScreen();
+          }
+        },
+      );
+    } else {
+      return SplashScreen(
+        duration: const Duration(milliseconds: 500),
+        onSplashComplete: _navigateToNextScreen,
+      );
+    }
   }
 }
