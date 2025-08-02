@@ -103,17 +103,5 @@
 	<!-- Face ID for Payment Authentication -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to authenticate payments</string>
-	
-	<!-- Background Modes for Payment Processing -->
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>background-fetch</string>
-		<string>background-processing</string>
-	</array>
-	
-	<!-- Prevent App from being killed during payment -->
-	<key>UIApplicationExitsOnSuspend</key>
-	<false/>
-	
 </dict>
 </plist>

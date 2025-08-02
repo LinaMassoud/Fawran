@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:fawran/OnboardingScreens/splash_screen.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
+import '../widgets/background_container.dart'; // Import the reusable component
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -28,11 +29,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _phoneEmpty = false;
   bool _passwordEmpty = false;
   bool _submitted = false;
-@override
-void initState() {
-  super.initState();
-}
 
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -49,10 +50,11 @@ void initState() {
     });
 
     if (!_phoneEmpty && !_passwordEmpty) {
+      print("Inside _handleLogin");
       ref.read(authProvider.notifier).login(
             phoneNumber: _phoneController.text.trim(),
             password: _passwordController.text.trim(),
-            ref:ref
+            ref: ref,
           );
     }
   }
@@ -92,178 +94,261 @@ void initState() {
       }
     });
 
-    final inputBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
-    );
-
-    final errorBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Colors.red, width: 1.5),
-    );
-
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
+    return BackgroundContainer(
+      showBackButton: false,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.35,
+      topRightWidget: GestureDetector(
+        onTap: () {
+          final newLocale = isArabic ? const Locale('en') : const Locale('ar');
+          ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: const Icon(
+            Icons.language,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Language Switch - Now properly positioned within safe area
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('العربية', style: TextStyle(fontSize: 14)),
-                    Switch(
-                      value: !isArabic,
-                      onChanged: (val) {
-                        final newLocale =
-                            val ? const Locale('en') : const Locale('ar');
-                        ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
-                      },
-                      activeTrackColor: Colors.orange,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    const Text('English', style: TextStyle(fontSize: 14)),
-                  ],
+            const SizedBox(height: 20),
+            
+            // Welcome Back Title
+            Center(
+              child: Text(
+                loc.login,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2B4C7E),
                 ),
               ),
             ),
+            const SizedBox(height: 40),
 
-            // Login UI
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Center(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: Text(
-                          loc.login,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Phone Number
-                      TextField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.phone),
-                          labelText: loc.phoneNumber,
-                          border: inputBorder,
-                          enabledBorder: _phoneEmpty && _submitted
-                              ? errorBorder
-                              : inputBorder,
-                          focusedBorder: _phoneEmpty && _submitted
-                              ? errorBorder
-                              : inputBorder,
-                          errorText: _phoneEmpty && _submitted
-                              ? loc.phoneNumber + ' ' + loc.requiredField
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Password
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: !_passwordVisible,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.lock),
-                          labelText: loc.password,
-                          border: inputBorder,
-                          enabledBorder: _passwordEmpty && _submitted
-                              ? errorBorder
-                              : inputBorder,
-                          focusedBorder: _passwordEmpty && _submitted
-                              ? errorBorder
-                              : inputBorder,
-                          errorText: _passwordEmpty && _submitted
-                              ? '${loc.password} ${loc.requiredField}'
-                              : null,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _passwordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _passwordVisible = !_passwordVisible;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Forgot password
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          loc.forgotPassword,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w300,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Login Button
-                      SizedBox(
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: authState.isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            textStyle: const TextStyle(fontSize: 16),
-                            backgroundColor: Colors.orange,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: authState.isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : Text(loc.login),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Sign Up Link
-                      Center(
-                        child: TextButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            ref.read(authProvider.notifier).clearStateError();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignUpScreen(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            "${loc.dontHaveAccount} ${loc.signUp}",
-                            style: const TextStyle(fontWeight: FontWeight.w300),
-                          ),
-                        ),
-                      ),
-                    ],
+            // Phone Number Field
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.phoneNumber,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _phoneEmpty && _submitted 
+                          ? Colors.red 
+                          : Colors.grey.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    decoration: InputDecoration(
+                      hintText: isArabic ? 'أدخل رقم هاتفك' : 'Enter your phone number',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 16,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.phone_outlined,
+                        color: Colors.grey.shade400,
+                        size: 20,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_phoneEmpty && _submitted)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '${loc.phoneNumber} ${loc.requiredField}',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Password Field
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.password,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _passwordEmpty && _submitted 
+                          ? Colors.red 
+                          : Colors.grey.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _passwordController,
+                    obscureText: !_passwordVisible,
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    decoration: InputDecoration(
+                      hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 16,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: Colors.grey.shade400,
+                        size: 20,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: Colors.grey.shade400,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_passwordEmpty && _submitted)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '${loc.password} ${loc.requiredField}',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            
+            // Forgot Password Link
+            const SizedBox(height: 8),
+            Align(
+              alignment: isArabic ? Alignment.centerLeft : Alignment.centerRight,
+              child: Text(
+                loc.forgotPassword,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w300,
+                  color: Color(0xFF4A90E2),
+                ),
               ),
             ),
+            const SizedBox(height: 32),
+
+            // Login Button
+            SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                onPressed: authState.isLoading ? null : _handleLogin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF06214B),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: authState.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        loc.login,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Sign Up Link
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "${loc.dontHaveAccount} ",
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ref.read(authProvider.notifier).clearStateError();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignUpScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    loc.signUp,
+                    style: const TextStyle(
+                      color: Color(0xFF4A90E2),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

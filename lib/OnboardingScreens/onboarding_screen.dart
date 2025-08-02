@@ -1,8 +1,8 @@
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/OnboardingScreens/splash_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
+import '../widgets/background_container.dart'; // Import the reusable component
 
 // Data class for onboarding content
 class OnboardingContent {
@@ -130,217 +130,157 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildOnboardingScreen() {
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          // SVG Background Image
-          Positioned.fill(
-            child: SvgPicture.asset(
-              'assets/images/onboarding_background.svg',
-              fit: BoxFit.cover,
-              width: screenWidth,
-              height: screenHeight,
-            ),
-          ),
-
-          // Main content overlay
-          Column(
+    return BackgroundContainer(
+      topSectionHeight: screenHeight * 0.6,
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (int page) {
+          setState(() {
+            _currentPage = page;
+          });
+        },
+        itemCount: _onboardingData.length,
+        itemBuilder: (context, index) {
+          // Check if this is the final "Get Started" page
+          bool isGetStartedPage = index == _onboardingData.length - 1;
+          
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Top section with background
-              Container(
-                height: screenHeight * 0.6, // Fixed height for top section
-                child: SafeArea(
-                  child: Column(
-                    children: [
-                      SizedBox(height: screenHeight * 0.08),
-                      // Empty space where logo was - now in background image
-                      const SizedBox(),
-                      const Spacer(),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Bottom white container - fills remaining space
+              const SizedBox(height: 16),
               Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(32),
-                      topRight: Radius.circular(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _onboardingData[index].title,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2B4C7E),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                      child: PageView.builder(
-                        controller: _pageController,
-                        onPageChanged: (int page) {
-                          setState(() {
-                            _currentPage = page;
-                          });
-                        },
-                        itemCount: _onboardingData.length,
-                        itemBuilder: (context, index) {
-                          // Check if this is the final "Get Started" page
-                          bool isGetStartedPage = index == _onboardingData.length - 1;
-                          
-                          return Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const SizedBox(height: 16),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _onboardingData[index].title,
-                                      style: const TextStyle(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF2B4C7E),
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      _onboardingData[index].description,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.grey,
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Bottom section with buttons and page indicators
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 16, bottom: 8),
-                                child: isGetStartedPage
-                                    ? // Get Started page layout - only show the button
-                                    SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const LoginScreen(),
-                                              ),
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                const Color(0xFF06214B),
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 28,
-                                              vertical: 14,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(28),
-                                            ),
-                                            elevation: 0,
-                                          ),
-                                          child: const Text(
-                                            'Get Started',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    : // Regular pages layout - show skip, indicators, and next
-                                    Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          // Skip button
-                                          TextButton(
-                                            onPressed: _skipToEnd,
-                                            child: const Text(
-                                              'Skip',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color: Color(0xFF2B4C7E),
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Page indicators in the center (excluding the last page)
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: List.generate(
-                                                _onboardingData.length - 1, (indicatorIndex) {
-                                              return AnimatedContainer(
-                                                duration: const Duration(milliseconds: 200),
-                                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                                width: _currentPage == indicatorIndex ? 24 : 8,
-                                                height: 8,
-                                                decoration: BoxDecoration(
-                                                  color: _currentPage == indicatorIndex
-                                                      ? const Color(0xFF06214B)
-                                                      : Colors.grey.withOpacity(0.3),
-                                                  borderRadius: BorderRadius.circular(4),
-                                                ),
-                                              );
-                                            }),
-                                          ),
-
-                                          // Next button
-                                          ElevatedButton(
-                                            onPressed: _nextPage,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color(0xFF06214B),
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 28,
-                                                vertical: 14,
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(28),
-                                              ),
-                                              elevation: 0,
-                                            ),
-                                            child: const Text(
-                                              'Next',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                              ),
-                            ],
-                          );
-                        },
+                    const SizedBox(height: 16),
+                    Text(
+                      _onboardingData[index].description,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey,
+                        height: 1.5,
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
+
+              // Bottom section with buttons and page indicators
+              Padding(
+                padding: const EdgeInsets.only(top: 16, bottom: 8),
+                child: isGetStartedPage
+                    ? // Get Started page layout - only show the button
+                    SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF06214B),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 28,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Get Started',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                    : // Regular pages layout - show skip, indicators, and next
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Skip button
+                          TextButton(
+                            onPressed: _skipToEnd,
+                            child: const Text(
+                              'Skip',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF2B4C7E),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+
+                          // Page indicators in the center (excluding the last page)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                                _onboardingData.length - 1, (indicatorIndex) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                width: _currentPage == indicatorIndex ? 24 : 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: _currentPage == indicatorIndex
+                                      ? const Color(0xFF06214B)
+                                      : Colors.grey.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              );
+                            }),
+                          ),
+
+                          // Next button
+                          ElevatedButton(
+                            onPressed: _nextPage,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF06214B),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 28,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Next',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
