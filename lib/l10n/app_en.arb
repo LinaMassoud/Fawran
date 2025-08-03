@@ -12,7 +12,7 @@
   "lastName": "Last Name",
   "phoneNumber": "Phone Number",
   "confirmPassword": "Confirm Password",
-  "alreadyHaveAccount": "Already have an account? Login",
+  "alreadyHaveAccount": "Already have an account?",
 
   "verification": "Verification",
   "enterOtp": "Enter the 6-digit code",
@@ -77,6 +77,7 @@
   "weeks":"Weeks",
 
   "add":"ADD",
+  "back":"Back",
 
   "insertAddress":"Insert Address",
   "district":"District",

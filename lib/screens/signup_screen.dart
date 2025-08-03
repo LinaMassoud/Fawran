@@ -1,5 +1,6 @@
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/verification_screen.dart';
+import 'package:fawran/widgets/background_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
@@ -67,14 +68,30 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final authState = ref.watch(authProvider);
     final loc = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(loc.signUp)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+    return BackgroundContainer(
+      showBackButton: true,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.15, // Reduced to accommodate more content
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Title
+              Center(
+                child: Text(
+                  loc.signUp,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2B4C7E),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Form fields
               _buildTextField(
                 controller: _firstNameController,
                 label: loc.firstName,
@@ -87,7 +104,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _middleNameController,
                 label: loc.middleName,
@@ -100,7 +117,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _lastNameController,
                 label: loc.lastName,
@@ -113,11 +130,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _nationalIdController,
-                label: "National Id",
-                icon: Icons.person,
+                label: "National ID",
+                icon: Icons.badge,
+                keyboardType: TextInputType.number,
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return 'National ID is required';
@@ -126,7 +144,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _phoneController,
                 label: loc.phoneNumber,
@@ -136,11 +154,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   if (val == null || val.isEmpty)
                     return '${loc.phoneNumber} is required';
                   if (!phoneRegex.hasMatch(val))
-                    return ' enter valid Saudi ${loc.phoneNumber} ';
+                    return 'Enter valid Saudi ${loc.phoneNumber}';
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _emailController,
                 label: loc.email,
@@ -153,7 +171,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return emailRegex.hasMatch(val) ? null : 'Invalid email';
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _passwordController,
                 label: loc.password,
@@ -168,7 +186,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   });
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _confirmPasswordController,
                 label: loc.confirmPassword,
@@ -183,60 +201,130 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: authState.isLoading
-                    ? null
-                    : () {
-                        // Trim all inputs before validation and usage
-                        _firstNameController.text =
-                            _firstNameController.text.trim();
-                        _middleNameController.text =
-                            _middleNameController.text.trim();
-                        _lastNameController.text =
-                            _lastNameController.text.trim();
-                        _nationalIdController.text =
-                            _nationalIdController.text.trim();
+              const SizedBox(height: 32),
+              
+              // Sign Up Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: authState.isLoading
+                      ? null
+                      : () {
+                          // Trim all inputs before validation and usage
+                          _firstNameController.text =
+                              _firstNameController.text.trim();
+                          _middleNameController.text =
+                              _middleNameController.text.trim();
+                          _lastNameController.text =
+                              _lastNameController.text.trim();
+                          _nationalIdController.text =
+                              _nationalIdController.text.trim();
 
-                        if (_formKey.currentState!.validate()) {
-                          ref.read(authProvider.notifier).signUp(
-                                userName: _phoneController.text,
-                                firstName: _firstNameController.text,
-                                middleName: _middleNameController.text,
-                                lastName: _lastNameController.text,
-                                phoneNumber: _phoneController.text,
-                                email: _emailController.text,
-                                password: _passwordController.text,
-                                nationalId: _nationalIdController.text,
-                              );
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
+                          if (_formKey.currentState!.validate()) {
+                            ref.read(authProvider.notifier).signUp(
+                                  userName: _phoneController.text,
+                                  firstName: _firstNameController.text,
+                                  middleName: _middleNameController.text,
+                                  lastName: _lastNameController.text,
+                                  phoneNumber: _phoneController.text,
+                                  email: _emailController.text,
+                                  password: _passwordController.text,
+                                  nationalId: _nationalIdController.text,
+                                );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF06214B),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: authState.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          loc.signUp,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
-                child: authState.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(loc.signUp),
               ),
+              
+              // Error message
               if (authState.errorMessage.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                Text(
-                  authState.errorMessage,
-                  style: const TextStyle(color: Colors.red),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          authState.errorMessage,
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LoginScreen(),
+              
+              const SizedBox(height: 24),
+              
+              // Login navigation
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "${loc.alreadyHaveAccount} ",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
                     ),
-                  );
-                },
-                child: Text(loc.alreadyHaveAccount),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      loc.login,
+                      style: const TextStyle(
+                        color: Color(0xFF4A90E2),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              
+              // Extra bottom padding for safe scrolling
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -259,20 +347,52 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       obscureText: isObscured ?? obscureText,
       keyboardType: keyboardType,
       validator: validator,
+      style: const TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
-        prefixIcon: Icon(icon),
+        labelStyle: TextStyle(
+          fontSize: 16,
+          color: Colors.grey.shade600,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        prefixIcon: Icon(
+          icon,
+          color: Colors.grey.shade600,
+          size: 22,
+        ),
         suffixIcon: toggleVisibility != null
             ? IconButton(
                 icon: Icon(
                   (isObscured ?? obscureText)
                       ? Icons.visibility_off
                       : Icons.visibility,
+                  color: Colors.grey.shade600,
                 ),
                 onPressed: toggleVisibility,
               )
             : null,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
