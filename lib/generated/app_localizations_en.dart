@@ -45,7 +45,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmPassword => 'Confirm Password';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account? Login';
+  String get alreadyHaveAccount => 'Already have an account?';
 
   @override
   String get verification => 'Verification';
@@ -203,6 +203,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get add => 'ADD';
+
+  @override
+  String get back => 'Back';
 
   @override
   String get insertAddress => 'Insert Address';

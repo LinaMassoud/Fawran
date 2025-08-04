@@ -1,5 +1,6 @@
 import 'package:fawran/OnboardingScreens/onboarding_screen.dart';
 import 'package:fawran/screens/home_screen.dart';
+import 'package:fawran/screens/newhome.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -38,7 +39,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
       String? token = await _secureStorage.read(key: 'token');
       if (token != null && token.isNotEmpty) {
         setState(() {
-          _nextScreen = const HomeScreen();
+          _nextScreen = const Newhome();
           _isLoading = false;
         });
       } else {
@@ -71,7 +72,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return SplashScreen(
-        duration: const Duration(seconds: 2), 
+        duration: const Duration(seconds: 2),
         onSplashComplete: () {
           if (!_isLoading) {
             _navigateToNextScreen();
