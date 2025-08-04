@@ -542,13 +542,18 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             children: [
               TextButton(
                 onPressed: status.toLowerCase() == "cancelled" ||
-                        status.toLowerCase() == "canceled"
+                        status.toLowerCase() == "canceled" ||
+                        isCancelled
                     ? null
                     : () => _startCheckout(booking, isHourly: false),
-                child: const Text(
+                child: Text(
                   "Pay Now",
                   style: TextStyle(
-                    color: Color(0xFF2196F3),
+                    color: (status.toLowerCase() == "cancelled" ||
+                            status.toLowerCase() == "canceled" ||
+                            isCancelled)
+                        ? Colors.grey
+                        : const Color(0xFF2196F3),
                     fontWeight: FontWeight.w500,
                     fontSize: 14,
                   ),
@@ -660,13 +665,18 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             children: [
               TextButton(
                 onPressed: status.toLowerCase() == "cancelled" ||
-                        status.toLowerCase() == "canceled"
+                        status.toLowerCase() == "canceled" ||
+                        isCancelled
                     ? null
-                    : () => _startCheckout(booking, isHourly: true), // Pass booking data and contract type
+                    : () => _startCheckout(booking, isHourly: true),
                 child: Text(
                   loc.payNow ?? "Pay Now",
-                  style: const TextStyle(
-                    color: Color(0xFF2196F3),
+                  style: TextStyle(
+                    color: (status.toLowerCase() == "cancelled" ||
+                            status.toLowerCase() == "canceled" ||
+                            isCancelled)
+                        ? Colors.grey
+                        : const Color(0xFF2196F3),
                     fontWeight: FontWeight.w500,
                     fontSize: 14,
                   ),
@@ -762,273 +772,230 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         children: [
-          // Header with gradient background
           Container(
+            height: 124,
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [-0.2734, 0.7524, 1.0],
-                colors: [
-                  Color(0xFF1E49A0), // #1E49A0
-                  Color(0xD1D9F0F9), // rgba(217, 240, 249, 0.82)
-                  Color(0x00F5FCFF), // rgba(245, 252, 255, 0)
-                ],
+              color: Color(0xFF10295C),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  // App bar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_back_ios,
-                                color: Color(0xFF10295C), size: 18),
-                            onPressed: () {
-                              Navigator.of(context)
-                                  .pushReplacementNamed('/home');
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              "My Booking",
-                              style: const TextStyle(
-                                color: Color(0xFF10295C),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 28,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 40),
-                      ],
+            padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
+            child: Stack(
+              children: [
+                // Left back button
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios,
+                          color: Color(0xFFFFA200), size: 20),
+                      onPressed: () {
+                        Navigator.of(context).pushReplacementNamed('/home');
+                      },
                     ),
                   ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+                
+                // Centered title
+                const Center(
+                  child: Text(
+                    "My Booking",
+                    style: TextStyle(
+                      color: Color(0xFFFFA200),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 27,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           // Content area with tab selector overlapping header
           Expanded(
-            child: Transform.translate(
-              offset: const Offset(0, -15),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
+  child: Container(
+    decoration: const BoxDecoration(
+      color: Color(0xFFF8FAFC),
+    ),
+    child: Column(
+      children: [
+        // Tab selector
+        Container(
+          margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE0EAFF), // Light blue background
+            borderRadius: BorderRadius.circular(50),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                spreadRadius: 0,
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedTab = 'all'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedTab == 'all'
+                          ? Colors.white
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: _selectedTab == 'all'
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                spreadRadius: 0,
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      'All',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _selectedTab == 'all'
+                            ? const Color(0xFF10295C)
+                            : const Color(0xFF9CA3AF),
+                        fontWeight: _selectedTab == 'all'
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x1A000000),
-                      spreadRadius: 0,
-                      blurRadius: 10,
-                      offset: Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Tab selector - overlapping the header
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(16, 32, 16, 0),
-                      padding: const EdgeInsets.all(4), // Reduced from 6 to 4
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0EAFF), // Light blue background
-                        borderRadius: BorderRadius.circular(50),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            spreadRadius: 0,
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _selectedTab = 'all'),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                    horizontal: 12), // Reduced from 16 to 10
-                                decoration: BoxDecoration(
-                                  color: _selectedTab == 'all'
-                                      ? Colors.white
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(50),
-                                  boxShadow: _selectedTab == 'all'
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.15),
-                                            spreadRadius: 0,
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Text(
-                                  'All',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _selectedTab == 'all'
-                                        ? const Color(0xFF10295C) // --Main-Blue
-                                        : const Color(0xFF9CA3AF),
-                                    fontWeight: _selectedTab == 'all'
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    fontSize: 14, // Reduced from 16 to 14
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedTab = 'permanent'),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                    horizontal: 12), // Reduced from 16 to 10
-                                decoration: BoxDecoration(
-                                  color: _selectedTab == 'permanent'
-                                      ? Colors.white
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(50),
-                                  boxShadow: _selectedTab == 'permanent'
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.15),
-                                            spreadRadius: 0,
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Text(
-                                  'Permanent',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _selectedTab == 'permanent'
-                                        ? const Color(0xFF10295C) // --Main-Blue
-                                        : const Color(0xFF9CA3AF),
-                                    fontWeight: _selectedTab == 'permanent'
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    fontSize: 14, // Reduced from 16 to 14
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedTab = 'hourly'),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                    horizontal: 12), // Reduced from 16 to 10
-                                decoration: BoxDecoration(
-                                  color: _selectedTab == 'hourly'
-                                      ? Colors.white
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(50),
-                                  boxShadow: _selectedTab == 'hourly'
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.15),
-                                            spreadRadius: 0,
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Text(
-                                  'Hourly',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _selectedTab == 'hourly'
-                                        ? const Color(0xFF10295C) // --Main-Blue
-                                        : const Color(0xFF9CA3AF),
-                                    fontWeight: _selectedTab == 'hourly'
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    fontSize: 14, // Reduced from 16 to 14
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Contracts list
-                    Expanded(
-                      child: state.isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                  color: Color(0xFF1A365D)))
-                          : RefreshIndicator(
-                              onRefresh: notifier.fetchContracts,
-                              color: const Color(0xFF1A365D),
-                              child: Builder(
-                                builder: (context) {
-                                  final filtered = _getFilteredContracts(
-                                      state.permanent, state.hourly, loc);
-                                  if (filtered.isEmpty) {
-                                    return SingleChildScrollView(
-                                      physics:
-                                          const AlwaysScrollableScrollPhysics(),
-                                      child: SizedBox(
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                0.6,
-                                        child: _buildEmptyState(),
-                                      ),
-                                    );
-                                  }
-
-                                  return ListView(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        0, 16, 0, 100),
-                                    children: filtered,
-                                  );
-                                },
-                              ),
-                            ),
-                    ),
-                  ],
                 ),
               ),
-            ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedTab = 'permanent'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedTab == 'permanent'
+                          ? Colors.white
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: _selectedTab == 'permanent'
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                spreadRadius: 0,
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      'Permanent',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _selectedTab == 'permanent'
+                            ? const Color(0xFF10295C)
+                            : const Color(0xFF9CA3AF),
+                        fontWeight: _selectedTab == 'permanent'
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedTab = 'hourly'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedTab == 'hourly'
+                          ? Colors.white
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: _selectedTab == 'hourly'
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                spreadRadius: 0,
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      'Hourly',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _selectedTab == 'hourly'
+                            ? const Color(0xFF10295C)
+                            : const Color(0xFF9CA3AF),
+                        fontWeight: _selectedTab == 'hourly'
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+        ),
+
+        // Contracts list
+        Expanded(
+          child: state.isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                      color: Color(0xFF1A365D)))
+              : RefreshIndicator(
+                  onRefresh: notifier.fetchContracts,
+                  color: const Color(0xFF1A365D),
+                  child: Builder(
+                    builder: (context) {
+                      final filtered = _getFilteredContracts(
+                          state.permanent, state.hourly, loc);
+                      if (filtered.isEmpty) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.6,
+                            child: _buildEmptyState(),
+                          ),
+                        );
+                      }
+
+                      return ListView(
+                        padding: const EdgeInsets.fromLTRB(0, 16, 0, 100),
+                        children: filtered,
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
+    ),
+  ),
+),
         ],
       ),
       floatingActionButton: FloatingActionButton(

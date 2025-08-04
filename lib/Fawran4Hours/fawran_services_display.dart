@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'cleaning_service_screen.dart'; 
+import 'hourly_service_screen.dart'; 
 
 class FawranServicesScreen extends StatefulWidget {
   final int selectedPositionId;
@@ -216,7 +216,7 @@ class _FawranServicesScreenState extends State<FawranServicesScreen> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => CleaningServiceScreen(
+                                            builder: (context) => HourlyServiceScreen(
                                               professionId: widget.selectedPositionId, // Use the selected position ID
                                               serviceId: service.id, // Use the selected service ID
                                               serviceType: service.name, // Pass the service name

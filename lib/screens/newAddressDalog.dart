@@ -127,221 +127,275 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
 
   @override
 Widget build(BuildContext context) {
-  return ReusableHeaderScaffold(
-    title: 'Select Location',
-    centerTitle: true, // Add this to center the title like in the address screen
-    child: ClipRRect(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(24),
-        topRight: Radius.circular(24),
-      ),
-      child: Stack(
+  return Dialog(
+    insetPadding: EdgeInsets.zero,
+    child: Scaffold(
+      backgroundColor: Colors.grey[100],
+      body: Column(
         children: [
-        GoogleMap(
-          onMapCreated: (GoogleMapController controller) {
-            _mapController = controller;
-          },
-          initialCameraPosition: CameraPosition(
-            target: widget.initialLocation,
-            zoom: 15.0,
-          ),
-          onCameraMove: _onCameraMove,
-          onCameraIdle: _onCameraIdle,
-          myLocationEnabled: true,
-          myLocationButtonEnabled: false,
-          mapType: _currentMapType,
-          zoomControlsEnabled: false,
-          polygons: _polygons,
-          buildingsEnabled: true,
-          trafficEnabled: false,
-        ),
-        // Fixed center pin - always visible
-        Center(
-          child: Icon(
-            Icons.location_on,
-            color: Colors.red,
-            size: 40,
-          ),
-        ),
-        // Custom zoom controls (top right)
-        Positioned(
-          top: 20,
-          right: 20,
-          child: Column(
-            children: [
-              // Zoom in button
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.add, color: Colors.black54, size: 24),
-                  onPressed: _zoomIn,
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-              SizedBox(height: 8),
-              // Zoom out button
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.remove, color: Colors.black54, size: 24),
-                  onPressed: _zoomOut,
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-              SizedBox(height: 8),
-              // Current location button
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: _isGettingLocation 
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
-                          ),
-                        )
-                      : Icon(Icons.my_location, color: Colors.black54, size: 24),
-                  onPressed: _isGettingLocation ? null : _getCurrentLocation,
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Map type selector (positioned properly above the confirm button)
-        Positioned(
-          bottom: 100,
-          left: 20,
-          right: 20,
-          child: Center(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // MAP button
-                  GestureDetector(
-                    onTap: () => _changeMapType(MapType.normal),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _currentMapType == MapType.normal 
-                            ? Color(0xFF1E3A8A) 
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          bottomLeft: Radius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Map',
-                        style: TextStyle(
-                          color: _currentMapType == MapType.normal 
-                              ? Colors.white 
-                              : Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // SATELLITE button
-                  GestureDetector(
-                    onTap: () => _changeMapType(MapType.hybrid),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _currentMapType == MapType.hybrid
-                            ? Color(0xFF1E3A8A) 
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(8),
-                          bottomRight: Radius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Satellite',
-                        style: TextStyle(
-                          color: _currentMapType == MapType.hybrid
-                              ? Colors.white 
-                              : Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        // Bottom button
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            padding: EdgeInsets.all(20),
+          // Header with same styling as cleaning service screen
+          Container(
+            height: 65,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Color(0xFF10295C),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
-            child: _buildMapActionButton(),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        color: Color(0xFFFFA200),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Select Location',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFFFA200),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 48), // Balance the back button width
+                ],
+              ),
+            ),
           ),
-        ),
-      ],
+          
+          // Map content - removed the negative offset to prevent overlap
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.only(top: 8), // Small gap between header and map
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+                child: Stack(
+                  children: [
+                    GoogleMap(
+                      onMapCreated: (GoogleMapController controller) {
+                        _mapController = controller;
+                      },
+                      initialCameraPosition: CameraPosition(
+                        target: widget.initialLocation,
+                        zoom: 15.0,
+                      ),
+                      onCameraMove: _onCameraMove,
+                      onCameraIdle: _onCameraIdle,
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: false,
+                      mapType: _currentMapType,
+                      zoomControlsEnabled: false,
+                      polygons: _polygons,
+                      buildingsEnabled: true,
+                      trafficEnabled: false,
+                    ),
+                    // Fixed center pin - always visible
+                    Center(
+                      child: Icon(
+                        Icons.location_on,
+                        color: Colors.red,
+                        size: 40,
+                      ),
+                    ),
+                    // Custom zoom controls (top right)
+                    Positioned(
+                      top: 20,
+                      right: 20,
+                      child: Column(
+                        children: [
+                          // Zoom in button
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: Icon(Icons.add, color: Colors.black54, size: 24),
+                              onPressed: _zoomIn,
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          // Zoom out button
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: Icon(Icons.remove, color: Colors.black54, size: 24),
+                              onPressed: _zoomOut,
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          // Current location button
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: _isGettingLocation 
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+                                      ),
+                                    )
+                                  : Icon(Icons.my_location, color: Colors.black54, size: 24),
+                              onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Map type selector (positioned properly above the confirm button)
+                    Positioned(
+                      bottom: 100,
+                      left: 20,
+                      right: 20,
+                      child: Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // MAP button
+                              GestureDetector(
+                                onTap: () => _changeMapType(MapType.normal),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _currentMapType == MapType.normal 
+                                        ? Color(0xFF1E3A8A) 
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(8),
+                                      bottomLeft: Radius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Map',
+                                    style: TextStyle(
+                                      color: _currentMapType == MapType.normal 
+                                          ? Colors.white 
+                                          : Colors.black87,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // SATELLITE button
+                              GestureDetector(
+                                onTap: () => _changeMapType(MapType.hybrid),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _currentMapType == MapType.hybrid
+                                        ? Color(0xFF1E3A8A) 
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.only(
+                                      topRight: Radius.circular(8),
+                                      bottomRight: Radius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Satellite',
+                                    style: TextStyle(
+                                      color: _currentMapType == MapType.hybrid
+                                          ? Colors.white 
+                                          : Colors.black87,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Bottom button
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                        ),
+                        child: _buildMapActionButton(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     ),
   );

@@ -24,7 +24,7 @@ class Service {
   }
 }
 
-class CleaningServiceScreen extends StatefulWidget {
+class HourlyServiceScreen extends StatefulWidget {
   final PackageModel? autoOpenPackage;
   final int? autoOpenShift;
   final String serviceType; // Keep this parameter but make it dynamic
@@ -32,7 +32,7 @@ class CleaningServiceScreen extends StatefulWidget {
   final int serviceId;
   final int professionId;
 
-  const CleaningServiceScreen({
+  const HourlyServiceScreen({
     Key? key,
     this.autoOpenPackage,
     this.autoOpenShift,
@@ -43,10 +43,10 @@ class CleaningServiceScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CleaningServiceScreenState createState() => _CleaningServiceScreenState();
+  _HourlyServiceScreenState createState() => _HourlyServiceScreenState();
 }
 
-class _CleaningServiceScreenState extends State<CleaningServiceScreen> {
+class _HourlyServiceScreenState extends State<HourlyServiceScreen> {
   // Global keys for navigation to specific sections
   final _storage = FlutterSecureStorage();
   // Package lists for different groups and shifts
@@ -565,7 +565,7 @@ Widget build(BuildContext context) {
             SliverAppBar(
               pinned: true,
               expandedHeight: 0,
-              toolbarHeight: 75,
+              toolbarHeight: 65,
               backgroundColor: Color(0xFF10295C),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
@@ -579,7 +579,7 @@ Widget build(BuildContext context) {
                   padding: EdgeInsets.all(8),
                   child: Icon(
                     Icons.arrow_back_ios,
-                    color: Colors.white,
+                    color: Color(0xFFFFA200),
                     size: 20,
                   ),
                 ),
@@ -589,7 +589,7 @@ Widget build(BuildContext context) {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: Color(0xFFFFA200),
                 ),
               ),
               centerTitle: true,
@@ -1315,8 +1315,12 @@ Widget _buildDetailRow(String label, String value) {
   return Container(
     width: double.infinity,
     decoration: BoxDecoration(
-      color: Color(0xFFE0EAFF), // Changed to --White-Blue color
+      color: Color(0xFFF5F8FF), // Changed to --White-Blue color
       borderRadius: BorderRadius.circular(25),
+      border: Border.all(
+        color: Colors.grey[300]!, // Light gray border
+        width: 1,
+      ),
     ),
     child: Row(
       children: availableShifts.map<Widget>((shift) {

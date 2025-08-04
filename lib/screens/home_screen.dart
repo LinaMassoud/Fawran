@@ -1,4 +1,4 @@
-import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
+import 'package:fawran/Fawran4Hours/hourly_service_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/package_model.dart';
 import 'package:fawran/providers/auth_provider.dart';
@@ -82,7 +82,7 @@ static bool _promotionShown = false;
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CleaningServiceScreen(
+          builder: (context) => HourlyServiceScreen(
             autoOpenPackage: package,
             autoOpenShift: shift,
           ),
@@ -219,7 +219,7 @@ static bool _promotionShown = false;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => CleaningServiceScreen(
+                                builder: (_) => HourlyServiceScreen(
                                   professionId: profession.positionId,
                                   serviceId: profession.services[0].id,
                                 ),
