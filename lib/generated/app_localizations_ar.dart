@@ -205,6 +205,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get add => 'يضيف';
 
   @override
+  String get back => 'رجوع';
+
+  @override
   String get insertAddress => 'أدخل العنوان';
 
   @override

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/location_provider.dart';
 import 'package:fawran/screens/home_screen.dart';
+import 'package:fawran/screens/newhome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +28,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
   late Animation<double> _fadeAnimation;
 
   Completer<void>? _locationRequestCompleter;
-
 
   @override
   void initState() {
@@ -75,141 +75,145 @@ class _LocationScreenState extends ConsumerState<LocationScreen>
       throw Exception("فشل الاتصال بخدمة Google Places.");
     }
   }
-Future<void> _getCurrentLocation({bool isRetry = false}) async {
-  if (_locationRequestCompleter != null && !_locationRequestCompleter!.isCompleted) {
-    print("Another location request is in progress. Waiting...");
-    await _locationRequestCompleter!.future;
 
-    if (!isRetry) {
-      await _getCurrentLocation(isRetry: true);
-    }
-    return;
-  }
+  Future<void> _getCurrentLocation({bool isRetry = false}) async {
+    if (_locationRequestCompleter != null &&
+        !_locationRequestCompleter!.isCompleted) {
+      print("Another location request is in progress. Waiting...");
+      await _locationRequestCompleter!.future;
 
-  _locationRequestCompleter = Completer<void>();
-  final locationState = ref.read(locationProvider.notifier);
-
-  try {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      if (!mounted) return;
-      locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
-      setState(() => isLoading = false);
-      await _showLocationSettingsDialog();
+      if (!isRetry) {
+        await _getCurrentLocation(isRetry: true);
+      }
       return;
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      if (!mounted) return;
-      locationState.state = "صلاحية الوصول إلى الموقع مرفوضة. تحقق من الإعدادات.";
-      setState(() => isLoading = false);
-      return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    ).timeout(
-      const Duration(seconds: 10),
-      onTimeout: () => throw TimeoutException("Timeout أثناء جلب الموقع."),
-    );
-
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-      localeIdentifier: 'en',
-    );
-
-    final address = "${placemarks.first.street}, "
-        "${placemarks.first.locality}, "
-        "${placemarks.first.administrativeArea}, "
-        "${placemarks.first.country}";
-
-    if (!mounted) return;
-    locationState.state = address;
-
-    setState(() {
-      isLoading = false;
-      showLocation = true;
-    });
-
-    _controller.forward();
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-    );
-  } catch (e, stackTrace) {
-    print("Error: $e");
-    print("Stack: $stackTrace");
+    _locationRequestCompleter = Completer<void>();
+    final locationState = ref.read(locationProvider.notifier);
 
     try {
-      final lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null) {
-        await fetchNearbyPlaces(lastKnown);
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         if (!mounted) return;
-        setState(() {
-          isLoading = false;
-          showLocation = true;
-        });
-
-        _controller.forward();
-        await Future.delayed(const Duration(seconds: 2));
-
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        locationState.state = "خدمة تحديد الموقع غير مفعّلة.";
+        setState(() => isLoading = false);
+        await _showLocationSettingsDialog();
         return;
       }
-    } catch (err) {
-      print("Failed to use last known location: $err");
-    }
 
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        locationState.state =
+            "صلاحية الوصول إلى الموقع مرفوضة. تحقق من الإعدادات.";
+        setState(() => isLoading = false);
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw TimeoutException("Timeout أثناء جلب الموقع."),
+      );
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+        localeIdentifier: 'en',
+      );
+
+      final address = "${placemarks.first.street}, "
+          "${placemarks.first.locality}, "
+          "${placemarks.first.administrativeArea}, "
+          "${placemarks.first.country}";
+
+      if (!mounted) return;
+      locationState.state = address;
+
+      setState(() {
+        isLoading = false;
+        showLocation = true;
+      });
+
+      _controller.forward();
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Newhome()),
+      );
+    } catch (e, stackTrace) {
+      print("Error: $e");
+      print("Stack: $stackTrace");
+
+      try {
+        final lastKnown = await Geolocator.getLastKnownPosition();
+        if (lastKnown != null) {
+          await fetchNearbyPlaces(lastKnown);
+          if (!mounted) return;
+          setState(() {
+            isLoading = false;
+            showLocation = true;
+          });
+
+          _controller.forward();
+          await Future.delayed(const Duration(seconds: 2));
+
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+          return;
+        }
+      } catch (err) {
+        print("Failed to use last known location: $err");
+      }
+
+      if (!mounted) return;
+
+      final errorMessage = e is TimeoutException
+          ? "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى."
+          : "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
+
+      locationState.state = errorMessage;
+      setState(() {
+        isLoading = false;
+        showLocation = false;
+      });
+    } finally {
+      _locationRequestCompleter?.complete();
+      _locationRequestCompleter = null;
+    }
+  }
+
+  Future<void> _showLocationSettingsDialog() async {
     if (!mounted) return;
 
-    final errorMessage = e is TimeoutException
-        ? "انتهت المهلة أثناء محاولة جلب الموقع. حاول مرة أخرى."
-        : "حدث خطأ غير متوقع أثناء جلب الموقع. حاول مرة أخرى.\n$e";
-
-    locationState.state = errorMessage;
-    setState(() {
-      isLoading = false;
-      showLocation = false;
-    });
-  } finally {
-    _locationRequestCompleter?.complete();
-    _locationRequestCompleter = null;
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("خدمة الموقع غير مفعّلة"),
+        content: const Text("يرجى تفعيل خدمة تحديد الموقع من إعدادات الجهاز."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("إلغاء"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await Geolocator.openLocationSettings();
+            },
+            child: const Text("فتح الإعدادات"),
+          ),
+        ],
+      ),
+    );
   }
-}
-Future<void> _showLocationSettingsDialog() async {
-  if (!mounted) return;
-
-  await showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text("خدمة الموقع غير مفعّلة"),
-      content: const Text("يرجى تفعيل خدمة تحديد الموقع من إعدادات الجهاز."),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text("إلغاء"),
-        ),
-        TextButton(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            await Geolocator.openLocationSettings();
-          },
-          child: const Text("فتح الإعدادات"),
-        ),
-      ],
-    ),
-  );
-}
-
 
   @override
   void dispose() {

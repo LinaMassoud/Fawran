@@ -2,10 +2,10 @@ import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/screens/bookings.dart';
-import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/launchScreen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/login_screen.dart';
+import 'package:fawran/screens/newhome.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/userProfile.dart';
 
@@ -55,7 +55,7 @@ class MyApp extends ConsumerWidget {
         '/profile': (context) => const UserProfileScreen(),
         '/bookings': (context) => const BookingsScreen(),
         '/location': (context) => const LocationScreen(),
-        '/home': (contex) => HomeScreen(),
+        '/home': (contex) => Newhome(),
         '/hourly': (context) => CleaningServiceScreen(),
         '/selectAddress': (context) => AddressSelectionScreen()
 

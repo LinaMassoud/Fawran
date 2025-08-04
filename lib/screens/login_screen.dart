@@ -4,6 +4,7 @@ import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/providers/userNameProvider.dart';
 import 'package:fawran/screens/home_screen.dart';
 import 'package:fawran/screens/location_screen.dart';
+import 'package:fawran/screens/newhome.dart';
 import 'package:fawran/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,7 +74,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           MaterialPageRoute(
             builder: (context) => SplashScreen(
               duration: const Duration(seconds: 3),
-              nextScreen: const HomeScreen(),
+              nextScreen: Newhome(),
               autoNavigate: true,
             ),
           ),
@@ -116,7 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
-            
+
             // Welcome Back Title
             Center(
               child: Text(
@@ -148,8 +149,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _phoneEmpty && _submitted 
-                          ? Colors.red 
+                      color: _phoneEmpty && _submitted
+                          ? Colors.red
                           : Colors.grey.shade200,
                       width: 1,
                     ),
@@ -157,9 +158,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        isArabic ? TextDirection.rtl : TextDirection.ltr,
                     decoration: InputDecoration(
-                      hintText: isArabic ? 'أدخل رقم هاتفك' : 'Enter your phone number',
+                      hintText: isArabic
+                          ? 'أدخل رقم هاتفك'
+                          : 'Enter your phone number',
                       hintStyle: TextStyle(
                         color: Colors.grey.shade400,
                         fontSize: 16,
@@ -210,8 +214,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _passwordEmpty && _submitted 
-                          ? Colors.red 
+                      color: _passwordEmpty && _submitted
+                          ? Colors.red
                           : Colors.grey.shade200,
                       width: 1,
                     ),
@@ -219,9 +223,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: TextField(
                     controller: _passwordController,
                     obscureText: !_passwordVisible,
-                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        isArabic ? TextDirection.rtl : TextDirection.ltr,
                     decoration: InputDecoration(
-                      hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
+                      hintText:
+                          isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
                       hintStyle: TextStyle(
                         color: Colors.grey.shade400,
                         fontSize: 16,
@@ -266,11 +272,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
               ],
             ),
-            
+
             // Forgot Password Link
             const SizedBox(height: 8),
             Align(
-              alignment: isArabic ? Alignment.centerLeft : Alignment.centerRight,
+              alignment:
+                  isArabic ? Alignment.centerLeft : Alignment.centerRight,
               child: Text(
                 loc.forgotPassword,
                 style: const TextStyle(
