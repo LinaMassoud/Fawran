@@ -1,4 +1,4 @@
-import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
+import 'package:fawran/Fawran4Hours/hourly_service_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/localProvider.dart';
 import 'package:fawran/screens/bookings.dart';
@@ -56,7 +56,7 @@ class MyApp extends ConsumerWidget {
         '/bookings': (context) => const BookingsScreen(),
         '/location': (context) => const LocationScreen(),
         '/home': (contex) => Newhome(),
-        '/hourly': (context) => CleaningServiceScreen(),
+        '/hourly': (context) => HourlyServiceScreen(),
         '/selectAddress': (context) => AddressSelectionScreen()
 
         // '/profile' key routes to UserProfileScreen widget

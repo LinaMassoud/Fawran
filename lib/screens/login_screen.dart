@@ -97,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return BackgroundContainer(
       showBackButton: false,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.35,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.28,
       topRightWidget: GestureDetector(
         onTap: () {
           final newLocale = isArabic ? const Locale('en') : const Locale('ar');
@@ -107,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(8),
           child: const Icon(
             Icons.language,
-            color: Colors.white,
+            color: Color(0xFFFFA200),
             size: 20,
           ),
         ),

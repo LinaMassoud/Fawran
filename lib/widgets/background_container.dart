@@ -102,14 +102,14 @@ class BackgroundContainer extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.chevron_left,
-                        color: Colors.white,
+                        color: Color(0xFFFFA200),
                         size: 24,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         loc.back,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Color(0xFFFFA200),
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
                         ),

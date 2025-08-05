@@ -1,4 +1,4 @@
-import 'package:fawran/Fawran4Hours/cleaning_service_screen.dart';
+import 'package:fawran/Fawran4Hours/hourly_service_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/package_model.dart';
 import 'package:fawran/providers/auth_provider.dart';
@@ -57,14 +57,15 @@ class Newhome extends ConsumerWidget {
           children: [
             // Top Bar
             Container(
+              height: 124,
               decoration: const BoxDecoration(
-                color: Color(0xFF072C74),
+                color: Color(0xFF10295C),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(24),
                   bottomRight: Radius.circular(24),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
               child: Row(
                 children: [
                   // Left icons
@@ -73,14 +74,20 @@ class Newhome extends ConsumerWidget {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.menu,
-                              color: Colors.white, size: 28),
+                              color: Color(0xFFFFA200), size: 28),
                           onPressed: () {
                             Scaffold.of(context).openDrawer();
                           },
                         ),
-                        const SizedBox(width: 12),
-                        const Icon(Icons.notifications_none,
-                            color: Colors.white, size: 26),
+                        const SizedBox(width: 2),
+                        IconButton(
+                          icon: const Icon(Icons.notifications_none,
+                              color: Color(0xFFFFA200), size: 26),
+                          onPressed: () {
+                            // Add your notification action here
+                            // For example: Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen()));
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -238,7 +245,7 @@ class Newhome extends ConsumerWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => CleaningServiceScreen(
+                                        builder: (_) => HourlyServiceScreen(
                                           professionId: profession.positionId,
                                           serviceId: profession.services[0].id,
                                         ),
