@@ -3,6 +3,7 @@ import 'package:fawran/screens/verification_screen.dart';
 import 'package:fawran/widgets/background_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/auth_provider.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/localProvider.dart';
@@ -82,10 +83,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         },
         child: Container(
           padding: const EdgeInsets.all(8),
-          child: const Icon(
-            Icons.language,
-            color: Color(0xFFFFA200),
-            size: 20,
+          child: SvgPicture.asset(
+            'assets/icons/language.svg',
+            color: const Color(0xFFFFA200),
+            width: 20,
+            height: 20,
           ),
         ),
       ),
@@ -113,7 +115,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _firstNameController,
                 label: loc.firstName,
                 hintText: isArabic ? 'أدخل الاسم الأول' : 'Enter your first name',
-                icon: Icons.person_outlined,
+                iconPath: 'assets/icons/person.svg',
                 isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
@@ -128,7 +130,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _middleNameController,
                 label: loc.middleName,
                 hintText: isArabic ? 'أدخل الاسم الأوسط' : 'Enter your middle name',
-                icon: Icons.person_outlined,
+                iconPath: 'assets/icons/person.svg',
                 isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
@@ -143,7 +145,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _lastNameController,
                 label: loc.lastName,
                 hintText: isArabic ? 'أدخل الاسم الأخير' : 'Enter your last name',
-                icon: Icons.person_outlined,
+                iconPath: 'assets/icons/person.svg',
                 isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
@@ -174,7 +176,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _phoneController,
                 label: loc.phoneNumber,
                 hintText: isArabic ? 'أدخل رقم الهاتف' : 'Enter your phone number',
-                icon: Icons.phone_outlined,
+                iconPath: 'assets/icons/phone.svg',
                 keyboardType: TextInputType.phone,
                 isArabic: isArabic,
                 validator: (val) {
@@ -190,7 +192,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _emailController,
                 label: loc.email,
                 hintText: isArabic ? 'أدخل البريد الإلكتروني' : 'Enter your email',
-                icon: Icons.email_outlined,
+                iconPath: 'assets/icons/email.svg',
                 keyboardType: TextInputType.emailAddress,
                 isArabic: isArabic,
                 validator: (val) {
@@ -205,7 +207,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _passwordController,
                 label: loc.password,
                 hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
-                icon: Icons.lock_outline,
+                iconPath: 'assets/icons/lock.svg',
                 isArabic: isArabic,
                 validator: (val) => val != null && val.length >= 6
                     ? null
@@ -222,7 +224,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _confirmPasswordController,
                 label: loc.confirmPassword,
                 hintText: isArabic ? 'تأكيد كلمة المرور' : 'Confirm your password',
-                icon: Icons.lock_outline,
+                iconPath: 'assets/icons/lock.svg',
                 isArabic: isArabic,
                 validator: (val) => val == _passwordController.text
                     ? null
@@ -364,7 +366,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     required TextEditingController controller,
     required String label,
     required String hintText,
-    required IconData icon,
+    String? iconPath,
+    IconData? icon,
     required bool isArabic,
     bool obscureText = false,
     TextInputType? keyboardType,
@@ -382,11 +385,23 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
-        prefixIcon: Icon(
-          icon,
-          color: Colors.grey.shade400,
-          size: 20,
-        ),
+        prefixIcon: iconPath != null
+            ? Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SvgPicture.asset(
+                  iconPath,
+                  color: Colors.grey.shade400,
+                  width: 16,
+                  height: 16,
+                ),
+              )
+            : icon != null
+                ? Icon(
+                    icon,
+                    color: Colors.grey.shade400,
+                    size: 16,
+                  )
+                : null,
         suffixIcon: toggleVisibility != null
             ? IconButton(
                 icon: Icon(

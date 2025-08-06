@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:fawran/OnboardingScreens/splash_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import '../widgets/background_container.dart';
@@ -106,10 +107,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         },
         child: Container(
           padding: const EdgeInsets.all(8),
-          child: const Icon(
-            Icons.language,
-            color: Color(0xFFFFA200),
-            size: 20,
+          child: SvgPicture.asset(
+            'assets/icons/language.svg',
+            width: 28,
+            height: 28,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFFFFA200),
+              BlendMode.srcIn,
+            ),
           ),
         ),
       ),
@@ -142,10 +147,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 hintText: isArabic
                     ? 'أدخل رقم هاتفك'
                     : 'Enter your phone number',
-                prefixIcon: Icon(
-                  Icons.phone_outlined,
-                  color: Colors.grey.shade400,
-                  size: 20,
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: SvgPicture.asset(
+                    'assets/icons/phone.svg',
+                    width: 16,
+                    height: 16,
+                    colorFilter: ColorFilter.mode(
+                      Colors.grey.shade400,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -210,10 +222,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: InputDecoration(
                 labelText: loc.password,
                 hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
-                prefixIcon: Icon(
-                  Icons.lock_outline,
-                  color: Colors.grey.shade400,
-                  size: 20,
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: SvgPicture.asset(
+                    'assets/icons/lock.svg',
+                    width: 16,
+                    height: 16,
+                    fit: BoxFit.contain,
+                    colorFilter: ColorFilter.mode(
+                      Colors.grey.shade400,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
