@@ -13,7 +13,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:fawran/OnboardingScreens/splash_screen.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
-import '../widgets/background_container.dart'; // Import the reusable component
+import '../widgets/background_container.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -97,7 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return BackgroundContainer(
       showBackButton: false,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.28,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.25,
       topRightWidget: GestureDetector(
         onTap: () {
           final newLocale = isArabic ? const Locale('en') : const Locale('ar');
@@ -121,184 +122,206 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             // Welcome Back Title
             Center(
               child: Text(
-                loc.login,
+                loc.welcomeBack,
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2B4C7E),
+                  color: Color(0xFF10295C),
                 ),
               ),
             ),
             const SizedBox(height: 40),
 
-            // Phone Number Field
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  loc.phoneNumber,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
+            // Phone Number Field with Floating Label
+            TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+              decoration: InputDecoration(
+                labelText: loc.phone,
+                hintText: isArabic
+                    ? 'أدخل رقم هاتفك'
+                    : 'Enter your phone number',
+                prefixIcon: Icon(
+                  Icons.phone_outlined,
+                  color: Colors.grey.shade400,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _phoneEmpty && _submitted
-                          ? Colors.red
-                          : Colors.grey.shade200,
-                      width: 1,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    textDirection:
-                        isArabic ? TextDirection.rtl : TextDirection.ltr,
-                    decoration: InputDecoration(
-                      hintText: isArabic
-                          ? 'أدخل رقم هاتفك'
-                          : 'Enter your phone number',
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 16,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.phone_outlined,
-                        color: Colors.grey.shade400,
-                        size: 20,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1,
                   ),
                 ),
-                if (_phoneEmpty && _submitted)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      '${loc.phoneNumber} ${loc.requiredField}',
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                      ),
-                    ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF4A90E2),
+                    width: 2,
                   ),
-              ],
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 1,
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 2,
+                  ),
+                ),
+                labelStyle: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 16,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                errorText: _phoneEmpty && _submitted
+                    ? '${loc.phoneNumber} ${loc.requiredField}'
+                    : null,
+              ),
             ),
             const SizedBox(height: 20),
 
-            // Password Field
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  loc.password,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
+            // Password Field with Floating Label
+            TextField(
+              controller: _passwordController,
+              obscureText: !_passwordVisible,
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+              decoration: InputDecoration(
+                labelText: loc.password,
+                hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
+                prefixIcon: Icon(
+                  Icons.lock_outline,
+                  color: Colors.grey.shade400,
+                  size: 20,
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _passwordVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: Colors.grey.shade400,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _passwordVisible = !_passwordVisible;
+                    });
+                  },
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _passwordEmpty && _submitted
-                          ? Colors.red
-                          : Colors.grey.shade200,
-                      width: 1,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _passwordController,
-                    obscureText: !_passwordVisible,
-                    textDirection:
-                        isArabic ? TextDirection.rtl : TextDirection.ltr,
-                    decoration: InputDecoration(
-                      hintText:
-                          isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 16,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: Colors.grey.shade400,
-                        size: 20,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: Colors.grey.shade400,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _passwordVisible = !_passwordVisible;
-                          });
-                        },
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1,
                   ),
                 ),
-                if (_passwordEmpty && _submitted)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      '${loc.password} ${loc.requiredField}',
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                      ),
-                    ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF4A90E2),
+                    width: 2,
                   ),
-              ],
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 1,
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 2,
+                  ),
+                ),
+                labelStyle: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 16,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                errorText: _passwordEmpty && _submitted
+                    ? '${loc.password} ${loc.requiredField}'
+                    : null,
+              ),
             ),
 
             // Forgot Password Link
             const SizedBox(height: 8),
-            Align(
-              alignment:
-                  isArabic ? Alignment.centerLeft : Alignment.centerRight,
-              child: Text(
-                loc.forgotPassword,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w300,
-                  color: Color(0xFF4A90E2),
+              Align(
+                alignment: isArabic ? Alignment.centerLeft : Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () {
+                    // Clear any existing error messages
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    
+                    // Navigate to forgot password screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    loc.forgotPassword,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF1A69DD),
+                    ),
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 32),
 
             // Login Button
             SizedBox(
-              height: 56,
+              height: 50,
               child: ElevatedButton(
                 onPressed: authState.isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF06214B),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(25),
                   ),
                   elevation: 0,
                 ),
@@ -314,7 +337,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     : Text(
                         loc.login,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -347,7 +370,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Text(
                     loc.signUp,
                     style: const TextStyle(
-                      color: Color(0xFF4A90E2),
+                      color: const Color(0xFF1A69DD),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),

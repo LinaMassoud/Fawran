@@ -182,7 +182,28 @@
   "logoutConfirmation": "هل أنت متأكد من تسجيل الخروج؟",
 
   "userID": "معرف المستخدم",
-  "notProvided": "غير مقدم"
+  "notProvided": "غير مقدم",
+
+  "phone": "هاتف",
+  "welcomeBack":"مرحبًا بعودتك",
+  "getStarted":"ابدأ",
+
+  "enterPhoneForOTP": "أدخل رقم هاتفك لتلقي رمز التحقق",
+  "enterPhoneNumber": "أدخل رقم هاتفك",
+  "sendOTP": "إرسال رمز التحقق",
+  "resetPassword": "إعادة تعيين كلمة المرور",
+  "enterOTPSentTo": "أدخل رمز التحقق المرسل إلى",
+  "otp": "رمز التحقق",
+  "enterResetOTP": "أدخل رمز التحقق",
+  "newPassword": "كلمة المرور الجديدة",
+  "enterNewPassword": "أدخل كلمة المرور الجديدة",
+  "confirmPassword": "تأكيد كلمة المرور",
+  "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+  "passwordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+  "unknownResponse": "استجابة غير معروفة",
+  "failedSendOTP": "فشل في إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
+  "failedResetPassword": "فشل في إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.",
+  "errorOccurred": "حدث خطأ. يرجى المحاولة مرة أخرى."
 
 
 }

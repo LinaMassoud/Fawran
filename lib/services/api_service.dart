@@ -171,6 +171,96 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> sendForgotPasswordOTP({
+  required String phoneNumber,
+}) async {
+  final url = Uri.parse('$_baseUrl/forgot_password');
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'phone': phoneNumber,
+      }),
+    );
+
+    print('🔄 [FORGOT_PASSWORD] Response status: ${response.statusCode}');
+    print('🔄 [FORGOT_PASSWORD] Response body: ${response.body}');
+
+    // Handle all response codes, not just 200
+    if (response.body.isNotEmpty) {
+      try {
+        final responseData = json.decode(response.body);
+        // Add status code to response data for UI to handle appropriately
+        responseData['status_code'] = response.statusCode;
+        return responseData;
+      } catch (jsonError) {
+        print('❌ [FORGOT_PASSWORD] JSON decode error: $jsonError');
+        return {
+          'message': 'Invalid response format',
+          'status_code': response.statusCode,
+        };
+      }
+    } else {
+      return {
+        'message': 'Empty response from server',
+        'status_code': response.statusCode,
+      };
+    }
+  } catch (ex) {
+    print('💥 [FORGOT_PASSWORD] Error: $ex');
+    return null;
+  }
+}
+
+Future<Map<String, dynamic>?> resetPasswordWithOTP({
+  required String phoneNumber,
+  required String otp,
+  required String newPassword,
+}) async {
+  final url = Uri.parse('$_baseUrl/reset_password_with_otp');
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'phone': phoneNumber,
+        'otp': otp,
+        'new_password': newPassword,
+      }),
+    );
+
+    print('🔄 [RESET_PASSWORD] Response status: ${response.statusCode}');
+    print('🔄 [RESET_PASSWORD] Response body: ${response.body}');
+
+    // Handle all response codes, not just 200
+    if (response.body.isNotEmpty) {
+      try {
+        final responseData = json.decode(response.body);
+        // Add status code to response data for UI to handle appropriately
+        responseData['status_code'] = response.statusCode;
+        return responseData;
+      } catch (jsonError) {
+        print('❌ [RESET_PASSWORD] JSON decode error: $jsonError');
+        return {
+          'message': 'Invalid response format',
+          'status_code': response.statusCode,
+        };
+      }
+    } else {
+      return {
+        'message': 'Empty response from server',
+        'status_code': response.statusCode,
+      };
+    }
+  } catch (ex) {
+    print('💥 [RESET_PASSWORD] Error: $ex');
+    return null;
+  }
+}
+
   static Future<List<dynamic>> fetchCustomerAddresses(
       {required String userId}) async {
     try {

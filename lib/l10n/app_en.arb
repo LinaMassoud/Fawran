@@ -179,7 +179,28 @@
   "logoutConfirmation": "Are you sure you want to logout?",
 
   "userID": "User ID",
-  "notProvided": "Not provided"
+  "notProvided": "Not provided",
+  
+  "phone": "Phone",
+  "welcomeBack":"Welcome Back",
+  "getStarted":"Get Started",
+
+  "enterPhoneForOTP": "Enter your phone number to receive an OTP",
+  "enterPhoneNumber": "Enter your phone number",
+  "sendOTP": "Send OTP",
+  "resetPassword": "Reset Password",
+  "enterOTPSentTo": "Enter the OTP sent to",
+  "otp": "OTP",
+  "enterResetOTP": "Enter OTP",
+  "newPassword": "New Password",
+  "enterNewPassword": "Enter new password",
+  "confirmPassword": "Confirm Password",
+  "confirmNewPassword": "Confirm new password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "unknownResponse": "Unknown response",
+  "failedSendOTP": "Failed to send OTP. Please try again.",
+  "failedResetPassword": "Failed to reset password. Please try again.",
+  "errorOccurred": "An error occurred. Please try again."
 
 
 

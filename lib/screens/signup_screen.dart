@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:fawran/providers/localProvider.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -67,11 +68,27 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     });
     final authState = ref.watch(authProvider);
     final loc = AppLocalizations.of(context)!;
+    final locale = ref.watch(localeNotifierProvider);
+    final isArabic = locale.languageCode == 'ar';
 
     return BackgroundContainer(
-      showBackButton: true,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.15, // Reduced to accommodate more content
+      showBackButton: false,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.16,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      topRightWidget: GestureDetector(
+        onTap: () {
+          final newLocale = isArabic ? const Locale('en') : const Locale('ar');
+          ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: const Icon(
+            Icons.language,
+            color: Color(0xFFFFA200),
+            size: 20,
+          ),
+        ),
+      ),
       child: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -81,11 +98,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               // Title
               Center(
                 child: Text(
-                  loc.signUp,
+                  loc.getStarted,
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B4C7E),
+                    color: Color(0xFF10295C),
                   ),
                 ),
               ),
@@ -95,7 +112,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _buildTextField(
                 controller: _firstNameController,
                 label: loc.firstName,
-                icon: Icons.person,
+                hintText: isArabic ? 'أدخل الاسم الأول' : 'Enter your first name',
+                icon: Icons.person_outlined,
+                isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return '${loc.firstName} is required';
@@ -104,11 +123,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildTextField(
                 controller: _middleNameController,
                 label: loc.middleName,
-                icon: Icons.person,
+                hintText: isArabic ? 'أدخل الاسم الأوسط' : 'Enter your middle name',
+                icon: Icons.person_outlined,
+                isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return '${loc.middleName} is required';
@@ -117,11 +138,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildTextField(
                 controller: _lastNameController,
                 label: loc.lastName,
-                icon: Icons.person,
+                hintText: isArabic ? 'أدخل الاسم الأخير' : 'Enter your last name',
+                icon: Icons.person_outlined,
+                isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return '${loc.lastName} is required';
@@ -130,12 +153,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildTextField(
                 controller: _nationalIdController,
                 label: "National ID",
-                icon: Icons.badge,
+                hintText: isArabic ? 'أدخل رقم الهوية الوطنية' : 'Enter your national ID',
+                icon: Icons.badge_outlined,
                 keyboardType: TextInputType.number,
+                isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return 'National ID is required';
@@ -144,12 +169,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildTextField(
                 controller: _phoneController,
                 label: loc.phoneNumber,
-                icon: Icons.phone,
+                hintText: isArabic ? 'أدخل رقم الهاتف' : 'Enter your phone number',
+                icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
+                isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return '${loc.phoneNumber} is required';
@@ -158,12 +185,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildTextField(
                 controller: _emailController,
                 label: loc.email,
-                icon: Icons.email,
+                hintText: isArabic ? 'أدخل البريد الإلكتروني' : 'Enter your email',
+                icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
+                isArabic: isArabic,
                 validator: (val) {
                   if (val == null || val.isEmpty)
                     return '${loc.email} is required';
@@ -171,11 +200,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return emailRegex.hasMatch(val) ? null : 'Invalid email';
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildTextField(
                 controller: _passwordController,
                 label: loc.password,
-                icon: Icons.lock,
+                hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
+                icon: Icons.lock_outline,
+                isArabic: isArabic,
                 validator: (val) => val != null && val.length >= 6
                     ? null
                     : 'Password must be at least 6 characters',
@@ -186,11 +217,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   });
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildTextField(
                 controller: _confirmPasswordController,
                 label: loc.confirmPassword,
-                icon: Icons.lock,
+                hintText: isArabic ? 'تأكيد كلمة المرور' : 'Confirm your password',
+                icon: Icons.lock_outline,
+                isArabic: isArabic,
                 validator: (val) => val == _passwordController.text
                     ? null
                     : 'Passwords do not match',
@@ -206,7 +239,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               // Sign Up Button
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: authState.isLoading
                       ? null
@@ -238,7 +271,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     backgroundColor: const Color(0xFF06214B),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(25),
                     ),
                     elevation: 0,
                   ),
@@ -254,7 +287,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       : Text(
                           loc.signUp,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 20,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -304,12 +337,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                      );
+                      Navigator.pop(context);
                     },
                     child: Text(
                       loc.login,
@@ -335,7 +363,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
+    required String hintText,
     required IconData icon,
+    required bool isArabic,
     bool obscureText = false,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
@@ -347,52 +377,76 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       obscureText: isObscured ?? obscureText,
       keyboardType: keyboardType,
       validator: validator,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       style: const TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(
-          fontSize: 16,
-          color: Colors.grey.shade600,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade50,
+        hintText: hintText,
         prefixIcon: Icon(
           icon,
-          color: Colors.grey.shade600,
-          size: 22,
+          color: Colors.grey.shade400,
+          size: 20,
         ),
         suffixIcon: toggleVisibility != null
             ? IconButton(
                 icon: Icon(
                   (isObscured ?? obscureText)
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: Colors.grey.shade600,
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.grey.shade400,
+                  size: 20,
                 ),
                 onPressed: toggleVisibility,
               )
             : null,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Color(0xFF4A90E2),
+            width: 2,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Colors.red,
+            width: 1,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Colors.red,
+            width: 2,
+          ),
+        ),
+        labelStyle: TextStyle(
+          color: Colors.grey.shade600,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        hintStyle: TextStyle(
+          color: Colors.grey.shade400,
+          fontSize: 16,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
     );
   }
