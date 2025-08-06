@@ -74,7 +74,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     return BackgroundContainer(
       showBackButton: false,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.16,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.17,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       topRightWidget: GestureDetector(
         onTap: () {
@@ -86,8 +86,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           child: SvgPicture.asset(
             'assets/icons/language.svg',
             color: const Color(0xFFFFA200),
-            width: 20,
-            height: 20,
+            width: 23,
+            height: 23,
           ),
         ),
       ),

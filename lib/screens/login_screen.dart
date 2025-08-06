@@ -109,8 +109,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(8),
           child: SvgPicture.asset(
             'assets/icons/language.svg',
-            width: 28,
-            height: 28,
+            width: 23,
+            height: 23,
             colorFilter: const ColorFilter.mode(
               Color(0xFFFFA200),
               BlendMode.srcIn,
@@ -148,7 +148,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ? 'أدخل رقم هاتفك'
                     : 'Enter your phone number',
                 prefixIcon: Padding(
-                  padding: const EdgeInsets.all(14.0),
+                  padding: const EdgeInsets.all(15.0),
                   child: SvgPicture.asset(
                     'assets/icons/phone.svg',
                     width: 16,
@@ -223,7 +223,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 labelText: loc.password,
                 hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
                 prefixIcon: Padding(
-                  padding: const EdgeInsets.all(14.0),
+                  padding: const EdgeInsets.all(15.0),
                   child: SvgPicture.asset(
                     'assets/icons/lock.svg',
                     width: 16,

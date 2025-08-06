@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/localProvider.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
@@ -44,7 +45,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  // Updated method to use FlashyFlushbar with localized messages
+  // Updated method to use FlashyFlushbar with localized messages and SVG icons
   void _showFlashyFlushbar(String message, {bool isError = false}) {
     FlashyFlushbar(
       message: message,
@@ -225,10 +226,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           decoration: InputDecoration(
             labelText: loc.phone,
             hintText: loc.enterPhoneNumber,
-            prefixIcon: Icon(
-              Icons.phone_outlined,
-              color: Colors.grey.shade400,
-              size: 20,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: SvgPicture.asset(
+                'assets/icons/phone.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(Colors.grey.shade400, BlendMode.srcIn),
+              ),
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -428,14 +433,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           decoration: InputDecoration(
             labelText: loc.newPassword,
             hintText: loc.enterNewPassword,
-            prefixIcon: Icon(
-              Icons.lock_outline,
-              color: Colors.grey.shade400,
-              size: 20,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: SvgPicture.asset(
+                'assets/icons/lock.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(Colors.grey.shade400, BlendMode.srcIn),
+              ),
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                _passwordVisible
+                _confirmPasswordVisible
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
                 color: Colors.grey.shade400,
@@ -443,7 +452,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
               onPressed: () {
                 setState(() {
-                  _passwordVisible = !_passwordVisible;
+                  _confirmPasswordVisible = !_confirmPasswordVisible;
                 });
               },
             ),
@@ -510,10 +519,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           decoration: InputDecoration(
             labelText: loc.confirmPassword,
             hintText: loc.confirmNewPassword,
-            prefixIcon: Icon(
-              Icons.lock_outline,
-              color: Colors.grey.shade400,
-              size: 20,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: SvgPicture.asset(
+                'assets/icons/lock.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(Colors.grey.shade400, BlendMode.srcIn),
+              ),
             ),
             suffixIcon: IconButton(
               icon: Icon(
@@ -639,10 +652,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         },
         child: Container(
           padding: const EdgeInsets.all(8),
-          child: const Icon(
-            Icons.language,
-            color: Color(0xFFFFA200),
-            size: 20,
+          child: SvgPicture.asset(
+            'assets/icons/language.svg',
+            width: 23,
+            height: 23,
+            colorFilter: const ColorFilter.mode(Color(0xFFFFA200), BlendMode.srcIn),
           ),
         ),
       ),
