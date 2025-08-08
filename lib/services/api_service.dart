@@ -1259,6 +1259,50 @@ Future<Map<String, dynamic>?> resetPasswordWithOTP({
     }
   }
 
+  static Future<Map<String, dynamic>?> validatePromotion({
+  required String promotionCode,
+  required int shiftId,
+  required int cityCode,
+  required double originalPrice,
+  required double hourPrice,
+  int? totalVisits, // optional named parameter
+}) async {
+  try {
+    final url = '$_baseUrl/validate-promotion';
+
+    // Build the request body
+    final body = {
+      'promotion_code': promotionCode,
+      'shift_id': shiftId,
+      'city': cityCode,
+      'original_price': originalPrice,
+      'hour_price': hourPrice,
+      if (totalVisits != null) 'total_visits': totalVisits,
+    };
+
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: url,
+      body: json.encode(body),
+    );
+
+    print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
+    print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 404) {
+      final responseData = json.decode(response.body);
+      return responseData;
+    } else {
+      print('❌ [VALIDATE_PROMOTION] Failed with status: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('💥 [VALIDATE_PROMOTION] Error: $e');
+    return null;
+  }
+}
+
+
   static Future<List<dynamic>> fetchFAQs() async {
     try {
       final url = '$_baseUrl/faq';

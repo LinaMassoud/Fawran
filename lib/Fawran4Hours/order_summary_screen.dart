@@ -406,62 +406,6 @@ Widget _buildFormattedTerms() {
                   ),
                   SizedBox(height: 24),
 
-                  if (!_isPaymentSummaryExpanded) ...[
-                    // Coupons and offers card
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Colors.blue, Colors.purple],
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Icon(
-                              Icons.local_offer,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              loc.coupons,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          
-                          SizedBox(width: 8),
-                          Icon(
-                            Icons.chevron_right,
-                            color: Color(0xFF10295C),
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 24),
-                  ],
-
                   // Payment summary section - Hidden for custom bookings
                   if (!widget.customBooking) ...[
                     Text(

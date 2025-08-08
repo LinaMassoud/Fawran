@@ -112,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               width: double.infinity,
               height: double.infinity,
               child: SvgPicture.asset(
-                'assets/images/opening_background.svg',
+                'assets/images/background.svg',
                 fit: BoxFit.cover,
                 // Add error handling for SVG loading
                 placeholderBuilder: (BuildContext context) {

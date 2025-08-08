@@ -121,8 +121,18 @@ List<int> _validatedWorkerIds = [];
 double _apiFinalPricePerVisit = 0.0; // Price per visit with VAT
 double _vatAmount = 0.0;
 double _apiPriceVat = 0.0;
+int _apiTotalVisits = 1;
 
 bool _isSnackBarShowing = false;
+
+String _couponCode = '';
+bool _isValidatingCoupon = false;
+bool _isCouponApplied = false;
+String _couponMessage = '';
+bool _isCouponValid = false;
+double _originalFinalPrice = 0.0; // Store original price before coupon
+double _originalPricePerVisit = 0.0; // Store original price per visit before coupon
+TextEditingController _couponController = TextEditingController();
 
   @override
   void initState() {
@@ -135,6 +145,13 @@ bool _isSnackBarShowing = false;
       _loadHourlyVisits();
     }
   }
+
+  @override
+void dispose() {
+  _couponController.dispose();
+  super.dispose();
+}
+
 
 
 Future<void> _loadContractDurations() async {
@@ -241,6 +258,171 @@ Future<void> _loadContractDurations() async {
 }
 
 
+Future<void> _validateCouponCode() async {
+  if (_couponCode.trim().isEmpty) {
+    _showValidationMessage('Please enter a coupon code');
+    return;
+  }
+
+  // Check if all required data is available from the existing calculation
+  if (_apiPricePerVisit <= 0 || _apiTotalPrice <= 0 || _apiHourPrice <= 0) {
+    _showValidationMessage('Please complete all fields first to apply coupon');
+    return;
+  }
+
+  setState(() {
+    _isValidatingCoupon = true;
+    _couponMessage = '';
+  });
+
+  try {
+    // Get shift ID from selected time
+    int shiftId = 1; // Default fallback
+    try {
+      final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
+      final matchingShift = serviceShifts.firstWhere(
+        (shift) => shift['service_shifts']?.toString().toLowerCase() == widget.selectedTime.toLowerCase(),
+        orElse: () => {'id': 1},
+      );
+      shiftId = int.parse(matchingShift['id'].toString());
+    } catch (e) {
+      print('❌ Error fetching shift ID for coupon: $e');
+    }
+
+    // Get city code - you might need to adjust this based on your address model
+    int cityCode = 1; // Default
+    if (widget.selectedAddress != null) {
+      cityCode = int.tryParse(widget.selectedAddress!.cityCode.toString()) ?? 1;
+    }
+
+    // Use existing calculated values instead of calling calculatePackagePrice again
+    final finalPrice = _apiFinalPricePerVisit; // Use already calculated final price with VAT
+    final totalVisits = _apiTotalVisits; // Calculate total visits
+    final hourPrice = _apiHourPrice; // Use already calculated hour price
+
+    print('🔍 [COUPON] Validating coupon with parameters:');
+    print('  - promotionCode: $_couponCode');
+    print('  - shiftId: $shiftId');
+    print('  - cityCode: $cityCode');
+    print('  - originalPrice: $finalPrice');
+    print('  - hourPrice: $hourPrice');
+    print('  - totalVisits: $totalVisits');
+
+    // Call the validatePromotion API with the existing calculated values
+    final response = await ApiService.validatePromotion(
+      promotionCode: _couponCode.trim(),
+      shiftId: shiftId,
+      cityCode: cityCode,
+      originalPrice: finalPrice, // Use existing final_price
+      hourPrice: hourPrice, // Use existing hour_price
+      totalVisits: totalVisits, // Use calculated total_visits
+    );
+
+    print('🔍 [COUPON] API response: $response');
+
+    if (response != null && response['valid'] == true) {
+      // Store original prices if not already stored
+      if (_originalFinalPrice == 0.0) {
+        _originalFinalPrice = _apiFinalPricePerVisit;
+        _originalPricePerVisit = _apiPricePerVisit;
+      }
+
+      // Update prices with coupon discount
+      final newFinalPrice = response['final_price']?.toDouble() ?? _apiFinalPricePerVisit;
+      final newPricePerVisit = response['price_per_visit']?.toDouble() ?? _apiPricePerVisit;
+      
+      print("newFinalPrice = ${newFinalPrice}");
+      print("newPricePerVisit = ${newPricePerVisit}");
+      setState(() {
+        _isCouponValid = true;
+        _isCouponApplied = true;
+        _couponMessage = response['message'] ?? 'Coupon applied successfully!';
+        
+        // Update the prices with coupon discount
+        _apiFinalPricePerVisit = newFinalPrice;
+        _apiPricePerVisit = newPricePerVisit;
+        
+        _isValidatingCoupon = false;
+      });
+
+      // Recalculate total price with new discounted price
+      if (_internalSelectedDates.isNotEmpty) {
+        double newTotalPrice = _internalSelectedDates.length * _apiPricePerVisit;
+        print("newTotalPrice = ${newTotalPrice}");
+        setState(() {
+          _calculatedTotalPrice = newTotalPrice;
+        });
+
+        print("_calculatedTotalPrice = ${_calculatedTotalPrice}");
+        // Update parent with new total price
+        if (widget.onTotalPriceChanged != null) {
+          widget.onTotalPriceChanged!(newTotalPrice);
+        }
+      }
+
+      // Update parent callbacks with new prices
+      if (widget.onPricePerVisitChanged != null) {
+        widget.onPricePerVisitChanged!(_apiPricePerVisit);
+      }
+
+      print('✅ [COUPON] Coupon applied successfully');
+    } else {
+      setState(() {
+        _isCouponValid = false;
+        _isCouponApplied = false;
+        _couponMessage = response?['message'] ?? 'Invalid coupon code';
+        _isValidatingCoupon = false;
+      });
+      print('❌ [COUPON] Invalid coupon code');
+    }
+  } catch (e) {
+    print('💥 [COUPON] Error validating coupon: $e');
+    setState(() {
+      _isValidatingCoupon = false;
+      _isCouponValid = false;
+      _isCouponApplied = false;
+      _couponMessage = 'Error validating coupon. Please try again.';
+    });
+  }
+}
+
+// 3. Add this method to remove coupon
+
+void _removeCoupon() {
+  setState(() {
+    _isCouponApplied = false;
+    _isCouponValid = false;
+    _couponMessage = '';
+    _couponCode = '';
+    _couponController.clear();
+    
+    // Restore original prices
+    if (_originalFinalPrice > 0) {
+      _apiFinalPricePerVisit = _originalFinalPrice;
+      _apiPricePerVisit = _originalPricePerVisit;
+      _originalFinalPrice = 0.0;
+      _originalPricePerVisit = 0.0;
+    }
+  });
+
+  // Recalculate total price with original prices
+  if (_internalSelectedDates.isNotEmpty) {
+    double originalTotalPrice = _internalSelectedDates.length * _apiFinalPricePerVisit;
+    setState(() {
+      _calculatedTotalPrice = originalTotalPrice;
+    });
+
+    // Update parent with original total price
+    if (widget.onTotalPriceChanged != null) {
+      widget.onTotalPriceChanged!(originalTotalPrice);
+    }
+  }
+
+  // Update parent callbacks with original prices
+  if (widget.onPricePerVisitChanged != null) {
+    widget.onPricePerVisitChanged!(_apiPricePerVisit);
+  }
+}
 
 void _resetDependentFields(String changedField) {
     switch (changedField) {
@@ -409,6 +591,7 @@ Future<void> _calculatePriceFromAPI() async {
         final finalPrice = response['final_price']?.toDouble() ?? 0.0; // Price with VAT
         final hourPrice = response['hour_price']?.toDouble() ?? 0.0;
         final priceVat = response['price_vat']?.toDouble() ?? 0.0;
+        final totalVisits = response['total_visits']?.toDouble() ?? 0.0;
         
         print('🔍 DEBUG: Extracted from response:');
         print('  - price_per_visit: $pricePerVisit (without VAT)');
@@ -416,9 +599,10 @@ Future<void> _calculatePriceFromAPI() async {
         print('  - final_price: $finalPrice (with VAT)');
         print('  - hour_price: $hourPrice');
         print('  - price_vat: $priceVat');
+        print('  - total_visits: $totalVisits');
         
         // Calculate VAT amount and final price per visit
-        final vatAmount = finalPrice - totalPrice;
+        final vatAmount = priceVat;
         final finalPricePerVisit = finalPrice; // This is already the price with VAT per visit
         
         print('🔍 DEBUG: Calculated VAT values:');
@@ -433,7 +617,8 @@ Future<void> _calculatePriceFromAPI() async {
           _apiFinalPricePerVisit = finalPricePerVisit; // With VAT
           _vatAmount = vatAmount; // VAT amount per visit
           _apiHourPrice = hourPrice;
-          _apiPriceVat = priceVat; 
+          _apiPriceVat = priceVat;
+          _apiTotalVisits = totalVisits.toInt(); 
           _isCalculatingPrice = false;
         });
         
@@ -453,6 +638,12 @@ Future<void> _calculatePriceFromAPI() async {
         if (widget.onPriceVatChanged != null) {
           widget.onPriceVatChanged!(_apiPriceVat);
           print('✅ DEBUG: Called onPriceVatChanged callback with: $_apiPriceVat');
+        }
+
+        // Re-validate coupon if it was previously applied
+        if (_isCouponApplied && _isCouponValid && _couponCode.isNotEmpty) {
+          print('🔄 DEBUG: Re-validating coupon after price calculation');
+          await _validateCouponCode();
         }
 
         // Update parent with the new price per visit if callback is available
@@ -688,6 +879,155 @@ Future<bool> _validateWorkers() async {
   }
 }
 
+Widget _buildCouponCodeField(AppLocalizations loc) {
+  // Only show coupon field if price calculation is complete
+  bool canApplyCoupon = _apiPricePerVisit > 0 && _apiTotalPrice > 0 && _apiHourPrice > 0;
+  
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    margin: EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: canApplyCoupon ? Colors.grey.shade50 : Colors.grey.shade100,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: canApplyCoupon ? Colors.grey.shade200 : Colors.grey.shade300,
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Coupon Code',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: canApplyCoupon ? Colors.black : Colors.grey.shade500,
+          ),
+        ),
+        
+        SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _couponController,
+                enabled: canApplyCoupon,
+                onChanged: canApplyCoupon ? (value) {
+                  setState(() {
+                    _couponCode = value;
+                    _couponMessage = ''; // Clear previous messages
+                  });
+                } : null,
+                decoration: InputDecoration(
+                  hintText: 'Enter coupon code',
+                  hintStyle: TextStyle(
+                    color: canApplyCoupon ? Colors.grey.shade500 : Colors.grey.shade400,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
+                    ),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: canApplyCoupon ? Color(0xFF1E3A8A) : Colors.grey.shade400,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  filled: true,
+                  fillColor: canApplyCoupon ? Colors.white : Colors.grey.shade200,
+                  suffixIcon: (_isCouponApplied && canApplyCoupon)
+                      ? IconButton(
+                          icon: Icon(Icons.close, color: Colors.red),
+                          onPressed: _removeCoupon,
+                        )
+                      : null,
+                ),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: canApplyCoupon ? Colors.black : Colors.grey.shade500,
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Container(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: (canApplyCoupon && !_isValidatingCoupon) ? _validateCouponCode : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: canApplyCoupon 
+                      ? (_isCouponApplied ? Colors.green : Color(0xFF1E3A8A))
+                      : Colors.grey.shade400,
+                  disabledBackgroundColor: Colors.grey.shade400,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: _isValidatingCoupon
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        _isCouponApplied ? 'Applied' : 'Apply',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+        if (_couponMessage.isNotEmpty && canApplyCoupon) ...[
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                _isCouponValid ? Icons.check_circle : Icons.error,
+                size: 16,
+                color: _isCouponValid ? Colors.green : Colors.red,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _couponMessage,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _isCouponValid ? Colors.green.shade700 : Colors.red.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
 // Add this method to build the Select Date field
   Widget _buildSelectDateField(AppLocalizations loc) {
     bool hasSelectedDates = _internalSelectedDates.isNotEmpty;
@@ -797,8 +1137,6 @@ Future<bool> _validateWorkers() async {
                         onDatesChanged: (dates) {
                           setState(() {
                             _internalSelectedDates = dates;
-                            // The price calculation is now handled inside the CustomDateSelectionStep
-                            // and communicated back via onTotalPriceChanged callback
                           });
 
                           // Convert dates to day names and update parent
@@ -812,8 +1150,6 @@ Future<bool> _validateWorkers() async {
                         },
                         onTotalPriceChanged: (price) {
                           setState(() {
-                            // Now this callback will be called whenever dates change
-                            // with the correct price calculation
                             _calculatedTotalPrice = price;
                           });
 
@@ -823,15 +1159,18 @@ Future<bool> _validateWorkers() async {
                           }
                         },
                         onNextPressed: null,
-                        pricePerVisit: _apiPricePerVisit > 0 ? _apiPricePerVisit : widget.pricePerVisit,
+                        // Pass the correct price based on coupon status
+                        pricePerVisit: _isCouponApplied && _isCouponValid 
+                            ? _apiPricePerVisit  // Use discounted price when coupon is applied
+                            : (_apiPricePerVisit > 0 ? _apiPricePerVisit : widget.pricePerVisit),
                         contractDuration: widget.contractDuration,
                         visitsPerWeek: widget.visitsPerWeek,
                         maxSelectableDates: _getMaxSelectableDates(),
                         showBottomNavigation: false,
-                        vatAmount: _vatAmount,
+                        vatAmount: _isCouponApplied && _isCouponValid ? 0.0 : _vatAmount, // No additional VAT when coupon is applied
                         professionId: widget.professionId,
                         workerCount: widget.workerCount,
-                      ),
+                      )
                     ),
                   )
                 : SizedBox.shrink(),
@@ -1511,6 +1850,8 @@ Future<void> _handleDonePressed() async {
                         ),
                       ],
                     ),
+
+                    _buildCouponCodeField(loc),
 
                     SizedBox(height: 20),
 

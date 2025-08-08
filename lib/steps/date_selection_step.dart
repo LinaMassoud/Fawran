@@ -11,6 +11,7 @@ class DateSelectionStep extends StatefulWidget {
   final Function(List<DateTime>) onDatesChanged;
   final Function(List<String>)? onSelectedDaysChanged;
   final Function(List<int>)? onWorkerValidationSuccess;
+  final Function(double)? onPriceChanged;
   final VoidCallback? onNextPressed;
   final int maxSelectableDates;
   final List<String> selectedDays;
@@ -40,6 +41,7 @@ class DateSelectionStep extends StatefulWidget {
     required this.professionId,
     this.onSelectedDaysChanged,
     this.onWorkerValidationSuccess,
+    this.onPriceChanged,
   }) : super(key: key);
 
   @override
@@ -60,22 +62,271 @@ class _DateSelectionStepState extends State<DateSelectionStep> {
   List<String> _localSelectedDays = [];
   bool _isSnackBarShowing = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _currentMonth = DateTime.now();
-    _pageController = PageController();
-    _selectedDates = List.from(widget.selectedDates);
-    _localSelectedDays = List.from(widget.selectedDays); 
-    _calculateContractDetails();
-    _updateWeeklyVisitCounts();
+  TextEditingController _couponController = TextEditingController();
+bool _isCouponApplied = false;
+double _discountedPrice = 0.0;
+String _couponMessage = '';
+bool _isValidatingCoupon = false;
+
+ @override
+void initState() {
+  super.initState();
+  _currentMonth = DateTime.now();
+  _pageController = PageController();
+  _selectedDates = List.from(widget.selectedDates);
+  _localSelectedDays = List.from(widget.selectedDays);
+  
+  // Pre-fill coupon code if available from package and auto-apply
+  if (widget.package?.promotionCode != null && widget.package!.promotionCode!.isNotEmpty) {
+    _couponController.text = widget.package!.promotionCode!;
+    // Auto-apply the promotion without validation since it's already applied in the package
+    _isCouponApplied = true;
+    _discountedPrice = widget.package!.finalPrice; // Use the already calculated final price
+    _couponMessage = 'Promotion applied successfully!';
   }
+  
+  _calculateContractDetails();
+  _updateWeeklyVisitCounts();
+}
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+void dispose() {
+  _pageController.dispose();
+  _couponController.dispose();
+  super.dispose();
+}
+
+void _validateCouponCode() async {
+  if (_couponController.text.trim().isEmpty) {
+    setState(() {
+      _isCouponApplied = false;
+      _discountedPrice = 0.0;
+      _couponMessage = '';
+    });
+    return;
   }
+
+  // Check if this is the pre-applied promotion code from the package
+  if (widget.package?.promotionCode != null && 
+      _couponController.text.trim() == widget.package!.promotionCode!) {
+    setState(() {
+      _isCouponApplied = true;
+      _discountedPrice = widget.package!.finalPrice;
+      _couponMessage = 'Promotion applied successfully!';
+    });
+    return;
+  }
+
+  if (widget.selectedAddress == null) {
+    _showSnackBar('Please select an address first');
+    return;
+  }
+
+  setState(() {
+    _isValidatingCoupon = true;
+    _couponMessage = '';
+  });
+
+  try {
+    print('🌐 DEBUG: Calling ApiService.validatePromotion with parameters:');
+    print('  - promotionCode: ${_couponController.text.trim()}');
+    print('  - shiftId: ${widget.package!.serviceShift}');
+    print('  - cityCode: ${widget.selectedAddress!.cityCode}');
+    print('  - originalPrice: ${widget.package?.originalPrice}');
+    print('  - hourPrice: ${widget.package?.hourPrice}');
+
+    final result = await ApiService.validatePromotion(
+      promotionCode: _couponController.text.trim(),
+      shiftId: int.parse(widget.package!.serviceShift),
+      cityCode: widget.selectedAddress!.cityCode,
+      originalPrice: widget.package?.originalPrice ?? widget.totalPrice,
+      hourPrice: widget.package?.hourPrice ?? 0.0,
+    );
+
+    setState(() {
+      _isValidatingCoupon = false;
+      
+      if (result != null) {
+        bool isValid = result['valid'] == true;
+        String message = result['message']?.toString() ?? '';
+        
+        if (isValid) {
+          _isCouponApplied = true;
+          _discountedPrice = (result['final_price'] as num?)?.toDouble() ?? widget.totalPrice;
+          _couponMessage = message;
+          _showSnackBar('Coupon applied successfully!');
+          if (widget.onPriceChanged != null) {
+          widget.onPriceChanged!(_discountedPrice);
+        }
+        } else {
+          _isCouponApplied = false;
+          _discountedPrice = 0.0;
+          _couponMessage = message.isNotEmpty ? message : 'Invalid coupon code';
+          _showSnackBar(_couponMessage);
+          if (widget.onPriceChanged != null) {
+          widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
+        }
+        }
+      } else {
+        _isCouponApplied = false;
+        _discountedPrice = 0.0;
+        _couponMessage = 'Failed to validate coupon';
+        _showSnackBar(_couponMessage);
+        if (widget.onPriceChanged != null) {
+        widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
+      }
+      }
+    });
+  } catch (e) {
+    setState(() {
+      _isValidatingCoupon = false;
+      _isCouponApplied = false;
+      _discountedPrice = 0.0;
+      _couponMessage = 'Error validating coupon';
+    });
+    _showSnackBar('Error validating coupon: ${e.toString()}');
+  }
+}
+
+void _removeCoupon() {
+  setState(() {
+    _couponController.clear();
+    _isCouponApplied = false;
+    _discountedPrice = 0.0;
+    _couponMessage = '';
+  });
+  if (widget.onPriceChanged != null) {
+    widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
+  }
+}
+
+Widget _buildCouponSection() {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    margin: EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade50,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey.shade200),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Coupon Code',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _couponController,
+                decoration: InputDecoration(
+                  hintText: 'Enter coupon code',
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Color(0xFF1E3A8A)),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  suffixIcon: _isCouponApplied
+                      ? IconButton(
+                          icon: Icon(Icons.close, color: Colors.red),
+                          onPressed: _removeCoupon,
+                        )
+                      : null,
+                ),
+                style: TextStyle(fontSize: 14),
+                onChanged: (value) {
+                // Reset validation state when text changes, but only if it's not the pre-applied promotion
+                if (widget.package?.promotionCode == null || 
+                    value.trim() != widget.package!.promotionCode!) {
+                  if (_isCouponApplied || _couponMessage.isNotEmpty) {
+                    setState(() {
+                      _isCouponApplied = false;
+                      _discountedPrice = 0.0;
+                      _couponMessage = '';
+                    });
+                  }
+                }
+              },
+              ),
+            ),
+            SizedBox(width: 12),
+            Container(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isValidatingCoupon ? null : _validateCouponCode,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isCouponApplied ? Colors.green : Color(0xFF1E3A8A),
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: _isValidatingCoupon
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        _isCouponApplied ? 'Applied' : 'Apply',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+        if (_couponMessage.isNotEmpty) ...[
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                _isCouponApplied ? Icons.check_circle : Icons.error,
+                size: 16,
+                color: _isCouponApplied ? Colors.green : Colors.red,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _couponMessage,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _isCouponApplied ? Colors.green.shade700 : Colors.red.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
 
   void _calculateContractDetails() {
     // Get duration from package using noOfWeeks or fallback to widget parameter
@@ -974,34 +1225,35 @@ Widget build(BuildContext context) {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              // ADD THIS LINE: Coupon section
+              _buildCouponSection(),
+              
               // Day selection widget
               _buildDaySelectionWidget(),
-              // // Contract info
-              // _buildContractInfo(),
               // Calendar container with fixed height
               Container(
-              height: 450, // Increased height to accommodate 6 rows
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
-                  });
-                },
-                itemCount: 24,
-                itemBuilder: (context, index) {
-                  final month = DateTime(DateTime.now().year, DateTime.now().month + index);
-                  return _buildMonthView(month);
-                },
+                height: 450,
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
+                    });
+                  },
+                  itemCount: 24,
+                  itemBuilder: (context, index) {
+                    final month = DateTime(DateTime.now().year, DateTime.now().month + index);
+                    return _buildMonthView(month);
+                  },
+                ),
               ),
-            ),
               // Add some bottom padding to ensure content doesn't get cut off
               SizedBox(height: 100),
             ],
           ),
         ),
       ),
-      // Bottom section remains fixed
+      // Bottom section remains fixed - UPDATE THE PRICE DISPLAY
       Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -1046,8 +1298,13 @@ Widget build(BuildContext context) {
                     color: Colors.grey.shade600,
                   ),
                 ),
+                // UPDATE THIS PART TO SHOW DISCOUNTED PRICE
                 Text(
-                  widget.package?.formattedFinalPrice ?? 'SAR ${widget.totalPrice.toInt()}',
+                  _isCouponApplied && _discountedPrice > 0
+                      ? 'SAR ${_discountedPrice.toInt()}'
+                      : _couponController.text.trim().isEmpty
+                          ? 'SAR ${(widget.package?.originalPrice ?? widget.totalPrice).toInt()}'
+                          : widget.package?.formattedFinalPrice ?? 'SAR ${widget.totalPrice.toInt()}',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1058,32 +1315,32 @@ Widget build(BuildContext context) {
             ),
             Spacer(),
             Container(
-            width: 120,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _selectedDates.isNotEmpty &&
-                      !_isSelectingStartDate &&
-                      widget.selectedAddress != null
-                  ? _validateAndProceed // Changed from widget.onNextPressed to _validateAndProceed
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF1E3A8A),
-                disabledBackgroundColor: Colors.grey.shade300,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+              width: 120,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _selectedDates.isNotEmpty &&
+                        !_isSelectingStartDate &&
+                        widget.selectedAddress != null
+                    ? _validateAndProceed
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF1E3A8A),
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: 0,
                 ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Next',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                child: Text(
+                  'Next',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-          )
+            )
           ],
         ),
       ),
