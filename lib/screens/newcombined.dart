@@ -17,6 +17,55 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
   String? selectedLaborSource;
   String? selectedDriver;
   String? selectedDelivery;
+  Widget _buildMinimalRadio(String label, String value) {
+    final isSelected = selectedLaborSource == value;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedLaborSource = value;
+          if (currentStep == 2) goToNextStep();
+        });
+      },
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            margin: const EdgeInsets.only(right: 12), // distance from text
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.grey, // gray border
+                width: 1,
+              ),
+            ),
+            child: isSelected
+                ? Center(
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black87, // selected inner dot
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: const Color.fromRGBO(118, 128, 144, 1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   final List<Map<String, String>> packages = [
     {
       "title": "1 Month - 1000 SR",
@@ -177,6 +226,7 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
               const SizedBox(height: 8),
             ],
           ),
+
         // Step 3: Labor Source
         if (currentStep >= 2)
           Column(
@@ -189,40 +239,10 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
                   fontSize: 18,
                 ),
               ),
-              const SizedBox(height: 8), // keep header spacing
-
-              RadioListTile<String>(
-                dense: true,
-                contentPadding: EdgeInsets.only(
-                    left: 0, right: 0), // remove horizontal padding
-                visualDensity:
-                    VisualDensity(horizontal: -4.0), // tighten horizontal space
-                value: "company",
-                groupValue: selectedLaborSource,
-                onChanged: (val) {
-                  selectedLaborSource = val;
-                  if (currentStep == 2) goToNextStep();
-                },
-                title: Text(
-                  "From Company",
-                  style: GoogleFonts.poppins(),
-                ),
-              ),
-              RadioListTile<String>(
-                dense: true,
-                contentPadding: EdgeInsets.only(left: 0, right: 0),
-                visualDensity: VisualDensity(horizontal: -4.0),
-                value: "app",
-                groupValue: selectedLaborSource,
-                onChanged: (val) {
-                  selectedLaborSource = val;
-                  if (currentStep == 2) goToNextStep();
-                },
-                title: Text(
-                  "From App",
-                  style: GoogleFonts.poppins(),
-                ),
-              ),
+              const SizedBox(height: 16),
+              _buildMinimalRadio("From Company", "company"),
+              const SizedBox(height: 12),
+              _buildMinimalRadio("From App", "app"),
             ],
           ),
         if (currentStep >= 3)
@@ -233,44 +253,43 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 8),
               ...List.generate(3, (index) {
-                String name = "Mohammed Yusuf $index";
+                String name = "Mr. Mohammad Yusuf";
+                String employeeNumber = "500735$index";
+                String driverValue = "$name - $employeeNumber";
+
+                final isSelected = selectedDriver == driverValue;
+                final isRTL = Directionality.of(context) == TextDirection.rtl;
+
                 return GestureDetector(
                   onTap: () {
-                    selectedDriver = name;
-                    if (currentStep == 3) goToNextStep();
+                    setState(() {
+                      selectedDriver = driverValue;
+                      if (currentStep == 3) goToNextStep();
+                    });
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 8),
+                    height: 90,
+                    margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: selectedDriver == name
-                          ? Colors.blue.shade50
-                          : Colors.white,
+                      color: isSelected ? Colors.blue.shade50 : Colors.white,
                       border: Border.all(
-                        color: selectedDriver == name
-                            ? Colors.blue
-                            : Colors.grey.shade300,
+                        color: isSelected ? Colors.blue : Colors.grey.shade300,
+                        width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
-                      children: [
-                        const CircleAvatar(radius: 22),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(name,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                        ),
-                        Radio<String>(
-                          value: name,
-                          groupValue: selectedDriver,
-                          onChanged: (val) {
-                            selectedDriver = val;
-                            if (currentStep == 3) goToNextStep();
-                          },
-                        )
-                      ],
+                      children: isRTL
+                          ? _buildDriverCardContent(
+                              isSelected: isSelected,
+                              name: name,
+                              employeeNumber: employeeNumber,
+                              imageOnRight: true)
+                          : _buildDriverCardContent(
+                              isSelected: isSelected,
+                              name: name,
+                              employeeNumber: employeeNumber,
+                              imageOnRight: false),
                     ),
                   ),
                 );
@@ -364,6 +383,87 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
     );
   }
 
+  List<Widget> _buildDriverCardContent({
+    required bool isSelected,
+    required String name,
+    required String employeeNumber,
+    required bool imageOnRight,
+  }) {
+    final profileImage = Container(
+      margin: const EdgeInsets.all(2), // 2px gap on all sides
+      width: 82,
+      height: 82,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        image: const DecorationImage(
+          image: AssetImage("assets/images/default_avatar.jpg"),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+
+    final textAndRadio = Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF003366),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Employee Number: $employeeNumber",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF768090),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? Colors.blue : Colors.grey.shade400,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return imageOnRight
+        ? [textAndRadio, profileImage]
+        : [profileImage, textAndRadio];
+  }
+
   Widget _textRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -384,21 +484,26 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: _buildHeader(),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: _buildSteps(),
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: _buildHeader(),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: _buildSteps(),
+              ),
             ),
-          ),
-          _buildFooterStepper(),
-        ],
+            _buildFooterStepper(),
+          ],
+        ),
       ),
     );
   }
@@ -410,67 +515,35 @@ Widget buildPackageCard({
   required bool isSelected,
   required VoidCallback onTap,
 }) {
-  return GestureDetector(
-    onTap: onTap,
-    child: IntrinsicHeight(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? const Color.fromARGB(255, 30, 73, 160)
-                : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // 🔵 Left area (always rendered for alignment)
-            Container(
-              width: 48,
-              decoration: BoxDecoration(
-                color:
-                    isSelected ? const Color(0xFF003366) : Colors.transparent,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  bottomLeft: Radius.circular(10),
-                ),
-              ),
-              child: Center(
-                child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white)
-                    : Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.grey.shade400,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-              ),
-            ),
+  return Builder(
+    builder: (context) {
+      final isRTL = Directionality.of(context) == TextDirection.rtl;
 
-            // 📦 Right content
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.blue.shade50 : Colors.white,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
-                  ),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: Row(
-                  children: [
-                    // Text content
-                    Expanded(
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color:
+                    isSelected ? const Color(0xFF003366) : Colors.grey.shade300,
+                width: isSelected ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              color: isSelected ? Colors.blue.shade50 : Colors.white,
+            ),
+            child: Directionality(
+              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              child: Row(
+                children: [
+                  _buildSelectionIndicator(isSelected, isRTL),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: isRTL
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
                         children: [
                           Text(
                             title,
@@ -482,6 +555,9 @@ Widget buildPackageCard({
                           const SizedBox(height: 4),
                           Text(
                             subtitle,
+                            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                            textDirection:
+                                isRTL ? TextDirection.rtl : TextDirection.ltr,
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.grey,
@@ -490,14 +566,40 @@ Widget buildPackageCard({
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.grey),
-                  ],
+                  ),
+                ],
+              ),
+            )),
+      );
+    },
+  );
+}
+
+Widget _buildSelectionIndicator(bool isSelected, bool isRTL) {
+  return Container(
+    width: 48,
+    height: 100,
+    decoration: BoxDecoration(
+      color: isSelected ? const Color(0xFF003366) : Colors.transparent,
+      borderRadius: BorderRadius.horizontal(
+        right: isRTL ? Radius.circular(10) : Radius.zero,
+        left: isRTL ? Radius.zero : Radius.circular(10),
+      ),
+    ),
+    child: Center(
+      child: isSelected
+          ? const Icon(Icons.check, color: Colors.white)
+          : Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.grey.shade400,
+                  width: 2,
                 ),
               ),
             ),
-          ],
-        ),
-      ),
     ),
   );
 }
