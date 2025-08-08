@@ -3,6 +3,7 @@ import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/auth_provider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/screens/combined.dart';
+import 'package:fawran/screens/newcombined.dart';
 import 'package:fawran/services/api_service.dart';
 import 'package:fawran/steps/address_selection_step.dart';
 import 'package:flutter/material.dart';
@@ -38,87 +39,86 @@ class _AddressSelectionScreenState
     fetchAddresses();
   }
 
-Future<void> fetchAddresses() async {
-  final storage = FlutterSecureStorage();
-  final userId = await storage.read(key: 'user_id');
+  Future<void> fetchAddresses() async {
+    final storage = FlutterSecureStorage();
+    final userId = await storage.read(key: 'user_id');
 
-  if (userId == null) {
+    if (userId == null) {
+      setState(() {
+        addressError = 'User not authenticated. Please log in again.';
+        isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
-      addressError = 'User not authenticated. Please log in again.';
-      isLoading = false;
+      isLoading = true;
+      addressError = null;
     });
-    return;
-  }
 
-  setState(() {
-    isLoading = true;
-    addressError = null;
-  });
+    try {
+      // ✅ Use the API service
+      final data = await ApiService.fetchCustomerAddresses(userId: userId);
 
-  try {
-    // ✅ Use the API service
-    final data = await ApiService.fetchCustomerAddresses(userId:userId);
-
-    // Parse data into Address list
-    final List<Address> fetchedAddresses = data.map((item) {
-      return Address(
-        cardText: item['card_text']?.toString() ?? 'Address',
-        addressId: item['address_id'] ?? 0,
-        cityCode: int.parse(item['city_code']),
-        districtCode: item['district_code']?.toString() ?? '',
-      );
-    }).toList();
-
-    final currentSelected = ref.read(selectedAddressProvider);
-    String? currentText = currentSelected?.cardText;
-    int? currentId = currentSelected?.addressId;
-
-    Address? addressToSelect;
-
-    if (currentId != null) {
-      try {
-        addressToSelect = fetchedAddresses.firstWhere(
-          (addr) => addr.addressId == currentId,
+      // Parse data into Address list
+      final List<Address> fetchedAddresses = data.map((item) {
+        return Address(
+          cardText: item['card_text']?.toString() ?? 'Address',
+          addressId: item['address_id'] ?? 0,
+          cityCode: int.parse(item['city_code']),
+          districtCode: item['district_code']?.toString() ?? '',
         );
-      } catch (_) {}
+      }).toList();
+
+      final currentSelected = ref.read(selectedAddressProvider);
+      String? currentText = currentSelected?.cardText;
+      int? currentId = currentSelected?.addressId;
+
+      Address? addressToSelect;
+
+      if (currentId != null) {
+        try {
+          addressToSelect = fetchedAddresses.firstWhere(
+            (addr) => addr.addressId == currentId,
+          );
+        } catch (_) {}
+      }
+
+      if (addressToSelect == null && currentText != null) {
+        try {
+          addressToSelect = fetchedAddresses.firstWhere(
+            (addr) => addr.cardText.toLowerCase() == currentText.toLowerCase(),
+          );
+        } catch (_) {}
+      }
+
+      addressToSelect ??=
+          fetchedAddresses.isNotEmpty ? fetchedAddresses.first : null;
+
+      setState(() {
+        addresses = fetchedAddresses
+            .map((a) => a.copyWith(
+                isSelected: a.addressId == addressToSelect?.addressId))
+            .toList();
+        _selectedAddress = addressToSelect?.addressId;
+        isLoading = false;
+      });
+
+      if (addressToSelect != null) {
+        ref.read(selectedAddressProvider.notifier).state = addressToSelect;
+      } else {
+        ref.read(selectedAddressProvider.notifier).state = null;
+      }
+    } catch (e) {
+      setState(() {
+        addressError = 'Error fetching addresses: $e';
+        isLoading = false;
+      });
     }
-
-    if (addressToSelect == null && currentText != null) {
-      try {
-        addressToSelect = fetchedAddresses.firstWhere(
-          (addr) => addr.cardText.toLowerCase() == currentText.toLowerCase(),
-        );
-      } catch (_) {}
-    }
-
-    addressToSelect ??=
-        fetchedAddresses.isNotEmpty ? fetchedAddresses.first : null;
-
-    setState(() {
-      addresses = fetchedAddresses
-          .map((a) => a.copyWith(
-              isSelected: a.addressId == addressToSelect?.addressId))
-          .toList();
-      _selectedAddress = addressToSelect?.addressId;
-      isLoading = false;
-    });
-
-    if (addressToSelect != null) {
-      ref.read(selectedAddressProvider.notifier).state = addressToSelect;
-    } else {
-      ref.read(selectedAddressProvider.notifier).state = null;
-    }
-  } catch (e) {
-    setState(() {
-      addressError = 'Error fetching addresses: $e';
-      isLoading = false;
-    });
   }
-}
-
 
   void _addNewAddress() async {
-  final userId = await _storage.read(key: 'user_id') ?? '';
+    final userId = await _storage.read(key: 'user_id') ?? '';
 
     final result = await Navigator.push(
       context,
@@ -260,8 +260,7 @@ Future<void> fetchAddresses() async {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            CombinedOrderScreen(header: widget.header),
+                        builder: (context) => PrivateDriverScreen(),
                       ),
                     );
                   },

@@ -464,4 +464,60 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notProvided => 'غير مقدم';
+
+  @override
+  String get phone => 'هاتف';
+
+  @override
+  String get welcomeBack => 'مرحبًا بعودتك';
+
+  @override
+  String get getStarted => 'ابدأ';
+
+  @override
+  String get enterPhoneForOTP => 'أدخل رقم هاتفك لتلقي رمز التحقق';
+
+  @override
+  String get enterPhoneNumber => 'أدخل رقم هاتفك';
+
+  @override
+  String get sendOTP => 'إرسال رمز التحقق';
+
+  @override
+  String get resetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get enterOTPSentTo => 'أدخل رمز التحقق المرسل إلى';
+
+  @override
+  String get otp => 'رمز التحقق';
+
+  @override
+  String get enterResetOTP => 'أدخل رمز التحقق';
+
+  @override
+  String get newPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get enterNewPassword => 'أدخل كلمة المرور الجديدة';
+
+  @override
+  String get confirmNewPassword => 'تأكيد كلمة المرور الجديدة';
+
+  @override
+  String get passwordsDoNotMatch => 'كلمتا المرور غير متطابقتين';
+
+  @override
+  String get unknownResponse => 'استجابة غير معروفة';
+
+  @override
+  String get failedSendOTP =>
+      'فشل في إرسال رمز التحقق. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get failedResetPassword =>
+      'فشل في إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get errorOccurred => 'حدث خطأ. يرجى المحاولة مرة أخرى.';
 }

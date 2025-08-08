@@ -34,6 +34,7 @@ dependencies:
   flutter_svg: ^2.0.9
   checkout_flutter: ^1.0.0
   confetti: ^0.7.0
+  google_fonts: ^4.0.3
 
 
 dev_dependencies:
