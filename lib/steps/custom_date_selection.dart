@@ -942,8 +942,10 @@ Widget _buildDaySelectionWidget() {
   }
 
   double _calculateTotalPrice() {
-    return (_selectedDates.length * widget.pricePerVisit) + widget.vatAmount;
-  }
+  print("vatAmount inside _calculateTotalPrice = ${widget.vatAmount}");
+  double totalPrice = (_selectedDates.length * widget.pricePerVisit) + widget.vatAmount;
+  return double.parse(totalPrice.toStringAsFixed(0));
+}
 
   Widget _buildContractInfo() {
     String statusText = _isSelectingStartDate 

@@ -18,6 +18,8 @@ class PackageModel {
   final double vatAmount; // Changed to double to match JSON
   final double finalPrice;
   final int? noOfWeeks; // Added missing field, nullable
+  final int? promotionId; // Add this field
+final String? promotionCode; // Add this field
 
   static Map<String, List<dynamic>> _countryGroupsCache = {};
   static Map<String, String> _groupCodeToNameCache = {};
@@ -41,6 +43,8 @@ class PackageModel {
     required this.vatAmount,
     required this.finalPrice,
     this.noOfWeeks,
+    this.promotionId,
+  this.promotionCode,
   });
 
   factory PackageModel.fromJson(Map<String, dynamic> json) {
@@ -64,6 +68,8 @@ class PackageModel {
       noOfMonth: _parseInt(json['no_of_month']),
       // Get hour_price directly from JSON instead of calculating
       hourPrice: _parseDouble(json['hour_price']),
+      promotionId: json['promotion_id'] != null ? _parseInt(json['promotion_id']) : null,
+    promotionCode: json['promotion_code']?.toString(),
       // Default values for fields not present in JSON but required by constructor
  // Set appropriate default or get from another source  
     );
@@ -246,6 +252,8 @@ class PackageModel {
       'no_of_weeks': noOfWeeks,
       'no_of_month': noOfMonth,
       'hour_price': hourPrice,
+      'promotion_id': promotionId,
+    'promotion_code': promotionCode,
     };
   }
 
@@ -271,6 +279,8 @@ class PackageModel {
     double? vatAmount,
     double? finalPrice,
     int? noOfWeeks,
+    int? promotionId,
+  String? promotionCode,
   }) {
     return PackageModel(
       groupCode: groupCode ?? this.groupCode,
@@ -291,6 +301,8 @@ class PackageModel {
       vatAmount: vatAmount ?? this.vatAmount,
       finalPrice: finalPrice ?? this.finalPrice,
       noOfWeeks: noOfWeeks ?? this.noOfWeeks,
+      promotionId: promotionId ?? this.promotionId,
+    promotionCode: promotionCode ?? this.promotionCode,
     );
   }
 

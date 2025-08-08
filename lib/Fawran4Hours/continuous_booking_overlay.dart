@@ -102,6 +102,8 @@ class _ContinuousBookingOverlayState
     final _storage = FlutterSecureStorage();
 bool _isCompletingPurchase = false;
 
+double? _finalPriceFromDateSelection;
+
 
   int currentStep = 0;
   // Modified: Dynamic total steps based on booking type
@@ -340,6 +342,11 @@ Future<void> _fetchAddresses() async {
       selectedDays = newSelectedDays;
     });
   }
+  void _updateFinalPrice(double price) {
+  setState(() {
+    _finalPriceFromDateSelection = price;
+  });
+}
 
   // Modified: Handle step navigation based on booking type
   void _nextStep() {
@@ -893,7 +900,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
   // Use the total price from ServiceDetailsStep for custom booking
   final totalPrice = widget.isCustomBooking
       ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
-      : widget.package!.finalPrice;
+      : (_finalPriceFromDateSelection ?? widget.package!.finalPrice); 
 
   final originalPrice = widget.isCustomBooking
       ? _calculateOriginalPrice()
@@ -1222,6 +1229,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                       package: widget.package,
                                       professionId: widget.professionId,
                                       onWorkerValidationSuccess: _onWorkerValidationSuccess,
+                                      onPriceChanged: _updateFinalPrice,
                                     ),
                             ],
                           ),
