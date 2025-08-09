@@ -1302,9 +1302,7 @@ Widget build(BuildContext context) {
                 Text(
                   _isCouponApplied && _discountedPrice > 0
                       ? 'SAR ${_discountedPrice.toInt()}'
-                      : _couponController.text.trim().isEmpty
-                          ? 'SAR ${(widget.package?.originalPrice ?? widget.totalPrice).toInt()}'
-                          : widget.package?.formattedFinalPrice ?? 'SAR ${widget.totalPrice.toInt()}',
+                      : 'SAR ${(widget.package?.originalPrice ?? widget.totalPrice).toInt()}',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

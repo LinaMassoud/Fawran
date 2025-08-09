@@ -74,12 +74,30 @@ class ApiService {
         final result = safeJsonDecode(response.body);
         print('✅ [SIGNUP] Parsed result: $result');
         return result;
+      } else if (response.statusCode == 400) {
+        // Handle validation errors (400 Bad Request)
+        final result = safeJsonDecode(response.body);
+        print('⚠️ [SIGNUP] Validation error: $result');
+        return result;
+      } else if (response.statusCode == 422) {
+        // Handle unprocessable entity errors
+        final result = safeJsonDecode(response.body);
+        print('⚠️ [SIGNUP] Unprocessable entity: $result');
+        return result;
+      } else if (response.statusCode == 500) {
+        // Handle server errors
+        final result = safeJsonDecode(response.body);
+        print('💥 [SIGNUP] Server error: $result');
+        return result ?? {'error': 'Internal server error. Please try again later.'};
       } else {
-        return null;
+        // Handle other status codes
+        final result = safeJsonDecode(response.body);
+        print('❌ [SIGNUP] Unexpected status code: ${response.statusCode}');
+        return result ?? {'error': 'Sign up failed. Please try again.'};
       }
     } catch (ex) {
       print('🧨 [SIGNUP] Exception occurred: $ex');
-      return null;
+      return {'error': 'Network error. Please check your connection and try again.'};
     }
   }
 
@@ -1289,7 +1307,7 @@ Future<Map<String, dynamic>?> resetPasswordWithOTP({
     print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
     print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
 
-    if (response.statusCode == 200 || response.statusCode == 404) {
+    if (response.statusCode == 200 || response.statusCode == 404 || response.statusCode == 400) {
       final responseData = json.decode(response.body);
       return responseData;
     } else {

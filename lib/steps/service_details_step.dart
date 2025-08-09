@@ -133,10 +133,12 @@ bool _isCouponValid = false;
 double _originalFinalPrice = 0.0; // Store original price before coupon
 double _originalPricePerVisit = 0.0; // Store original price per visit before coupon
 TextEditingController _couponController = TextEditingController();
+Address? _previousAddress;
 
   @override
   void initState() {
     super.initState();
+    _previousAddress = widget.selectedAddress;
     if (widget.isCustomBooking) {
       _loadCountryGroups();
       _loadServiceShifts();
@@ -153,7 +155,64 @@ void dispose() {
 }
 
 
+@override
+void didUpdateWidget(ServiceDetailsStep oldWidget) {
+  super.didUpdateWidget(oldWidget);
+  
+  // Check if the selected address has changed
+  if (widget.selectedAddress != _previousAddress) {
+    // Schedule the coupon reset for after the current build cycle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _resetCouponOnAddressChange();
+      }
+    });
+    
+    // Update the previous address reference
+    _previousAddress = widget.selectedAddress;
+  }
+}
 
+// 3. Add this method to reset coupon when address changes
+void _resetCouponOnAddressChange() {
+  if (_isCouponApplied || _couponCode.isNotEmpty) {
+    print('🔄 [ADDRESS CHANGE] Resetting coupon due to address change');
+    
+    setState(() {
+      _isCouponApplied = false;
+      _isCouponValid = false;
+      _couponMessage = '';
+      _couponCode = '';
+      _couponController.clear();
+      
+      // Restore original prices if they were stored
+      if (_originalFinalPrice > 0) {
+        _apiFinalPricePerVisit = _originalFinalPrice;
+        _apiPricePerVisit = _originalPricePerVisit;
+        _originalFinalPrice = 0.0;
+        _originalPricePerVisit = 0.0;
+      }
+    });
+
+    // Recalculate total price with original prices if dates are selected
+    if (_internalSelectedDates.isNotEmpty) {
+      double originalTotalPrice = _internalSelectedDates.length * _apiFinalPricePerVisit;
+      setState(() {
+        _calculatedTotalPrice = originalTotalPrice;
+      });
+
+      // Update parent with original total price
+      if (widget.onTotalPriceChanged != null) {
+        widget.onTotalPriceChanged!(originalTotalPrice);
+      }
+    }
+
+    // Update parent callbacks with original prices
+    if (widget.onPricePerVisitChanged != null) {
+      widget.onPricePerVisitChanged!(_apiPricePerVisit);
+    }
+  }
+}
 Future<void> _loadContractDurations() async {
     setState(() {
       isLoadingContractDurations = true;

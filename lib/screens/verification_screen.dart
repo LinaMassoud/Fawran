@@ -7,6 +7,7 @@ import 'package:fawran/widgets/background_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class VerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -104,7 +105,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
 
     return BackgroundContainer(
       showBackButton: true,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.35,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.25,
       topRightWidget: GestureDetector(
         onTap: () {
           final newLocale = isArabic ? const Locale('en') : const Locale('ar');
@@ -112,10 +113,11 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
         },
         child: Container(
           padding: const EdgeInsets.all(8),
-          child: const Icon(
-            Icons.language,
-            color: Colors.white,
-            size: 20,
+          child: SvgPicture.asset(
+            'assets/icons/language.svg',
+            color: const Color(0xFFFFA200),
+            width: 23,
+            height: 23,
           ),
         ),
       ),

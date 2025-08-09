@@ -84,8 +84,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
     required String nationalId,
   }) async {
-    state =
-        state.copyWith(isLoading: true, errorMessage: '', isSignedUp: false);
+    state = state.copyWith(isLoading: true, errorMessage: '', isSignedUp: false);
 
     final response = await _apiService.signUp(
         userName: userName,
@@ -97,16 +96,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
         nationalId: nationalId);
 
-    if (response != null && response['error'] != null) {
-      state = state.copyWith(
-          isLoading: false, errorMessage: response['error'], isSignedUp: false);
-    } else if (response != null && response['error'] == null) {
-      state = state.copyWith(isLoading: false, isSignedUp: true);
-      final userId = response['user_id'];
-      _setUserId(userId);
+    if (response != null) {
+      // Check if response contains an error
+      if (response['error'] != null) {
+        state = state.copyWith(
+            isLoading: false, 
+            errorMessage: response['error'], 
+            isSignedUp: false);
+      } 
+      // Check for successful signup (no error and has user_id)
+      else if (response['user_id'] != null) {
+        state = state.copyWith(isLoading: false, isSignedUp: true);
+        final userId = response['user_id'];
+        _setUserId(userId);
+      }
+      // Handle unexpected response format
+      else {
+        state = state.copyWith(
+            isLoading: false, 
+            errorMessage: 'Sign up failed. Please try again.',
+            isSignedUp: false);
+      }
     } else {
+      // Handle null response (network error or exception)
       state = state.copyWith(
-          isLoading: false, errorMessage: response?['error']??  'Sign up failed. Please try again.');
+          isLoading: false, 
+          errorMessage: 'Sign up failed. Please try again.',
+          isSignedUp: false);
     }
   }
 
@@ -117,10 +133,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state =
         state.copyWith(isLoading: true, errorMessage: '', isSignedUp: false);
-
+        print("_apiService.login ");
     final result =
         await _apiService.login(phoneNumber: phoneNumber, password: password);
-
+      print("result = $result");
     if (result != null) {
       // Check if the response contains an error message
       if (result['error'] != null) {
@@ -174,12 +190,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       // If the response is unexpected (i.e., no token or refresh_token)
       else {
+        print("response is unexpected");
         state = state.copyWith(
           isLoading: false,
           errorMessage: 'Login failed. Please check your credentials.',
         );
       }
     } else {
+      print("Login Failed!!");
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Login failed. Please try again.',

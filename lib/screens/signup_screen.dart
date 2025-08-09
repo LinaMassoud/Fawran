@@ -73,8 +73,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final isArabic = locale.languageCode == 'ar';
 
     return BackgroundContainer(
-      showBackButton: false,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.17,
+      showBackButton: true,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.12,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       topRightWidget: GestureDetector(
         onTap: () {
@@ -102,6 +102,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 child: Text(
                   loc.getStarted,
                   style: const TextStyle(
+                    fontFamily: 'Poppins',
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF10295C),
@@ -385,6 +386,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
+        floatingLabelBehavior: FloatingLabelBehavior.always,
         prefixIcon: iconPath != null
             ? Padding(
                 padding: const EdgeInsets.all(16.0),
