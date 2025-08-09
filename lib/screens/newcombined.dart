@@ -1,14 +1,27 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert';
 
-class PrivateDriverScreen extends StatefulWidget {
+import 'package:fawran/models/Nationality.dart';
+import 'package:fawran/models/domestic_package_model.dart';
+import 'package:fawran/providers/address_provider.dart';
+import 'package:fawran/providers/labour_provider.dart';
+import 'package:fawran/providers/nationality_provider.dart';
+import 'package:fawran/providers/package_provider.dart';
+import 'package:fawran/services/api_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+
+class PrivateDriverScreen extends ConsumerStatefulWidget {
   const PrivateDriverScreen({super.key});
 
   @override
-  State<PrivateDriverScreen> createState() => _PrivateDriverScreenState();
+  ConsumerState<PrivateDriverScreen> createState() =>
+      _PrivateDriverScreenState();
 }
 
-class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
+class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int currentStep = 0;
   final int totalSteps = 6;
 
@@ -17,29 +30,406 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
   String? selectedLaborSource;
   String? selectedDriver;
   String? selectedDelivery;
-  Widget _buildMinimalRadio(String label, String value) {
+  int? filterAge;
+  String? filterSocialStatus;
+  int? filterExperience;
+
+  int? selectedPackageIndex;
+  int? selectedLaborId;
+  String? pickupOption; // "pickup" or "delivery"
+  bool deliveryAvailable = false;
+  bool loadingDeliveryCheck = false;
+  bool isLoading = false;
+  int? minAge;
+  int? minExperience;
+  String? selectedStatus;
+
+  Widget _buildSteps() {
+    final nationalityAsync = ref.watch(nationalitiesProvider);
+    final packagesAsync = ref.watch(packageProvider);
+    final selectedPackage = ref.watch(
+        selectedPackageProvider); // assuming this is how you track selection
+    final laborersAsync = ref.watch(laborersProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Step 1: Nationality
+        if (currentStep >= 0)
+          // Assuming you have:
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Choose Nationality",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 8),
+              nationalityAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Text('Error loading nationalities'),
+                data: (nationalities) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: DropdownButtonFormField<String>(
+                      value: selectedNationality,
+                      hint: const Text("Select nationality"),
+                      decoration:
+                          const InputDecoration(border: InputBorder.none),
+                      items: nationalities.map<DropdownMenuItem<String>>((nat) {
+                        return DropdownMenuItem(
+                          value: nat?.id.toString(),
+                          child: Text(nat != null ? nat.name : ""),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        ref.read(selectedNationalityProvider.notifier).state =
+                            int.parse(val != null ? val : '0');
+                        checkCarAvailability();
+                        setState(() {
+                          selectedNationality = val;
+                        });
+                        if (currentStep == 0) goToNextStep();
+                      },
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        // Step 2: Package
+        if (currentStep >= 1)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Choose Package",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 8),
+              packagesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Text("Failed to load packages"),
+                data: (packages) {
+                  return Column(
+                    children:
+                        packages.map<Widget>((DomesticPackageModel package) {
+                      final title =
+                          "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} Riyal";
+
+                      final subtitle = [
+                        "Contract: ${package.contractAmount.toStringAsFixed(2)} Riyal",
+                        "VAT: ${package.vatAmount.toStringAsFixed(2)} Riyal",
+                        "Duration: ${package.contractDays} days",
+                      ].join(" • ");
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: buildPackageCard(
+                          title: title,
+                          subtitle: subtitle,
+                          isSelected:
+                              selectedPackage?.packageId == package.packageId,
+                          onTap: () {
+                            ref.read(selectedPackageProvider.notifier).state =
+                                package;
+                            if (currentStep == 1) goToNextStep();
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        // Step 3: Labor Source
+        if (currentStep >= 2)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Choose Labor Source",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // From Company
+              _buildMinimalRadio(
+                label: "From Company", // ✅ required
+                value: "company", // ✅ required
+              ),
+
+              _buildMinimalRadio(
+                label: "From App",
+                value: "app",
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+
+        if (currentStep >= 3 && selectedLaborSource == 'app')
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Choose Private Driver",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  GestureDetector(
+                    onTap: _openFilterDialog, // your filter method
+                    child: SvgPicture.asset(
+                      "assets/images/filter.svg",
+                      height: 24,
+                      width: 24,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Handle async states
+              laborersAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (err, stack) => Text(
+                  'Error: $err',
+                  style: const TextStyle(color: Colors.red),
+                ),
+                data: (laborers) {
+                  if (laborers.isEmpty) {
+                    return const Text("No drivers found");
+                  }
+
+                  final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+                  return Column(
+                    children: laborers.map((laborer) {
+                      final driverValue =
+                          "${laborer.employeeName} - ${laborer.employeeNumber}";
+                      final isSelected = selectedDriver == driverValue;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedDriver = driverValue;
+                            if (currentStep == 3) goToNextStep();
+                          });
+                        },
+                        child: Container(
+                          height: 90,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected ? Colors.blue.shade50 : Colors.white,
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.blue
+                                  : Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: isRTL
+                                ? _buildDriverCardContent(
+                                    isSelected: isSelected,
+                                    name: laborer.employeeName,
+                                    employeeNumber:
+                                        laborer.employeeNumber.toString(),
+                                    imageOnRight: true,
+                                  )
+                                : _buildDriverCardContent(
+                                    isSelected: isSelected,
+                                    name: laborer.employeeName,
+                                    employeeNumber:
+                                        laborer.employeeNumber.toString(),
+                                    imageOnRight: false,
+                                  ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+            ],
+          ),
+        // Step 5: Delivery
+        if (currentStep >= 4)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Pickup or Delivery",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              RadioListTile<String>(
+                title: const Text("Pick up laborer yourself"),
+                value: "pickup",
+                groupValue: pickupOption,
+                onChanged: (val) {
+                  setState(() => pickupOption = val);
+                  if (currentStep == 4) {
+                    goToNextStep();
+                  } // extra statement
+                  // anotherAction();
+                },
+              ),
+              RadioListTile<String>(
+                title: const Text("Deliver laborer to home"),
+                value: "delivery",
+                groupValue: pickupOption,
+                onChanged: deliveryAvailable
+                    ? (val) {
+                        setState(() => pickupOption = val);
+                        if (currentStep == 4)
+                          goToNextStep(); // another statement
+                      }
+                    : null,
+                subtitle: !deliveryAvailable
+                    ? const Text("Delivery option is not available currently.",
+                        style: TextStyle(color: Colors.red))
+                    : null,
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+
+        // Step 6: Agreement
+        if (currentStep == 5)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Agreement",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade100, Colors.white],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black12, blurRadius: 4),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Show driver only if labor source is app
+                    if (selectedLaborSource == 'app')
+                      _textRow(
+                          "Private driver: ", selectedDriver ?? "Not selected"),
+
+                    // Nationality: (show actual selectedNationality if available)
+                    _textRow(
+                        "Nationality: ", selectedNationality ?? "Not selected"),
+
+                    // Package name
+                    _textRow("Package: ",
+                        selectedPackage?.packageName ?? "Not selected"),
+
+                    // Price = contractAmount + vatAmount + delivery fee if delivery
+                    _textRow(
+                      "Price: ",
+                      () {
+                        if (selectedPackage == null) return "N/A";
+
+                        double basePrice = selectedPackage.contractAmount +
+                            selectedPackage.vatAmount;
+                        if (pickupOption == "delivery") {
+                          basePrice += 100; // Add delivery fee
+                        }
+                        return "${basePrice.toStringAsFixed(2)} SR";
+                      }(),
+                    ),
+
+                    // Delivery method text
+                    _textRow(
+                      "Delivery: ",
+                      pickupOption == "pickup"
+                          ? "Pick up laborer yourself"
+                          : pickupOption == "delivery"
+                              ? "Deliver laborer to home (100 SR fee)"
+                              : "Not selected",
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Submit action
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[900],
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: const Text("Submit Order"),
+                ),
+              )
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMinimalRadio({
+    required String label,
+    required String value,
+  }) {
     final isSelected = selectedLaborSource == value;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedLaborSource = value;
-          if (currentStep == 2) goToNextStep();
-        });
-      },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              selectedLaborSource = value;
+              if (value == "company") {
+                currentStep = 4;
+              } else if (value == "app") {
+                currentStep = 3;
+              }
+            });
+          },
+          child: Container(
             width: 20,
             height: 20,
-            margin: const EdgeInsets.only(right: 12), // distance from text
+            margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.grey, // gray border
-                width: 1,
-              ),
+              border: Border.all(color: Colors.grey, width: 1),
             ),
             child: isSelected
                 ? Center(
@@ -48,22 +438,41 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
                       height: 10,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.black87, // selected inner dot
+                        color: Colors.black87,
                       ),
                     ),
                   )
                 : null,
           ),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: const Color.fromRGBO(118, 128, 144, 1),
-            ),
+        ),
+        // The label Text is NOT wrapped in GestureDetector so tapping it won't trigger onTap
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            color: const Color.fromRGBO(118, 128, 144, 1),
           ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  void _handleStepNavigation(String value) {
+    if (value == "company") {
+      // Skip to step 5 only if we're on step 4
+      if (currentStep == 3) {
+        setState(() {
+          currentStep = 4; // step 5 index if zero-based
+        });
+      }
+    } else if (value == "app") {
+      // Go back to step 5 only if we're past it
+      if (currentStep >= 4) {
+        setState(() {
+          currentStep = 3; // step 4 index if zero-based
+        });
+      }
+    }
   }
 
   final List<Map<String, String>> packages = [
@@ -149,237 +558,105 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
     );
   }
 
-  Widget _buildSteps() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Step 1: Nationality
-        if (currentStep >= 0)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Choose Nationality",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: DropdownButtonFormField<String>(
-                  value: selectedNationality,
-                  hint: const Text("Select nationality"),
-                  decoration: const InputDecoration(border: InputBorder.none),
-                  items: const [
-                    DropdownMenuItem(value: "Indian", child: Text("Indian")),
-                    DropdownMenuItem(value: "Nepali", child: Text("Nepali")),
-                  ],
-                  onChanged: (val) {
-                    selectedNationality = val;
-                    if (currentStep == 0) goToNextStep();
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+  void _openFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        int? selectedAge = filterAge;
+        String? selectedSocialStatus = filterSocialStatus;
+        int? selectedExperience = filterExperience;
 
-        // Step 2: Package
-        if (currentStep >= 1)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Choose Package",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Column(
-                children: packages.map((package) {
-                  final title = package['title']!;
-                  final subtitle = package['subtitle']!;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: buildPackageCard(
-                      title: title,
-                      subtitle: subtitle,
-                      isSelected: selectedPackage == title,
-                      onTap: () {
-                        setState(() {
-                          selectedPackage = title;
-                        });
-                        if (currentStep == 1) goToNextStep();
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Filter Drivers",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                  const SizedBox(height: 16),
 
-        // Step 3: Labor Source
-        if (currentStep >= 2)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Choose Labor Source",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildMinimalRadio("From Company", "company"),
-              const SizedBox(height: 12),
-              _buildMinimalRadio("From App", "app"),
-            ],
-          ),
-        if (currentStep >= 3)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Choose Private Driver",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 8),
-              ...List.generate(3, (index) {
-                String name = "Mr. Mohammad Yusuf";
-                String employeeNumber = "500735$index";
-                String driverValue = "$name - $employeeNumber";
+                  // Age filter
+                  DropdownButtonFormField<int>(
+                    decoration: InputDecoration(labelText: "Age"),
+                    value: selectedAge,
+                    items: [20, 30, 40, 50, 60]
+                        .map((age) =>
+                            DropdownMenuItem(value: age, child: Text("$age+")))
+                        .toList(),
+                    onChanged: (value) {
+                      setModalState(() => selectedAge = value);
+                    },
+                    isExpanded: true,
+                  ),
+                  const SizedBox(height: 12),
 
-                final isSelected = selectedDriver == driverValue;
-                final isRTL = Directionality.of(context) == TextDirection.rtl;
+                  // Social status filter
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(labelText: "Social Status"),
+                    value: selectedSocialStatus,
+                    items: ["Single", "Married", "Divorced", "Widowed"]
+                        .map((status) => DropdownMenuItem(
+                            value: status, child: Text(status)))
+                        .toList(),
+                    onChanged: (value) {
+                      setModalState(() => selectedSocialStatus = value);
+                    },
+                    isExpanded: true,
+                  ),
+                  const SizedBox(height: 12),
 
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedDriver = driverValue;
-                      if (currentStep == 3) goToNextStep();
-                    });
-                  },
-                  child: Container(
-                    height: 90,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.blue.shade50 : Colors.white,
-                      border: Border.all(
-                        color: isSelected ? Colors.blue : Colors.grey.shade300,
-                        width: 1.5,
+                  // Experience filter
+                  DropdownButtonFormField<int>(
+                    decoration:
+                        InputDecoration(labelText: "Experience (years)"),
+                    value: selectedExperience,
+                    items: [1, 3, 5, 10]
+                        .map((exp) => DropdownMenuItem(
+                            value: exp, child: Text("$exp+ years")))
+                        .toList(),
+                    onChanged: (value) {
+                      setModalState(() => selectedExperience = value);
+                    },
+                    isExpanded: true,
+                  ),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            filterAge = null;
+                            filterSocialStatus = null;
+                            filterExperience = null;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Text("Clear"),
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: isRTL
-                          ? _buildDriverCardContent(
-                              isSelected: isSelected,
-                              name: name,
-                              employeeNumber: employeeNumber,
-                              imageOnRight: true)
-                          : _buildDriverCardContent(
-                              isSelected: isSelected,
-                              name: name,
-                              employeeNumber: employeeNumber,
-                              imageOnRight: false),
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 24),
-            ],
-          ),
-
-        // Step 5: Delivery
-        if (currentStep >= 4)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Pickup or Delivery",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              RadioListTile<String>(
-                value: "pickup",
-                groupValue: selectedDelivery,
-                onChanged: (val) {
-                  selectedDelivery = val;
-                  if (currentStep == 4) goToNextStep();
-                },
-                title: const Text("Pick up Laborer yourself"),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            filterAge = selectedAge;
+                            filterSocialStatus = selectedSocialStatus;
+                            filterExperience = selectedExperience;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Text("Apply"),
+                      ),
+                    ],
+                  )
+                ],
               ),
-              RadioListTile<String>(
-                value: "delivery",
-                groupValue: selectedDelivery,
-                onChanged: null,
-                subtitle: const Text(
-                  "Delivery option is not available currently",
-                  style: TextStyle(color: Colors.red),
-                ),
-                title: const Text("Deliver Laborer to Home"),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-
-        // Step 6: Agreement
-        if (currentStep == 5)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Agreement",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade100, Colors.white],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, blurRadius: 4),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _textRow("Private driver: ", selectedDriver ?? ""),
-                    _textRow("Nationality: ", selectedNationality ?? ""),
-                    _textRow("Package: ", selectedPackage ?? ""),
-                    _textRow("Price: ", "1000 SR"),
-                    _textRow("Delivery: ", selectedDelivery ?? ""),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Submit action
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[900],
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: const Text("Submit Order"),
-                ),
-              )
-            ],
-          ),
-      ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -482,9 +759,36 @@ class _PrivateDriverScreenState extends State<PrivateDriverScreen> {
     );
   }
 
+  Future<void> checkCarAvailability() async {
+    final selectedAddress = ref.watch(selectedAddressProvider);
+    setState(() {
+      loadingDeliveryCheck = true;
+      deliveryAvailable = false;
+      pickupOption = null;
+    });
+
+    try {
+      // Example POST or GET depending on your API design
+      final available =
+          await ApiService.checkCarAvailability(selectedAddress?.cityCode);
+      setState(() {
+        deliveryAvailable = available;
+      });
+    } catch (e) {
+      setState(() {
+        deliveryAvailable = false;
+      });
+    } finally {
+      setState(() {
+        loadingDeliveryCheck = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final nationalityAsync = ref.watch(nationalitiesProvider);
 
     return Directionality(
       textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
@@ -534,40 +838,45 @@ Widget buildPackageCard({
             ),
             child: Directionality(
               textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-              child: Row(
-                children: [
-                  _buildSelectionIndicator(isSelected, isRTL),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: isRTL
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+              child: IntrinsicHeight(
+                // <<<<< Wrap the Row with IntrinsicHeight
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSelectionIndicator(isSelected, isRTL),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: isRTL
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            textAlign: isRTL ? TextAlign.right : TextAlign.left,
-                            textDirection:
-                                isRTL ? TextDirection.rtl : TextDirection.ltr,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey,
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle,
+                              textAlign:
+                                  isRTL ? TextAlign.right : TextAlign.left,
+                              textDirection:
+                                  isRTL ? TextDirection.rtl : TextDirection.ltr,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             )),
       );
@@ -578,7 +887,6 @@ Widget buildPackageCard({
 Widget _buildSelectionIndicator(bool isSelected, bool isRTL) {
   return Container(
     width: 48,
-    height: 100,
     decoration: BoxDecoration(
       color: isSelected ? const Color(0xFF003366) : Colors.transparent,
       borderRadius: BorderRadius.horizontal(

@@ -14,8 +14,7 @@ import '../models/promotion_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiService {
-  static const String _baseUrl =
-      'http://5.195.129.137:8080/ords/emdad/fawran';
+  static const String _baseUrl = 'http://5.195.129.137:8080/ords/emdad/fawran';
   static const String packagesBaseUrl =
       'http://fawran.ddns.net:8080/ords/emdad/fawran/service/packages';
   static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
@@ -172,94 +171,94 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>?> sendForgotPasswordOTP({
-  required String phoneNumber,
-}) async {
-  final url = Uri.parse('$_baseUrl/forgot_password');
+    required String phoneNumber,
+  }) async {
+    final url = Uri.parse('$_baseUrl/forgot_password');
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'phone': phoneNumber,
-      }),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'phone': phoneNumber,
+        }),
+      );
 
-    print('🔄 [FORGOT_PASSWORD] Response status: ${response.statusCode}');
-    print('🔄 [FORGOT_PASSWORD] Response body: ${response.body}');
+      print('🔄 [FORGOT_PASSWORD] Response status: ${response.statusCode}');
+      print('🔄 [FORGOT_PASSWORD] Response body: ${response.body}');
 
-    // Handle all response codes, not just 200
-    if (response.body.isNotEmpty) {
-      try {
-        final responseData = json.decode(response.body);
-        // Add status code to response data for UI to handle appropriately
-        responseData['status_code'] = response.statusCode;
-        return responseData;
-      } catch (jsonError) {
-        print('❌ [FORGOT_PASSWORD] JSON decode error: $jsonError');
+      // Handle all response codes, not just 200
+      if (response.body.isNotEmpty) {
+        try {
+          final responseData = json.decode(response.body);
+          // Add status code to response data for UI to handle appropriately
+          responseData['status_code'] = response.statusCode;
+          return responseData;
+        } catch (jsonError) {
+          print('❌ [FORGOT_PASSWORD] JSON decode error: $jsonError');
+          return {
+            'message': 'Invalid response format',
+            'status_code': response.statusCode,
+          };
+        }
+      } else {
         return {
-          'message': 'Invalid response format',
+          'message': 'Empty response from server',
           'status_code': response.statusCode,
         };
       }
-    } else {
-      return {
-        'message': 'Empty response from server',
-        'status_code': response.statusCode,
-      };
+    } catch (ex) {
+      print('💥 [FORGOT_PASSWORD] Error: $ex');
+      return null;
     }
-  } catch (ex) {
-    print('💥 [FORGOT_PASSWORD] Error: $ex');
-    return null;
   }
-}
 
-Future<Map<String, dynamic>?> resetPasswordWithOTP({
-  required String phoneNumber,
-  required String otp,
-  required String newPassword,
-}) async {
-  final url = Uri.parse('$_baseUrl/reset_password_with_otp');
+  Future<Map<String, dynamic>?> resetPasswordWithOTP({
+    required String phoneNumber,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final url = Uri.parse('$_baseUrl/reset_password_with_otp');
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'phone': phoneNumber,
-        'otp': otp,
-        'new_password': newPassword,
-      }),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'phone': phoneNumber,
+          'otp': otp,
+          'new_password': newPassword,
+        }),
+      );
 
-    print('🔄 [RESET_PASSWORD] Response status: ${response.statusCode}');
-    print('🔄 [RESET_PASSWORD] Response body: ${response.body}');
+      print('🔄 [RESET_PASSWORD] Response status: ${response.statusCode}');
+      print('🔄 [RESET_PASSWORD] Response body: ${response.body}');
 
-    // Handle all response codes, not just 200
-    if (response.body.isNotEmpty) {
-      try {
-        final responseData = json.decode(response.body);
-        // Add status code to response data for UI to handle appropriately
-        responseData['status_code'] = response.statusCode;
-        return responseData;
-      } catch (jsonError) {
-        print('❌ [RESET_PASSWORD] JSON decode error: $jsonError');
+      // Handle all response codes, not just 200
+      if (response.body.isNotEmpty) {
+        try {
+          final responseData = json.decode(response.body);
+          // Add status code to response data for UI to handle appropriately
+          responseData['status_code'] = response.statusCode;
+          return responseData;
+        } catch (jsonError) {
+          print('❌ [RESET_PASSWORD] JSON decode error: $jsonError');
+          return {
+            'message': 'Invalid response format',
+            'status_code': response.statusCode,
+          };
+        }
+      } else {
         return {
-          'message': 'Invalid response format',
+          'message': 'Empty response from server',
           'status_code': response.statusCode,
         };
       }
-    } else {
-      return {
-        'message': 'Empty response from server',
-        'status_code': response.statusCode,
-      };
+    } catch (ex) {
+      print('💥 [RESET_PASSWORD] Error: $ex');
+      return null;
     }
-  } catch (ex) {
-    print('💥 [RESET_PASSWORD] Error: $ex');
-    return null;
   }
-}
 
   static Future<List<dynamic>> fetchCustomerAddresses(
       {required String userId}) async {
@@ -795,9 +794,9 @@ Future<Map<String, dynamic>?> resetPasswordWithOTP({
       }
 
       if (workerIds != null && workerIds.isNotEmpty) {
-      requestBody["worker_ids"] = workerIds;
-      print('Including worker IDs in contract creation: $workerIds');
-    }
+        requestBody["worker_ids"] = workerIds;
+        print('Including worker IDs in contract creation: $workerIds');
+      }
 
       if (appointments != null && appointments.isNotEmpty) {
         requestBody["appointments"] = appointments;
@@ -851,27 +850,54 @@ Future<Map<String, dynamic>?> resetPasswordWithOTP({
     }
   }
 
+  static Future<List<PromotionModel>> getValidPromotions(
+      String cityName) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: '$_baseUrl/get-valid-promotions-by-city',
+        body: json.encode({'city_name': cityName}),
+      );
 
-  static Future<List<PromotionModel>> getValidPromotions(String cityName) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: '$_baseUrl/get-valid-promotions-by-city',
-      body: json.encode({'city_name': cityName}),
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => PromotionModel.fromJson(json)).toList();
-    } else {
-      print('Failed to load promotions: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => PromotionModel.fromJson(json)).toList();
+      } else {
+        print('Failed to load promotions: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching promotions: $e');
       return [];
     }
-  } catch (e) {
-    print('Error fetching promotions: $e');
-    return [];
   }
-}
+
+  static Future<bool> checkCarAvailability(int? cityCode) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: '$_baseUrl/available-cars',
+        body: jsonEncode({
+          "city_code": cityCode,
+          "num_of_workers": 1,
+          "required_shift": "Morning",
+          "required_days": "Sunday,Monday,Wednesday"
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        bool available = data.length > 0;
+        return available;
+      } else {
+        print('Failed to load promotions: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error fetching promotions: $e');
+      return false;
+    }
+  }
 
   static Future<http.Response> createPermanentContract({
     required Map<String, dynamic> requestBody,
@@ -1004,42 +1030,42 @@ Future<Map<String, dynamic>?> resetPasswordWithOTP({
   }
 
   static Future<List<Map<String, dynamic>>> fetchHourlyContracts({
-  required String userId,
-}) async {
-  try {
-    if (userId.toString().isEmpty) {
-      throw Exception("Missing customer ID");
-    }
-
-    final url = "$_baseUrl/hourly/contracts/$userId";
-
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
-
-    if (response.statusCode == 200) {
-      try {
-        final List<dynamic> data = json.decode(response.body);
-        return data.cast<Map<String, dynamic>>();
-      } catch (_) {
-        try {
-          final Map<String, dynamic> singleData = json.decode(response.body);
-          return [singleData];
-        } catch (_) {
-          throw Exception("Failed to parse hourly contracts response");
-        }
+    required String userId,
+  }) async {
+    try {
+      if (userId.toString().isEmpty) {
+        throw Exception("Missing customer ID");
       }
-    } else if (response.statusCode == 204) {
-      return [];
-    } else {
-      throw Exception("Failed to load hourly contracts: ${response.statusCode}");
-    }
-  } catch (e) {
-    throw Exception("Error fetching hourly contracts: $e");
-  }
-}
 
+      final url = "$_baseUrl/hourly/contracts/$userId";
+
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        try {
+          final List<dynamic> data = json.decode(response.body);
+          return data.cast<Map<String, dynamic>>();
+        } catch (_) {
+          try {
+            final Map<String, dynamic> singleData = json.decode(response.body);
+            return [singleData];
+          } catch (_) {
+            throw Exception("Failed to parse hourly contracts response");
+          }
+        }
+      } else if (response.statusCode == 204) {
+        return [];
+      } else {
+        throw Exception(
+            "Failed to load hourly contracts: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching hourly contracts: $e");
+    }
+  }
 
   static Future<void> cancelPermContract(String contractId) async {
     final url = "$_baseUrl/domestic/contract/cancel";
@@ -1260,48 +1286,48 @@ Future<Map<String, dynamic>?> resetPasswordWithOTP({
   }
 
   static Future<Map<String, dynamic>?> validatePromotion({
-  required String promotionCode,
-  required int shiftId,
-  required int cityCode,
-  required double originalPrice,
-  required double hourPrice,
-  int? totalVisits, // optional named parameter
-}) async {
-  try {
-    final url = '$_baseUrl/validate-promotion';
+    required String promotionCode,
+    required int shiftId,
+    required int cityCode,
+    required double originalPrice,
+    required double hourPrice,
+    int? totalVisits, // optional named parameter
+  }) async {
+    try {
+      final url = '$_baseUrl/validate-promotion';
 
-    // Build the request body
-    final body = {
-      'promotion_code': promotionCode,
-      'shift_id': shiftId,
-      'city': cityCode,
-      'original_price': originalPrice,
-      'hour_price': hourPrice,
-      if (totalVisits != null) 'total_visits': totalVisits,
-    };
+      // Build the request body
+      final body = {
+        'promotion_code': promotionCode,
+        'shift_id': shiftId,
+        'city': cityCode,
+        'original_price': originalPrice,
+        'hour_price': hourPrice,
+        if (totalVisits != null) 'total_visits': totalVisits,
+      };
 
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: url,
-      body: json.encode(body),
-    );
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: url,
+        body: json.encode(body),
+      );
 
-    print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
-    print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
+      print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
+      print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
 
-    if (response.statusCode == 200 || response.statusCode == 404) {
-      final responseData = json.decode(response.body);
-      return responseData;
-    } else {
-      print('❌ [VALIDATE_PROMOTION] Failed with status: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 404) {
+        final responseData = json.decode(response.body);
+        return responseData;
+      } else {
+        print(
+            '❌ [VALIDATE_PROMOTION] Failed with status: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('💥 [VALIDATE_PROMOTION] Error: $e');
       return null;
     }
-  } catch (e) {
-    print('💥 [VALIDATE_PROMOTION] Error: $e');
-    return null;
   }
-}
-
 
   static Future<List<dynamic>> fetchFAQs() async {
     try {
@@ -1325,58 +1351,62 @@ Future<Map<String, dynamic>?> resetPasswordWithOTP({
   }
 
   static Future<Map<String, dynamic>?> validateWorkersHourly({
-  required int positionId,
-  required String nationalityId,
-  required int numWorkers,
-  required DateTime startDate,
-  required DateTime endDate,
-  required int shiftId,
-  required String cityCode,
-  required String districtId,
-  List<String>? appointmentDates,
-}) async {
-  print('🔍 [validateWorkersHourly] Starting validation...');
+    required int positionId,
+    required String nationalityId,
+    required int numWorkers,
+    required DateTime startDate,
+    required DateTime endDate,
+    required int shiftId,
+    required String cityCode,
+    required String districtId,
+    List<String>? appointmentDates,
+  }) async {
+    print('🔍 [validateWorkersHourly] Starting validation...');
 
-  try {
-    final url = '$_baseUrl/validate-workers';
+    try {
+      final url = '$_baseUrl/validate-workers';
 
-    final requestBody = {
-      "sector_type": "H",
-      "position_id": positionId,
-      "num_workers": numWorkers,
-      "start_date": DateFormat('MM-dd-yyyy').format(startDate),
-      "end_date": DateFormat('MM-dd-yyyy').format(endDate),
-      "shift_id": shiftId ?? 1,
-      "nationality_id": nationalityId,
-      "city_code": cityCode ?? "1",
-      "district_id": districtId ?? "18",
-      if (appointmentDates != null) "appointment_dates": appointmentDates,
-    };
+      final requestBody = {
+        "sector_type": "H",
+        "position_id": positionId,
+        "num_workers": numWorkers,
+        "start_date": DateFormat('MM-dd-yyyy').format(startDate),
+        "end_date": DateFormat('MM-dd-yyyy').format(endDate),
+        "shift_id": shiftId ?? 1,
+        "nationality_id": nationalityId,
+        "city_code": cityCode ?? "1",
+        "district_id": districtId ?? "18",
+        if (appointmentDates != null) "appointment_dates": appointmentDates,
+      };
 
-    print('📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
+      print(
+          '📦 [validateWorkersHourly] Request body: ${json.encode(requestBody)}');
 
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: url,
-      body: json.encode(requestBody),
-    ).timeout(Duration(seconds: 30));
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: url,
+        body: json.encode(requestBody),
+      ).timeout(Duration(seconds: 30));
 
-    print('📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
+      print(
+          '📡 [validateWorkersHourly] Response status code: ${response.statusCode}');
 
-    if (response.statusCode == 200) {
-      print('✅ [validateWorkersHourly] Request successful');
-      final responseData = json.decode(response.body);
-      print('📥 [validateWorkersHourly] Response data: $responseData');
-      return responseData as Map<String, dynamic>?;
-    } else {
-      print('❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
-      throw Exception('Failed to validate workers. Status code: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        print('✅ [validateWorkersHourly] Request successful');
+        final responseData = json.decode(response.body);
+        print('📥 [validateWorkersHourly] Response data: $responseData');
+        return responseData as Map<String, dynamic>?;
+      } else {
+        print(
+            '❌ [validateWorkersHourly] Request failed with status ${response.statusCode}');
+        throw Exception(
+            'Failed to validate workers. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('💥 [validateWorkersHourly] Error: $e');
+      throw Exception('Error validating workers: $e');
     }
-  } catch (e) {
-    print('💥 [validateWorkersHourly] Error: $e');
-    throw Exception('Error validating workers: $e');
   }
-}
 
   static Future<List<PackageModel>> fetchEastAsiaPackages({
     required int professionId,
