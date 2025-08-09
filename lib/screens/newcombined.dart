@@ -3,12 +3,15 @@ import 'dart:convert';
 import 'package:fawran/models/Nationality.dart';
 import 'package:fawran/models/domestic_package_model.dart';
 import 'package:fawran/providers/address_provider.dart';
+import 'package:fawran/providers/contractsProvider.dart';
+import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/labour_provider.dart';
 import 'package:fawran/providers/nationality_provider.dart';
 import 'package:fawran/providers/package_provider.dart';
 import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
@@ -25,7 +28,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int currentStep = 0;
   final int totalSteps = 6;
 
-  String? selectedNationality;
+  int? selectedNationality;
   String? selectedPackage;
   String? selectedLaborSource;
   String? selectedDriver;
@@ -43,6 +46,121 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int? minAge;
   int? minExperience;
   String? selectedStatus;
+  final _storage = FlutterSecureStorage();
+
+  Future<void> submitOrder() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final userId = await _storage.read(key: 'user_id') ?? '';
+    final selectedProfession = ref.watch(selectedProfessionProvider);
+    final selectedLabor = ref.watch(selectedLaborerProvider);
+
+    // 🔍 Step 1: Check for "not confirmed" contracts
+    try {
+      final contracts =
+          await ApiService.fetchPermanentContracts(userId: userId);
+
+      final hasNotConfirmedContracts = contracts.any((contract) {
+        final status = contract['status']?.toString().toLowerCase();
+        return status == 'not confirmed';
+      });
+
+      if (hasNotConfirmedContracts) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                "You have an unconfirmed contract. Please confirm or cancel it before creating a new one."),
+          ),
+        );
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error checking existing contracts: $e")),
+      );
+      return;
+    }
+
+    // 🔧 Prepare form data
+    final selectedPackage = ref.read(selectedPackageProvider);
+
+    final selectedNationalityData = ref
+        .read(nationalitiesProvider)
+        .asData
+        ?.value
+        .firstWhere((n) => n?.id == selectedNationality);
+
+    if (selectedPackage == null || selectedNationalityData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Missing required data.")),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    final double deliveryCharge = pickupOption == "delivery" ? 50.0 : 0.0;
+    final double amountToPay = selectedPackage.vatAmount +
+        selectedPackage.contractAmount +
+        deliveryCharge;
+
+    final requestBody = {
+      "customer_id": userId,
+      "profession_id": selectedProfession?.positionId,
+      "profession_name": selectedProfession?.positionName,
+      "nationality_id": selectedNationalityData.id,
+      "nationality": selectedNationalityData.name,
+      "package_id": selectedPackage.packageId,
+      "package_name": selectedPackage.packageName,
+      "period_days": selectedPackage.contractDays,
+      "tax_rate": 15.0,
+      "final_price": selectedPackage.finalInvoice,
+      "delivery_charge": deliveryCharge,
+      "amount_to_pay": amountToPay,
+      "vat_amount": selectedPackage.vatAmount,
+      "worker_id": selectedLabor?.personId
+    };
+
+    // 🚀 Submit contract
+    try {
+      final response = await ref
+          .read(contractsProvider.notifier)
+          .createPermanentContract(requestBody);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Order submitted successfully!")),
+        );
+        setState(() {
+          isLoading = false;
+        });
+        Navigator.pushReplacementNamed(context, '/bookings');
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Submission failed: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error submitting order: $e")),
+      );
+    }
+  }
 
   Widget _buildSteps() {
     final nationalityAsync = ref.watch(nationalitiesProvider);
@@ -78,20 +196,20 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormField<int>(
                       value: selectedNationality,
                       hint: const Text("Select nationality"),
                       decoration:
                           const InputDecoration(border: InputBorder.none),
-                      items: nationalities.map<DropdownMenuItem<String>>((nat) {
+                      items: nationalities.map<DropdownMenuItem<int>>((nat) {
                         return DropdownMenuItem(
-                          value: nat?.id.toString(),
+                          value: nat?.id,
                           child: Text(nat != null ? nat.name : ""),
                         );
                       }).toList(),
                       onChanged: (val) {
                         ref.read(selectedNationalityProvider.notifier).state =
-                            int.parse(val != null ? val : '0');
+                            val;
                         checkCarAvailability();
                         setState(() {
                           selectedNationality = val;
@@ -232,6 +350,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                       return GestureDetector(
                         onTap: () {
                           setState(() {
+                            ref.read(selectedLaborerProvider.notifier).state =
+                                laborer;
                             selectedDriver = driverValue;
                             if (currentStep == 3) goToNextStep();
                           });
@@ -346,8 +466,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                           "Private driver: ", selectedDriver ?? "Not selected"),
 
                     // Nationality: (show actual selectedNationality if available)
-                    _textRow(
-                        "Nationality: ", selectedNationality ?? "Not selected"),
+                    _textRow("Nationality: ",
+                        ref.read(selectedLaborerProvider)?.nationality ?? ''),
 
                     // Package name
                     _textRow("Package: ",
@@ -384,7 +504,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
               Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    // Submit action
+                    submitOrder();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[900],
@@ -408,52 +528,68 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     required String value,
   }) {
     final isSelected = selectedLaborSource == value;
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              selectedLaborSource = value;
-              if (value == "company") {
-                currentStep = 4;
-              } else if (value == "app") {
-                currentStep = 3;
-              }
-            });
-          },
-          child: Container(
-            width: 20,
-            height: 20,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey, width: 1),
+    return Padding(
+      padding: EdgeInsets.only(
+        left: isRTL ? 0 : 10, // push right in LTR
+        right: 8, // push left in RTL
+        bottom: 8, // optional vertical spacing between radios
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 30, // fixed width for radio button alignment
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectedLaborSource = value;
+                  if (value == "company") {
+                    currentStep = 4;
+                  } else if (value == "app") {
+                    currentStep = 3;
+                  }
+                });
+              },
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey, width: 1.5),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 5,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
             ),
-            child: isSelected
-                ? Center(
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  )
-                : null,
           ),
-        ),
-        // The label Text is NOT wrapped in GestureDetector so tapping it won't trigger onTap
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            color: const Color.fromRGBO(118, 128, 144, 1),
+          Expanded(
+            child: Padding(
+              padding: isRTL
+                  ? const EdgeInsets.only(right: 24, left: 12)
+                  : const EdgeInsets.only(left: 12, right: 12),
+              child: Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: const Color.fromRGBO(118, 128, 144, 1),
+                ),
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
