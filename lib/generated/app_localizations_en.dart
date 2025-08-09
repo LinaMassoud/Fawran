@@ -448,7 +448,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get socialMediaLinks => 'Social Media Links';
 
   @override
-  String get faq => 'Frequently Asked Questions (FAQ)';
+  String get faq => 'FAQ';
 
   @override
   String get privacyPolicy => 'Privacy Policy';

@@ -977,7 +977,7 @@ abstract class AppLocalizations {
   /// No description provided for @faq.
   ///
   /// In en, this message translates to:
-  /// **'Frequently Asked Questions (FAQ)'**
+  /// **'FAQ'**
   String get faq;
 
   /// No description provided for @privacyPolicy.

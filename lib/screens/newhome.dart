@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/screens/address_display_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/promotion_model.dart';
 import 'package:fawran/services/location_service.dart';
@@ -338,32 +339,44 @@ class Newhome extends ConsumerWidget {
         child: Column(
           children: [
             const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Color(0xFFE0E0E0),
-                  child: Icon(Icons.person, size: 40, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                IconButton(
-                  icon: const Icon(Icons.language, color: Colors.blue),
-                  onPressed: () {
-                    final localeNotifier =
-                        ref.read(localeNotifierProvider.notifier);
-                    final currentLocale = ref.read(localeNotifierProvider);
 
-                    if (currentLocale.languageCode == 'ar') {
-                      localeNotifier.setLocale(const Locale('en'));
-                    } else {
-                      localeNotifier.setLocale(const Locale('ar'));
-                    }
-                  },
-                ),
-              ],
+            // Profile picture with globe icon overlay on left
+            SizedBox(
+              width: double.infinity, // make Stack fill drawer width
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Color(0xFFE0E0E0),
+                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                  ),
+                  Positioned(
+                    left: 20, // exactly same horizontal margin as menu icons
+                    child: IconButton(
+                      icon: const Icon(Icons.public,
+                          color: Colors.blue, size: 22),
+                      onPressed: () {
+                        final localeNotifier =
+                            ref.read(localeNotifierProvider.notifier);
+                        final currentLocale = ref.read(localeNotifierProvider);
+
+                        if (currentLocale.languageCode == 'en') {
+                          localeNotifier.setLocale(const Locale('ar'));
+                        } else {
+                          localeNotifier.setLocale(const Locale('en'));
+                        }
+                        // Handle globe icon tap
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
+
             const SizedBox(height: 12),
+
+            // User name
             userNameAsync.when(
               data: (name) => Text(
                 name,
@@ -378,11 +391,246 @@ class Newhome extends ConsumerWidget {
               error: (_, __) => Text(loc.user),
             ),
             const SizedBox(height: 20),
-            // Menu Items and Logout (unchanged)...
+
+            // Menu items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                children: [
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/addresses.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.myAddresses,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const AddressDisplayScreen()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/account.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.myInformation,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const UserDetailsScreen()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/about.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.aboutCompany,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      const url = 'https://emdadhr.com/#/about';
+                      final Uri uri = Uri.parse(url);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        throw 'Could not launch $url';
+                      }
+                    },
+                  ),
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/branches.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.companyBranches,
+                    onTap: () {},
+                  ),
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/social.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.socialMediaLinks,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SocialMediaPage()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/faq.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.faq,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const FAQPage()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/bookings.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.myContracts,
+                    showNotification: hasUnconfirmedContracts,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/bookings');
+                    },
+                  ),
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/privacy.svg',
+                      width: 22,
+                      height: 22,
+                      color: Colors.blue, // optional tint
+                    ),
+                    title: loc.privacyPolicy,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      const url = 'https://emdadhr.com/#/PrivacyPolicy';
+                      final Uri uri = Uri.parse(url);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        throw 'Could not launch $url';
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Logout at bottom (aligned same as other items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16, left: 18),
+              child: _buildDrawerItem(
+                iconWidget: SvgPicture.asset(
+                  'assets/images/addresses.svg',
+                  width: 22,
+                  height: 22,
+                  color: Colors.blue, // optional tint
+                ),
+                title: loc.logout,
+                onTap: () {
+                  Navigator.pop(context);
+                  _showLogoutDialog(context, ref);
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildDrawerItem({
+    required Widget iconWidget,
+    required String title,
+    required VoidCallback onTap,
+    bool showNotification = false,
+  }) {
+    return ListTile(
+      leading: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          Transform.translate(
+            offset: const Offset(1, -4), // move left by 4 and up by 4 pixels
+            child: iconWidget,
+          ),
+          if (showNotification)
+            const Positioned(
+              right: -2,
+              top: -2,
+              child: CircleAvatar(
+                radius: 5,
+                backgroundColor: Colors.red,
+              ),
+            ),
+        ],
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black87,
+          fontSize: 15,
+        ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+      onTap: onTap,
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _logout(ref);
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/login',
+                  (route) => false,
+                );
+              },
+              child: const Text(
+                "Logout",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _logout(WidgetRef ref) async {
+    const storage = FlutterSecureStorage();
+
+    // Clear secure storage
+    await storage.deleteAll();
+
+    // Call logout from authProvider
+    ref.read(authProvider.notifier).logout(ref);
   }
 
   Future<void> _loadAndShowPromotions(BuildContext context) async {
