@@ -26,6 +26,7 @@ class BackgroundContainer extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final effectiveTopHeight = topSectionHeight ?? screenHeight * 0.4;
     final loc = AppLocalizations.of(context)!;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       body: Stack(
@@ -50,19 +51,7 @@ class BackgroundContainer extends StatelessWidget {
               // Top section with background
               Container(
                 height: effectiveTopHeight,
-                child: SafeArea(
-                  child: Stack(
-                    children: [
-                      // Top right widget (language switcher, etc.)
-                      if (topRightWidget != null)
-                        Positioned(
-                          top: 16,
-                          right: 16,
-                          child: topRightWidget!,
-                        ),
-                    ],
-                  ),
-                ),
+                child: const SizedBox.shrink(), // Remove SafeArea and content from here
               ),
 
               // Bottom white container - fills remaining space and allows scrolling
@@ -88,11 +77,11 @@ class BackgroundContainer extends StatelessWidget {
             ],
           ),
 
-          // Back button with text positioned as overlay
+          // Back button positioned higher in the colored section
           if (showBackButton)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 16, // Account for status bar
-              left: 16,
+              top: statusBarHeight -5, // Reduced from 16 to 8 for higher positioning
+              left: -1,
               child: GestureDetector(
                 onTap: onBackPressed ?? () => Navigator.of(context).pop(),
                 child: Container(
@@ -103,7 +92,7 @@ class BackgroundContainer extends StatelessWidget {
                       const Icon(
                         Icons.chevron_left,
                         color: Color(0xFFFFA200),
-                        size: 24,
+                        size: 28,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -118,6 +107,14 @@ class BackgroundContainer extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+
+          // Top right widget positioned higher in the colored section
+          if (topRightWidget != null)
+            Positioned(
+              top: statusBarHeight - 5, // Reduced from 16 to 8 for higher positioning
+              right: 16,
+              child: topRightWidget!,
             ),
         ],
       ),

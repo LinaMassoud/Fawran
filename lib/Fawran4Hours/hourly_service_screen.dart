@@ -405,9 +405,9 @@ Widget _buildServiceSelector(AppLocalizations loc) {
           Text(
             loc.selectService,
             style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
               fontFamily: 'Poppins',
+              fontSize: 25,
+              fontWeight: FontWeight.w600,
               color: Color(0xFF091735),
             ),
           ),
@@ -419,7 +419,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
           ),
-          SizedBox(height: 24),
+          SizedBox(height: 20),
         ],
       ),
     );
@@ -442,12 +442,13 @@ Widget _buildServiceSelector(AppLocalizations loc) {
           Text(
             loc.selectService,
             style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              fontFamily: 'Poppins',
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF091735),
             ),
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 10),
 
           // HORIZONTAL ROW FOR RADIO BUTTONS
           SingleChildScrollView(
@@ -456,7 +457,6 @@ Widget _buildServiceSelector(AppLocalizations loc) {
               children: availableServices
                   .map(
                     (service) => Container(
-                      margin: EdgeInsets.only(right: 2),
                       child: GestureDetector(
                         onTap: () => _onServiceChanged(service.id),
                         child: Row(
@@ -475,7 +475,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
                             Text(
                               service.name,
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Poppins',
                                 color: Color(0xFF768090),
@@ -492,7 +492,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
 
           
 
-          SizedBox(height: 24),
+          SizedBox(height: 5),
         ],
       ),
     );
@@ -580,15 +580,16 @@ Widget build(BuildContext context) {
                   child: Icon(
                     Icons.arrow_back_ios,
                     color: Color(0xFFFFA200),
-                    size: 20,
+                    size: 22,
                   ),
                 ),
               ),
               title: Text(
                 loc.hourlyServices,
                 style: TextStyle(
-                  fontSize: 20,
+                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.w600,
+                  fontSize: 24,
                   color: Color(0xFFFFA200),
                 ),
               ),
@@ -673,7 +674,8 @@ Widget build(BuildContext context) {
                             child: Text(
                               'Scrub Away\ntough Stains',
                               style: TextStyle(
-                                fontSize: 28,
+                                fontFamily: 'Poppins',
+                                fontSize: 32,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 height: 1.2,
@@ -694,12 +696,20 @@ Widget build(BuildContext context) {
                     // Main content with consistent padding
                     Container(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 20),
+                          horizontal: 20, vertical: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Service selector (only shows when multiple services)
                           _buildServiceSelector(loc),
+
+                          // Divider line
+                          Container(
+                            width: double.infinity,
+                            height: 2,
+                            color: Colors.grey[300],
+                            margin: EdgeInsets.symmetric(vertical: 10),
+                          ),
 
                           // Service title - only show if professionId is not 61
                           if (widget.serviceId != 62)
@@ -713,12 +723,12 @@ Widget build(BuildContext context) {
                             ),
                           if (widget.serviceId != 62)
                             SizedBox(height: 16),
-                          SizedBox(height: 16),
+                          SizedBox(height: 1),
 
                           // Design your card button - only show if professionId is not 61
                           if (widget.serviceId != 62) ...[
                             _buildDesignCardButton(loc),
-                            SizedBox(height: 32),
+                            SizedBox(height: 22),
                           ] else
                             SizedBox(height: 16),
 
@@ -1620,7 +1630,7 @@ Widget _buildDetailRow(String label, String value) {
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16), // Reduced vertical padding
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 2), // Added horizontal margin
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(30), // More rounded corners like in image
         border: Border.all(
           color: Color(0xFF1E49A0), // --Second-blue color
@@ -1633,7 +1643,7 @@ Widget _buildDetailRow(String label, String value) {
           Icon(
             Icons.add,
             color: Color(0xFF1E49A0), // --Second-blue color
-            size: 20,
+            size: 27,
           ),
           SizedBox(width: 8),
           Text(
