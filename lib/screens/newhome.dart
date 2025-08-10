@@ -18,7 +18,7 @@ import 'package:fawran/screens/serviceChoice.dart';
 import 'package:fawran/screens/socialMediaLinks.dart';
 import 'package:fawran/screens/user_details.dart';
 import 'package:fawran/services/api_service.dart';
-import 'package:flutter/material.dart' hide CarouselController;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/screens/address_display_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -28,7 +28,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/promotion_model.dart';
 import 'package:fawran/services/location_service.dart';
 import 'dart:ui';
-import 'package:carousel_slider/carousel_slider.dart' as cs;
 
 class Newhome extends ConsumerWidget {
   const Newhome({super.key});
