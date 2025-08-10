@@ -8,6 +8,7 @@ import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/labour_provider.dart';
 import 'package:fawran/providers/nationality_provider.dart';
 import 'package:fawran/providers/package_provider.dart';
+import 'package:fawran/screens/laborerProfile.dart';
 import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +48,47 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int? minExperience;
   String? selectedStatus;
   final _storage = FlutterSecureStorage();
+  Widget _buildHeader(BuildContext context) {
+
+       final selectedProfession = ref.watch(selectedProfessionProvider);
+  return Container(
+    height: 124,
+    decoration: const BoxDecoration(
+      color: Color(0xFF10295C),
+      borderRadius: BorderRadius.only(
+        bottomLeft: Radius.circular(24),
+        bottomRight: Radius.circular(24),
+      ),
+    ),
+    padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Back arrow button
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        const SizedBox(width: 16),
+        // Header text
+        Text(
+          "${selectedProfession?.positionName}",
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Future<void> submitOrder() async {
     setState(() {
@@ -165,6 +207,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   Widget _buildSteps() {
     final nationalityAsync = ref.watch(nationalitiesProvider);
     final packagesAsync = ref.watch(packageProvider);
+       final selectedProfession = ref.watch(selectedProfessionProvider);
     final selectedPackage = ref.watch(
         selectedPackageProvider); // assuming this is how you track selection
     final laborersAsync = ref.watch(laborersProvider);
@@ -179,7 +222,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Choose Nationality",
+                "Nationality",
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -308,8 +351,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Choose Private Driver",
+                   Text(
+                    "Choose ${selectedProfession?.positionName}",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   GestureDetector(
@@ -326,74 +369,84 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
               const SizedBox(height: 8),
 
               // Handle async states
-              laborersAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                error: (err, stack) => Text(
-                  'Error: $err',
-                  style: const TextStyle(color: Colors.red),
-                ),
-                data: (laborers) {
-                  if (laborers.isEmpty) {
-                    return const Text("No drivers found");
-                  }
+            laborersAsync.when(
+  loading: () => const Center(child: CircularProgressIndicator()),
+  error: (err, stack) => Text('Error: $err', style: const TextStyle(color: Colors.red)),
+  data: (laborers) {
+    if (laborers.isEmpty) {
+      return const Text("No drivers found");
+    }
 
-                  final isRTL = Directionality.of(context) == TextDirection.rtl;
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
 
-                  return Column(
-                    children: laborers.map((laborer) {
-                      final driverValue =
-                          "${laborer.employeeName} - ${laborer.employeeNumber}";
-                      final isSelected = selectedDriver == driverValue;
+    return ListView.builder(
+      shrinkWrap: true, // makes list take only needed height
+      physics: const NeverScrollableScrollPhysics(), // disables inner scrolling
+      itemCount: laborers.length,
+      itemBuilder: (context, index) {
+        final laborer = laborers[index];
+        final driverValue = "${laborer.employeeName} - ${laborer.employeeNumber}";
+        final isSelected = selectedDriver == driverValue;
 
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            ref.read(selectedLaborerProvider.notifier).state =
-                                laborer;
-                            selectedDriver = driverValue;
-                            if (currentStep == 3) goToNextStep();
-                          });
-                        },
-                        child: Container(
-                          height: 90,
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected ? Colors.blue.shade50 : Colors.white,
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.blue
-                                  : Colors.grey.shade300,
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: isRTL
-                                ? _buildDriverCardContent(
-                                    isSelected: isSelected,
-                                    name: laborer.employeeName,
-                                    employeeNumber:
-                                        laborer.employeeNumber.toString(),
-                                    imageOnRight: true,
-                                  )
-                                : _buildDriverCardContent(
-                                    isSelected: isSelected,
-                                    name: laborer.employeeName,
-                                    employeeNumber:
-                                        laborer.employeeNumber.toString(),
-                                    imageOnRight: false,
-                                  ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                },
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              ref.read(selectedLaborerProvider.notifier).state = laborer;
+              selectedDriver = driverValue;
+              if (currentStep == 3) goToNextStep();
+            });
+          },
+          child: Container(
+            // remove fixed height to allow flexible height
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12), // add padding instead of fixed height
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.blue.shade50 : Colors.white,
+              border: Border.all(
+                color: isSelected ? Colors.blue : Colors.grey.shade300,
+                width: 1.5,
               ),
-
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+         children: isRTL
+  ? _buildDriverCardContent(
+      context: context,
+      isSelected: isSelected,
+      name: laborer.employeeName,
+      employeeNumber: laborer.employeeNumber.toString(),
+      imageOnRight: true,
+      onInfoPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LaborProfilePage(laborer: laborer),
+          ),
+        );
+      },
+    )
+  : _buildDriverCardContent(
+      context: context,
+      isSelected: isSelected,
+      name: laborer.employeeName,
+      employeeNumber: laborer.employeeNumber.toString(),
+      imageOnRight: false,
+      onInfoPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LaborProfilePage(laborer: laborer),
+          ),
+        );
+      },
+    ),
+            ),
+          ),
+        );
+      },
+    );
+  },
+),
               const SizedBox(height: 24),
             ],
           ),
@@ -635,23 +688,44 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     }
   }
 
-  Widget _buildHeader() {
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
+Widget _buildHeader(BuildContext context) {
+  return Container(
+    height: 124,
+    decoration: const BoxDecoration(
+      color: Color(0xFF10295C),
+      borderRadius: BorderRadius.only(
         bottomLeft: Radius.circular(24),
         bottomRight: Radius.circular(24),
       ),
-      child: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    ),
+    padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Back arrow button
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ),
-        title: const Text("Private Driver"),
-        centerTitle: true,
-        backgroundColor: Colors.blue[900],
-      ),
-    );
-  }
+        const SizedBox(width: 16),
+        // Header text
+        const Text(
+          selectedProfession?.positionName,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildFooterStepper() {
     return Container(
@@ -796,86 +870,91 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     );
   }
 
-  List<Widget> _buildDriverCardContent({
-    required bool isSelected,
-    required String name,
-    required String employeeNumber,
-    required bool imageOnRight,
-  }) {
-    final profileImage = Container(
-      margin: const EdgeInsets.all(2), // 2px gap on all sides
-      width: 82,
-      height: 82,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: AssetImage("assets/images/default_avatar.jpg"),
-          fit: BoxFit.cover,
-        ),
+List<Widget> _buildDriverCardContent({
+  required BuildContext context,
+  required bool isSelected,
+  required String name,
+  required String employeeNumber,
+  required bool imageOnRight,
+  required VoidCallback onInfoPressed,
+}) {
+  final profileImage = Container(
+    margin: const EdgeInsets.all(2), // 2px gap on all sides
+    width: 82,
+    height: 82,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      image: const DecorationImage(
+        image: AssetImage("assets/images/default_avatar.jpg"),
+        fit: BoxFit.cover,
       ),
-    );
+    ),
+  );
 
-    final textAndRadio = Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF003366),
-                    ),
+  final textAndRadio = Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF003366),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Employee Number: $employeeNumber",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF768090),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.blue : Colors.grey.shade400,
-                  width: 2,
                 ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    )
-                  : null,
+                const SizedBox(height: 4),
+                Text(
+                  "Employee Number: $employeeNumber",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF768090),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: onInfoPressed,
+            tooltip: 'View Profile',
+          ),
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? Colors.blue : Colors.grey.shade400,
+                width: 2,
+              ),
+            ),
+            child: isSelected
+                ? Center(
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+        ],
       ),
-    );
+    ),
+  );
 
-    return imageOnRight
-        ? [textAndRadio, profileImage]
-        : [profileImage, textAndRadio];
-  }
+  return imageOnRight ? [textAndRadio, profileImage] : [profileImage, textAndRadio];
+}
 
   Widget _textRow(String label, String value) {
     return Padding(
@@ -930,8 +1009,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: _buildHeader(),
+          preferredSize: const Size.fromHeight(120),
+          child: _buildHeader( context),
         ),
         body: Column(
           children: [
@@ -947,6 +1026,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       ),
     );
   }
+
+
 }
 
 Widget buildPackageCard({
