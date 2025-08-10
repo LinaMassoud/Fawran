@@ -60,10 +60,10 @@ Widget _buildHeader(BuildContext context) {
         bottomRight: Radius.circular(24),
       ),
     ),
-    padding: const EdgeInsets.only(top: 70, bottom: 20), // no left padding
+    padding: const EdgeInsets.only(top: 70, bottom: 20), // remove left/right padding
     child: Stack(
       children: [
-        // Back arrow on far left
+        // Back arrow flush left
         Positioned(
           left: 0,
           top: 0,
