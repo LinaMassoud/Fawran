@@ -977,7 +977,7 @@ abstract class AppLocalizations {
   /// No description provided for @faq.
   ///
   /// In en, this message translates to:
-  /// **'Frequently Asked Questions (FAQ)'**
+  /// **'FAQ'**
   String get faq;
 
   /// No description provided for @privacyPolicy.
@@ -1009,6 +1009,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not provided'**
   String get notProvided;
+
+  /// No description provided for @phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phone;
+
+  /// No description provided for @welcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back'**
+  String get welcomeBack;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get getStarted;
+
+  /// No description provided for @enterPhoneForOTP.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your phone number to receive an OTP'**
+  String get enterPhoneForOTP;
+
+  /// No description provided for @enterPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your phone number'**
+  String get enterPhoneNumber;
+
+  /// No description provided for @sendOTP.
+  ///
+  /// In en, this message translates to:
+  /// **'Send OTP'**
+  String get sendOTP;
+
+  /// No description provided for @resetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get resetPassword;
+
+  /// No description provided for @enterOTPSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the OTP sent to'**
+  String get enterOTPSentTo;
+
+  /// No description provided for @otp.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP'**
+  String get otp;
+
+  /// No description provided for @enterResetOTP.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter OTP'**
+  String get enterResetOTP;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPassword;
+
+  /// No description provided for @enterNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter new password'**
+  String get enterNewPassword;
+
+  /// No description provided for @confirmNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm new password'**
+  String get confirmNewPassword;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @unknownResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown response'**
+  String get unknownResponse;
+
+  /// No description provided for @failedSendOTP.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send OTP. Please try again.'**
+  String get failedSendOTP;
+
+  /// No description provided for @failedResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to reset password. Please try again.'**
+  String get failedResetPassword;
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred. Please try again.'**
+  String get errorOccurred;
 }
 
 class _AppLocalizationsDelegate

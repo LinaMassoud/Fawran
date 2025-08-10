@@ -448,7 +448,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get socialMediaLinks => 'Social Media Links';
 
   @override
-  String get faq => 'Frequently Asked Questions (FAQ)';
+  String get faq => 'FAQ';
 
   @override
   String get privacyPolicy => 'Privacy Policy';
@@ -464,4 +464,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notProvided => 'Not provided';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get welcomeBack => 'Welcome Back';
+
+  @override
+  String get getStarted => 'Get Started';
+
+  @override
+  String get enterPhoneForOTP => 'Enter your phone number to receive an OTP';
+
+  @override
+  String get enterPhoneNumber => 'Enter your phone number';
+
+  @override
+  String get sendOTP => 'Send OTP';
+
+  @override
+  String get resetPassword => 'Reset Password';
+
+  @override
+  String get enterOTPSentTo => 'Enter the OTP sent to';
+
+  @override
+  String get otp => 'OTP';
+
+  @override
+  String get enterResetOTP => 'Enter OTP';
+
+  @override
+  String get newPassword => 'New Password';
+
+  @override
+  String get enterNewPassword => 'Enter new password';
+
+  @override
+  String get confirmNewPassword => 'Confirm new password';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get unknownResponse => 'Unknown response';
+
+  @override
+  String get failedSendOTP => 'Failed to send OTP. Please try again.';
+
+  @override
+  String get failedResetPassword =>
+      'Failed to reset password. Please try again.';
+
+  @override
+  String get errorOccurred => 'An error occurred. Please try again.';
 }

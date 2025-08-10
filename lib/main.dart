@@ -5,6 +5,7 @@ import 'package:fawran/screens/bookings.dart';
 import 'package:fawran/screens/launchScreen.dart';
 import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/login_screen.dart';
+import 'package:fawran/screens/newcombined.dart';
 import 'package:fawran/screens/newhome.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/userProfile.dart';
