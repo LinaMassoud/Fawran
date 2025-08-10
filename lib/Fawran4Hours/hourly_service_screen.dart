@@ -9,6 +9,7 @@ import '../services/api_service.dart';
 import 'continuous_booking_overlay.dart';
 import 'order_summary_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class Service {
   final int id;
@@ -1132,14 +1133,14 @@ Widget _buildDetailRow(String label, String value) {
     ],
   );
 }
-  Widget _buildShiftSelector(String groupCode) { // Changed from bool isEastAsia to String groupCode
+  Widget _buildShiftSelector(String groupCode) {
   if (isLoadingShifts || availableShifts.isEmpty) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(16), // Reduced from 25 to 12
       ),
       child: Center(
         child: isLoadingShifts
@@ -1174,7 +1175,7 @@ Widget _buildDetailRow(String label, String value) {
       return '7:30 AM-10:00 PM';
     }
     
-    // Check Arabic shift names - Fixed patterns
+    // Check Arabic shift names
     if (lowerShiftName.contains('صباح') || lowerShiftName.contains('الصباح')) {
       return '7:30-10:00 صباحاً';
     } else if (lowerShiftName.contains('مسائي') || lowerShiftName.contains('مساني') || 
@@ -1184,73 +1185,7 @@ Widget _buildDetailRow(String label, String value) {
       return '7:30 صباحاً-10:00 مساءً';
     }
     
-    return ''; // Default case if shift type is not recognized
-  }
-
-  // Helper function to get appropriate icon based on shift name
-  IconData _getShiftIcon(String shiftName) {
-    final lowerShiftName = shiftName.toLowerCase();
-    
-    // Check for morning shifts (English and Arabic)
-    if (lowerShiftName.contains('morning') || 
-        lowerShiftName.contains('صباح') || 
-        lowerShiftName.contains('الصباح')) {
-      return Icons.wb_sunny;
-    }
-    
-    // Check for evening shifts (English and Arabic) - Fixed patterns
-    if (lowerShiftName.contains('evening') || 
-        lowerShiftName.contains('مسائي') || 
-        lowerShiftName.contains('مساني') ||
-        lowerShiftName.contains('مساء') || 
-        lowerShiftName.contains('المساء')) {
-      return Icons.nightlight_round; 
-    }
-    
-    // Check for full day shifts (English and Arabic) - Fixed patterns
-    if (lowerShiftName.contains('full day') || 
-        lowerShiftName.contains('fullday') ||
-        lowerShiftName.contains('يوم كامل') || 
-        lowerShiftName.contains('كامل')) {
-      return Icons.access_time; // Changed from schedule to access_time to match screenshot
-    }
-    
-    // Default icon
-    return Icons.access_time;
-  }
-
-  // Helper function to get icon color based on shift name
-  Color _getShiftIconColor(String shiftName, bool isSelected) {
-    if (!isSelected) return Colors.grey;
-    
-    final lowerShiftName = shiftName.toLowerCase();
-    
-    // Morning shifts - orange
-    if (lowerShiftName.contains('morning') || 
-        lowerShiftName.contains('صباح') || 
-        lowerShiftName.contains('الصباح')) {
-      return Colors.orange;
-    }
-    
-    // Evening shifts - indigo - Fixed patterns
-    if (lowerShiftName.contains('evening') || 
-        lowerShiftName.contains('مسائي') || 
-        lowerShiftName.contains('مساني') ||
-        lowerShiftName.contains('مساء') || 
-        lowerShiftName.contains('المساء')) {
-      return Colors.indigo;
-    }
-    
-    // Full day shifts - blue - Fixed patterns
-    if (lowerShiftName.contains('full day') || 
-        lowerShiftName.contains('fullday') ||
-        lowerShiftName.contains('يوم كامل') || 
-        lowerShiftName.contains('كامل')) {
-      return Colors.blue;
-    }
-    
-    // Default color
-    return Colors.grey[700]!;
+    return '';
   }
 
   // If only one shift available, show it as a static display
@@ -1265,7 +1200,7 @@ Widget _buildDetailRow(String label, String value) {
       padding: EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(16), // Reduced from 25 to 12
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -1280,18 +1215,14 @@ Widget _buildDetailRow(String label, String value) {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                _getShiftIcon(shiftName),
-                color: _getShiftIconColor(shiftName, true),
-                size: 20,
-              ),
+              _getShiftIcon(shiftName, true), // Updated to use the new method
               SizedBox(width: 6),
               Flexible(
                 child: Text(
                   shiftName,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold, // Made bold
+                    fontWeight: FontWeight.bold,
                     fontFamily: 'Poppins',
                     color: Colors.black,
                   ),
@@ -1308,7 +1239,7 @@ Widget _buildDetailRow(String label, String value) {
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],
-                fontWeight: FontWeight.bold, // Made bold
+                fontWeight: FontWeight.bold,
                 fontFamily: 'Poppins',
               ),
               textDirection: _isArabicText(deliveryTime) ? TextDirection.rtl : TextDirection.ltr,
@@ -1322,13 +1253,14 @@ Widget _buildDetailRow(String label, String value) {
   // Multiple shifts available - show selector
   int selectedShift = selectedShiftsByGroup[groupCode] ?? 1;
   Function(int) onShiftChanged = (int shift) => _onShiftChangedForGroup(groupCode, shift);
+  
   return Container(
     width: double.infinity,
     decoration: BoxDecoration(
-      color: Color(0xFFF5F8FF), // Changed to --White-Blue color
-      borderRadius: BorderRadius.circular(25),
+      color: Color(0xFFF5F8FF),
+      borderRadius: BorderRadius.circular(16), // Reduced from 25 to 12
       border: Border.all(
-        color: Colors.grey[300]!, // Light gray border
+        color: Colors.grey[300]!,
         width: 1,
       ),
     ),
@@ -1347,7 +1279,7 @@ Widget _buildDetailRow(String label, String value) {
               padding: EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(16), // Reduced from 25 to 12
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
@@ -1364,18 +1296,14 @@ Widget _buildDetailRow(String label, String value) {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        _getShiftIcon(shiftName),
-                        color: _getShiftIconColor(shiftName, isSelected),
-                        size: 20,
-                      ),
+                      _getShiftIcon(shiftName, isSelected), // Updated to use the new method
                       SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           shiftName,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.bold, // Made bold
+                            fontWeight: FontWeight.bold,
                             color: isSelected ? Colors.black : Colors.grey[600],
                           ),
                           textAlign: TextAlign.center,
@@ -1392,7 +1320,7 @@ Widget _buildDetailRow(String label, String value) {
                       style: TextStyle(
                         fontSize: 11,
                         color: isSelected ? Colors.grey[700] : Colors.grey[500],
-                        fontWeight: FontWeight.bold, // Made bold
+                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                       textDirection: _isArabicText(deliveryTime) ? TextDirection.rtl : TextDirection.ltr,
@@ -1406,6 +1334,87 @@ Widget _buildDetailRow(String label, String value) {
       }).toList(),
     ),
   );
+}
+Widget _getShiftIcon(String shiftName, bool isSelected) {
+  final lowerShiftName = shiftName.toLowerCase();
+  final iconColor = _getShiftIconColor(shiftName, isSelected);
+  
+  // Check for morning shifts (English and Arabic)
+  if (lowerShiftName.contains('morning') || 
+      lowerShiftName.contains('صباح') || 
+      lowerShiftName.contains('الصباح')) {
+    return SvgPicture.asset(
+      'assets/icons/sun.svg', // Replace with your actual SVG path
+      width: 20,
+      height: 20,
+      color: iconColor,
+    );
+  }
+  
+  // Check for evening shifts (English and Arabic)
+  if (lowerShiftName.contains('evening') || 
+      lowerShiftName.contains('مسائي') || 
+      lowerShiftName.contains('مساني') ||
+      lowerShiftName.contains('مساء') || 
+      lowerShiftName.contains('المساء')) {
+    return SvgPicture.asset(
+      'assets/icons/moon.svg', // Replace with your actual SVG path
+      width: 20,
+      height: 20,
+      color: iconColor,
+    );
+  }
+  
+  // Check for full day shifts (English and Arabic) - Keep Icons.access_time
+  if (lowerShiftName.contains('full day') || 
+      lowerShiftName.contains('fullday') ||
+      lowerShiftName.contains('يوم كامل') || 
+      lowerShiftName.contains('كامل')) {
+    return Icon(
+      Icons.access_time,
+      color: iconColor,
+      size: 20,
+    );
+  }
+  
+  // Default icon
+  return Icon(
+    Icons.access_time,
+    color: iconColor,
+    size: 20,
+  );
+}
+Color _getShiftIconColor(String shiftName, bool isSelected) {
+  if (!isSelected) return Colors.grey;
+  
+  final lowerShiftName = shiftName.toLowerCase();
+  
+  // Morning shifts - orange
+  if (lowerShiftName.contains('morning') || 
+      lowerShiftName.contains('صباح') || 
+      lowerShiftName.contains('الصباح')) {
+    return Colors.orange;
+  }
+  
+  // Evening shifts - indigo
+  if (lowerShiftName.contains('evening') || 
+      lowerShiftName.contains('مسائي') || 
+      lowerShiftName.contains('مساني') ||
+      lowerShiftName.contains('مساء') || 
+      lowerShiftName.contains('المساء')) {
+    return Colors.indigo;
+  }
+  
+  // Full day shifts - blue
+  if (lowerShiftName.contains('full day') || 
+      lowerShiftName.contains('fullday') ||
+      lowerShiftName.contains('يوم كامل') || 
+      lowerShiftName.contains('كامل')) {
+    return Colors.blue;
+  }
+  
+  // Default color
+  return Colors.grey[700]!;
 }
 
   Widget _buildServicePack(String title, String imagePath, Color color) {
