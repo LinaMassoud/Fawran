@@ -18,7 +18,7 @@ import 'package:fawran/screens/serviceChoice.dart';
 import 'package:fawran/screens/socialMediaLinks.dart';
 import 'package:fawran/screens/user_details.dart';
 import 'package:fawran/services/api_service.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/screens/address_display_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -28,6 +28,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/promotion_model.dart';
 import 'package:fawran/services/location_service.dart';
 import 'dart:ui';
+import 'package:carousel_slider/carousel_slider.dart' as cs;
 
 class Newhome extends ConsumerWidget {
   const Newhome({super.key});
@@ -199,6 +200,10 @@ class Newhome extends ConsumerWidget {
                       const SizedBox(height: 12),
 
                       // Professions
+                    
+ // fixed width
+
+                      // Professions
                       professionsAsync.when(
                         data: (professions) {
                           return GridView.builder(
@@ -293,7 +298,6 @@ class Newhome extends ConsumerWidget {
                             const Center(child: CircularProgressIndicator()),
                         error: (e, st) => Text('Error loading services: $e'),
                       ),
-
                       const SizedBox(height: 24),
                       const Text(
                         'Special Packages',
@@ -366,6 +370,7 @@ class Newhome extends ConsumerWidget {
       } else {
         localeNotifier.setLocale(const Locale('en'));
       }
+       ref.refresh(sliderItemsProvider);
     },
   ),
 ),   ],
@@ -380,7 +385,7 @@ class Newhome extends ConsumerWidget {
                 name,
                   style: GoogleFonts.poppins(
     fontWeight: FontWeight.w600,
-    fontSize: 18,
+    fontSize: 15,
     color: const Color(0xFF091735), // #091735
   ),
                 textAlign: TextAlign.center,
@@ -531,15 +536,16 @@ class Newhome extends ConsumerWidget {
 
             // Logout at bottom (aligned same as other items)
             Padding(
-              padding: const EdgeInsets.only(bottom: 16, left: 18),
+              padding: const EdgeInsets.only(bottom: 16, left: 14),
               child: _buildDrawerItem(
                 iconWidget: SvgPicture.asset(
                   'assets/images/logout.svg',
-                  width: 22,
-                  height: 22,
+                  width: 20,
+                  height: 20,
                   color: Colors.red, // optional tint
                 ),
                 title: loc.logout,
+                textColor: Colors.red,
                 onTap: () {
                   Navigator.pop(context);
                   _showLogoutDialog(context, ref);
@@ -552,25 +558,26 @@ class Newhome extends ConsumerWidget {
     );
   }
 
-  Widget _buildDrawerItem({
+ Widget _buildDrawerItem({
   required Widget iconWidget,
   required String title,
   required VoidCallback onTap,
   bool showNotification = false,
+   Color textColor = const Color(0xFF091735)
 }) {
   return ListTile(
-    visualDensity: const VisualDensity(vertical: -2), // tighter vertical space
+    visualDensity: const VisualDensity(vertical: -2),
     leading: Stack(
       alignment: Alignment.topRight,
       children: [
         Transform.translate(
-          offset: const Offset(1, -4),
+          offset: const Offset(1, -1), // 0 so it aligns with text baseline
           child: iconWidget,
         ),
         if (showNotification)
           const Positioned(
             right: -2,
-            top: -2,
+            top: 2, // lowered slightly to match icon's new position
             child: CircleAvatar(
               radius: 5,
               backgroundColor: Colors.red,
@@ -578,15 +585,15 @@ class Newhome extends ConsumerWidget {
           ),
       ],
     ),
-  title: Text(
-  title,
-  style: GoogleFonts.poppins(
-    fontWeight: FontWeight.w600,
-    fontSize: 18,
-    color: const Color(0xFF091735), // #091735
-  ),
-),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 20), // slightly less than 24
+    title: Text(
+      title,
+      style: GoogleFonts.poppins(
+        fontWeight: FontWeight.w600,
+        fontSize: 15,
+        color: textColor,
+      ),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
     onTap: onTap,
   );
 }
