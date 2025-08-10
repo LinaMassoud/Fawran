@@ -443,19 +443,26 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
             ),
             suffixIcon: IconButton(
-              icon: Icon(
-                _confirmPasswordVisible
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: Colors.grey.shade400,
-                size: 20,
+            icon: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: SvgPicture.asset(
+                _passwordVisible
+                    ? 'assets/icons/eye-regular-full.svg'
+                    : 'assets/icons/eye-slash-regular-full.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(
+                  Colors.grey.shade400,
+                  BlendMode.srcIn,
+                ),
               ),
-              onPressed: () {
-                setState(() {
-                  _confirmPasswordVisible = !_confirmPasswordVisible;
-                });
-              },
             ),
+            onPressed: () {
+              setState(() {
+                _passwordVisible = !_passwordVisible;
+              });
+            },
+          ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
@@ -529,12 +536,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
             ),
             suffixIcon: IconButton(
-              icon: Icon(
-                _confirmPasswordVisible
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: Colors.grey.shade400,
-                size: 20,
+              icon: Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: SvgPicture.asset(
+                  _confirmPasswordVisible
+                      ? 'assets/icons/eye-regular-full.svg'
+                      : 'assets/icons/eye-slash-regular-full.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey.shade400,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
               onPressed: () {
                 setState(() {
