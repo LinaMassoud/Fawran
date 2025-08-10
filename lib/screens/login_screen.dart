@@ -147,6 +147,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 hintText: isArabic
                     ? 'أدخل رقم هاتفك'
                     : 'Enter your phone number',
+                floatingLabelBehavior: FloatingLabelBehavior.always,
                 prefixIcon: Padding(
                   padding: const EdgeInsets.all(15.0),
                   child: SvgPicture.asset(
@@ -222,6 +223,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: InputDecoration(
                 labelText: loc.password,
                 hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
+                floatingLabelBehavior: FloatingLabelBehavior.always,
                 prefixIcon: Padding(
                   padding: const EdgeInsets.all(15.0),
                   child: SvgPicture.asset(
@@ -236,12 +238,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 suffixIcon: IconButton(
-                  icon: Icon(
-                    _passwordVisible
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: Colors.grey.shade400,
-                    size: 20,
+                  icon: Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: SvgPicture.asset(
+                      _passwordVisible
+                          ? 'assets/icons/eye-regular-full.svg'
+                          : 'assets/icons/eye-slash-regular-full.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: ColorFilter.mode(
+                        Colors.grey.shade400,
+                        BlendMode.srcIn,
+                      ),
+                    ),
                   ),
                   onPressed: () {
                     setState(() {

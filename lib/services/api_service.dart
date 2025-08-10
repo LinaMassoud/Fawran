@@ -73,12 +73,30 @@ class ApiService {
         final result = safeJsonDecode(response.body);
         print('✅ [SIGNUP] Parsed result: $result');
         return result;
+      } else if (response.statusCode == 400) {
+        // Handle validation errors (400 Bad Request)
+        final result = safeJsonDecode(response.body);
+        print('⚠️ [SIGNUP] Validation error: $result');
+        return result;
+      } else if (response.statusCode == 422) {
+        // Handle unprocessable entity errors
+        final result = safeJsonDecode(response.body);
+        print('⚠️ [SIGNUP] Unprocessable entity: $result');
+        return result;
+      } else if (response.statusCode == 500) {
+        // Handle server errors
+        final result = safeJsonDecode(response.body);
+        print('💥 [SIGNUP] Server error: $result');
+        return result ?? {'error': 'Internal server error. Please try again later.'};
       } else {
-        return null;
+        // Handle other status codes
+        final result = safeJsonDecode(response.body);
+        print('❌ [SIGNUP] Unexpected status code: ${response.statusCode}');
+        return result ?? {'error': 'Sign up failed. Please try again.'};
       }
     } catch (ex) {
       print('🧨 [SIGNUP] Exception occurred: $ex');
-      return null;
+      return {'error': 'Network error. Please check your connection and try again.'};
     }
   }
 
@@ -1285,49 +1303,47 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> validatePromotion({
-    required String promotionCode,
-    required int shiftId,
-    required int cityCode,
-    required double originalPrice,
-    required double hourPrice,
-    int? totalVisits, // optional named parameter
-  }) async {
-    try {
-      final url = '$_baseUrl/validate-promotion';
+ static Future<Map<String, dynamic>?> validatePromotion({
+  required String promotionCode,
+  required int shiftId,
+  required int cityCode,
+  required double originalPrice,
+  required double hourPrice,
+  int? totalVisits, // optional named parameter
+}) async {
+  try {
+    final url = '$_baseUrl/validate-promotion';
+    // Build the request body
+    final body = {
+      'promotion_code': promotionCode,
+      'shift_id': shiftId,
+      'city': cityCode,
+      'original_price': originalPrice,
+      'hour_price': hourPrice,
+      if (totalVisits != null) 'total_visits': totalVisits,
+    };
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: url,
+      body: json.encode(body),
+    );
+    print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
+    print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
 
-      // Build the request body
-      final body = {
-        'promotion_code': promotionCode,
-        'shift_id': shiftId,
-        'city': cityCode,
-        'original_price': originalPrice,
-        'hour_price': hourPrice,
-        if (totalVisits != null) 'total_visits': totalVisits,
-      };
-
-      final response = await makeAuthenticatedRequest(
-        method: 'POST',
-        url: url,
-        body: json.encode(body),
-      );
-
-      print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
-      print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 404) {
-        final responseData = json.decode(response.body);
-        return responseData;
-      } else {
-        print(
-            '❌ [VALIDATE_PROMOTION] Failed with status: ${response.statusCode}');
-        return null;
-      }
-    } catch (e) {
-      print('💥 [VALIDATE_PROMOTION] Error: $e');
+ 
+    if (response.statusCode == 200 || response.statusCode == 404 || response.statusCode == 400) {
+      final responseData = json.decode(response.body);
+      return responseData;
+    } else {
+      print('❌ [VALIDATE_PROMOTION] Failed with status: ${response.statusCode}');
       return null;
     }
+  } catch (e) {
+    print('💥 [VALIDATE_PROMOTION] Error: $e');
+    return null;
   }
+}
+
 
   static Future<List<dynamic>> fetchFAQs() async {
     try {
