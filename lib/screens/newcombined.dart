@@ -48,9 +48,9 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int? minExperience;
   String? selectedStatus;
   final _storage = FlutterSecureStorage();
-  Widget _buildHeader(BuildContext context) {
+Widget _buildHeader(BuildContext context) {
+  final selectedProfession = ref.watch(selectedProfessionProvider);
 
-       final selectedProfession = ref.watch(selectedProfessionProvider);
   return Container(
     height: 124,
     decoration: const BoxDecoration(
@@ -60,13 +60,14 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
         bottomRight: Radius.circular(24),
       ),
     ),
-    padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    padding: const EdgeInsets.only(top: 70, bottom: 20), // no left padding
+    child: Stack(
       children: [
-        // Back arrow button
-        Align(
-          alignment: Alignment.centerLeft,
+        // Back arrow on far left
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
           child: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
@@ -74,21 +75,23 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             },
           ),
         ),
-        const SizedBox(width: 16),
-        // Header text
-        Text(
-          "${selectedProfession?.positionName}",
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+
+        // Centered title
+        Align(
+          alignment: Alignment.center,
+          child: Text(
+            "${selectedProfession?.positionName}",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
     ),
   );
 }
-
 
   Future<void> submitOrder() async {
     setState(() {
@@ -688,44 +691,6 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     }
   }
 
-Widget _buildHeader(BuildContext context) {
-  return Container(
-    height: 124,
-    decoration: const BoxDecoration(
-      color: Color(0xFF10295C),
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(24),
-        bottomRight: Radius.circular(24),
-      ),
-    ),
-    padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Back arrow button
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ),
-        const SizedBox(width: 16),
-        // Header text
-        const Text(
-          selectedProfession?.positionName,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
   Widget _buildFooterStepper() {
     return Container(
