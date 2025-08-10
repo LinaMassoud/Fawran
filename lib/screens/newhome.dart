@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fawran/screens/address_display_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/promotion_model.dart';
 import 'package:fawran/services/location_service.dart';
@@ -351,26 +352,23 @@ class Newhome extends ConsumerWidget {
                     backgroundColor: Color(0xFFE0E0E0),
                     child: Icon(Icons.person, size: 40, color: Colors.white),
                   ),
-                  Positioned(
-                    left: 20, // exactly same horizontal margin as menu icons
-                    child: IconButton(
-                      icon: const Icon(Icons.public,
-                          color: Colors.blue, size: 22),
-                      onPressed: () {
-                        final localeNotifier =
-                            ref.read(localeNotifierProvider.notifier);
-                        final currentLocale = ref.read(localeNotifierProvider);
+             Positioned(
+  left: isArabic ? null : 20,
+  right: isArabic ? 20 : null,
+  child: IconButton(
+    icon: const Icon(Icons.public, color: Color(0xFF1E49A0), size: 22),
+    onPressed: () {
+      final localeNotifier = ref.read(localeNotifierProvider.notifier);
+      final currentLocale = ref.read(localeNotifierProvider);
 
-                        if (currentLocale.languageCode == 'en') {
-                          localeNotifier.setLocale(const Locale('ar'));
-                        } else {
-                          localeNotifier.setLocale(const Locale('en'));
-                        }
-                        // Handle globe icon tap
-                      },
-                    ),
-                  ),
-                ],
+      if (currentLocale.languageCode == 'en') {
+        localeNotifier.setLocale(const Locale('ar'));
+      } else {
+        localeNotifier.setLocale(const Locale('en'));
+      }
+    },
+  ),
+),   ],
               ),
             ),
 
@@ -380,11 +378,11 @@ class Newhome extends ConsumerWidget {
             userNameAsync.when(
               data: (name) => Text(
                 name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
+                  style: GoogleFonts.poppins(
+    fontWeight: FontWeight.w600,
+    fontSize: 18,
+    color: const Color(0xFF091735), // #091735
+  ),
                 textAlign: TextAlign.center,
               ),
               loading: () => const Text("..."),
@@ -400,9 +398,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/addresses.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.myAddresses,
                     onTap: () {
@@ -417,9 +415,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/account.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.myInformation,
                     onTap: () {
@@ -434,9 +432,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/about.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.aboutCompany,
                     onTap: () async {
@@ -453,9 +451,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/branches.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.companyBranches,
                     onTap: () {},
@@ -463,9 +461,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/social.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.socialMediaLinks,
                     onTap: () {
@@ -480,9 +478,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/faq.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.faq,
                     onTap: () {
@@ -497,9 +495,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/bookings.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.myContracts,
                     showNotification: hasUnconfirmedContracts,
@@ -511,9 +509,9 @@ class Newhome extends ConsumerWidget {
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/privacy.svg',
-                      width: 22,
-                      height: 22,
-                      color: Colors.blue, // optional tint
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.privacyPolicy,
                     onTap: () async {
@@ -536,10 +534,10 @@ class Newhome extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 16, left: 18),
               child: _buildDrawerItem(
                 iconWidget: SvgPicture.asset(
-                  'assets/images/addresses.svg',
+                  'assets/images/logout.svg',
                   width: 22,
                   height: 22,
-                  color: Colors.blue, // optional tint
+                  color: Colors.red, // optional tint
                 ),
                 title: loc.logout,
                 onTap: () {
@@ -555,41 +553,43 @@ class Newhome extends ConsumerWidget {
   }
 
   Widget _buildDrawerItem({
-    required Widget iconWidget,
-    required String title,
-    required VoidCallback onTap,
-    bool showNotification = false,
-  }) {
-    return ListTile(
-      leading: Stack(
-        alignment: Alignment.topRight,
-        children: [
-          Transform.translate(
-            offset: const Offset(1, -4), // move left by 4 and up by 4 pixels
-            child: iconWidget,
-          ),
-          if (showNotification)
-            const Positioned(
-              right: -2,
-              top: -2,
-              child: CircleAvatar(
-                radius: 5,
-                backgroundColor: Colors.red,
-              ),
-            ),
-        ],
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 15,
+  required Widget iconWidget,
+  required String title,
+  required VoidCallback onTap,
+  bool showNotification = false,
+}) {
+  return ListTile(
+    visualDensity: const VisualDensity(vertical: -2), // tighter vertical space
+    leading: Stack(
+      alignment: Alignment.topRight,
+      children: [
+        Transform.translate(
+          offset: const Offset(1, -4),
+          child: iconWidget,
         ),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-      onTap: onTap,
-    );
-  }
+        if (showNotification)
+          const Positioned(
+            right: -2,
+            top: -2,
+            child: CircleAvatar(
+              radius: 5,
+              backgroundColor: Colors.red,
+            ),
+          ),
+      ],
+    ),
+  title: Text(
+  title,
+  style: GoogleFonts.poppins(
+    fontWeight: FontWeight.w600,
+    fontSize: 18,
+    color: const Color(0xFF091735), // #091735
+  ),
+),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20), // slightly less than 24
+    onTap: onTap,
+  );
+}
 
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
