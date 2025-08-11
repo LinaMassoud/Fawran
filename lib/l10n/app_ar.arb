@@ -221,7 +221,7 @@
    "chooselabor":"اختيار العامل",
    "pickup_or_delivey":"طريقة استلام العامل",
    "agreement":"الاتفاقية",
-   "submit_ordre":"اتمام التعاقد",
+   "submit_order":"اتمام التعاقد",
     "pickup":"من مقر الشركة",
    "delivery":"توصيل للمنزل",
    "delivery_not_available":"التوصيل للمنزل غير متاح",
@@ -233,8 +233,6 @@
     "delivery_fee":"توصيل العامل للمنزل (100 ريال)",
     "riyal":"ريال",
     "days":"ايام"
-
-
 
 
 }

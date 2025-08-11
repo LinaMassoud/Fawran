@@ -547,7 +547,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pickup_or_delivey => 'طريقة استلام العامل';
 
   @override
-  String get submit_order => 'Submit Order';
+  String get submit_order => 'اتمام التعاقد';
 
   @override
   String get pickup => 'من مقر الشركة';
