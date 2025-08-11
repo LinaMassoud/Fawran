@@ -1,5 +1,7 @@
 // newhome.dart
 
+import 'dart:async';
+
 import 'package:fawran/Fawran4Hours/hourly_service_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/package_model.dart';
@@ -126,17 +128,17 @@ class Newhome extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
-                              children: const [
+                              children: [
                                 Icon(Icons.warning_amber_rounded,
                                     color: Colors.blueAccent),
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    "You have unconfirmed contracts",
+                                    loc.unconfirmedcontracts,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: Color(0xFF1A237E),
+                                      color: Color(0xFFFF9800),
                                     ),
                                   ),
                                 ),
@@ -145,51 +147,145 @@ class Newhome extends ConsumerWidget {
                           ),
                         ),
 
-                      const Text(
-                        'Welcome on board!',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFFF9800),
+                      Text(
+                        loc.welcome,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                          color: Color(0xFFFF9800), // #091735
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'A variety of services at your fingertips — ready to start?',
-                        style: TextStyle(fontSize: 14),
+                      Text(
+                        loc.intro_text,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w400,
+                          fontSize: 13,
+                          color: const Color(0xFF091735), // #091735
+                        ),
                       ),
                       const SizedBox(height: 16),
 
                       // Slider
                       sliderItemsAsync.when(
                         data: (items) {
-                          return SizedBox(
-                            height: 150,
-                            child: PageView.builder(
-                              itemCount: items.length,
-                              itemBuilder: (context, index) {
-                                final item = items[index];
-                                final imageUrl = getFullImageUrl(item.imageUrl);
-                                return ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.network(
-                                    imageUrl,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
+                          final PageController pageController =
+                              PageController();
+                          int currentPage = 0;
+                          final ValueNotifier<int> pageNotifier =
+                              ValueNotifier<int>(0);
+
+                          // Auto-slide logic
+                          Timer.periodic(const Duration(seconds: 3), (timer) {
+                            if (pageController.hasClients) {
+                              currentPage = (currentPage + 1) % items.length;
+                              pageController.animateToPage(
+                                currentPage,
+                                duration: const Duration(milliseconds: 400),
+                                curve: Curves.easeInOut,
+                              );
+                              pageNotifier.value = currentPage;
+                            }
+                          });
+
+                          return Stack(
+                            children: [
+                              Column(
+                                children: [
+                                  SizedBox(
+                                    height: 150,
+                                    child: PageView.builder(
+                                      controller: pageController,
+                                      itemCount: items.length,
+                                      onPageChanged: (index) =>
+                                          pageNotifier.value = index,
+                                      itemBuilder: (context, index) {
+                                        final item = items[index];
+                                        final imageUrl =
+                                            getFullImageUrl(item.imageUrl);
+
+                                        return ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          child: Image.network(
+                                            imageUrl,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Container(
+                                                color: Colors.grey[300],
+                                                child: const Icon(Icons.error,
+                                                    color: Colors.red),
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                );
-                              },
-                            ),
+                                  const SizedBox(height: 8),
+                                  // Slider indicator
+                                  ValueListenableBuilder<int>(
+                                    valueListenable: pageNotifier,
+                                    builder: (context, value, _) {
+                                      return Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: List.generate(items.length,
+                                            (index) {
+                                          return AnimatedContainer(
+                                            duration: const Duration(
+                                                milliseconds: 300),
+                                            margin: const EdgeInsets.symmetric(
+                                                horizontal: 4),
+                                            height: 8,
+                                            width: value == index ? 24 : 8,
+                                            decoration: BoxDecoration(
+                                              color: value == index
+                                                  ? Colors.blue.shade800
+                                                  : Colors.blue.shade300,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          );
+                                        }),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+
+                              // Fixed "Popular" tag at bottom left of slider
+                              Positioned(
+                                bottom: 40, // adjust this to your liking
+                                left: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.lightBlue.shade50,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    loc.popular,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           );
                         },
                         loading: () =>
                             const Center(child: CircularProgressIndicator()),
                         error: (e, st) => Text('Error loading slider: $e'),
                       ),
-
                       const SizedBox(height: 20),
-                      const Text(
-                        'Our Services',
+                      Text(
+                        loc.our_services,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
@@ -199,107 +295,132 @@ class Newhome extends ConsumerWidget {
                       const SizedBox(height: 12),
 
                       // Professions
-                    
- // fixed width
+
+                      // fixed width
 
                       // Professions
                       professionsAsync.when(
                         data: (professions) {
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: professions.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1,
-                            ),
-                            itemBuilder: (context, index) {
-                              final profession = professions[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  ref
-                                      .read(selectedProfessionProvider.notifier)
-                                      .state = profession;
-
-                                  final hasDomestic =
-                                      profession.hasDomesticPackage;
-                                  final serviceCount =
-                                      profession.services.length;
-
-                                  if (hasDomestic) {
-                                    if (serviceCount > 1) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ServiceChoicePage()),
-                                      );
-                                    } else {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              AddressSelectionScreen(
-                                            header: profession.positionName,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  } else {
-                                    if (serviceCount <= 1) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => HourlyServiceScreen(
-                                            professionId: profession.positionId,
-                                            serviceId:
-                                                profession.services[0].id,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    image: DecorationImage(
-                                      image: NetworkImage(
-                                          getFullImageUrl(profession.image)),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  alignment: Alignment.bottomCenter,
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF072C74),
-                                      borderRadius: BorderRadius.vertical(
-                                          bottom: Radius.circular(12)),
-                                    ),
-                                    child: Text(
-                                      profession.positionName,
-                                      textAlign: TextAlign.center,
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                          final PageController pageController = PageController(
+                            viewportFraction:
+                                0.4, // Smaller cards, roughly 40% of screen width
+                            initialPage: professions.length -
+                                1, // Start from the last page on the right
                           );
+
+                          return SizedBox(
+                              height:
+                                  150, // Adjust height to match square shape (same as width)
+                              child: PageView.builder(
+                                controller: pageController,
+                                itemCount: professions.length,
+                                reverse: true, // RTL direction
+                                padEnds:
+                                    false, // THIS REMOVES the unwanted padding at edges!
+                                itemBuilder: (context, index) {
+                                  final profession = professions[index];
+
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // navigation logic here
+
+                                        ref
+                                            .read(selectedProfessionProvider
+                                                .notifier)
+                                            .state = profession;
+
+                                        final hasDomestic =
+                                            profession.hasDomesticPackage;
+                                        final serviceCount =
+                                            profession.services.length;
+
+                                        if (hasDomestic) {
+                                          if (serviceCount > 1) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const ServiceChoicePage()),
+                                            );
+                                          } else {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    AddressSelectionScreen(
+                                                  header:
+                                                      profession.positionName,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        } else {
+                                          if (serviceCount <= 1) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    HourlyServiceScreen(
+                                                  professionId:
+                                                      profession.positionId,
+                                                  serviceId:
+                                                      profession.services[0].id,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      child: Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          image: DecorationImage(
+                                            image: NetworkImage(getFullImageUrl(
+                                                profession.image)),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        alignment: Alignment.bottomCenter,
+                                        child: Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF072C74),
+                                            borderRadius: BorderRadius.vertical(
+                                                bottom: Radius.circular(12)),
+                                          ),
+                                          child: Text(
+                                            profession.positionName,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1, // limit to one line
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              color: Colors.white, // #091735
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ));
                         },
                         loading: () =>
                             const Center(child: CircularProgressIndicator()),
                         error: (e, st) => Text('Error loading services: $e'),
                       ),
+
                       const SizedBox(height: 24),
-                      const Text(
-                        'Special Packages',
+                      Text(
+                        loc.saving_packages,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
@@ -313,7 +434,7 @@ class Newhome extends ConsumerWidget {
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Center(child: Text('Coming soon...')),
+                        child: Center(child: Text(loc.coming_soon)),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -355,24 +476,28 @@ class Newhome extends ConsumerWidget {
                     backgroundColor: Color(0xFFE0E0E0),
                     child: Icon(Icons.person, size: 40, color: Colors.white),
                   ),
-             Positioned(
-  left: isArabic ? null : 20,
-  right: isArabic ? 20 : null,
-  child: IconButton(
-    icon: const Icon(Icons.public, color: Color(0xFF1E49A0), size: 22),
-    onPressed: () {
-      final localeNotifier = ref.read(localeNotifierProvider.notifier);
-      final currentLocale = ref.read(localeNotifierProvider);
+                  Positioned(
+                    left: isArabic ? null : 16,
+                    right: isArabic ? 12 : null,
+                    child: IconButton(
+                      icon: const Icon(Icons.public,
+                          color: Color(0xFF1E49A0), size: 22),
+                      onPressed: () {
+                        final localeNotifier =
+                            ref.read(localeNotifierProvider.notifier);
+                        final currentLocale = ref.read(localeNotifierProvider);
 
-      if (currentLocale.languageCode == 'en') {
-        localeNotifier.setLocale(const Locale('ar'));
-      } else {
-        localeNotifier.setLocale(const Locale('en'));
-      }
-       ref.refresh(sliderItemsProvider);
-    },
-  ),
-),   ],
+                        if (currentLocale.languageCode == 'en') {
+                          localeNotifier.setLocale(const Locale('ar'));
+                        } else {
+                          localeNotifier.setLocale(const Locale('en'));
+                        }
+                        ref.refresh(sliderItemsProvider);
+                        ref.refresh(professionsProvider);
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -382,11 +507,11 @@ class Newhome extends ConsumerWidget {
             userNameAsync.when(
               data: (name) => Text(
                 name,
-                  style: GoogleFonts.poppins(
-    fontWeight: FontWeight.w600,
-    fontSize: 15,
-    color: const Color(0xFF091735), // #091735
-  ),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: const Color(0xFF091735), // #091735
+                ),
                 textAlign: TextAlign.center,
               ),
               loading: () => const Text("..."),
@@ -557,45 +682,44 @@ class Newhome extends ConsumerWidget {
     );
   }
 
- Widget _buildDrawerItem({
-  required Widget iconWidget,
-  required String title,
-  required VoidCallback onTap,
-  bool showNotification = false,
-   Color textColor = const Color(0xFF091735)
-}) {
-  return ListTile(
-    visualDensity: const VisualDensity(vertical: -2),
-    leading: Stack(
-      alignment: Alignment.topRight,
-      children: [
-        Transform.translate(
-          offset: const Offset(1, -1), // 0 so it aligns with text baseline
-          child: iconWidget,
-        ),
-        if (showNotification)
-          const Positioned(
-            right: -2,
-            top: 2, // lowered slightly to match icon's new position
-            child: CircleAvatar(
-              radius: 5,
-              backgroundColor: Colors.red,
-            ),
+  Widget _buildDrawerItem(
+      {required Widget iconWidget,
+      required String title,
+      required VoidCallback onTap,
+      bool showNotification = false,
+      Color textColor = const Color(0xFF091735)}) {
+    return ListTile(
+      visualDensity: const VisualDensity(vertical: -2),
+      leading: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          Transform.translate(
+            offset: const Offset(3, 0), // 0 so it aligns with text baseline
+            child: iconWidget,
           ),
-      ],
-    ),
-    title: Text(
-      title,
-      style: GoogleFonts.poppins(
-        fontWeight: FontWeight.w600,
-        fontSize: 15,
-        color: textColor,
+          if (showNotification)
+            const Positioned(
+              right: -2,
+              top: 2, // lowered slightly to match icon's new position
+              child: CircleAvatar(
+                radius: 5,
+                backgroundColor: Colors.red,
+              ),
+            ),
+        ],
       ),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-    onTap: onTap,
-  );
-}
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          color: textColor,
+        ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      onTap: onTap,
+    );
+  }
 
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(

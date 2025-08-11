@@ -108,7 +108,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tenpercent => 'خصم %10';
 
   @override
-  String get welcome => 'أهلا';
+  String get welcome => 'مرحبًا بكم معنا! ';
 
   @override
   String get designYourCard => 'صمم بطاقتك';
@@ -129,7 +129,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get next => 'التالي';
 
   @override
-  String get nationality => 'جنسية';
+  String get nationality => 'الجنسية';
 
   @override
   String get professionals => 'كم عدد المحترفين الذين تحتاجهم';
@@ -355,7 +355,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get onFinalBill => 'على الفاتورة النهائية';
 
   @override
-  String get agreement => 'أنا أوافق على ';
+  String get agreement => 'الاتفاقية';
 
   @override
   String get termsAndCond => 'الشروط والأحكام';
@@ -520,4 +520,68 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorOccurred => 'حدث خطأ. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get intro_text =>
+      'مجموعة متنوعة من الخدمات بين يديكم — هل أنتم مستعدون للبدء؟';
+
+  @override
+  String get popular => 'الأكثر شيوعا';
+
+  @override
+  String get our_services => 'حدماتنا';
+
+  @override
+  String get coming_soon => 'قريباّ';
+
+  @override
+  String get unconfirmedcontracts => 'لديك عقود غير مدفوعة';
+
+  @override
+  String get choose => 'اختر';
+
+  @override
+  String get chooselabor => 'اختيار العامل';
+
+  @override
+  String get pickup_or_delivey => 'طريقة استلام العامل';
+
+  @override
+  String get submit_order => 'Submit Order';
+
+  @override
+  String get pickup => 'من مقر الشركة';
+
+  @override
+  String get delivery => 'توصيل للمنزل';
+
+  @override
+  String get delivery_not_available => 'التوصيل للمنزل غير متاح';
+
+  @override
+  String get from_company => 'من الشركة';
+
+  @override
+  String get from_app => 'من التطبيق';
+
+  @override
+  String get choose_package => 'اختر حزمة';
+
+  @override
+  String get contract_amount => 'سعر الباقة قبل الضريبة';
+
+  @override
+  String get package => 'Package';
+
+  @override
+  String get price => 'السعر';
+
+  @override
+  String get delivery_fee => 'توصيل العامل للمنزل (100 ريال)';
+
+  @override
+  String get riyal => 'ريال';
+
+  @override
+  String get days => 'ايام';
 }

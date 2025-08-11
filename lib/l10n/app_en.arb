@@ -200,8 +200,38 @@
   "unknownResponse": "Unknown response",
   "failedSendOTP": "Failed to send OTP. Please try again.",
   "failedResetPassword": "Failed to reset password. Please try again.",
-  "errorOccurred": "An error occurred. Please try again."
+  "errorOccurred": "An error occurred. Please try again.",
 
+
+
+  "welcome":"Welcome on board! ",
+  "intro_text":"A variety of services at your fingertips — ready to start?",
+  "popular":"Popular",
+  "our_services":"Our Services",
+  "coming_soon":"Coming Soon",
+  "unconfirmedcontracts":"You have unconfirmed contracts",
+
+
+  "nationality":"Nationality",
+   "choose":"Choose",
+   "chooselabor":"Choose laborer",
+   "pickup_or_delivey":"PickUp or Delivery",
+   "agreement":"Agreement",
+   "submit_order":"Submit Order",
+   "pickup":"Pick up laborer yourself",
+   "delivery":"Deliver laborer to home",
+   "delivery_not_available":"Delivery option is not available currently.",
+   
+   "from_company":"From Company",
+   "from_app":"From App",
+   "choose_package":"Choose Package",
+   "contract_amount":"Contract Price before vat",
+    "package":"Package",
+    "price":"Price",
+    "delivery_fee":"Deliver laborer to home (100 SR fee)",
+    
+    "riyal":"Riyal",
+    "days":"Days"
 
 
 }

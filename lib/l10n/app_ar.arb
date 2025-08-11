@@ -203,7 +203,38 @@
   "unknownResponse": "استجابة غير معروفة",
   "failedSendOTP": "فشل في إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
   "failedResetPassword": "فشل في إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.",
-  "errorOccurred": "حدث خطأ. يرجى المحاولة مرة أخرى."
+  "errorOccurred": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+  
+
+  "welcome":"مرحبًا بكم معنا! ",
+  "intro_text":"مجموعة متنوعة من الخدمات بين يديكم — هل أنتم مستعدون للبدء؟",
+  "popular":"الأكثر شيوعا",
+  "our_services":"حدماتنا",
+   "coming_soon":"قريباّ",
+   "unconfirmedcontracts":"لديك عقود غير مدفوعة",
+
+
+
+
+   "nationality":"الجنسية",
+   "choose":"اختر",
+   "chooselabor":"اختيار العامل",
+   "pickup_or_delivey":"طريقة استلام العامل",
+   "agreement":"الاتفاقية",
+   "submit_ordre":"اتمام التعاقد",
+    "pickup":"من مقر الشركة",
+   "delivery":"توصيل للمنزل",
+   "delivery_not_available":"التوصيل للمنزل غير متاح",
+   "from_company":"من الشركة",
+   "from_app":"من التطبيق",
+    "choose_package":"اختر حزمة",
+    "contract_amount":"سعر الباقة قبل الضريبة",
+    "price":"السعر",
+    "delivery_fee":"توصيل العامل للمنزل (100 ريال)",
+    "riyal":"ريال",
+    "days":"ايام"
+
+
 
 
 }

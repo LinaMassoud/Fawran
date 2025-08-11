@@ -108,7 +108,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tenpercent => ' %10 OFF';
 
   @override
-  String get welcome => 'Welcome';
+  String get welcome => 'Welcome on board! ';
 
   @override
   String get designYourCard => 'Design Your Card';
@@ -355,7 +355,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onFinalBill => 'on final bill';
 
   @override
-  String get agreement => 'I agree to the ';
+  String get agreement => 'Agreement';
 
   @override
   String get termsAndCond => 'Terms and Conditions';
@@ -519,4 +519,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorOccurred => 'An error occurred. Please try again.';
+
+  @override
+  String get intro_text =>
+      'A variety of services at your fingertips — ready to start?';
+
+  @override
+  String get popular => 'Popular';
+
+  @override
+  String get our_services => 'Our Services';
+
+  @override
+  String get coming_soon => 'Coming Soon';
+
+  @override
+  String get unconfirmedcontracts => 'You have unconfirmed contracts';
+
+  @override
+  String get choose => 'Choose';
+
+  @override
+  String get chooselabor => 'Choose laborer';
+
+  @override
+  String get pickup_or_delivey => 'PickUp or Delivery';
+
+  @override
+  String get submit_order => 'Submit Order';
+
+  @override
+  String get pickup => 'Pick up laborer yourself';
+
+  @override
+  String get delivery => 'Deliver laborer to home';
+
+  @override
+  String get delivery_not_available =>
+      'Delivery option is not available currently.';
+
+  @override
+  String get from_company => 'From Company';
+
+  @override
+  String get from_app => 'From App';
+
+  @override
+  String get choose_package => 'Choose Package';
+
+  @override
+  String get contract_amount => 'Contract Price before vat';
+
+  @override
+  String get package => 'Package';
+
+  @override
+  String get price => 'Price';
+
+  @override
+  String get delivery_fee => 'Deliver laborer to home (100 SR fee)';
+
+  @override
+  String get riyal => 'Riyal';
+
+  @override
+  String get days => 'Days';
 }
