@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:checkout_flutter/checkout_flutter.dart';
 import 'package:confetti/confetti.dart';
 import 'package:fawran/providers/contractsProvider.dart';
+import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -47,7 +50,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     super.dispose();
   }
 
-  Future<void> _startCheckout(Map<String, dynamic> booking, {required bool isHourly}) async {
+  Future<void> _startCheckout(Map<String, dynamic> booking, {required bool isHourly,required String sector}) async {
   try {
     setState(() {
       _checkoutStatus = 'Starting checkout...';
@@ -165,14 +168,17 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         });
         print('Checkout is ready!');
       },
-      onSuccess: (data) {
+      onSuccess: (data) async{
+          final parsedData = jsonDecode(data); // now it's a Map
+  final chargeId = parsedData["charge_id"];
         setState(() {
           _checkoutStatus = 'Payment successful: $data';
         });
         print('Payment successful: $data');
         _confettiController.play();
-        _showSuccessDialog();
         
+          final result = await  ApiService.addChargePayment(userId, contractId, sector, chargeId);
+          _showSuccessDialog(data);
         // Refresh contracts after successful payment
         ref.read(contractsProvider.notifier).fetchContracts();
       },
@@ -208,7 +214,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(String data) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -219,7 +225,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              title: const Text('🎉 Payment Successful!'),
+              title:  Text('🎉 Payment Successful!' + data),
               content: const Text('Thank you for your purchase.'),
               actions: [
                 TextButton(
@@ -544,7 +550,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                         status.toLowerCase() == "canceled" ||
                         isCancelled
                     ? null
-                    : () => _startCheckout(booking, isHourly: false),
+                    : () => _startCheckout(booking, isHourly: false,sector:'I'),
                 child: Text(
                   "Pay Now",
                   style: TextStyle(
@@ -667,7 +673,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                         status.toLowerCase() == "canceled" ||
                         isCancelled
                     ? null
-                    : () => _startCheckout(booking, isHourly: true),
+                    : () => _startCheckout(booking, isHourly: true,sector: 'H'),
                 child: Text(
                   loc.payNow ?? "Pay Now",
                   style: TextStyle(
