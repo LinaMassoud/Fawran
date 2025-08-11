@@ -228,7 +228,10 @@
    "contract_amount":"Contract Price before vat",
     "package":"Package",
     "price":"Price",
-    "delivery_fee":"Deliver laborer to home (100 SR fee)"
+    "delivery_fee":"Deliver laborer to home (100 SR fee)",
+    
+    "riyal":"Riyal",
+    "days":"Days"
 
 
 }

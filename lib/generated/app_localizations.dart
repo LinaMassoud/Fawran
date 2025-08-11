@@ -1231,6 +1231,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deliver laborer to home (100 SR fee)'**
   String get delivery_fee;
+
+  /// No description provided for @riyal.
+  ///
+  /// In en, this message translates to:
+  /// **'Riyal'**
+  String get riyal;
+
+  /// No description provided for @days.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get days;
 }
 
 class _AppLocalizationsDelegate

@@ -228,7 +228,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Nationality",
+                loc.nationality,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -247,7 +247,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: DropdownButtonFormField<int>(
                       value: selectedNationality,
-                      hint: const Text("Select nationality"),
+                      hint: Text(loc.choose + " " + loc.nationality),
                       decoration:
                           const InputDecoration(border: InputBorder.none),
                       items: nationalities.map<DropdownMenuItem<int>>((nat) {
@@ -278,7 +278,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Choose Package",
+                loc.choose_package,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -293,12 +293,12 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                     children:
                         packages.map<Widget>((DomesticPackageModel package) {
                       final title =
-                          "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} Riyal";
+                          "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} ${loc.riyal}";
 
                       final subtitle = [
-                        "${loc.contract_amount}: ${package.contractAmount.toStringAsFixed(2)} Riyal",
-                        "${loc.vat}: ${package.vatAmount.toStringAsFixed(2)} Riyal",
-                        "${loc.duration}: ${package.contractDays} days",
+                        "${loc.contract_amount}: ${package.contractAmount.toStringAsFixed(2)}  ${loc.riyal}",
+                        "${loc.vat}: ${package.vatAmount.toStringAsFixed(2)}  ${loc.riyal}",
+                        "${loc.duration}: ${package.contractDays}  ${loc.days}",
                       ].join(" • ");
 
                       return Padding(
@@ -539,13 +539,15 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                           selectedDriver ?? "Not selected"),
 
                     // Nationality: (show actual selectedNationality if available)
-                    _textRow("${loc.nationality}: ",
-                        ref.read(selectedLaborerProvider)?.nationality ?? ''),
+                    if (selectedLaborSource == 'app')
+                      _textRow("${loc.nationality}: ",
+                          ref.read(selectedLaborerProvider)?.nationality ?? ''),
 
                     // Package name
                     _textRow("${loc.package}: ",
                         selectedPackage?.packageName ?? "Not selected"),
-
+                    _textRow("${loc.vat}: ",
+                        selectedPackage?.vatAmount.toString() ?? ''),
                     // Price = contractAmount + vatAmount + delivery fee if delivery
                     _textRow(
                       "${loc.price}: ",
