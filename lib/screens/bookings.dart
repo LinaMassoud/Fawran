@@ -522,11 +522,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           // Contract details
           _buildInfoRow("Service Contract ID", booking["contract_id"] ?? ""),
           _buildInfoRow("Contract ID", booking["contract_id"] ?? ""),
-          _buildInfoRow("Customer", booking["nationality_name"] ?? ""),
-          _buildInfoRow("Service ID", booking["profession_name"] ?? ""),
+          _buildInfoRow("Nationality", booking["nationality_name"] ?? ""),
+          _buildInfoRow("Service", booking["profession_name"] ?? ""),
           _buildInfoRow("Total Price", "${booking["amount_to_pay"] ?? 0}"),
           _buildInfoRow("VAT", "${booking["vat_amount"] ?? 0}"),
-          _buildInfoRow("Start Date", booking["period_days"]?.toString() ?? ""),
           _buildInfoRow("Status", status),
 
           // Show cancelled time if status is cancelled
