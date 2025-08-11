@@ -575,4 +575,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get price => 'Price';
+
+  @override
+  String get delivery_fee => 'Deliver laborer to home (100 SR fee)';
 }

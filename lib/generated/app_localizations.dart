@@ -1225,6 +1225,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Price'**
   String get price;
+
+  /// No description provided for @delivery_fee.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver laborer to home (100 SR fee)'**
+  String get delivery_fee;
 }
 
 class _AppLocalizationsDelegate
