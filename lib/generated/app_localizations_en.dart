@@ -108,7 +108,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tenpercent => ' %10 OFF';
 
   @override
-  String get welcome => 'Welcome';
+  String get welcome => 'Welcome on board! ';
 
   @override
   String get designYourCard => 'Design Your Card';
@@ -519,4 +519,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorOccurred => 'An error occurred. Please try again.';
+
+  @override
+  String get intro_text =>
+      'A variety of services at your fingertips — ready to start?';
+
+  @override
+  String get popular => 'Popular';
+
+  @override
+  String get our_services => 'Our Services';
+
+  @override
+  String get coming_soon => 'Coming Soon';
 }

@@ -200,8 +200,13 @@
   "unknownResponse": "Unknown response",
   "failedSendOTP": "Failed to send OTP. Please try again.",
   "failedResetPassword": "Failed to reset password. Please try again.",
-  "errorOccurred": "An error occurred. Please try again."
+  "errorOccurred": "An error occurred. Please try again.",
 
 
 
+  "welcome":"Welcome on board! ",
+  "intro_text":"A variety of services at your fingertips — ready to start?",
+ "popular":"Popular",
+ "our_services":"Our Services",
+ "coming_soon":"Coming Soon"
 }

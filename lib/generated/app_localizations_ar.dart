@@ -108,7 +108,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tenpercent => 'خصم %10';
 
   @override
-  String get welcome => 'أهلا';
+  String get welcome => 'مرحبًا بكم معنا! ';
 
   @override
   String get designYourCard => 'صمم بطاقتك';
@@ -520,4 +520,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorOccurred => 'حدث خطأ. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get intro_text =>
+      'مجموعة متنوعة من الخدمات بين يديكم — هل أنتم مستعدون للبدء؟';
+
+  @override
+  String get popular => 'الأكثر شيوعا';
+
+  @override
+  String get our_services => 'حدماتنا';
+
+  @override
+  String get coming_soon => 'قريباّ';
 }

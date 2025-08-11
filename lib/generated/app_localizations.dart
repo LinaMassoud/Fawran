@@ -299,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcome.
   ///
   /// In en, this message translates to:
-  /// **'Welcome'**
+  /// **'Welcome on board! '**
   String get welcome;
 
   /// No description provided for @designYourCard.
@@ -1117,6 +1117,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An error occurred. Please try again.'**
   String get errorOccurred;
+
+  /// No description provided for @intro_text.
+  ///
+  /// In en, this message translates to:
+  /// **'A variety of services at your fingertips — ready to start?'**
+  String get intro_text;
+
+  /// No description provided for @popular.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular'**
+  String get popular;
+
+  /// No description provided for @our_services.
+  ///
+  /// In en, this message translates to:
+  /// **'Our Services'**
+  String get our_services;
+
+  /// No description provided for @coming_soon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming Soon'**
+  String get coming_soon;
 }
 
 class _AppLocalizationsDelegate
