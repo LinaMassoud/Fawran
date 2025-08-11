@@ -128,17 +128,17 @@ class Newhome extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
-                              children: const [
+                              children: [
                                 Icon(Icons.warning_amber_rounded,
                                     color: Colors.blueAccent),
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    "You have unconfirmed contracts",
+                                    loc.unconfirmedcontracts,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: Color(0xFF1A237E),
+                                      color: Color(0xFFFF9800),
                                     ),
                                   ),
                                 ),
@@ -149,16 +149,20 @@ class Newhome extends ConsumerWidget {
 
                       Text(
                         loc.welcome,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFFF9800),
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                          color: Color(0xFFFF9800), // #091735
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         loc.intro_text,
-                        style: TextStyle(fontSize: 14),
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w400,
+                          fontSize: 13,
+                          color: const Color(0xFF091735), // #091735
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -322,6 +326,53 @@ class Newhome extends ConsumerWidget {
                                     child: GestureDetector(
                                       onTap: () {
                                         // navigation logic here
+
+                                        ref
+                                            .read(selectedProfessionProvider
+                                                .notifier)
+                                            .state = profession;
+
+                                        final hasDomestic =
+                                            profession.hasDomesticPackage;
+                                        final serviceCount =
+                                            profession.services.length;
+
+                                        if (hasDomestic) {
+                                          if (serviceCount > 1) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const ServiceChoicePage()),
+                                            );
+                                          } else {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    AddressSelectionScreen(
+                                                  header:
+                                                      profession.positionName,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        } else {
+                                          if (serviceCount <= 1) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    HourlyServiceScreen(
+                                                  professionId:
+                                                      profession.positionId,
+                                                  serviceId:
+                                                      profession.services[0].id,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
                                       },
                                       child: Container(
                                         width: double.infinity,
@@ -349,9 +400,11 @@ class Newhome extends ConsumerWidget {
                                             textAlign: TextAlign.center,
                                             maxLines: 1, // limit to one line
                                             overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.white),
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              color: Colors.white, // #091735
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -424,8 +477,8 @@ class Newhome extends ConsumerWidget {
                     child: Icon(Icons.person, size: 40, color: Colors.white),
                   ),
                   Positioned(
-                    left: isArabic ? null : 20,
-                    right: isArabic ? 20 : null,
+                    left: isArabic ? null : 16,
+                    right: isArabic ? 12 : null,
                     child: IconButton(
                       icon: const Icon(Icons.public,
                           color: Color(0xFF1E49A0), size: 22),
@@ -641,7 +694,7 @@ class Newhome extends ConsumerWidget {
         alignment: Alignment.topRight,
         children: [
           Transform.translate(
-            offset: const Offset(1, -1), // 0 so it aligns with text baseline
+            offset: const Offset(3, 0), // 0 so it aligns with text baseline
             child: iconWidget,
           ),
           if (showNotification)

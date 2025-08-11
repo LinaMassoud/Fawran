@@ -30,11 +30,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
 
-  final nameOnlyRegex = RegExp(r'^[a-zA-Z\u0600-\u06FF ]+$');
+  final nameOnlyRegex =
+      RegExp(r'^(?=.{3,}$)[a-zA-Z\u0600-\u06FF]+(?: [a-zA-Z\u0600-\u06FF]+)*$');
+
   final numberOnlyRegex = RegExp(r'^\d+$');
   final phoneRegex = RegExp(r'^\+?[0-9\s\-\(\)]{7,20}$');
-  final nationalIdRegex = RegExp(r'^[12]\d{9}$'); 
-  
+  final nationalIdRegex = RegExp(r'^[12]\d{9}$');
+
   @override
   void initState() {
     super.initState();
@@ -110,12 +112,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Form fields
               _buildTextField(
                 controller: _firstNameController,
                 label: loc.firstName,
-                hintText: isArabic ? 'أدخل الاسم الأول' : 'Enter your first name',
+                hintText:
+                    isArabic ? 'أدخل الاسم الأول' : 'Enter your first name',
                 iconPath: 'assets/icons/person.svg',
                 isArabic: isArabic,
                 validator: (val) {
@@ -130,7 +133,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _buildTextField(
                 controller: _middleNameController,
                 label: loc.middleName,
-                hintText: isArabic ? 'أدخل الاسم الأوسط' : 'Enter your middle name',
+                hintText:
+                    isArabic ? 'أدخل الاسم الأوسط' : 'Enter your middle name',
                 iconPath: 'assets/icons/person.svg',
                 isArabic: isArabic,
                 validator: (val) {
@@ -145,7 +149,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _buildTextField(
                 controller: _lastNameController,
                 label: loc.lastName,
-                hintText: isArabic ? 'أدخل الاسم الأخير' : 'Enter your last name',
+                hintText:
+                    isArabic ? 'أدخل الاسم الأخير' : 'Enter your last name',
                 iconPath: 'assets/icons/person.svg',
                 isArabic: isArabic,
                 validator: (val) {
@@ -160,7 +165,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _buildTextField(
                 controller: _nationalIdController,
                 label: "National ID",
-                hintText: isArabic ? 'أدخل رقم الهوية الوطنية' : 'Enter your national ID',
+                hintText: isArabic
+                    ? 'أدخل رقم الهوية الوطنية'
+                    : 'Enter your national ID',
                 icon: Icons.badge_outlined,
                 keyboardType: TextInputType.number,
                 isArabic: isArabic,
@@ -176,7 +183,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _buildTextField(
                 controller: _phoneController,
                 label: loc.phoneNumber,
-                hintText: isArabic ? 'أدخل رقم الهاتف' : 'Enter your phone number',
+                hintText:
+                    isArabic ? 'أدخل رقم الهاتف' : 'Enter your phone number',
                 iconPath: 'assets/icons/phone.svg',
                 keyboardType: TextInputType.phone,
                 isArabic: isArabic,
@@ -192,7 +200,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _buildTextField(
                 controller: _emailController,
                 label: loc.email,
-                hintText: isArabic ? 'أدخل البريد الإلكتروني' : 'Enter your email',
+                hintText:
+                    isArabic ? 'أدخل البريد الإلكتروني' : 'Enter your email',
                 iconPath: 'assets/icons/email.svg',
                 keyboardType: TextInputType.emailAddress,
                 isArabic: isArabic,
@@ -224,7 +233,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _buildTextField(
                 controller: _confirmPasswordController,
                 label: loc.confirmPassword,
-                hintText: isArabic ? 'تأكيد كلمة المرور' : 'Confirm your password',
+                hintText:
+                    isArabic ? 'تأكيد كلمة المرور' : 'Confirm your password',
                 iconPath: 'assets/icons/lock.svg',
                 isArabic: isArabic,
                 validator: (val) => val == _passwordController.text
@@ -238,7 +248,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 },
               ),
               const SizedBox(height: 32),
-              
+
               // Sign Up Button
               SizedBox(
                 width: double.infinity,
@@ -296,7 +306,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ),
                 ),
               ),
-              
+
               // Error message
               if (authState.errorMessage.isNotEmpty) ...[
                 const SizedBox(height: 16),
@@ -309,7 +319,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                      Icon(Icons.error_outline,
+                          color: Colors.red.shade600, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -324,9 +335,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 24),
-              
+
               // Login navigation
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -353,7 +364,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                 ],
               ),
-              
+
               // Extra bottom padding for safe scrolling
               const SizedBox(height: 32),
             ],

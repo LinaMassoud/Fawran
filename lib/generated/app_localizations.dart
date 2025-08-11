@@ -791,7 +791,7 @@ abstract class AppLocalizations {
   /// No description provided for @agreement.
   ///
   /// In en, this message translates to:
-  /// **'I agree to the '**
+  /// **'Agreement'**
   String get agreement;
 
   /// No description provided for @termsAndCond.
@@ -1141,6 +1141,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Coming Soon'**
   String get coming_soon;
+
+  /// No description provided for @unconfirmedcontracts.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unconfirmed contracts'**
+  String get unconfirmedcontracts;
+
+  /// No description provided for @choose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get choose;
+
+  /// No description provided for @chooselabor.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose laborer'**
+  String get chooselabor;
+
+  /// No description provided for @pickup_or_delivey.
+  ///
+  /// In en, this message translates to:
+  /// **'PickUp or Delivery'**
+  String get pickup_or_delivey;
+
+  /// No description provided for @submit_order.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Order'**
+  String get submit_order;
+
+  /// No description provided for @pickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up laborer yourself'**
+  String get pickup;
+
+  /// No description provided for @delivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver laborer to home'**
+  String get delivery;
+
+  /// No description provided for @delivery_not_available.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery option is not available currently.'**
+  String get delivery_not_available;
+
+  /// No description provided for @from_company.
+  ///
+  /// In en, this message translates to:
+  /// **'From Company'**
+  String get from_company;
+
+  /// No description provided for @from_app.
+  ///
+  /// In en, this message translates to:
+  /// **'From App'**
+  String get from_app;
+
+  /// No description provided for @choose_package.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Package'**
+  String get choose_package;
+
+  /// No description provided for @contract_amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract Price before vat'**
+  String get contract_amount;
+
+  /// No description provided for @package.
+  ///
+  /// In en, this message translates to:
+  /// **'Package'**
+  String get package;
+
+  /// No description provided for @price.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get price;
 }
 
 class _AppLocalizationsDelegate

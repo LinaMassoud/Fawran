@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/Nationality.dart';
 import 'package:fawran/models/domestic_package_model.dart';
 import 'package:fawran/providers/address_provider.dart';
@@ -48,50 +49,51 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int? minExperience;
   String? selectedStatus;
   final _storage = FlutterSecureStorage();
-Widget _buildHeader(BuildContext context) {
-  final selectedProfession = ref.watch(selectedProfessionProvider);
+  Widget _buildHeader(BuildContext context) {
+    final selectedProfession = ref.watch(selectedProfessionProvider);
 
-  return Container(
-    height: 124,
-    decoration: const BoxDecoration(
-      color: Color(0xFF10295C),
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(24),
-        bottomRight: Radius.circular(24),
-      ),
-    ),
-    padding: const EdgeInsets.only(top: 70, bottom: 20), // remove left/right padding
-    child: Stack(
-      children: [
-        // Back arrow flush left
-        Positioned(
-          left: 0,
-          top: 0,
-          bottom: 0,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
+    return Container(
+      height: 124,
+      decoration: const BoxDecoration(
+        color: Color(0xFF10295C),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
-
-        // Centered title
-        Align(
-          alignment: Alignment.center,
-          child: Text(
-            "${selectedProfession?.positionName}",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+      ),
+      padding: const EdgeInsets.only(
+          top: 70, bottom: 20), // remove left/right padding
+      child: Stack(
+        children: [
+          // Back arrow flush left
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.pop(context);
+              },
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+
+          // Centered title
+          Align(
+            alignment: Alignment.center,
+            child: Text(
+              "${selectedProfession?.positionName}",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> submitOrder() async {
     setState(() {
@@ -208,9 +210,10 @@ Widget _buildHeader(BuildContext context) {
   }
 
   Widget _buildSteps() {
+    final loc = AppLocalizations.of(context)!;
     final nationalityAsync = ref.watch(nationalitiesProvider);
     final packagesAsync = ref.watch(packageProvider);
-       final selectedProfession = ref.watch(selectedProfessionProvider);
+    final selectedProfession = ref.watch(selectedProfessionProvider);
     final selectedPackage = ref.watch(
         selectedPackageProvider); // assuming this is how you track selection
     final laborersAsync = ref.watch(laborersProvider);
@@ -293,9 +296,9 @@ Widget _buildHeader(BuildContext context) {
                           "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} Riyal";
 
                       final subtitle = [
-                        "Contract: ${package.contractAmount.toStringAsFixed(2)} Riyal",
-                        "VAT: ${package.vatAmount.toStringAsFixed(2)} Riyal",
-                        "Duration: ${package.contractDays} days",
+                        "${loc.contract_amount}: ${package.contractAmount.toStringAsFixed(2)} Riyal",
+                        "${loc.vat}: ${package.vatAmount.toStringAsFixed(2)} Riyal",
+                        "${loc.duration}: ${package.contractDays} days",
                       ].join(" • ");
 
                       return Padding(
@@ -325,7 +328,7 @@ Widget _buildHeader(BuildContext context) {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Choose Labor Source",
+                loc.chooselabor,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -335,12 +338,12 @@ Widget _buildHeader(BuildContext context) {
 
               // From Company
               _buildMinimalRadio(
-                label: "From Company", // ✅ required
+                label: loc.from_company, // ✅ required
                 value: "company", // ✅ required
               ),
 
               _buildMinimalRadio(
-                label: "From App",
+                label: loc.from_app,
                 value: "app",
               ),
               const SizedBox(height: 24),
@@ -354,7 +357,7 @@ Widget _buildHeader(BuildContext context) {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Text(
+                  Text(
                     "Choose ${selectedProfession?.positionName}",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
@@ -372,84 +375,98 @@ Widget _buildHeader(BuildContext context) {
               const SizedBox(height: 8),
 
               // Handle async states
-            laborersAsync.when(
-  loading: () => const Center(child: CircularProgressIndicator()),
-  error: (err, stack) => Text('Error: $err', style: const TextStyle(color: Colors.red)),
-  data: (laborers) {
-    if (laborers.isEmpty) {
-      return const Text("No drivers found");
-    }
+              laborersAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Text('Error: $err',
+                    style: const TextStyle(color: Colors.red)),
+                data: (laborers) {
+                  if (laborers.isEmpty) {
+                    return const Text("No drivers found");
+                  }
 
-    final isRTL = Directionality.of(context) == TextDirection.rtl;
+                  final isRTL = Directionality.of(context) == TextDirection.rtl;
 
-    return ListView.builder(
-      shrinkWrap: true, // makes list take only needed height
-      physics: const NeverScrollableScrollPhysics(), // disables inner scrolling
-      itemCount: laborers.length,
-      itemBuilder: (context, index) {
-        final laborer = laborers[index];
-        final driverValue = "${laborer.employeeName} - ${laborer.employeeNumber}";
-        final isSelected = selectedDriver == driverValue;
+                  return ListView.builder(
+                    shrinkWrap: true, // makes list take only needed height
+                    physics:
+                        const NeverScrollableScrollPhysics(), // disables inner scrolling
+                    itemCount: laborers.length,
+                    itemBuilder: (context, index) {
+                      final laborer = laborers[index];
+                      final driverValue =
+                          "${laborer.employeeName} - ${laborer.employeeNumber}";
+                      final isSelected = selectedDriver == driverValue;
 
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              ref.read(selectedLaborerProvider.notifier).state = laborer;
-              selectedDriver = driverValue;
-              if (currentStep == 3) goToNextStep();
-            });
-          },
-          child: Container(
-            // remove fixed height to allow flexible height
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12), // add padding instead of fixed height
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.blue.shade50 : Colors.white,
-              border: Border.all(
-                color: isSelected ? Colors.blue : Colors.grey.shade300,
-                width: 1.5,
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            ref.read(selectedLaborerProvider.notifier).state =
+                                laborer;
+                            selectedDriver = driverValue;
+                            if (currentStep == 3) goToNextStep();
+                          });
+                        },
+                        child: Container(
+                          // remove fixed height to allow flexible height
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(
+                              12), // add padding instead of fixed height
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected ? Colors.blue.shade50 : Colors.white,
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.blue
+                                  : Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: isRTL
+                                ? _buildDriverCardContent(
+                                    context: context,
+                                    isSelected: isSelected,
+                                    name: laborer.employeeName,
+                                    employeeNumber:
+                                        laborer.employeeNumber.toString(),
+                                    imageOnRight: true,
+                                    onInfoPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              LaborProfilePage(
+                                                  laborer: laborer),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : _buildDriverCardContent(
+                                    context: context,
+                                    isSelected: isSelected,
+                                    name: laborer.employeeName,
+                                    employeeNumber:
+                                        laborer.employeeNumber.toString(),
+                                    imageOnRight: false,
+                                    onInfoPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              LaborProfilePage(
+                                                  laborer: laborer),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-         children: isRTL
-  ? _buildDriverCardContent(
-      context: context,
-      isSelected: isSelected,
-      name: laborer.employeeName,
-      employeeNumber: laborer.employeeNumber.toString(),
-      imageOnRight: true,
-      onInfoPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LaborProfilePage(laborer: laborer),
-          ),
-        );
-      },
-    )
-  : _buildDriverCardContent(
-      context: context,
-      isSelected: isSelected,
-      name: laborer.employeeName,
-      employeeNumber: laborer.employeeNumber.toString(),
-      imageOnRight: false,
-      onInfoPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LaborProfilePage(laborer: laborer),
-          ),
-        );
-      },
-    ),
-            ),
-          ),
-        );
-      },
-    );
-  },
-),
               const SizedBox(height: 24),
             ],
           ),
@@ -458,10 +475,10 @@ Widget _buildHeader(BuildContext context) {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Pickup or Delivery",
+              Text(loc.pickup_or_delivey,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               RadioListTile<String>(
-                title: const Text("Pick up laborer yourself"),
+                title: Text(loc.pickup),
                 value: "pickup",
                 groupValue: pickupOption,
                 onChanged: (val) {
@@ -473,7 +490,7 @@ Widget _buildHeader(BuildContext context) {
                 },
               ),
               RadioListTile<String>(
-                title: const Text("Deliver laborer to home"),
+                title: Text(loc.delivery),
                 value: "delivery",
                 groupValue: pickupOption,
                 onChanged: deliveryAvailable
@@ -484,7 +501,7 @@ Widget _buildHeader(BuildContext context) {
                       }
                     : null,
                 subtitle: !deliveryAvailable
-                    ? const Text("Delivery option is not available currently.",
+                    ? Text(loc.delivery_not_available,
                         style: TextStyle(color: Colors.red))
                     : null,
               ),
@@ -497,7 +514,7 @@ Widget _buildHeader(BuildContext context) {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Agreement",
+              Text(loc.agreement,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 12),
               Container(
@@ -518,20 +535,20 @@ Widget _buildHeader(BuildContext context) {
                   children: [
                     // Show driver only if labor source is app
                     if (selectedLaborSource == 'app')
-                      _textRow(
-                          "Private driver: ", selectedDriver ?? "Not selected"),
+                      _textRow(selectedProfession?.positionName ?? '',
+                          selectedDriver ?? "Not selected"),
 
                     // Nationality: (show actual selectedNationality if available)
-                    _textRow("Nationality: ",
+                    _textRow("${loc.nationality}: ",
                         ref.read(selectedLaborerProvider)?.nationality ?? ''),
 
                     // Package name
-                    _textRow("Package: ",
+                    _textRow("${loc.package}: ",
                         selectedPackage?.packageName ?? "Not selected"),
 
                     // Price = contractAmount + vatAmount + delivery fee if delivery
                     _textRow(
-                      "Price: ",
+                      "${loc.price}: ",
                       () {
                         if (selectedPackage == null) return "N/A";
 
@@ -546,11 +563,11 @@ Widget _buildHeader(BuildContext context) {
 
                     // Delivery method text
                     _textRow(
-                      "Delivery: ",
+                      "${loc.delivery}: ",
                       pickupOption == "pickup"
-                          ? "Pick up laborer yourself"
+                          ? loc.pickup
                           : pickupOption == "delivery"
-                              ? "Deliver laborer to home (100 SR fee)"
+                              ? loc.delivery_fee
                               : "Not selected",
                     ),
                   ],
@@ -570,7 +587,7 @@ Widget _buildHeader(BuildContext context) {
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text("Submit Order"),
+                  child: Text(loc.submit_order),
                 ),
               )
             ],
@@ -690,7 +707,6 @@ Widget _buildHeader(BuildContext context) {
       });
     }
   }
-
 
   Widget _buildFooterStepper() {
     return Container(
@@ -835,91 +851,93 @@ Widget _buildHeader(BuildContext context) {
     );
   }
 
-List<Widget> _buildDriverCardContent({
-  required BuildContext context,
-  required bool isSelected,
-  required String name,
-  required String employeeNumber,
-  required bool imageOnRight,
-  required VoidCallback onInfoPressed,
-}) {
-  final profileImage = Container(
-    margin: const EdgeInsets.all(2), // 2px gap on all sides
-    width: 82,
-    height: 82,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      image: const DecorationImage(
-        image: AssetImage("assets/images/default_avatar.jpg"),
-        fit: BoxFit.cover,
+  List<Widget> _buildDriverCardContent({
+    required BuildContext context,
+    required bool isSelected,
+    required String name,
+    required String employeeNumber,
+    required bool imageOnRight,
+    required VoidCallback onInfoPressed,
+  }) {
+    final profileImage = Container(
+      margin: const EdgeInsets.all(2), // 2px gap on all sides
+      width: 82,
+      height: 82,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        image: const DecorationImage(
+          image: AssetImage("assets/images/default_avatar.jpg"),
+          fit: BoxFit.cover,
+        ),
       ),
-    ),
-  );
+    );
 
-  final textAndRadio = Expanded(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Color(0xFF003366),
+    final textAndRadio = Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFF003366),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Employee Number: $employeeNumber",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF768090),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Employee Number: $employeeNumber",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF768090),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: onInfoPressed,
-            tooltip: 'View Profile',
-          ),
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? Colors.blue : Colors.grey.shade400,
-                width: 2,
+                ],
               ),
             ),
-            child: isSelected
-                ? Center(
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.blue,
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: onInfoPressed,
+              tooltip: 'View Profile',
+            ),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? Colors.blue : Colors.grey.shade400,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.blue,
+                        ),
                       ),
-                    ),
-                  )
-                : null,
-          ),
-        ],
+                    )
+                  : null,
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
 
-  return imageOnRight ? [textAndRadio, profileImage] : [profileImage, textAndRadio];
-}
+    return imageOnRight
+        ? [textAndRadio, profileImage]
+        : [profileImage, textAndRadio];
+  }
 
   Widget _textRow(String label, String value) {
     return Padding(
@@ -975,7 +993,7 @@ List<Widget> _buildDriverCardContent({
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(120),
-          child: _buildHeader( context),
+          child: _buildHeader(context),
         ),
         body: Column(
           children: [
@@ -991,8 +1009,6 @@ List<Widget> _buildDriverCardContent({
       ),
     );
   }
-
-
 }
 
 Widget buildPackageCard({
