@@ -584,12 +584,15 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[900],
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 14),
+                        horizontal: 120, vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: Text(loc.submit_order),
+                  child: Text(
+                    loc.submit_order,
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               )
             ],
