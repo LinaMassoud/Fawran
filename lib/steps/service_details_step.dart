@@ -960,7 +960,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: canApplyCoupon ? Colors.black : Colors.grey.shade500,
+            color: canApplyCoupon ? Color(0xFF091735) : const Color(0xFF768090),
           ),
         ),
         
@@ -1018,7 +1018,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                 ),
                 style: TextStyle(
                   fontSize: 14,
-                  color: canApplyCoupon ? Colors.black : Colors.grey.shade500,
+                  color: canApplyCoupon ? Colors.black : const Color(0xFF768090),
                 ),
               ),
             ),
@@ -1142,8 +1142,8 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       loc.date,
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF768090),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -1152,7 +1152,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       '${_internalSelectedDates.length} dates selected',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.black,
+                        color: const Color(0xFF10295C),
                         fontWeight: FontWeight.w700,
                       ),
                     )
@@ -1161,7 +1161,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       loc.tapToSelect,
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[500],
+                        color: const Color(0xFF768090),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1361,7 +1361,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                     text: 'Please select ',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.black87,
+                      color: Color(0xFF091735),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1500,7 +1500,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                   label,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: const Color(0xFF768090),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1521,9 +1521,9 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                     hasValidValue ? value : loc.select,
                     style: TextStyle(
                       fontSize: 16,
-                      color: hasValidValue ? Colors.black : Colors.grey[500],
+                      color: hasValidValue ? const Color(0xFF10295C) : const Color(0xFF768090),
                       fontWeight:
-                          hasValidValue ? FontWeight.w600 : FontWeight.w600,
+                          hasValidValue ? FontWeight.w700 : FontWeight.w700,
                     ),
                   ),
                   SizedBox(width: 4),
@@ -1535,7 +1535,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                   hasValidValue ? value : 'Select',
                   style: TextStyle(
                     fontSize: 16,
-                    color: hasValidValue ? Colors.black : Colors.grey[500],
+                    color: hasValidValue ? const Color(0xFF10295C) : Colors.grey[500],
                     fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w600,
                   ),
                 ),
@@ -1586,7 +1586,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: Color(0xFF091735),
               ),
             ),
             SizedBox(height: 10),
@@ -1629,7 +1629,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                                 fontSize: 16,
                                 color: isSelected
                                     ? Color(0xFF1E3A8A)
-                                    : Colors.black87,
+                                    : Color(0xFF091735),
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.w400,
@@ -1689,8 +1689,8 @@ Future<void> _handleDonePressed() async {
             loc.durationOfVisit,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w700,
+              color: const Color(0xFF768090),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -1711,7 +1711,7 @@ Future<void> _handleDonePressed() async {
                 widget.visitDuration.replaceAll(RegExp(r'\s*hours?'), '').replaceAll(RegExp(r'\s*ساعات'), ''),
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.black,
+                  color: const Color(0xFF10295C),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1720,7 +1720,7 @@ Future<void> _handleDonePressed() async {
                 widget.visitDuration.contains('ساعات') ? 'ساعات' : 'Hours',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.black,
+                  color: const Color(0xFF10295C),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1754,9 +1754,9 @@ Future<void> _handleDonePressed() async {
           Text(
             loc.professionals,
             style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: const Color(0xFF768090),
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: 16),
@@ -1784,11 +1784,11 @@ Future<void> _handleDonePressed() async {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: widget.workerCount == i
-                          ? Color(0xFF1E3A8A)
+                          ? const Color(0xFF10295C)
                           : Colors.transparent,
                       border: Border.all(
                         color: widget.workerCount == i
-                            ? Color(0xFF1E3A8A)
+                            ? const Color(0xFF10295C)
                             : Colors.grey[300]!,
                         width: 2,
                       ),
@@ -1882,7 +1882,7 @@ Future<void> _handleDonePressed() async {
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.black,
+                                  color: Color(0xFF091735),
                                 ),
                               ),
                               SizedBox(height: 8),
@@ -2066,8 +2066,8 @@ Future<void> _handleDonePressed() async {
                         'SAR ${(_calculatedTotalPrice > 0 && _internalSelectedDates.isNotEmpty) ? _calculatedTotalPrice.toStringAsFixed(2) : '0.0'}',
                         style: TextStyle(
                           fontSize: 20,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF091735),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -2077,11 +2077,11 @@ Future<void> _handleDonePressed() async {
 
                   // Done Button
                   Expanded(
-                    flex: 2,
+                    flex: 10,
                     child: GestureDetector(
                       onTap: _isValidDateSelection() && !_isValidatingWorkers ? _handleDonePressed : null,
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 7),
+                        padding: EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
                           color: (_isValidDateSelection() && !_isValidatingWorkers)
                               ? Color(0xFF1E3A8A)
