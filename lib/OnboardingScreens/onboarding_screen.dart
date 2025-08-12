@@ -146,137 +146,158 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // Check if this is the final "Get Started" page
           bool isGetStartedPage = index == _onboardingData.length - 1;
           
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          return Stack(
             children: [
-              const SizedBox(height: 16),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _onboardingData[index].title,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2B4C7E),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _onboardingData[index].description,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Bottom section with buttons and page indicators
-              Padding(
-                padding: const EdgeInsets.only(top: 16, bottom: 8),
-                child: isGetStartedPage
-                    ? // Get Started page layout - only show the button
-                    SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF06214B),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 28,
-                              vertical: 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'Get Started',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+              // Main content in white container
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 85), // Add more space for title positioning
+                        Text(
+                          _onboardingData[index].description,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF6B7280), // Updated color
+                            height: 1.5,
                           ),
                         ),
-                      )
-                    : // Regular pages layout - show skip, indicators, and next
-                    Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Skip button
-                          TextButton(
-                            onPressed: _skipToEnd,
-                            child: const Text(
-                              'Skip',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Color(0xFF2B4C7E),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
+                      ],
+                    ),
+                  ),
 
-                          // Page indicators in the center (excluding the last page)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                                _onboardingData.length - 1, (indicatorIndex) {
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                width: _currentPage == indicatorIndex ? 24 : 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: _currentPage == indicatorIndex
-                                      ? const Color(0xFF06214B)
-                                      : Colors.grey.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(4),
+                  // Bottom section with buttons and page indicators
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, bottom: 8),
+                    child: isGetStartedPage
+                        ? // Get Started page layout - only show the button
+                        SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF06214B),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 14,
                                 ),
-                              );
-                            }),
-                          ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Text(
+                                'Get Started',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          )
+                        : // Regular pages layout - show skip, indicators, and next
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Skip button
+                              TextButton(
+                                onPressed: _skipToEnd,
+                                child: const Text(
+                                  'Skip',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: Color(0xFF1E49A0), // Updated to var(--Second-blue, #1E49A0)
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
 
-                          // Next button
-                          ElevatedButton(
-                            onPressed: _nextPage,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF06214B),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 28,
-                                vertical: 14,
+                              // Page indicators in the center (excluding the last page)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                    _onboardingData.length - 1, (indicatorIndex) {
+                                  bool isActive = _currentPage == indicatorIndex;
+                                  return AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    width: isActive ? 20 : 12,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: isActive
+                                          ? const Color(0xFF1E49A0) // Active indicator
+                                          : Colors.white, // Inactive: white fill
+                                      border: isActive
+                                          ? null
+                                          : Border.all(
+                                              color: const Color(0xFF1E49A0), // Blue border for inactive
+                                              width: 1,
+                                            ),
+                                      borderRadius: BorderRadius.circular(6), // Fully rounded capsule shape
+                                    ),
+                                  );
+                                }),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
+
+                              // Next button
+                              ElevatedButton(
+                                onPressed: _nextPage,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF06214B),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'Next',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'Next',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                  ),
+                ],
+              ),
+              
+              // Title positioned on top of the white container
+              Positioned(
+                top: 15, // Position slightly above the container edge
+                left: 0,
+                right: 0,
+                child: Text(
+                  _onboardingData[index].title,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF091735), // Keep original dark color
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           );

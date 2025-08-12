@@ -468,9 +468,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           fontWeight: FontWeight.w500,
         ),
         hintStyle: TextStyle(
-          color: Colors.grey.shade400,
-          fontSize: 16,
-        ),
+                  color: Color(0xFFD8DBDB),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'poppins'
+                ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,

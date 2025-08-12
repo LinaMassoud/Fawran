@@ -14,6 +14,7 @@ import '../steps/address_selection_step.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
 import '../widgets/reusable_header_scaffold.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AddNewAddressScreen extends StatefulWidget {
   final PackageModel? package;
@@ -1036,45 +1037,63 @@ Future<void> _getCurrentLocation() async {
   return Container(
     width: double.infinity,
     margin: EdgeInsets.only(bottom: 20),
-    child: ElevatedButton.icon(
-      onPressed: _isGettingCurrentLocation ? null : _toggleCurrentLocation,
-      icon: _isGettingCurrentLocation
-          ? SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                color: Colors.grey[600],
-                strokeWidth: 2,
-              ),
-            )
-          : Icon(
-              _useCurrentLocation ? Icons.location_on : Icons.my_location,
+    child: Center( // Center the button
+      child: Container(
+        width: 325, // Set fixed width to match the image
+        child: ElevatedButton.icon(
+          onPressed: _isGettingCurrentLocation ? null : _toggleCurrentLocation,
+          icon: _isGettingCurrentLocation
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.grey[600],
+                    strokeWidth: 2,
+                  ),
+                )
+              : _useCurrentLocation 
+                  ? Icon(
+                      Icons.location_on,
+                      color: Colors.white,
+                    )
+                  : Padding(
+                    padding: EdgeInsets.only(right: 8), // Reduced spacing
+                    child: SvgPicture.asset(
+                      'assets/icons/my_location.svg',
+                      width: 20, // Slightly smaller icon
+                      height: 20,
+                      colorFilter: ColorFilter.mode(
+                        Color(0xFF1E3A8A),
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+          label: Text(
+            _isGettingCurrentLocation
+                ? loc.gettingLocation
+                : _useCurrentLocation
+                    ? loc.currentLocationSelected
+                    : loc.autoSelectLocation,
+            style: TextStyle(
               color: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
+              fontSize: 20, // Slightly smaller font
+              fontWeight: FontWeight.w600, // Reduced from w700
             ),
-      label: Text(
-        _isGettingCurrentLocation
-            ? "Getting location..."
-            : _useCurrentLocation
-                ? "Current location selected"
-                : "Auto Select Location",
-        style: TextStyle(
-          color: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _useCurrentLocation ? Color(0xFF1E3A8A) : Colors.grey[100],
+            foregroundColor: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
+            side: BorderSide(
+              color: Color(0xFF1E3A8A),
+              width: 1,
+            ),
+            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), // More compact padding
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25), // Slightly smaller border radius
+            ),
+            elevation: _useCurrentLocation ? 2 : 0,
+          ),
         ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _useCurrentLocation ? Color(0xFF1E3A8A) : Colors.white,
-        foregroundColor: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
-        side: BorderSide(
-          color: Color(0xFF1E3A8A),
-          width: 2,
-        ),
-        padding: EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-        elevation: _useCurrentLocation ? 2 : 0,
       ),
     ),
   );

@@ -99,7 +99,7 @@ class AddressSelectionStep extends StatelessWidget {
                           style: TextStyle(
                             color: Color(0xFF1E49A0), // Updated text color
                             fontSize: 16,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -111,8 +111,9 @@ class AddressSelectionStep extends StatelessWidget {
                 Text(
                   loc.selectAddressTitle,
                   style: TextStyle(
+                    fontFamily: 'poppins',
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     color: Colors.black,
                   ),
                 ),
@@ -257,19 +258,23 @@ class AddressSelectionStep extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _extractLocationName(address.cardText),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF10295C),
-                        ),
+                      _extractLocationName(address.cardText),
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        fontStyle: FontStyle.normal,
+                        color: const Color(0xFF10295C),
                       ),
+                    ),
                       SizedBox(height: 4),
                       Text(
                         address.cardText,
                         style: TextStyle(
+                          fontFamily: 'poppins',
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: const Color(0xFF768090),
+                          fontWeight: FontWeight.w500,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

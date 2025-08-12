@@ -232,7 +232,46 @@
     "price":"السعر",
     "delivery_fee":"توصيل العامل للمنزل (100 ريال)",
     "riyal":"ريال",
-    "days":"ايام"
+    "days":"ايام",
+
+    "agreementHourly":"أنا أوافق على ",
+    "startingFrom":"ابتداء من",
+    "couponCode":"رمز القسيمة",
+    "applied":"مُطبَّق",
+    "promotionApplied":"تم تطبيق الترقية بنجاح!",
+    "pleaseSelect":"الرجاء التحديد",
+    "enterCouponCode":"أدخل رمز القسيمة",
+    "apply":"يتقدم",
+    "promotionAppliedSuccessfully": "تم تطبيق العرض الترويجي بنجاح!",
+
+    "sunday": "الأحد",
+  "monday": "الإثنين",
+  "tuesday": "الثلاثاء", 
+  "wednesday": "الأربعاء",
+  "thursday": "الخميس",
+  "friday": "الجمعة",
+  "saturday": "السبت",
+  "sundayShort": "ح",
+  "mondayShort": "ن",
+  "tuesdayShort": "ث",
+  "wednesdayShort": "ر", 
+  "thursdayShort": "خ",
+  "fridayShort": "ج",
+  "saturdayShort": "س",
+  "startDate": "تاريخ البداية",
+  "startDateAutoSet": "سيتم تعيين تاريخ البداية تلقائياً",
+  "selectDaysFirst": "يرجى اختيار الأيام أولاً",
+  "start": "بداية",
+  "notAvailable": "غ/م",
+  "currency": "ر.س",
+
+  "chooseService": "اختر الخدمة",
+  "hourlyMaid": "خادمة بالساعة",
+  "permanentMaid": "خادمة دائمة",
+
+  "gettingLocation": "جاري تحديد الموقع...",
+  "currentLocationSelected": "تم تحديد الموقع الحالي",
+  "autoSelectLocation": "تحديد الموقع تلقائياً"
 
 
 }

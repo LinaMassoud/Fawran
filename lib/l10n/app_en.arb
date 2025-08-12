@@ -231,7 +231,45 @@
     "delivery_fee":"Deliver laborer to home (100 SR fee)",
     
     "riyal":"Riyal",
-    "days":"Days"
+    "days":"Days",
+    "agreementHourly":"I agree to the ",
+    "startingFrom":"Starting From",
+    "couponCode":"Coupon Code",
+    "applied":"Applied",
+    "promotionApplied":"Promotion applied sucessfully!",
+    "pleaseSelect":"Please select ",
+    "enterCouponCode":"Enter coupon code",
+    "apply":"Apply",
+    "promotionAppliedSuccessfully": "Promotion applied successfully!",
+
+     "sunday": "Sunday",
+      "monday": "Monday", 
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sundayShort": "S",
+      "mondayShort": "M",
+      "tuesdayShort": "T", 
+      "wednesdayShort": "W",
+      "thursdayShort": "T",
+      "fridayShort": "F",
+      "saturdayShort": "S",
+      "startDate": "Start date",
+      "startDateAutoSet": "Start date will be set automatically",
+      "selectDaysFirst": "Please select days first",
+      "start": "START",
+      "notAvailable": "N/A",
+      "currency": "SAR",
+
+      "chooseService": "Choose Service",
+      "hourlyMaid": "Hourly Maid",
+      "permanentMaid": "Permanent Maid",
+
+      "gettingLocation": "Getting location...",
+  "currentLocationSelected": "Current location selected",
+  "autoSelectLocation": "Auto Select Location"
 
 
 }

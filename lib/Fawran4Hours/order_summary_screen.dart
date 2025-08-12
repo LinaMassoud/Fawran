@@ -240,393 +240,453 @@ Widget _buildFormattedTerms() {
   }
 }
   @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          loc.orderSummary,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: false,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Service details section
-                  Text(
-                    loc.serviceDetails,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
+  return Scaffold(
+    backgroundColor: Colors.grey[100],
+    body: Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            // Sticky Header with overlap - same as hourly_service_screen
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 0,
+              toolbarHeight: 65,
+              backgroundColor: Color(0xFF10295C),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              leading: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.arrow_back_ios,
+                    color: Color(0xFFFFA200),
+                    size: 22,
+                  ),
+                ),
+              ),
+              title: Text(
+                loc.orderSummary,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 24,
+                  color: Color(0xFFFFA200),
+                ),
+              ),
+              centerTitle: true,
+              elevation: 0,
+              floating: false,
+              snap: false,
+            ),
+            
+            // Add negative margin to create overlap
+            SliverToBoxAdapter(
+              child: Transform.translate(
+                offset: Offset(0, -40), // Negative offset to create overlap
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
                     ),
                   ),
-                  SizedBox(height: 16),
-
-                  // Service details card
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 40, // Add top padding to account for the overlap
+                      bottom: 180,
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Service title
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              // Wrap the Text with Expanded
-                              child: Text(
-                                widget.bookingData.packageName,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                                overflow: TextOverflow
-                                    .ellipsis, // Handle overflow gracefully
-                                maxLines: 2, // Allow up to 2 lines if needed
-                              ),
-                            ),
-                          ],
-                        ),
                         SizedBox(height: 16),
-                        // Service details rows
-                        _buildDetailRow(
-                            loc.startDate,
-                            _formatDate(
-                                widget.bookingData.selectedDates.isNotEmpty
-                                    ? widget.bookingData.selectedDates.first
-                                    : DateTime.now())),
-                        // Use actual nationality instead of 'East Asia'
-                        SizedBox(height: 12),
-                        _buildDetailRow(
-                          loc.weeklyVisits, 
-                          _getLocalizedVisitsPerWeek(widget.bookingData.visitsPerWeek, loc)
-                      ),
-                        SizedBox(height: 16),
-                        Container(height: 1, color: Colors.grey[300]),
-                        SizedBox(height: 16),
-                        _buildDetailRow(
-                            loc.service,
-                            _getLocalizedNationality(widget.bookingData.selectedNationality, loc)), // Use actual nationality instead of 'East Asia'
-                        SizedBox(height: 12),
-                        _buildDetailRow(
-                            loc.workers, '${widget.bookingData.workerCount}'),
-                        SizedBox(height: 12),
-                        _buildDetailRow(loc.contractDuration,
-                            _getLocalizedContractDurationSimple(widget.bookingData.contractDuration, loc)),
-                        SizedBox(height: 16),
-                        Container(height: 1, color: Colors.grey[300]),
-                        SizedBox(height: 16),
-
-                        // Weekly visit section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                loc.finalPrice,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24),
-
-                  // Billing and payment section
-                  Text(
-                    loc.billingPayment,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Payment methods
-                  Row(
-                    children: [
-                      _buildPaymentLogo(
-                          'assets/images/Mada-Logo.png', Colors.blue),
-                      SizedBox(width: 8),
-                      _buildPaymentLogo(
-                          'assets/images/visa-logo.png', Colors.blue),
-                      SizedBox(width: 8),
-                      _buildPaymentLogo(
-                          'assets/images/mastercard.png', Colors.red),
-                    ],
-                  ),
-                  SizedBox(height: 24),
-
-                  // Payment summary section - Hidden for custom bookings
-                  if (!widget.customBooking) ...[
-                    Text(
-                      loc.paymentSummary,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-
-                    // Payment breakdown
-                    _buildPaymentRow(loc.itemTotal,
-                        'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(1)}'),
-                    SizedBox(height: 12),
-                    _buildPaymentRow(loc.packDiscount,
-                        '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(1)}',
-                        isDiscount: true),
-                    SizedBox(height: 16),
-                    Container(height: 1, color: Colors.black87),
-                    SizedBox(height: 16),
-
-                    // Savings banner
-                    Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.local_offer,
-                            color: Colors.green,
-                            size: 20,
+                        // Service details section
+                        Text(
+                          loc.serviceDetails,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
                           ),
-                          SizedBox(width: 8),
+                        ),
+                        SizedBox(height: 16),
+
+                        // Service details card
+                        Container(
+                          padding: EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Service title
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      widget.bookingData.packageName,
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16),
+                              // Service details rows
+                              _buildDetailRow(
+                                  loc.startDate,
+                                  _formatDate(
+                                      widget.bookingData.selectedDates.isNotEmpty
+                                          ? widget.bookingData.selectedDates.first
+                                          : DateTime.now())),
+                              SizedBox(height: 12),
+                              _buildDetailRow(
+                                loc.weeklyVisits, 
+                                _getLocalizedVisitsPerWeek(widget.bookingData.visitsPerWeek, loc)
+                            ),
+                              SizedBox(height: 16),
+                              Container(height: 1, color: Colors.grey[300]),
+                              SizedBox(height: 16),
+                              _buildDetailRow(
+                                  loc.service,
+                                  _getLocalizedNationality(widget.bookingData.selectedNationality, loc)),
+                              SizedBox(height: 12),
+                              _buildDetailRow(
+                                  loc.workers, '${widget.bookingData.workerCount}'),
+                              SizedBox(height: 12),
+                              _buildDetailRow(loc.contractDuration,
+                                  _getLocalizedContractDurationSimple(widget.bookingData.contractDuration, loc)),
+                              SizedBox(height: 16),
+                              Container(height: 1, color: Colors.grey[300]),
+                              SizedBox(height: 16),
+
+                              // Final Price section
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      loc.finalPrice,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 24),
+
+                        // Billing and payment section
+                        Text(
+                          loc.billingPayment,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+
+                        // Payment methods
+                        Row(
+                          children: [
+                            _buildPaymentLogo(
+                                'assets/images/Mada-Logo.png', Colors.blue),
+                            SizedBox(width: 8),
+                            _buildPaymentLogo(
+                                'assets/images/visa-logo.png', Colors.blue),
+                            SizedBox(width: 8),
+                            _buildPaymentLogo(
+                                'assets/images/mastercard.png', Colors.red),
+                          ],
+                        ),
+                        SizedBox(height: 24),
+
+                        // Payment summary section - Hidden for custom bookings
+                        if (!widget.customBooking) ...[
                           Text(
-                            '${loc.savedSummary} SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} ${loc.onFinalBill}',
+                            loc.paymentSummary,
                             style: TextStyle(
-                              color: Colors.green[700],
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 24),
-                  ],
+                          SizedBox(height: 16),
 
-                  // Total - Always shown
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        loc.total,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
+                          // Payment breakdown
+                          _buildPaymentRow(loc.itemTotal,
+                              'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(1)}'),
+                          SizedBox(height: 12),
+                          _buildPaymentRow(loc.packDiscount,
+                              '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(1)}',
+                              isDiscount: true),
+                          SizedBox(height: 16),
+                          Container(height: 1, color: Colors.black87),
+                          SizedBox(height: 16),
 
-                  // Terms and conditions
-                  Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Checkbox(
-                      value: _agreeToTerms,
-                      onChanged: (value) {
-                        setState(() {
-                          _agreeToTerms = value ?? false;
-                        });
-                      },
-                      activeColor: Color(0xFF10295C),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _agreeToTerms = !_agreeToTerms;
-                          });
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 12),
-                          child: RichText(
-                            text: TextSpan(
-                              text: loc.agreement,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
+                          // Savings banner
+                          Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
                               children: [
-                                TextSpan(
-                                  text: loc.termsAndCond,
+                                Icon(
+                                  Icons.local_offer,
+                                  color: Colors.green,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  '${loc.savedSummary} SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} ${loc.onFinalBill}',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFF10295C),
-                                    decoration: TextDecoration.underline,
+                                    color: Colors.green[700],
                                     fontWeight: FontWeight.w600,
+                                    fontSize: 14,
                                   ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      _showTermsAndConditions(loc);
-                                    },
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                  SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
+                          SizedBox(height: 24),
+                        ],
 
-          // Bottom section with dynamic address and proceed button
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Dynamic address section
-                Container(
-                  padding: EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(Icons.home, color: Colors.black54, size: 24),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        // Total - Always shown
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              widget.bookingData.selectedAddress,
+                              loc.total,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
                             Text(
-                              _getAddressDetails(
-                                  widget.bookingData.selectedAddress),
+                              'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
                               style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
                             ),
                           ],
                         ),
+                        SizedBox(height: 16),
+
+                        // Terms and conditions
+                        Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Checkbox(
+                            value: _agreeToTerms,
+                            onChanged: (value) {
+                              setState(() {
+                                _agreeToTerms = value ?? false;
+                              });
+                            },
+                            activeColor: Color(0xFF10295C),
+                            shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _agreeToTerms = !_agreeToTerms;
+                                });
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 12),
+                                child: RichText(
+                                  text: TextSpan(
+                                    text: loc.agreementHourly,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black87,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: loc.termsAndCond,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Color(0xFF10295C),
+                                          decoration: TextDecoration.underline,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            _showTermsAndConditions(loc);
+                                          },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                Container(height: 1, color: Colors.grey[300]),
+              ),
+            ),
+          ],
+        ),
 
-                // Proceed to pay button
-                Container(
-                  padding: EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _agreeToTerms
-                          ? () {
-                              _startCheckout(); // This replaces _showPaymentSuccess()
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _agreeToTerms ? Color(0xFF10295C) : Colors.grey[400],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        elevation: 0,
+        // Bottom section with dynamic address and proceed button
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(25),
+              topRight: Radius.circular(25),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF1E49A0).withOpacity(0.15), // Blue tinted shadow
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: Offset(0, -5),
+              ),
+              BoxShadow(
+                color: Color(0xFF1E49A0).withOpacity(0.08), // Additional lighter blue shadow
+                blurRadius: 40,
+                spreadRadius: 5,
+                offset: Offset(0, -10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Dynamic address section
+              Container(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.home, color: Colors.black54, size: 24),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.bookingData.selectedAddress,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            _getAddressDetails(
+                                widget.bookingData.selectedAddress),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        loc.proceedToPay,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: Colors.grey[300]),
+
+              // Proceed to pay button
+              Container(
+                padding: EdgeInsets.fromLTRB(24, 16, 24, 55), // Updated to match BookingBottomNavigation
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _agreeToTerms
+                        ? () {
+                            _startCheckout();
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _agreeToTerms ? Color(0xFF10295C) : Color(0xFF768090), // Updated disabled color
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      elevation: 0,
+                      disabledBackgroundColor: Color(0xFF768090), // Ensure disabled color is consistent
+                      disabledForegroundColor: Colors.white, // White text when disabled
+                    ),
+                    child: Text(
+                      loc.proceedToPay,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        ),
+      ],
+    ),
+  );
+}
 
 String _getLocalizedVisitsPerWeek(int visitsPerWeek, AppLocalizations loc) {
   return '$visitsPerWeek ${loc.weeklyVisits}';
