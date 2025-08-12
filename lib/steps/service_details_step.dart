@@ -956,10 +956,10 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Coupon Code',
+          loc.couponCode,
           style: TextStyle(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             color: canApplyCoupon ? Colors.black : Colors.grey.shade500,
           ),
         ),
@@ -978,7 +978,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                   });
                 } : null,
                 decoration: InputDecoration(
-                  hintText: 'Enter coupon code',
+                  hintText: loc.enterCouponCode,
                   hintStyle: TextStyle(
                     color: canApplyCoupon ? Colors.grey.shade500 : Colors.grey.shade400,
                   ),
@@ -1024,19 +1024,20 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
             ),
             SizedBox(width: 12),
             Container(
-              height: 48,
+              height: 36,
               child: ElevatedButton(
                 onPressed: (canApplyCoupon && !_isValidatingCoupon) ? _validateCouponCode : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: canApplyCoupon 
                       ? (_isCouponApplied ? Colors.green : Color(0xFF1E3A8A))
                       : Colors.grey.shade400,
-                  disabledBackgroundColor: Colors.grey.shade400,
+                  disabledBackgroundColor: Color(0xFF768090),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(25),
                   ),
                   elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 25),
+                  minimumSize: Size(80, 48),
                 ),
                 child: _isValidatingCoupon
                     ? SizedBox(
@@ -1048,7 +1049,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                         ),
                       )
                     : Text(
-                        _isCouponApplied ? 'Applied' : 'Apply',
+                        _isCouponApplied ? loc.applied : loc.apply,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1108,9 +1109,9 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
               child: Text(
                 loc.dialogForPrevious,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: Colors.orange[700],
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -1142,7 +1143,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -1152,7 +1153,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.black,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     )
                   else
@@ -1161,7 +1162,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[500],
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   SizedBox(width: 4),
@@ -1500,7 +1501,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -1522,7 +1523,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       fontSize: 16,
                       color: hasValidValue ? Colors.black : Colors.grey[500],
                       fontWeight:
-                          hasValidValue ? FontWeight.w600 : FontWeight.w400,
+                          hasValidValue ? FontWeight.w600 : FontWeight.w600,
                     ),
                   ),
                   SizedBox(width: 4),
@@ -1535,7 +1536,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                   style: TextStyle(
                     fontSize: 16,
                     color: hasValidValue ? Colors.black : Colors.grey[500],
-                    fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w600,
                   ),
                 ),
             ],
@@ -1689,7 +1690,7 @@ Future<void> _handleDonePressed() async {
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -1711,7 +1712,7 @@ Future<void> _handleDonePressed() async {
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.black,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(width: 6),
@@ -1720,7 +1721,7 @@ Future<void> _handleDonePressed() async {
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.black,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -1753,9 +1754,9 @@ Future<void> _handleDonePressed() async {
           Text(
             loc.professionals,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w700,
             ),
           ),
           SizedBox(height: 16),
@@ -1797,7 +1798,7 @@ Future<void> _handleDonePressed() async {
                         '$i',
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           color: widget.workerCount == i
                               ? Colors.white
                               : Colors.grey[600],
@@ -1880,7 +1881,7 @@ Future<void> _handleDonePressed() async {
                                     : '1 weekly visit:Cleaning Visit',
                                 style: TextStyle(
                                   fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.black,
                                 ),
                               ),
@@ -2024,18 +2025,28 @@ Future<void> _handleDonePressed() async {
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: Offset(0, -2),
+                  color: Color(0xFF1E49A0).withOpacity(0.15), // Blue tinted shadow
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: Offset(0, -5),
+                ),
+                BoxShadow(
+                  color: Color(0xFF1E49A0).withOpacity(0.08), // Additional lighter blue shadow
+                  blurRadius: 40,
+                  spreadRadius: 5,
+                  offset: Offset(0, -10),
                 ),
               ],
             ),
             child: SafeArea(
               child: Row(
                 children: [
-
                   SizedBox(width: 16),
 
                   // Price section
@@ -2046,9 +2057,9 @@ Future<void> _handleDonePressed() async {
                       Text(
                         loc.totalIncVat,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
@@ -2056,7 +2067,7 @@ Future<void> _handleDonePressed() async {
                         style: TextStyle(
                           fontSize: 20,
                           color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -2070,11 +2081,11 @@ Future<void> _handleDonePressed() async {
                     child: GestureDetector(
                       onTap: _isValidDateSelection() && !_isValidatingWorkers ? _handleDonePressed : null,
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: 7),
                         decoration: BoxDecoration(
                           color: (_isValidDateSelection() && !_isValidatingWorkers)
                               ? Color(0xFF1E3A8A)
-                              : Colors.grey[400],
+                              : Color(0xFF768090),
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: Center(

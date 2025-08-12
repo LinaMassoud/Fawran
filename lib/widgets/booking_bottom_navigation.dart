@@ -19,14 +19,25 @@ class BookingBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 55), // Added more bottom padding
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, -2),
+            color: Color(0xFF1E49A0).withOpacity(0.15), // Blue tinted shadow
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: Offset(0, -5),
+          ),
+          BoxShadow(
+            color: Color(0xFF1E49A0).withOpacity(0.08), // Additional lighter blue shadow
+            blurRadius: 40,
+            spreadRadius: 5,
+            offset: Offset(0, -10),
           ),
         ],
       ),
@@ -39,11 +50,11 @@ class BookingBottomNavigation extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Starting From',
+                  loc.startingFrom,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.black,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
@@ -56,36 +67,65 @@ class BookingBottomNavigation extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(width: 20),
-          ],
-          
-          SizedBox(width: 20),
-          
-          // Next/Complete Button
-          Expanded(
-            child: GestureDetector(
-              onTap: canProceed ? onNextPressed : null,
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: canProceed 
-                      ? Color(0xFF1E3A8A) 
+            Spacer(), // Push the button to the rightmost side
+            // Next Button positioned at the rightmost edge when price > 0
+            Container(
+              width: MediaQuery.of(context).size.width * 0.35, // Smaller width when price is shown
+              child: ElevatedButton(
+                onPressed: canProceed ? onNextPressed : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: canProceed 
+                      ? Color(0xFF10295C)
                       : Colors.grey[400],
-                  borderRadius: BorderRadius.circular(12),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: canProceed ? 2 : 0,
                 ),
-                child: Center(
-                  child: Text(
-                    isLastStep ? 'Complete Booking' : loc.next,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                child: Text(
+                  isLastStep ? 'Complete Booking' : loc.next,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ] else ...[
+            // Next Button centered with reduced width when price = 0
+            Expanded(
+              child: Center(
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.8, // Reduced width when centered
+                  child: ElevatedButton(
+                    onPressed: canProceed ? onNextPressed : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: canProceed 
+                          ? Color(0xFF10295C)
+                          : Colors.grey[400],
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      elevation: canProceed ? 2 : 0,
+                    ),
+                    child: Text(
+                      isLastStep ? 'Complete Booking' : loc.next,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

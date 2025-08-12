@@ -106,7 +106,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
         },
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.only(top: 20),
           child: SvgPicture.asset(
             'assets/icons/language.svg',
             width: 23,
@@ -201,8 +201,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   fontWeight: FontWeight.w500,
                 ),
                 hintStyle: TextStyle(
-                  color: Colors.grey.shade400,
+                  color: Color(0xFFD8DBDB),
                   fontSize: 16,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'poppins'
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -299,8 +301,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   fontWeight: FontWeight.w500,
                 ),
                 hintStyle: TextStyle(
-                  color: Colors.grey.shade400,
+                  color: Color(0xFFD8DBDB),
                   fontSize: 16,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'poppins'
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,

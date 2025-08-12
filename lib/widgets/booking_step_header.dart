@@ -49,8 +49,8 @@ class BookingStepHeader extends StatelessWidget {
                 '${loc.step} $currentStep ${loc.ofStep} $totalSteps',
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade700,
                 ),
               ),
             ),

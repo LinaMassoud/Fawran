@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class CustomDateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
@@ -636,6 +637,99 @@ void _resetToStartDateSelection() {
   return true;
 }
 
+List<String> _getLocalizedDays(AppLocalizations loc) {
+  return [
+    loc.sunday,
+    loc.monday, 
+    loc.tuesday,
+    loc.wednesday,
+    loc.thursday,
+    loc.saturday
+  ];
+}
+
+// Helper method to get day abbreviations for calendar header
+List<String> _getDayAbbreviations(AppLocalizations loc) {
+  return [
+    loc.sundayShort,    // S
+    loc.mondayShort,    // M
+    loc.tuesdayShort,   // T
+    loc.wednesdayShort, // W
+    loc.thursdayShort,  // T
+    loc.fridayShort,    // F
+    loc.saturdayShort   // S
+  ];
+}
+
+// Helper method to convert English day names to localized names
+String _getLocalizedDayName(String englishDayName, AppLocalizations loc) {
+  switch (englishDayName.toLowerCase()) {
+    case 'sunday':
+      return loc.sunday;
+    case 'monday':
+      return loc.monday;
+    case 'tuesday':
+      return loc.tuesday;
+    case 'wednesday':
+      return loc.wednesday;
+    case 'thursday':
+      return loc.thursday;
+    case 'friday':
+      return loc.friday;
+    case 'saturday':
+      return loc.saturday;
+    default:
+      return englishDayName;
+  }
+}
+
+// Helper method to convert localized day names back to English for logic
+String _getEnglishDayName(String localizedDayName, AppLocalizations loc) {
+  if (localizedDayName == loc.sunday) return 'Sunday';
+  if (localizedDayName == loc.monday) return 'Monday';
+  if (localizedDayName == loc.tuesday) return 'Tuesday';
+  if (localizedDayName == loc.wednesday) return 'Wednesday';
+  if (localizedDayName == loc.thursday) return 'Thursday';
+  if (localizedDayName == loc.friday) return 'Friday';
+  if (localizedDayName == loc.saturday) return 'Saturday';
+  return localizedDayName;
+}
+
+// Helper method to format numbers in Arabic if needed
+String _formatNumber(int number, AppLocalizations loc) {
+  if (Localizations.localeOf(context).languageCode == 'ar') {
+    // Convert Western Arabic numerals to Eastern Arabic numerals
+    const westernArabic = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const easternArabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    
+    String numberStr = number.toString();
+    for (int i = 0; i < westernArabic.length; i++) {
+      numberStr = numberStr.replaceAll(westernArabic[i], easternArabic[i]);
+    }
+    return numberStr;
+  }
+  return number.toString();
+}
+
+// Helper method to format dates in Arabic
+String _formatDateForLocale(DateTime date, AppLocalizations loc) {
+  if (Localizations.localeOf(context).languageCode == 'ar') {
+    // Use Arabic date formatting
+    final formatter = DateFormat('MMM dd, yyyy', 'ar');
+    return formatter.format(date);
+  }
+  return DateFormat('MMM dd, yyyy').format(date);
+}
+
+// Helper method to format month year for calendar header
+String _formatMonthYear(DateTime date, AppLocalizations loc) {
+  if (Localizations.localeOf(context).languageCode == 'ar') {
+    final formatter = DateFormat('MMMM yyyy', 'ar');
+    return formatter.format(date);
+  }
+  return DateFormat('MMMM yyyy').format(date);
+}
+
   String _formatPrice(double price) {
     return 'SAR ${price.toStringAsFixed(0)}';
   }
@@ -661,10 +755,8 @@ void _resetToStartDateSelection() {
     }
   }
 
-Widget _buildDaySelectionWidget() {
-  final days = [
-    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'
-  ];
+Widget _buildDaySelectionWidget(AppLocalizations loc) {
+  final days = _getLocalizedDays(loc);
   
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -673,15 +765,15 @@ Widget _buildDaySelectionWidget() {
       children: [
         RichText(
           text: TextSpan(
-            text: 'Please select ',
+            text: loc.pleaseSelect,
             style: TextStyle(
               fontSize: 16,
               color: Colors.black,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
             children: [
               TextSpan(
-                text: '${_visitsPerWeekCount} days',
+                text: '${_visitsPerWeekCount} ${loc.days}',
                 style: TextStyle(
                   color: Colors.teal,
                   fontWeight: FontWeight.bold,
@@ -695,12 +787,13 @@ Widget _buildDaySelectionWidget() {
           spacing: 8,
           runSpacing: 8,
           children: days.map((day) {
-            bool isSelected = _localSelectedDays.contains(day);
+            String englishDay = _getEnglishDayName(day, loc);
+            bool isSelected = _localSelectedDays.contains(englishDay);
             bool isFriday = day == 'Friday';
             
             return GestureDetector(
               onTap: isFriday ? null : () {
-                _handleDayToggle(day);
+                _handleDayToggle(englishDay);
               },
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -724,7 +817,7 @@ Widget _buildDaySelectionWidget() {
                   day,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: isFriday 
                         ? Colors.grey.shade400 
                         : isSelected 
@@ -755,7 +848,7 @@ Widget _buildDaySelectionWidget() {
     ),
   );
 }
-  Widget _buildCalendarGrid(DateTime month) {
+  Widget _buildCalendarGrid(DateTime month,AppLocalizations loc) {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final firstDayOfMonth = DateTime(month.year, month.month, 1);
     final startingWeekday = firstDayOfMonth.weekday % 7;
@@ -808,19 +901,22 @@ Widget _buildDaySelectionWidget() {
           child: Container(
             margin: EdgeInsets.all(1),
             decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(6),
-              border: isSelected ? Border.all(color: Color(0xFF1E3A8A), width: 1) : null,
-            ),
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(6),
+            border: isSelected ? Border.all(
+              color: isStartDate ? Color(0xFF1E3A8A) : Colors.orange, 
+              width: 1
+            ) : null,
+          ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  day.toString(),
+                  _formatNumber(day, loc),
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
                     color: textColor,
                   ),
                 ),
@@ -829,7 +925,7 @@ Widget _buildDaySelectionWidget() {
                     'START',
                     style: TextStyle(
                       fontSize: 7,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
@@ -840,7 +936,7 @@ Widget _buildDaySelectionWidget() {
                     _formatPrice(widget.pricePerVisit),
                     style: TextStyle(
                       fontSize: 8,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
                       color: priceColor,
                     ),
                   ),
@@ -864,7 +960,7 @@ Widget _buildDaySelectionWidget() {
     );
   }
 
-  Widget _buildMonthHeader(DateTime month) {
+  Widget _buildMonthHeader(DateTime month,AppLocalizations loc) {
     final now = DateTime.now();
     final canNavigateLeft = month.isAfter(DateTime(now.year, now.month));
     final canNavigateRight = month.isBefore(DateTime(now.year + 5, now.month));
@@ -884,7 +980,7 @@ Widget _buildDaySelectionWidget() {
           ),
           Expanded(
             child: Text(
-              DateFormat('MMMM yyyy').format(month),
+              _formatMonthYear(month, loc),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -906,14 +1002,14 @@ Widget _buildDaySelectionWidget() {
     );
   }
 
-  Widget _buildMonthView(DateTime month) {
+  Widget _buildMonthView(DateTime month,AppLocalizations loc) {
     return Column(
       children: [
-        _buildMonthHeader(month),
+        _buildMonthHeader(month,loc),
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Row(
-            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
+            children: _getDayAbbreviations(loc).map((day) {
               return Expanded(
                 child: Container(
                   padding: EdgeInsets.symmetric(vertical: 8),
@@ -922,8 +1018,8 @@ Widget _buildDaySelectionWidget() {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: day == 'F' ? Colors.grey : Colors.black, // Grey out Friday header
+                      fontWeight: FontWeight.w700,
+                      color: day == loc.fridayShort ? Colors.grey : Colors.black, // Grey out Friday header
                     ),
                   ),
                 ),
@@ -934,7 +1030,7 @@ Widget _buildDaySelectionWidget() {
         Expanded(
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _buildCalendarGrid(month),
+            child: _buildCalendarGrid(month,loc),
           ),
         ),
       ],
@@ -1046,6 +1142,7 @@ Widget _buildDaySelectionWidget() {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         if (widget.showBottomNavigation)
@@ -1062,7 +1159,7 @@ Widget _buildDaySelectionWidget() {
             ),
           ),
 
-          _buildDaySelectionWidget(),
+          _buildDaySelectionWidget(loc),
         
         // _buildContractInfo(),
         
@@ -1077,7 +1174,7 @@ Widget _buildDaySelectionWidget() {
             itemCount: 60,
             itemBuilder: (context, index) {
               final month = DateTime(DateTime.now().year, DateTime.now().month + index);
-              return _buildMonthView(month);
+              return _buildMonthView(month,loc);
             },
           ),
         ),

@@ -5,6 +5,8 @@ import '../models/package_model.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
 import '../models/address_model.dart';
 import '../services/api_service.dart';
+import 'package:fawran/generated/app_localizations.dart';
+import 'package:flutter/services.dart';
 
 class DateSelectionStep extends StatefulWidget {
   final List<DateTime> selectedDates;
@@ -96,6 +98,17 @@ void dispose() {
   super.dispose();
 }
 
+void _updatePromotionMessageLocalization() {
+  if (widget.package?.promotionCode != null && 
+      widget.package!.promotionCode!.isNotEmpty && 
+      _isCouponApplied && 
+      _couponMessage == 'Promotion applied successfully!') {
+    setState(() {
+      _couponMessage = AppLocalizations.of(context)!.promotionAppliedSuccessfully;
+    });
+  }
+}
+
 void _validateCouponCode() async {
   if (_couponController.text.trim().isEmpty) {
     setState(() {
@@ -112,7 +125,7 @@ void _validateCouponCode() async {
     setState(() {
       _isCouponApplied = true;
       _discountedPrice = widget.package!.finalPrice;
-      _couponMessage = 'Promotion applied successfully!';
+      _couponMessage = AppLocalizations.of(context)!.promotionAppliedSuccessfully;
     });
     return;
   }
@@ -200,7 +213,7 @@ void _removeCoupon() {
   }
 }
 
-Widget _buildCouponSection() {
+Widget _buildCouponSection(AppLocalizations loc) {
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     margin: EdgeInsets.only(bottom: 16),
@@ -213,7 +226,7 @@ Widget _buildCouponSection() {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Coupon Code',
+          loc.couponCode,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -267,17 +280,17 @@ Widget _buildCouponSection() {
             ),
             SizedBox(width: 12),
             Container(
-              height: 48,
+              height: 36,
               child: ElevatedButton(
                 onPressed: _isValidatingCoupon ? null : _validateCouponCode,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _isCouponApplied ? Colors.green : Color(0xFF1E3A8A),
                   disabledBackgroundColor: Colors.grey.shade300,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(25),
                   ),
                   elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 25),
                 ),
                 child: _isValidatingCoupon
                     ? SizedBox(
@@ -289,7 +302,7 @@ Widget _buildCouponSection() {
                         ),
                       )
                     : Text(
-                        _isCouponApplied ? 'Applied' : 'Apply',
+                        _isCouponApplied ? loc.applied : loc.apply,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -327,7 +340,98 @@ Widget _buildCouponSection() {
     ),
   );
 }
+List<String> _getLocalizedDays(AppLocalizations loc) {
+  return [
+    loc.sunday,
+    loc.monday, 
+    loc.tuesday,
+    loc.wednesday,
+    loc.thursday,
+    loc.saturday
+  ];
+}
 
+// Helper method to get day abbreviations for calendar header
+List<String> _getDayAbbreviations(AppLocalizations loc) {
+  return [
+    loc.sundayShort,    // S
+    loc.mondayShort,    // M
+    loc.tuesdayShort,   // T
+    loc.wednesdayShort, // W
+    loc.thursdayShort,  // T
+    loc.fridayShort,    // F
+    loc.saturdayShort   // S
+  ];
+}
+
+// Helper method to convert English day names to localized names
+String _getLocalizedDayName(String englishDayName, AppLocalizations loc) {
+  switch (englishDayName.toLowerCase()) {
+    case 'sunday':
+      return loc.sunday;
+    case 'monday':
+      return loc.monday;
+    case 'tuesday':
+      return loc.tuesday;
+    case 'wednesday':
+      return loc.wednesday;
+    case 'thursday':
+      return loc.thursday;
+    case 'friday':
+      return loc.friday;
+    case 'saturday':
+      return loc.saturday;
+    default:
+      return englishDayName;
+  }
+}
+
+// Helper method to convert localized day names back to English for logic
+String _getEnglishDayName(String localizedDayName, AppLocalizations loc) {
+  if (localizedDayName == loc.sunday) return 'Sunday';
+  if (localizedDayName == loc.monday) return 'Monday';
+  if (localizedDayName == loc.tuesday) return 'Tuesday';
+  if (localizedDayName == loc.wednesday) return 'Wednesday';
+  if (localizedDayName == loc.thursday) return 'Thursday';
+  if (localizedDayName == loc.friday) return 'Friday';
+  if (localizedDayName == loc.saturday) return 'Saturday';
+  return localizedDayName;
+}
+
+// Helper method to format numbers in Arabic if needed
+String _formatNumber(int number, AppLocalizations loc) {
+  if (Localizations.localeOf(context).languageCode == 'ar') {
+    // Convert Western Arabic numerals to Eastern Arabic numerals
+    const westernArabic = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const easternArabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    
+    String numberStr = number.toString();
+    for (int i = 0; i < westernArabic.length; i++) {
+      numberStr = numberStr.replaceAll(westernArabic[i], easternArabic[i]);
+    }
+    return numberStr;
+  }
+  return number.toString();
+}
+
+// Helper method to format dates in Arabic
+String _formatDateForLocale(DateTime date, AppLocalizations loc) {
+  if (Localizations.localeOf(context).languageCode == 'ar') {
+    // Use Arabic date formatting
+    final formatter = DateFormat('MMM dd, yyyy', 'ar');
+    return formatter.format(date);
+  }
+  return DateFormat('MMM dd, yyyy').format(date);
+}
+
+// Helper method to format month year for calendar header
+String _formatMonthYear(DateTime date, AppLocalizations loc) {
+  if (Localizations.localeOf(context).languageCode == 'ar') {
+    final formatter = DateFormat('MMMM yyyy', 'ar');
+    return formatter.format(date);
+  }
+  return DateFormat('MMMM yyyy').format(date);
+}
   void _calculateContractDetails() {
     // Get duration from package using noOfWeeks or fallback to widget parameter
     int durationInWeeks = 0;
@@ -572,10 +676,8 @@ Future<void> _validateAndProceed() async {
 }
 
 // Add this widget to build the day selection UI (like in your image)
-Widget _buildDaySelectionWidget() {
-  final days = [
-    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'
-  ];
+Widget _buildDaySelectionWidget(AppLocalizations loc) {
+  final days = _getLocalizedDays(loc); // Use localized days
   
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -584,15 +686,15 @@ Widget _buildDaySelectionWidget() {
       children: [
         RichText(
           text: TextSpan(
-            text: 'Please select ',
+            text: loc.pleaseSelect,
             style: TextStyle(
               fontSize: 16,
               color: Colors.black,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
             children: [
               TextSpan(
-                text: '${_visitsPerWeekCount} days',
+                text: '${_formatNumber(_visitsPerWeekCount, loc)} ${loc.days}',
                 style: TextStyle(
                   color: Colors.teal,
                   fontWeight: FontWeight.bold,
@@ -606,12 +708,14 @@ Widget _buildDaySelectionWidget() {
           spacing: 8,
           runSpacing: 8,
           children: days.map((day) {
-            bool isSelected = _localSelectedDays.contains(day); // Use local state
-            bool isFriday = day == 'Friday';
+            // Convert localized day back to English for comparison with _localSelectedDays
+            String englishDay = _getEnglishDayName(day, loc);
+            bool isSelected = _localSelectedDays.contains(englishDay);
+            bool isFriday = englishDay == 'Friday';
             
             return GestureDetector(
               onTap: isFriday ? null : () {
-                _handleDayToggle(day);
+                _handleDayToggle(englishDay); // Still use English day internally
               },
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -632,10 +736,10 @@ Widget _buildDaySelectionWidget() {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  day,
+                  day, // Display localized day name
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: isFriday 
                         ? Colors.grey.shade400 
                         : isSelected 
@@ -650,10 +754,10 @@ Widget _buildDaySelectionWidget() {
         SizedBox(height: 16),
         Text(
           _userSelectedStartDate != null 
-              ? 'Start date: ${DateFormat('MMM dd, yyyy').format(_userSelectedStartDate!)}'
+              ? '${loc.startDate}: ${_formatDateForLocale(_userSelectedStartDate!, loc)}'
               : _localSelectedDays.isNotEmpty 
-                  ? 'Start date will be set automatically'
-                  : 'Please select days first',
+                  ? loc.startDateAutoSet
+                  : loc.selectDaysFirst,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -993,6 +1097,7 @@ void _showSnackBarWithShake(String message) {
   }
 
   Widget _buildCalendarGrid(DateTime month) {
+  final loc = AppLocalizations.of(context)!;
   final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
   final firstDayOfMonth = DateTime(month.year, month.month, 1);
   final startingWeekday = firstDayOfMonth.weekday % 7;
@@ -1052,12 +1157,12 @@ void _showSnackBarWithShake(String message) {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Day number - always shown
+              // Day number - use localized formatting
               Text(
-                day.toString(),
+                _formatNumber(day, loc), // Use localized number formatting
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
                   color: textColor,
                 ),
               ),
@@ -1065,7 +1170,7 @@ void _showSnackBarWithShake(String message) {
               if (isStartDate && !_isSelectingStartDate) ...[
                 // Highest priority: Start date indicator
                 Text(
-                  'START',
+                  loc.start ?? 'START', // Use localized "START" text
                   style: TextStyle(
                     fontSize: 7,
                     fontWeight: FontWeight.bold,
@@ -1083,7 +1188,7 @@ void _showSnackBarWithShake(String message) {
                   isSelectable) ...[
                 // For package bookings: show if day doesn't match selected days
                 Text(
-                  'N/A',
+                  loc.notAvailable ?? 'N/A', // Use localized "N/A" text
                   style: TextStyle(
                     fontSize: 7,
                     fontWeight: FontWeight.w500,
@@ -1115,81 +1220,84 @@ void _showSnackBarWithShake(String message) {
 }
 
   Widget _buildMonthHeader(DateTime month) {
-    final now = DateTime.now();
-    final canNavigateLeft = month.isAfter(DateTime(now.year, now.month));
-    final canNavigateRight = month.isBefore(DateTime(now.year + 2, now.month));
+  final loc = AppLocalizations.of(context)!;
+  final now = DateTime.now();
+  final canNavigateLeft = month.isAfter(DateTime(now.year, now.month));
+  final canNavigateRight = month.isBefore(DateTime(now.year + 2, now.month));
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: canNavigateLeft ? () => _navigateToMonth(-1) : null,
-            icon: Icon(
-              Icons.chevron_left,
-              color: canNavigateLeft ? Colors.black : Colors.grey,
-              size: 28,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              DateFormat('MMMM yyyy').format(month),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: canNavigateRight ? () => _navigateToMonth(1) : null,
-            icon: Icon(
-              Icons.chevron_right,
-              color: canNavigateRight ? Colors.black : Colors.grey,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthView(DateTime month) {
-    return Column(
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildMonthHeader(month),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
-              return Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    day,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+        IconButton(
+          onPressed: canNavigateLeft ? () => _navigateToMonth(-1) : null,
+          icon: Icon(
+            Icons.chevron_left,
+            color: canNavigateLeft ? Colors.black : Colors.grey,
+            size: 28,
           ),
         ),
         Expanded(
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _buildCalendarGrid(month),
+          child: Text(
+            _formatMonthYear(month, loc), // Use localized month/year formatting
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed: canNavigateRight ? () => _navigateToMonth(1) : null,
+          icon: Icon(
+            Icons.chevron_right,
+            color: canNavigateRight ? Colors.black : Colors.grey,
+            size: 28,
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
+
+  Widget _buildMonthView(DateTime month) {
+  final loc = AppLocalizations.of(context)!;
+  
+  return Column(
+    children: [
+      _buildMonthHeader(month),
+      Container(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: _getDayAbbreviations(loc).map((day) { // Use localized abbreviations
+            return Expanded(
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  day,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+      Expanded(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: _buildCalendarGrid(month),
+        ),
+      ),
+    ],
+  );
+}
 
   String _getContractDurationText() {
     if (widget.package?.noOfWeeks != null && widget.package!.noOfWeeks! > 0) {
@@ -1206,18 +1314,21 @@ void _showSnackBarWithShake(String message) {
 
 @override
 Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
+  _updatePromotionMessageLocalization(); 
   return Column(
     children: [
       Container(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         alignment: Alignment.centerLeft,
         child: Text(
-          'Select Date',
+          loc.selectDate,
           style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
+                    fontFamily: 'poppins',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
         ),
       ),
       // Wrap the main content in Expanded and SingleChildScrollView
@@ -1226,10 +1337,10 @@ Widget build(BuildContext context) {
           child: Column(
             children: [
               // ADD THIS LINE: Coupon section
-              _buildCouponSection(),
+              _buildCouponSection(loc),
               
               // Day selection widget
-              _buildDaySelectionWidget(),
+              _buildDaySelectionWidget(loc),
               // Calendar container with fixed height
               Container(
                 height: 450,
@@ -1269,33 +1380,34 @@ Widget build(BuildContext context) {
         child: Row(
           children: [
             Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  _selectedDates.length.toString(),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ),
+  width: 50,
+  height: 50,
+  decoration: BoxDecoration(
+    color: Colors.grey.shade300,
+    shape: BoxShape.circle,
+  ),
+  child: Center(
+    child: Text(
+      _formatNumber(_selectedDates.length, loc), // Use localized number
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
+    ),
+  ),
+),
             SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Total',
+                  loc.total,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w600
                   ),
                 ),
                 // UPDATE THIS PART TO SHOW DISCOUNTED PRICE
@@ -1314,7 +1426,7 @@ Widget build(BuildContext context) {
             Spacer(),
             Container(
               width: 120,
-              height: 50,
+              height: 40,
               child: ElevatedButton(
                 onPressed: _selectedDates.isNotEmpty &&
                         !_isSelectingStartDate &&
@@ -1330,7 +1442,7 @@ Widget build(BuildContext context) {
                   elevation: 0,
                 ),
                 child: Text(
-                  'Next',
+                  loc.next,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
