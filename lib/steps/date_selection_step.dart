@@ -1437,7 +1437,6 @@ Widget build(BuildContext context) {
       Spacer(),
       Container(
         width: MediaQuery.of(context).size.width * 0.50,
-        height: 40,
         child: ElevatedButton(
           onPressed: _selectedDates.isNotEmpty &&
                   !_isSelectingStartDate &&
@@ -1447,6 +1446,7 @@ Widget build(BuildContext context) {
           style: ElevatedButton.styleFrom(
             backgroundColor: Color(0xFF10295C),
             disabledBackgroundColor: Color(0xFF768090),
+            padding: EdgeInsets.symmetric(vertical: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(25),
             ),

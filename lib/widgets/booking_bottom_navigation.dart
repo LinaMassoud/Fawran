@@ -78,7 +78,7 @@ class BookingBottomNavigation extends StatelessWidget {
                       ? Color(0xFF10295C)
                       : Colors.grey[400],
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                  padding: EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),

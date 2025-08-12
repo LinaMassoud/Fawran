@@ -2081,7 +2081,7 @@ Future<void> _handleDonePressed() async {
                     child: GestureDetector(
                       onTap: _isValidDateSelection() && !_isValidatingWorkers ? _handleDonePressed : null,
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8),
+                        padding: EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
                           color: (_isValidDateSelection() && !_isValidatingWorkers)
                               ? Color(0xFF1E3A8A)
