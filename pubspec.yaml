@@ -53,6 +53,7 @@ flutter:
     - assets/cvs/
     - assets/images/
     - assets/icons/
+    - assets/icons/permanent_maid.svg
     - assets/images/cleaning_hero.jpg
     - assets/images/east_asia_flags.png
     - assets/images/african_flags.png

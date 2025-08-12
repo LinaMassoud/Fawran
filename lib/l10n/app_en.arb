@@ -261,7 +261,15 @@
       "selectDaysFirst": "Please select days first",
       "start": "START",
       "notAvailable": "N/A",
-      "currency": "SAR"
+      "currency": "SAR",
+
+      "chooseService": "Choose Service",
+      "hourlyMaid": "Hourly Maid",
+      "permanentMaid": "Permanent Maid",
+
+      "gettingLocation": "Getting location...",
+  "currentLocationSelected": "Current location selected",
+  "autoSelectLocation": "Auto Select Location"
 
 
 }

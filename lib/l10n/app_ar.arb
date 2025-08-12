@@ -263,7 +263,15 @@
   "selectDaysFirst": "يرجى اختيار الأيام أولاً",
   "start": "بداية",
   "notAvailable": "غ/م",
-  "currency": "ر.س"
+  "currency": "ر.س",
+
+  "chooseService": "اختر الخدمة",
+  "hourlyMaid": "خادمة بالساعة",
+  "permanentMaid": "خادمة دائمة",
+
+  "gettingLocation": "جاري تحديد الموقع...",
+  "currentLocationSelected": "تم تحديد الموقع الحالي",
+  "autoSelectLocation": "تحديد الموقع تلقائياً"
 
 
 }
