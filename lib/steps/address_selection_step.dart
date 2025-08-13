@@ -84,7 +84,7 @@ class AddressSelectionStep extends StatelessWidget {
                   onTap: onAddNewAddress,
                   child: Container(
                     width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 18),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       border: Border.all(color: Color(0xFF1E49A0), width: 1), // Updated border color
                       borderRadius: BorderRadius.circular(30),
@@ -107,14 +107,14 @@ class AddressSelectionStep extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 35),
+                SizedBox(height: 20),
                 Text(
                   loc.selectAddressTitle,
                   style: TextStyle(
                     fontFamily: 'poppins',
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: Color(0xFF091735),
                   ),
                 ),
                 SizedBox(height: 20),

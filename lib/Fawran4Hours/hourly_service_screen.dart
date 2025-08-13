@@ -717,9 +717,9 @@ Widget build(BuildContext context) {
                             Text(
                               dynamicServiceTitle,
                               style: TextStyle(
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF091735),
                               ),
                             ),
                           if (widget.serviceId != 62)
@@ -825,8 +825,8 @@ Widget build(BuildContext context) {
                                     'SAR ${completedBooking!.totalPrice}',
                                     style: TextStyle(
                                       fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF091735),
                                     ),
                                   ),
                                   SizedBox(width: 8),
@@ -834,7 +834,7 @@ Widget build(BuildContext context) {
                                     'SAR ${completedBooking!.originalPrice}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey[800],
+                                      color: const Color(0xFF768090),
                                       decoration: TextDecoration.lineThrough,
                                     ),
                                   ),
@@ -1221,10 +1221,10 @@ Widget _buildDetailRow(String label, String value) {
                 child: Text(
                   shiftName,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                     fontFamily: 'Poppins',
-                    color: Colors.black,
+                    color: Color(0xFF091735),
                   ),
                   textAlign: TextAlign.center,
                   textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
@@ -1521,9 +1521,9 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
           Text(
             sectionTitle,
             style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF091735),
             ),
           ),
 

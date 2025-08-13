@@ -1558,7 +1558,7 @@ Widget build(BuildContext context) {
                               maxLines: 2, enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 100),
                           
                           // Add bottom padding to account for fixed button
-                          const SizedBox(height: 100),
+                          const SizedBox(height: 120),
                         ],
                       ),
                     ),
@@ -1571,54 +1571,65 @@ Widget build(BuildContext context) {
 
         // Bottom Button - Fixed at bottom
         Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 0,
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
+  bottom: 0,
+  left: 0,
+  right: 0,
+  child: Container(
+    padding: EdgeInsets.fromLTRB(20, 20, 20, 55), // Changed to match booking_bottom_navigation
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(25), // Changed from 24 to 25
+        topRight: Radius.circular(25), // Changed from 24 to 25
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Color(0xFF1E49A0).withOpacity(0.15), // Changed to blue tinted shadow
+          blurRadius: 20, // Changed from 10 to 20
+          spreadRadius: 2, // Changed from 0 to 2
+          offset: const Offset(0, -5), // Changed from -2 to -5
+        ),
+        BoxShadow(
+          color: Color(0xFF1E49A0).withOpacity(0.08), // Added additional lighter blue shadow
+          blurRadius: 40,
+          spreadRadius: 5,
+          offset: const Offset(0, -10),
+        ),
+      ],
+    ),
+    child: Center( // Added Center widget
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.8, // Reduced width when centered
+        child: ElevatedButton( // Changed from GestureDetector to ElevatedButton
+          onPressed: (_canProceedToDetails && _areAllFieldsValid())
+              ? _saveAddress
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: (_canProceedToDetails && _areAllFieldsValid())
+                ? Color(0xFF10295C) // Changed from Color(0xFF1E3A8A) to match
+                : null,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Color(0xFF768090),
+            padding: EdgeInsets.symmetric(vertical: 12), // Changed from 16 to 12
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25), // Changed from 30 to 25
             ),
-            child: GestureDetector(
-              onTap: (_canProceedToDetails && _areAllFieldsValid())
-                  ? _saveAddress
-                  : null,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: (_canProceedToDetails && _areAllFieldsValid())
-                      ? const Color(0xFF1E3A8A)
-                      : Colors.grey[400],
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Center(
-                  child: Text(
-                    loc.save,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
+            elevation: (_canProceedToDetails && _areAllFieldsValid()) ? 2 : 0, // Added elevation
+          ),
+          child: Text(
+            loc.save,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 19, // Changed from 18 to 19
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
         ),
+      ),
+    ),
+  ),
+),
       ],
     ),
   );

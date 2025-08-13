@@ -53,8 +53,8 @@ class BookingBottomNavigation extends StatelessWidget {
                   loc.startingFrom,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF091735),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
@@ -70,7 +70,7 @@ class BookingBottomNavigation extends StatelessWidget {
             Spacer(), // Push the button to the rightmost side
             // Next Button positioned at the rightmost edge when price > 0
             Container(
-              width: MediaQuery.of(context).size.width * 0.35, // Smaller width when price is shown
+              width: MediaQuery.of(context).size.width * 0.50, // Smaller width when price is shown
               child: ElevatedButton(
                 onPressed: canProceed ? onNextPressed : null,
                 style: ElevatedButton.styleFrom(
@@ -78,7 +78,7 @@ class BookingBottomNavigation extends StatelessWidget {
                       ? Color(0xFF10295C)
                       : Colors.grey[400],
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                  padding: EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
@@ -88,7 +88,7 @@ class BookingBottomNavigation extends StatelessWidget {
                   isLastStep ? 'Complete Booking' : loc.next,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

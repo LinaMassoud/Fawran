@@ -230,7 +230,7 @@ Widget _buildCouponSection(AppLocalizations loc) {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Color(0xFF091735),
           ),
         ),
         SizedBox(height: 12),
@@ -689,7 +689,7 @@ Widget _buildDaySelectionWidget(AppLocalizations loc) {
             text: loc.pleaseSelect,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.black,
+              color: Color(0xFF091735),
               fontWeight: FontWeight.w600,
             ),
             children: [
@@ -723,13 +723,13 @@ Widget _buildDaySelectionWidget(AppLocalizations loc) {
                   color: isFriday 
                       ? Colors.grey.shade100 
                       : isSelected 
-                          ? Color(0xFF1E3A8A) 
+                          ? Color(0xFF10295C) 
                           : Colors.white,
                   border: Border.all(
                     color: isFriday 
                         ? Colors.grey.shade300 
                         : isSelected 
-                            ? Color(0xFF1E3A8A) 
+                            ? Color(0xFF10295C) 
                             : Colors.grey.shade300,
                     width: 1.5,
                   ),
@@ -744,7 +744,7 @@ Widget _buildDaySelectionWidget(AppLocalizations loc) {
                         ? Colors.grey.shade400 
                         : isSelected 
                             ? Colors.white 
-                            : Colors.black,
+                            : Color(0xFF091735),
                   ),
                 ),
               ),
@@ -1123,7 +1123,7 @@ void _showSnackBarWithShake(String message) {
     final isFriday = date.weekday == 5;
 
     Color backgroundColor = Colors.transparent;
-    Color textColor = Colors.black;
+    Color textColor = Color(0xFF091735);
 
     if (isSelected) {
       if (isStartDate) {
@@ -1234,7 +1234,7 @@ void _showSnackBarWithShake(String message) {
           onPressed: canNavigateLeft ? () => _navigateToMonth(-1) : null,
           icon: Icon(
             Icons.chevron_left,
-            color: canNavigateLeft ? Colors.black : Colors.grey,
+            color: canNavigateLeft ? Color(0xFF091735) : Colors.grey,
             size: 28,
           ),
         ),
@@ -1245,7 +1245,7 @@ void _showSnackBarWithShake(String message) {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: Color(0xFF091735),
             ),
           ),
         ),
@@ -1253,7 +1253,7 @@ void _showSnackBarWithShake(String message) {
           onPressed: canNavigateRight ? () => _navigateToMonth(1) : null,
           icon: Icon(
             Icons.chevron_right,
-            color: canNavigateRight ? Colors.black : Colors.grey,
+            color: canNavigateRight ? Color(0xFF091735) : Colors.grey,
             size: 28,
           ),
         ),
@@ -1281,7 +1281,7 @@ void _showSnackBarWithShake(String message) {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: Color(0xFF091735),
                   ),
                 ),
               ),
@@ -1327,7 +1327,7 @@ Widget build(BuildContext context) {
                     fontFamily: 'poppins',
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: Color(0xFF091735),
                   ),
         ),
       ),
@@ -1366,94 +1366,105 @@ Widget build(BuildContext context) {
       ),
       // Bottom section remains fixed - UPDATE THE PRICE DISPLAY
       Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-  width: 50,
-  height: 50,
+  padding: EdgeInsets.fromLTRB(20, 20, 20, 55), // Added more bottom padding
   decoration: BoxDecoration(
-    color: Colors.grey.shade300,
-    shape: BoxShape.circle,
-  ),
-  child: Center(
-    child: Text(
-      _formatNumber(_selectedDates.length, loc), // Use localized number
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.black,
-      ),
+    color: Colors.white,
+    borderRadius: BorderRadius.only(
+      topLeft: Radius.circular(25),
+      topRight: Radius.circular(25),
     ),
+    boxShadow: [
+      BoxShadow(
+        color: Color(0xFF1E49A0).withOpacity(0.15), // Blue tinted shadow
+        blurRadius: 20,
+        spreadRadius: 2,
+        offset: Offset(0, -5),
+      ),
+      BoxShadow(
+        color: Color(0xFF1E49A0).withOpacity(0.08), // Additional lighter blue shadow
+        blurRadius: 40,
+        spreadRadius: 5,
+        offset: Offset(0, -10),
+      ),
+    ],
+  ),
+  child: Row(
+    children: [
+      Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            _formatNumber(_selectedDates.length, loc), // Use localized number
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF091735),
+            ),
+          ),
+        ),
+      ),
+      SizedBox(width: 16),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            loc.total,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w600
+            ),
+          ),
+          // UPDATE THIS PART TO SHOW DISCOUNTED PRICE
+          Text(
+            _isCouponApplied && _discountedPrice > 0
+                ? 'SAR ${_discountedPrice.toInt()}'
+                : 'SAR ${(widget.package?.originalPrice ?? widget.totalPrice).toInt()}',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFF2582A),
+            ),
+          ),
+        ],
+      ),
+      Spacer(),
+      Container(
+        width: MediaQuery.of(context).size.width * 0.50,
+        child: ElevatedButton(
+          onPressed: _selectedDates.isNotEmpty &&
+                  !_isSelectingStartDate &&
+                  widget.selectedAddress != null
+              ? _validateAndProceed
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF10295C),
+            disabledBackgroundColor: Color(0xFF768090),
+            padding: EdgeInsets.symmetric(vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            loc.next,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      )
+    ],
   ),
 ),
-            SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  loc.total,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w600
-                  ),
-                ),
-                // UPDATE THIS PART TO SHOW DISCOUNTED PRICE
-                Text(
-                  _isCouponApplied && _discountedPrice > 0
-                      ? 'SAR ${_discountedPrice.toInt()}'
-                      : 'SAR ${(widget.package?.originalPrice ?? widget.totalPrice).toInt()}',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFF2582A),
-                  ),
-                ),
-              ],
-            ),
-            Spacer(),
-            Container(
-              width: 120,
-              height: 40,
-              child: ElevatedButton(
-                onPressed: _selectedDates.isNotEmpty &&
-                        !_isSelectingStartDate &&
-                        widget.selectedAddress != null
-                    ? _validateAndProceed
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF1E3A8A),
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  loc.next,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
     ],
   );
 }
