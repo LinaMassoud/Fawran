@@ -50,187 +50,194 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     super.dispose();
   }
 
-  Future<void> _startCheckout(Map<String, dynamic> booking, {required bool isHourly,required String sector}) async {
-  try {
-    setState(() {
-      _checkoutStatus = 'Starting checkout...';
-    });
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+  Future<void> _startCheckout(Map<String, dynamic> booking,
+      {required bool isHourly, required String sector}) async {
+    try {
+      setState(() {
+        _checkoutStatus = 'Starting checkout...';
+      });
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
 
-    // Get user details from secure storage
-    final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-    final firstName = await secureStorage.read(key: 'first_name') ?? 'User';
-    final lastName = await secureStorage.read(key: 'last_name') ?? '';
-    final phoneNumber = await secureStorage.read(key: 'phone_number') ?? '';
-    final userId = await secureStorage.read(key: 'user_id') ?? '';
+      // Get user details from secure storage
+      final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+      final firstName = await secureStorage.read(key: 'first_name') ?? 'User';
+      final lastName = await secureStorage.read(key: 'last_name') ?? '';
+      final phoneNumber = await secureStorage.read(key: 'phone_number') ?? '';
+      final userId = await secureStorage.read(key: 'user_id') ?? '';
 
-    // Extract booking details based on contract type
-    String contractId;
-    String amount;
-    String customerName;
-    String serviceDescription;
-    
-    if (isHourly) {
-      contractId = booking["service_contract_id"]?.toString() ?? '';
-      amount = booking["total_price"]?.toString() ?? '0';
-      customerName = booking["customer_display"] ?? '';
-      serviceDescription = 'Hourly Service - ${booking["service_id"]?.toString() ?? ''}';
-    } else {
-      contractId = booking["contract_id"]?.toString() ?? '';
-      amount = booking["amount_to_pay"]?.toString() ?? '0';
-      customerName = booking["profession_name"] ?? '';
-      serviceDescription = 'Permanent Service - ${booking["profession_name"] ?? ''}';
-    }
+      // Extract booking details based on contract type
+      String contractId;
+      String amount;
+      String customerName;
+      String serviceDescription;
 
-    Map<String, dynamic> configurations = {
-      "hashString": "",
-      "language": "en",
-      "themeMode": "light",
-      "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "MADA","GOOGLE_PAY","STC_PAY"],
-      "paymentType": "ALL",
-      "selectedCurrency": "SAR",
-      "supportedCurrencies": ["SAR"],
-      "supportedPaymentTypes": [],
-      "supportedRegions": [],
-      "supportedSchemes": [],
-      "supportedCountries": [],
-      "gateway": {
-        "publicKey": "pk_test_pLd7nzHMmgBXUqNFP1E0SWOZ",
-        "merchantId": "",
-      },
-      "customer": {
-        "firstName": firstName,
-        "lastName": lastName,
-        "email": "customer@example.com",
-        "phone": {"countryCode": "965", "number": phoneNumber},
-      },
-      "transaction": {
-        "mode": "charge",
-        "charge": {
-          "saveCard": true,
-          "auto": {"type": "VOID", "time": 100},
-          "redirect": {
-            "url": "https://demo.staging.tap.company/v2/sdk/checkout",
-          },
-          "threeDSecure": true,
-          "subscription": {
-            "type": "SCHEDULED",
-            "amount_variability": "FIXED",
-            "txn_count": 0,
-          },
-          "airline": {
-            "reference": {"booking": ""},
+      if (isHourly) {
+        contractId = booking["contract_id"]?.toString() ?? '';
+        amount = booking["total_price"]?.toString() ?? '0';
+        customerName = booking["customer_display"] ?? '';
+        serviceDescription =
+            'Hourly Service - ${booking["service_id"]?.toString() ?? ''}';
+      } else {
+        contractId = booking["contract_id"]?.toString() ?? '';
+        amount = booking["amount_to_pay"]?.toString() ?? '0';
+        customerName = booking["profession_name"] ?? '';
+        serviceDescription =
+            'Permanent Service - ${booking["profession_name"] ?? ''}';
+      }
+
+      Map<String, dynamic> configurations = {
+        "hashString": "",
+        "language": "en",
+        "themeMode": "light",
+        "supportedPaymentMethods": [
+          "VISA",
+          "MASTERCARD",
+          "APPLE_PAY",
+          "MADA",
+          "GOOGLE_PAY",
+          "STC_PAY"
+        ],
+        "paymentType": "ALL",
+        "selectedCurrency": "SAR",
+        "supportedCurrencies": ["SAR"],
+        "supportedPaymentTypes": [],
+        "supportedRegions": [],
+        "supportedSchemes": [],
+        "supportedCountries": [],
+        "gateway": {
+          "publicKey": "pk_test_pLd7nzHMmgBXUqNFP1E0SWOZ",
+          "merchantId": "",
+        },
+        "customer": {
+          "firstName": firstName,
+          "lastName": lastName,
+          "email": "customer@example.com",
+          "phone": {"countryCode": "965", "number": phoneNumber},
+        },
+        "transaction": {
+          "mode": "charge",
+          "charge": {
+            "saveCard": true,
+            "auto": {"type": "VOID", "time": 100},
+            "redirect": {
+              "url": "https://demo.staging.tap.company/v2/sdk/checkout",
+            },
+            "threeDSecure": true,
+            "subscription": {
+              "type": "SCHEDULED",
+              "amount_variability": "FIXED",
+              "txn_count": 0,
+            },
+            "airline": {
+              "reference": {"booking": ""},
+            },
           },
         },
-      },
-      "amount": amount,
-      "order": {
-        "id": "",
-        "currency": "SAR",
         "amount": amount,
-        "items": [
-          {
-            "amount": amount,
-            "currency": "SAR",
-            "name": customerName,
-            "quantity": 1,
-            "description": serviceDescription,
-          },
-        ],
-      },
-      "cardOptions": {
-        "showBrands": true,
-        "showLoadingState": true,
-        "collectHolderName": true,
-        "preLoadCardName": "",
-        "cardNameEditable": true,
-        "cardFundingSource": "all",
-        "saveCardOption": "all",
-        "forceLtr": false,
-        "alternativeCardInputs": {"cardScanner": false, "cardNFC": false},
-      },
-      "isApplePayAvailableOnClient": true,
-    };
+        "order": {
+          "id": "",
+          "currency": "SAR",
+          "amount": amount,
+          "items": [
+            {
+              "amount": amount,
+              "currency": "SAR",
+              "name": customerName,
+              "quantity": 1,
+              "description": serviceDescription,
+            },
+          ],
+        },
+        "cardOptions": {
+          "showBrands": true,
+          "showLoadingState": true,
+          "collectHolderName": true,
+          "preLoadCardName": "",
+          "cardNameEditable": true,
+          "cardFundingSource": "all",
+          "saveCardOption": "all",
+          "forceLtr": false,
+          "alternativeCardInputs": {"cardScanner": false, "cardNFC": false},
+        },
+        "isApplePayAvailableOnClient": true,
+      };
 
-    // Call startCheckout function directly
-    final success = await startCheckout(
-      configurations: configurations,
-      onReady: () {
-        Navigator.of(context).pop();
-        setState(() {
-          _checkoutStatus = 'Checkout is ready!';
-        });
-        print('Checkout is ready!');
-      },
-      onSuccess: (data) async{
-        try{
-final parsedData = jsonDecode(data); // now it's a Map
-         final chargeId = parsedData["chargeId"];
-    
-        print('Payment successful: $data');
-       
-        
-          final result = await  ApiService.addChargePayment(userId, contractId, sector, chargeId);
-          
-          if(result.statusCode ==200){
-             _confettiController.play();
-             _showSuccessDialog(data,true);
-        // Refresh contracts after successful payment
-       
-          }
-          else{
+      // Call startCheckout function directly
+      final success = await startCheckout(
+        configurations: configurations,
+        onReady: () {
+          Navigator.of(context).pop();
+          setState(() {
+            _checkoutStatus = 'Checkout is ready!';
+          });
+          print('Checkout is ready!');
+        },
+        onSuccess: (data) async {
+          try {
+            final parsedData = jsonDecode(data); // now it's a Map
+            final chargeId = parsedData["chargeId"];
+
+            print('Payment successful: $data');
+
+            final result = await ApiService.addChargePayment(
+                userId, contractId, sector, chargeId);
+
+            if (result.statusCode == 200) {
+              _confettiController.play();
+              _showSuccessDialog(data, true);
+              // Refresh contracts after successful payment
+            } else {
               Map<String, dynamic> parsed = jsonDecode(result.body);
-  _showSuccessDialog( parsed["message"],false);
+              _showSuccessDialog(parsed["message"], false);
+            }
+          } catch (ex) {
+            _showSuccessDialog("somethig went wrong", false);
+            final r = ex;
+            print(ex);
           }
-          
-        }
-        catch(ex){
-            _showSuccessDialog( "somethig went wrong",false);
-final r = ex;
-          print(ex);
-        }
-          
-        // Refresh contracts after successful payment
-      },
-      onError: (error) {
-        setState(() {
-          _checkoutStatus = 'Payment failed: $error';
-        });
-        _showSuccessDialog( "somethig went wrong",false);
-        print('Payment failed: $error');
-      },
-      onClose: () {
-        setState(() {
-          _checkoutStatus = 'Checkout closed';
-        });
-        print('Checkout closed');
-      },
-      onCancel: () {
-        setState(() {
-          _checkoutStatus = 'Checkout cancelled';
-        });
-        print('Checkout cancelled (Android)');
-      },
-    );
 
-    if (!success) {
+          // Refresh contracts after successful payment
+        },
+        onError: (error) {
+          setState(() {
+            _checkoutStatus = 'Payment failed: $error';
+          });
+          _showSuccessDialog("somethig went wrong", false);
+          print('Payment failed: $error');
+        },
+        onClose: () {
+          setState(() {
+            _checkoutStatus = 'Checkout closed';
+          });
+          print('Checkout closed');
+        },
+        onCancel: () {
+          setState(() {
+            _checkoutStatus = 'Checkout cancelled';
+          });
+          print('Checkout cancelled (Android)');
+        },
+      );
+
+      if (!success) {
+        setState(() {
+          _checkoutStatus = 'Failed to start checkout';
+        });
+      }
+    } catch (e) {
       setState(() {
-        _checkoutStatus = 'Failed to start checkout';
+        _checkoutStatus = 'Error: $e';
       });
     }
-  } catch (e) {
-    setState(() {
-      _checkoutStatus = 'Error: $e';
-    });
   }
-}
-void _showSuccessDialog(String data,bool success) {
+
+  void _showSuccessDialog(String data, bool success) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -241,12 +248,14 @@ void _showSuccessDialog(String data,bool success) {
             AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              title:  Text (success ?'🎉 Payment Successful!' + data : 'Payment Declined' ),
-              content:  Text(success? 'Thank you for your purchase.': data),
+              title: Text(success
+                  ? '🎉 Payment Successful!' + data
+                  : 'Payment Declined'),
+              content: Text(success ? 'Thank you for your purchase.' : data),
               actions: [
                 TextButton(
                   onPressed: () {
-                     ref.read(contractsProvider.notifier).fetchContracts();
+                    ref.read(contractsProvider.notifier).fetchContracts();
                     Navigator.of(context).pop();
                   },
                   child: const Text('OK'),
@@ -567,7 +576,8 @@ void _showSuccessDialog(String data,bool success) {
                         status.toLowerCase() == "canceled" ||
                         isCancelled
                     ? null
-                    : () => _startCheckout(booking, isHourly: false,sector:'I'),
+                    : () =>
+                        _startCheckout(booking, isHourly: false, sector: 'I'),
                 child: Text(
                   "Pay Now",
                   style: TextStyle(
@@ -690,7 +700,8 @@ void _showSuccessDialog(String data,bool success) {
                         status.toLowerCase() == "canceled" ||
                         isCancelled
                     ? null
-                    : () => _startCheckout(booking, isHourly: true,sector: 'H'),
+                    : () =>
+                        _startCheckout(booking, isHourly: true, sector: 'H'),
                 child: Text(
                   loc.payNow ?? "Pay Now",
                   style: TextStyle(
@@ -823,7 +834,7 @@ void _showSuccessDialog(String data,bool success) {
                     ),
                   ),
                 ),
-                
+
                 // Centered title
                 const Center(
                   child: Text(
@@ -841,183 +852,189 @@ void _showSuccessDialog(String data,bool success) {
 
           // Content area with tab selector overlapping header
           Expanded(
-  child: Container(
-    decoration: const BoxDecoration(
-      color: Color(0xFFF8FAFC),
-    ),
-    child: Column(
-      children: [
-        // Tab selector
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE0EAFF), // Light blue background
-            borderRadius: BorderRadius.circular(50),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                spreadRadius: 0,
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedTab = 'all'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 12),
+              child: Column(
+                children: [
+                  // Tab selector
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: _selectedTab == 'all'
-                          ? Colors.white
-                          : Colors.transparent,
+                      color: const Color(0xFFE0EAFF), // Light blue background
                       borderRadius: BorderRadius.circular(50),
-                      boxShadow: _selectedTab == 'all'
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                spreadRadius: 0,
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          spreadRadius: 0,
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedTab = 'all'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: _selectedTab == 'all'
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(50),
+                                boxShadow: _selectedTab == 'all'
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.15),
+                                          spreadRadius: 0,
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : null,
                               ),
-                            ]
-                          : null,
-                    ),
-                    child: Text(
-                      'All',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _selectedTab == 'all'
-                            ? const Color(0xFF10295C)
-                            : const Color(0xFF9CA3AF),
-                        fontWeight: _selectedTab == 'all'
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedTab = 'permanent'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: _selectedTab == 'permanent'
-                          ? Colors.white
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(50),
-                      boxShadow: _selectedTab == 'permanent'
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                spreadRadius: 0,
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                              child: Text(
+                                'All',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: _selectedTab == 'all'
+                                      ? const Color(0xFF10295C)
+                                      : const Color(0xFF9CA3AF),
+                                  fontWeight: _selectedTab == 'all'
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ]
-                          : null,
-                    ),
-                    child: Text(
-                      'Permanent',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _selectedTab == 'permanent'
-                            ? const Color(0xFF10295C)
-                            : const Color(0xFF9CA3AF),
-                        fontWeight: _selectedTab == 'permanent'
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedTab = 'hourly'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: _selectedTab == 'hourly'
-                          ? Colors.white
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(50),
-                      boxShadow: _selectedTab == 'hourly'
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                spreadRadius: 0,
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Text(
-                      'Hourly',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _selectedTab == 'hourly'
-                            ? const Color(0xFF10295C)
-                            : const Color(0xFF9CA3AF),
-                        fontWeight: _selectedTab == 'hourly'
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Contracts list
-        Expanded(
-          child: state.isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                      color: Color(0xFF1A365D)))
-              : RefreshIndicator(
-                  onRefresh: notifier.fetchContracts,
-                  color: const Color(0xFF1A365D),
-                  child: Builder(
-                    builder: (context) {
-                      final filtered = _getFilteredContracts(
-                          state.permanent, state.hourly, loc);
-                      if (filtered.isEmpty) {
-                        return SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.6,
-                            child: _buildEmptyState(),
+                            ),
                           ),
-                        );
-                      }
-
-                      return ListView(
-                        padding: const EdgeInsets.fromLTRB(0, 16, 0, 100),
-                        children: filtered,
-                      );
-                    },
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedTab = 'permanent'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: _selectedTab == 'permanent'
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(50),
+                                boxShadow: _selectedTab == 'permanent'
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.15),
+                                          spreadRadius: 0,
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Text(
+                                'Permanent',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: _selectedTab == 'permanent'
+                                      ? const Color(0xFF10295C)
+                                      : const Color(0xFF9CA3AF),
+                                  fontWeight: _selectedTab == 'permanent'
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedTab = 'hourly'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: _selectedTab == 'hourly'
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(50),
+                                boxShadow: _selectedTab == 'hourly'
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.15),
+                                          spreadRadius: 0,
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Text(
+                                'Hourly',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: _selectedTab == 'hourly'
+                                      ? const Color(0xFF10295C)
+                                      : const Color(0xFF9CA3AF),
+                                  fontWeight: _selectedTab == 'hourly'
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-        ),
-      ],
-    ),
-  ),
-),
+
+                  // Contracts list
+                  Expanded(
+                    child: state.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                                color: Color(0xFF1A365D)))
+                        : RefreshIndicator(
+                            onRefresh: notifier.fetchContracts,
+                            color: const Color(0xFF1A365D),
+                            child: Builder(
+                              builder: (context) {
+                                final filtered = _getFilteredContracts(
+                                    state.permanent, state.hourly, loc);
+                                if (filtered.isEmpty) {
+                                  return SingleChildScrollView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    child: SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.6,
+                                      child: _buildEmptyState(),
+                                    ),
+                                  );
+                                }
+
+                                return ListView(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(0, 16, 0, 100),
+                                  children: filtered,
+                                );
+                              },
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
