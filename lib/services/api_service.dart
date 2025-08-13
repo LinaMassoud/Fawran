@@ -922,7 +922,7 @@ class ApiService {
     try {
       final response = await makeAuthenticatedRequest(
         method: 'POST',
-        url: '$_baseUrl/available-cars',
+        url: '$_baseUrl/add_charge_payment',
         body: jsonEncode({
           "user_id": userId,
   "contract_id":contractId,

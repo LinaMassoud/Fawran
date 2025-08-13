@@ -169,23 +169,40 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         print('Checkout is ready!');
       },
       onSuccess: (data) async{
-          final parsedData = jsonDecode(data); // now it's a Map
-  final chargeId = parsedData["charge_id"];
-        setState(() {
-          _checkoutStatus = 'Payment successful: $data';
-        });
+        try{
+final parsedData = jsonDecode(data); // now it's a Map
+         final chargeId = parsedData["chargeId"];
+    
         print('Payment successful: $data');
-        _confettiController.play();
+       
         
           final result = await  ApiService.addChargePayment(userId, contractId, sector, chargeId);
-          _showSuccessDialog(data);
+          
+          if(result.statusCode ==200){
+             _confettiController.play();
+             _showSuccessDialog(data,true);
         // Refresh contracts after successful payment
-        ref.read(contractsProvider.notifier).fetchContracts();
+       
+          }
+          else{
+              Map<String, dynamic> parsed = jsonDecode(result.body);
+  _showSuccessDialog( parsed["message"],false);
+          }
+          
+        }
+        catch(ex){
+            _showSuccessDialog( "somethig went wrong",false);
+final r = ex;
+          print(ex);
+        }
+          
+        // Refresh contracts after successful payment
       },
       onError: (error) {
         setState(() {
           _checkoutStatus = 'Payment failed: $error';
         });
+        _showSuccessDialog( "somethig went wrong",false);
         print('Payment failed: $error');
       },
       onClose: () {
@@ -213,8 +230,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     });
   }
 }
-
-  void _showSuccessDialog(String data) {
+void _showSuccessDialog(String data,bool success) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -225,11 +241,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              title:  Text('🎉 Payment Successful!' + data),
-              content: const Text('Thank you for your purchase.'),
+              title:  Text (success ?'🎉 Payment Successful!' + data : 'Payment Declined' ),
+              content:  Text(success? 'Thank you for your purchase.': data),
               actions: [
                 TextButton(
                   onPressed: () {
+                     ref.read(contractsProvider.notifier).fetchContracts();
                     Navigator.of(context).pop();
                   },
                   child: const Text('OK'),

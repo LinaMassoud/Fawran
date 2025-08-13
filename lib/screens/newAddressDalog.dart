@@ -288,7 +288,7 @@ Widget build(BuildContext context) {
                                       ),
                                     )
                                   : Icon(Icons.my_location, color: Colors.black54, size: 24),
-                              onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                              onPressed: _isGettingLocation ? null : null,
                               padding: EdgeInsets.zero,
                             ),
                           ),
