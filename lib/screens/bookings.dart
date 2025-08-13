@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:checkout_flutter/checkout_flutter.dart';
 import 'package:confetti/confetti.dart';
 import 'package:fawran/providers/contractsProvider.dart';
+import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -47,7 +50,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     super.dispose();
   }
 
-  Future<void> _startCheckout(Map<String, dynamic> booking, {required bool isHourly}) async {
+  Future<void> _startCheckout(Map<String, dynamic> booking, {required bool isHourly,required String sector}) async {
   try {
     setState(() {
       _checkoutStatus = 'Starting checkout...';
@@ -165,21 +168,41 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         });
         print('Checkout is ready!');
       },
-      onSuccess: (data) {
-        setState(() {
-          _checkoutStatus = 'Payment successful: $data';
-        });
+      onSuccess: (data) async{
+        try{
+final parsedData = jsonDecode(data); // now it's a Map
+         final chargeId = parsedData["chargeId"];
+    
         print('Payment successful: $data');
-        _confettiController.play();
-        _showSuccessDialog();
+       
         
+          final result = await  ApiService.addChargePayment(userId, contractId, sector, chargeId);
+          
+          if(result.statusCode ==200){
+             _confettiController.play();
+             _showSuccessDialog(data,true);
         // Refresh contracts after successful payment
-        ref.read(contractsProvider.notifier).fetchContracts();
+       
+          }
+          else{
+              Map<String, dynamic> parsed = jsonDecode(result.body);
+  _showSuccessDialog( parsed["message"],false);
+          }
+          
+        }
+        catch(ex){
+            _showSuccessDialog( "somethig went wrong",false);
+final r = ex;
+          print(ex);
+        }
+          
+        // Refresh contracts after successful payment
       },
       onError: (error) {
         setState(() {
           _checkoutStatus = 'Payment failed: $error';
         });
+        _showSuccessDialog( "somethig went wrong",false);
         print('Payment failed: $error');
       },
       onClose: () {
@@ -207,8 +230,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     });
   }
 }
-
-  void _showSuccessDialog() {
+void _showSuccessDialog(String data,bool success) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -219,11 +241,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              title: const Text('🎉 Payment Successful!'),
-              content: const Text('Thank you for your purchase.'),
+              title:  Text (success ?'🎉 Payment Successful!' + data : 'Payment Declined' ),
+              content:  Text(success? 'Thank you for your purchase.': data),
               actions: [
                 TextButton(
                   onPressed: () {
+                     ref.read(contractsProvider.notifier).fetchContracts();
                     Navigator.of(context).pop();
                   },
                   child: const Text('OK'),
@@ -544,7 +567,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                         status.toLowerCase() == "canceled" ||
                         isCancelled
                     ? null
-                    : () => _startCheckout(booking, isHourly: false),
+                    : () => _startCheckout(booking, isHourly: false,sector:'I'),
                 child: Text(
                   "Pay Now",
                   style: TextStyle(
@@ -667,7 +690,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                         status.toLowerCase() == "canceled" ||
                         isCancelled
                     ? null
-                    : () => _startCheckout(booking, isHourly: true),
+                    : () => _startCheckout(booking, isHourly: true,sector: 'H'),
                 child: Text(
                   loc.payNow ?? "Pay Now",
                   style: TextStyle(

@@ -917,6 +917,32 @@ class ApiService {
     }
   }
 
+
+    static Future<http.Response> addChargePayment(String userId,String contractId,String sector,String chargeId ) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: '$_baseUrl/add_charge_payment',
+        body: jsonEncode({
+          "user_id": userId,
+  "contract_id":contractId,
+  "sector_type": sector,
+  "charge_id": chargeId
+        }),
+      );
+return response;
+      
+      
+    } catch (e) {
+      print('Error fetching promotions: $e');
+      return http.Response(
+    jsonEncode({"error": e.toString()}),
+    500, // Internal Server Error
+  );
+    }
+  }
+
+
   static Future<http.Response> createPermanentContract({
     required Map<String, dynamic> requestBody,
   }) async {
