@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fawran/Fawran4Hours/hourly_service_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/package_model.dart';
@@ -303,80 +304,75 @@ class Newhome extends ConsumerWidget {
                         data: (professions) {
                           final PageController pageController = PageController(
                             viewportFraction:
-                                0.4, // Smaller cards, roughly 40% of screen width
-                            initialPage: professions.length -
-                                1, // Start from the last page on the right
+                                0.45, // roughly fits 162 width cards on screen
+                            initialPage: professions.length - 1,
                           );
 
                           return SizedBox(
-                              height:
-                                  150, // Adjust height to match square shape (same as width)
-                              child: PageView.builder(
-                                controller: pageController,
-                                itemCount: professions.length,
-                                reverse: true, // RTL direction
-                                padEnds:
-                                    false, // THIS REMOVES the unwanted padding at edges!
-                                itemBuilder: (context, index) {
-                                  final profession = professions[index];
+                            height: 162, // height of the cards
+                            child: PageView.builder(
+                              controller: pageController,
+                              itemCount: professions.length,
+                              reverse: true, // RTL direction
+                              padEnds: false,
+                              itemBuilder: (context, index) {
+                                final profession = professions[index];
 
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        // navigation logic here
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      ref
+                                          .read(selectedProfessionProvider
+                                              .notifier)
+                                          .state = profession;
 
-                                        ref
-                                            .read(selectedProfessionProvider
-                                                .notifier)
-                                            .state = profession;
+                                      final hasDomestic =
+                                          profession.hasDomesticPackage;
+                                      final serviceCount =
+                                          profession.services.length;
 
-                                        final hasDomestic =
-                                            profession.hasDomesticPackage;
-                                        final serviceCount =
-                                            profession.services.length;
-
-                                        if (hasDomestic) {
-                                          if (serviceCount > 1) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      const ServiceChoicePage()),
-                                            );
-                                          } else {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
+                                      if (hasDomestic) {
+                                        if (serviceCount > 1) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
                                                 builder: (_) =>
-                                                    AddressSelectionScreen(
-                                                  header:
-                                                      profession.positionName,
-                                                ),
-                                              ),
-                                            );
-                                          }
+                                                    const ServiceChoicePage()),
+                                          );
                                         } else {
-                                          if (serviceCount <= 1) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    HourlyServiceScreen(
-                                                  professionId:
-                                                      profession.positionId,
-                                                  serviceId:
-                                                      profession.services[0].id,
-                                                ),
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  AddressSelectionScreen(
+                                                header: profession.positionName,
                                               ),
-                                            );
-                                          }
+                                            ),
+                                          );
                                         }
-                                      },
+                                      } else {
+                                        if (serviceCount <= 1) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  HourlyServiceScreen(
+                                                professionId:
+                                                    profession.positionId,
+                                                serviceId:
+                                                    profession.services[0].id,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    child: SizedBox(
+                                      width: 162,
+                                      height: 162,
                                       child: Container(
-                                        width: double.infinity,
-                                        height: double.infinity,
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(12),
@@ -395,23 +391,31 @@ class Newhome extends ConsumerWidget {
                                             borderRadius: BorderRadius.vertical(
                                                 bottom: Radius.circular(12)),
                                           ),
-                                          child: Text(
+                                          child: AutoSizeText(
                                             profession.positionName,
                                             textAlign: TextAlign.center,
-                                            maxLines: 1, // limit to one line
+                                            maxLines:
+                                                1, // still limits number of lines
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.poppins(
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 14,
-                                              color: Colors.white, // #091735
+                                              fontSize:
+                                                  14, // starting font size
+                                              color: Colors.white,
                                             ),
+                                            minFontSize:
+                                                9, // smallest font allowed
+                                            maxFontSize:
+                                                14, // max starting font
                                           ),
                                         ),
                                       ),
                                     ),
-                                  );
-                                },
-                              ));
+                                  ),
+                                );
+                              },
+                            ),
+                          );
                         },
                         loading: () =>
                             const Center(child: CircularProgressIndicator()),

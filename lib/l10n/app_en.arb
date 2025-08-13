@@ -269,7 +269,21 @@
 
       "gettingLocation": "Getting location...",
   "currentLocationSelected": "Current location selected",
-  "autoSelectLocation": "Auto Select Location"
+  "autoSelectLocation": "Auto Select Location",
+
+    "myAccountTitle": "My Account",
+  "accountSection": "Account",
+  "personalDetailsSection": "Personal Details",
+  "personalInformation": "Personal Information",
+  "emailLabel": "Email",
+  "phoneLabel": "Phone",
+  "changePasswordLabel": "Change Password",
+  "firstNameLabel": "First Name",
+  "middleNameLabel": "Middle Name",
+  "lastNameLabel": "Last Name",
+  "nationalIdLabel": "National ID"
+
+
 
 
 }

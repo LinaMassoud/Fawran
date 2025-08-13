@@ -1441,6 +1441,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto Select Location'**
   String get autoSelectLocation;
+
+  /// No description provided for @myAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Account'**
+  String get myAccountTitle;
+
+  /// No description provided for @accountSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountSection;
+
+  /// No description provided for @personalDetailsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Details'**
+  String get personalDetailsSection;
+
+  /// No description provided for @personalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get personalInformation;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @phoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phoneLabel;
+
+  /// No description provided for @changePasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePasswordLabel;
+
+  /// No description provided for @firstNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'First Name'**
+  String get firstNameLabel;
+
+  /// No description provided for @middleNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Middle Name'**
+  String get middleNameLabel;
+
+  /// No description provided for @lastNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Name'**
+  String get lastNameLabel;
+
+  /// No description provided for @nationalIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'National ID'**
+  String get nationalIdLabel;
 }
 
 class _AppLocalizationsDelegate

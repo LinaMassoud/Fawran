@@ -271,7 +271,22 @@
 
   "gettingLocation": "جاري تحديد الموقع...",
   "currentLocationSelected": "تم تحديد الموقع الحالي",
-  "autoSelectLocation": "تحديد الموقع تلقائياً"
+  "autoSelectLocation": "تحديد الموقع تلقائياً",
+
+
+
+
+  "myAccountTitle": "حسابي",
+  "accountSection": "الحساب",
+  "personalDetailsSection": "البيانات الشخصية",
+  "personalInformation": "المعلومات الشخصية",
+  "emailLabel": "البريد الإلكتروني",
+  "phoneLabel": "رقم الهاتف",
+  "changePasswordLabel": "تغيير كلمة المرور",
+  "firstNameLabel": "الاسم الأول",
+  "middleNameLabel": "اسم الأب",
+  "lastNameLabel": "اسم العائلة",
+  "nationalIdLabel": "الرقم الوطني"
 
 
 }

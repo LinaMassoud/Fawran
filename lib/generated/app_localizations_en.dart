@@ -683,4 +683,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoSelectLocation => 'Auto Select Location';
+
+  @override
+  String get myAccountTitle => 'My Account';
+
+  @override
+  String get accountSection => 'Account';
+
+  @override
+  String get personalDetailsSection => 'Personal Details';
+
+  @override
+  String get personalInformation => 'Personal Information';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get phoneLabel => 'Phone';
+
+  @override
+  String get changePasswordLabel => 'Change Password';
+
+  @override
+  String get firstNameLabel => 'First Name';
+
+  @override
+  String get middleNameLabel => 'Middle Name';
+
+  @override
+  String get lastNameLabel => 'Last Name';
+
+  @override
+  String get nationalIdLabel => 'National ID';
 }

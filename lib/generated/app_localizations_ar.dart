@@ -683,4 +683,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get autoSelectLocation => 'تحديد الموقع تلقائياً';
+
+  @override
+  String get myAccountTitle => 'حسابي';
+
+  @override
+  String get accountSection => 'الحساب';
+
+  @override
+  String get personalDetailsSection => 'البيانات الشخصية';
+
+  @override
+  String get personalInformation => 'المعلومات الشخصية';
+
+  @override
+  String get emailLabel => 'البريد الإلكتروني';
+
+  @override
+  String get phoneLabel => 'رقم الهاتف';
+
+  @override
+  String get changePasswordLabel => 'تغيير كلمة المرور';
+
+  @override
+  String get firstNameLabel => 'الاسم الأول';
+
+  @override
+  String get middleNameLabel => 'اسم الأب';
+
+  @override
+  String get lastNameLabel => 'اسم العائلة';
+
+  @override
+  String get nationalIdLabel => 'الرقم الوطني';
 }
