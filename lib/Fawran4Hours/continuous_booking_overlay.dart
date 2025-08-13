@@ -892,8 +892,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
 
 
   void _completePurchase() async {
-
-      if (_isCompletingPurchase) return; // Prevent duplicate calls
+  if (_isCompletingPurchase) return; // Prevent duplicate calls
   _isCompletingPurchase = true;
   final selectedAddress = ref.read(selectedAddressProvider);
 
@@ -906,7 +905,8 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
       ? _calculateOriginalPrice()
       : widget.package!.packagePrice ?? widget.package!.finalPrice;
 
-  final bookingData = BookingData(
+  // Create initial BookingData without contract_id for contract creation
+  final initialBookingData = BookingData(
     selectedDates: selectedDates,
     totalPrice: totalPrice,
     originalPrice: originalPrice,
@@ -922,17 +922,38 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
         : widget.package!.packageName,
   );
 
-  print("bookingData total price after _completePurchase = ${bookingData.totalPrice}");
-  
-  // Create contract before closing overlay
-  final result = await _createContract(bookingData);
+  // Create contract and get the result with contract_id
+  final contractResult = await _createContract(initialBookingData);
+
+  // Create final BookingData with contract_id
+  final finalBookingData = BookingData(
+    selectedDates: selectedDates,
+    totalPrice: totalPrice,
+    originalPrice: originalPrice,
+    selectedAddress: selectedAddress != null
+        ? _extractLocationName(selectedAddress.cardText)
+        : 'No Address',
+    workerCount: workerCount,
+    contractDuration: contractDuration,
+    visitsPerWeek: visitsPerWeek,
+    selectedNationality: selectedNationality,
+    packageName: widget.isCustomBooking
+        ? 'Custom Service Package'
+        : widget.package!.packageName,
+    contractId: contractResult['success'] == true ? contractResult['contract_id'] : null,
+  );
+
+  print("bookingData total price after _completePurchase = ${finalBookingData.totalPrice}");
+  print("bookingData contract_id = ${finalBookingData.contractId}");
   
   await _animationController.reverse();
   Navigator.pop(context);
 
-  if (result['success'] == true && widget.onBookingCompleted != null) {
-    widget.onBookingCompleted!(bookingData);
+  if (contractResult['success'] == true && widget.onBookingCompleted != null) {
+    widget.onBookingCompleted!(finalBookingData);
   }
+
+  _isCompletingPurchase = false; // Reset the flag
 }
 
   void _updateTotalPriceFromServiceDetails(double totalPrice) {

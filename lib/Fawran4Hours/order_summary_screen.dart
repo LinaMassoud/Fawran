@@ -649,7 +649,7 @@ Widget build(BuildContext context) {
 
               // Proceed to pay button
               Container(
-                padding: EdgeInsets.fromLTRB(24, 16, 24, 55), // Updated to match BookingBottomNavigation
+                padding: EdgeInsets.fromLTRB(24, 16, 24, 45), // Updated to match BookingBottomNavigation
                 child: SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -851,156 +851,178 @@ String _getLocalizedContractDurationSimple(int contractDuration, AppLocalization
   }
 
   Future<void> _startCheckout() async {
-    try {
-      setState(() {
-        _checkoutStatus = 'Starting checkout...';
-      });
-      
-      // Show loading dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+  try {
+    setState(() {
+      _checkoutStatus = 'Starting checkout...';
+    });
+    
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
 
-      // Get customer information from secure storage
-      final firstName = await _secureStorage.read(key: 'first_name') ?? 'Customer';
-      final lastName = await _secureStorage.read(key: 'last_name') ?? '';
-      final phoneNumber = await _secureStorage.read(key: 'phone_number') ?? '555123456';
-      final userId = await _secureStorage.read(key: 'user_id') ?? '';
+    // Get customer information from secure storage
+    final firstName = await _secureStorage.read(key: 'first_name') ?? 'Customer';
+    final lastName = await _secureStorage.read(key: 'last_name') ?? '';
+    final phoneNumber = await _secureStorage.read(key: 'phone_number') ?? '555123456';
+    final userId = await _secureStorage.read(key: 'user_id') ?? '';
 
-      // Generate unique order ID
-      // final orderId = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      Map<String, dynamic> configurations = {
-        "hashString": "",
-        "language": "en",
-        "themeMode": "light",
-        "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "MADA","GOOGLE_PAY","STC_PAY"],
-        "paymentType": "ALL",
-        "selectedCurrency": "SAR",
-        "supportedCurrencies": ["SAR"],
-        "supportedPaymentTypes": [],
-        "supportedRegions": [],
-        "supportedSchemes": [],
-        "supportedCountries": [],
-        "gateway": {
-          "publicKey": "pk_test_pLd7nzHMmgBXUqNFP1E0SWOZ",
-          "merchantId": "",
-        },
-        "customer": {
-          "firstName": firstName,
-          "lastName": lastName,
-          "email": "customer@example.com",
-          "phone": {"countryCode": "965", "number": phoneNumber},
-        },
-        "transaction": {
-          "mode": "charge",
-          "charge": {
-            "saveCard": true,
-            "auto": {"type": "VOID", "time": 100},
-            "redirect": {
-              "url": "https://demo.staging.tap.company/v2/sdk/checkout",
-            },
-            "threeDSecure": true,
-            "subscription": {
-              "type": "SCHEDULED",
-              "amount_variability": "FIXED",
-              "txn_count": 0,
-            },
-            "airline": {
-              "reference": {"booking": ""},
-            },
+    // Extract contract details from bookingData
+    final contractId = widget.bookingData.contractId?.toString() ?? '';
+    final sector = 'H'; // Default sector for hourly service
+    final amount = widget.bookingData.totalPrice.toString();
+    final customerName = widget.bookingData.packageName;
+    final serviceDescription = "${widget.bookingData.packageName} - ${widget.bookingData.workerCount} workers for ${widget.bookingData.contractDuration} weeks";
+
+    // Print contract ID and sector for debugging
+    print('Contract ID: $contractId');
+    print('Sector: $sector');
+
+    Map<String, dynamic> configurations = {
+      "hashString": "",
+      "language": "en",
+      "themeMode": "light",
+      "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "MADA","GOOGLE_PAY","STC_PAY"],
+      "paymentType": "ALL",
+      "selectedCurrency": "SAR",
+      "supportedCurrencies": ["SAR"],
+      "supportedPaymentTypes": [],
+      "supportedRegions": [],
+      "supportedSchemes": [],
+      "supportedCountries": [],
+      "gateway": {
+        "publicKey": "pk_test_pLd7nzHMmgBXUqNFP1E0SWOZ",
+        "merchantId": "",
+      },
+      "customer": {
+        "firstName": firstName,
+        "lastName": lastName,
+        "email": "customer@example.com",
+        "phone": {"countryCode": "965", "number": phoneNumber},
+      },
+      "transaction": {
+        "mode": "charge",
+        "charge": {
+          "saveCard": true,
+          "auto": {"type": "VOID", "time": 100},
+          "redirect": {
+            "url": "https://demo.staging.tap.company/v2/sdk/checkout",
+          },
+          "threeDSecure": true,
+          "subscription": {
+            "type": "SCHEDULED",
+            "amount_variability": "FIXED",
+            "txn_count": 0,
+          },
+          "airline": {
+            "reference": {"booking": ""},
           },
         },
-        "amount": widget.bookingData.totalPrice.toString(),
-        "order": {
-          "id": "",
-          "currency": "SAR",
-          "amount": widget.bookingData.totalPrice.toString(),
-          "items": [
-            {
-              "amount": widget.bookingData.totalPrice.toString(),
-              "currency": "SAR",
-              "name": widget.bookingData.packageName,
-              "quantity": 1,
-              "description": "${widget.bookingData.packageName} - ${widget.bookingData.workerCount} workers for ${widget.bookingData.contractDuration} weeks",
-            },
-          ],
-        },
-        "cardOptions": {
-          "showBrands": true,
-          "showLoadingState": true,
-          "collectHolderName": true,
-          "preLoadCardName": "",
-          "cardNameEditable": true,
-          "cardFundingSource": "all",
-          "saveCardOption": "all",
-          "forceLtr": false,
-          "alternativeCardInputs": {"cardScanner": false, "cardNFC": false},
-        },
-        "isApplePayAvailableOnClient": true,
-      };
+      },
+      "amount": amount,
+      "order": {
+        "id": "",
+        "currency": "SAR",
+        "amount": amount,
+        "items": [
+          {
+            "amount": amount,
+            "currency": "SAR",
+            "name": customerName,
+            "quantity": 1,
+            "description": serviceDescription,
+          },
+        ],
+      },
+      "cardOptions": {
+        "showBrands": true,
+        "showLoadingState": true,
+        "collectHolderName": true,
+        "preLoadCardName": "",
+        "cardNameEditable": true,
+        "cardFundingSource": "all",
+        "saveCardOption": "all",
+        "forceLtr": false,
+        "alternativeCardInputs": {"cardScanner": false, "cardNFC": false},
+      },
+      "isApplePayAvailableOnClient": true,
+    };
 
-      // Call startCheckout function directly
-      final success = await startCheckout(
-        configurations: configurations,
-        onReady: () {
-          Navigator.of(context).pop(); // Close loading dialog
-          setState(() {
-            _checkoutStatus = 'Checkout is ready!';
-          });
-          print('Checkout is ready!');
-        },
-        onSuccess: (data) {
-          setState(() {
-            _checkoutStatus = 'Payment successful: $data';
-          });
-          print('Payment successful: $data');
-          _confettiController.play();
-          _showPaymentSuccessDialog();
-        },
-        onError: (error) {
-          Navigator.of(context).pop(); // Close loading dialog if still open
-          setState(() {
-            _checkoutStatus = 'Payment failed: $error';
-          });
-          print('Payment failed: $error');
-          _showPaymentErrorDialog(error.toString());
-        },
-        onClose: () {
-          Navigator.of(context).pop(); // Close loading dialog if still open
-          setState(() {
-            _checkoutStatus = 'Checkout closed';
-          });
-          print('Checkout closed');
-        },
-        onCancel: () {
-          Navigator.of(context).pop(); // Close loading dialog if still open
-          setState(() {
-            _checkoutStatus = 'Checkout cancelled';
-          });
-          print('Checkout cancelled (Android)');
-        },
-      );
-
-      if (!success) {
+    // Call startCheckout function directly
+    final success = await startCheckout(
+      configurations: configurations,
+      onReady: () {
         Navigator.of(context).pop(); // Close loading dialog
         setState(() {
-          _checkoutStatus = 'Failed to start checkout';
+          _checkoutStatus = 'Checkout is ready!';
         });
-        _showPaymentErrorDialog('Failed to start checkout');
-      }
-    } catch (e) {
+        print('Checkout is ready!');
+      },
+      onSuccess: (data) async {
+        try {
+          final parsedData = jsonDecode(data); // Parse the response data
+          final chargeId = parsedData["chargeId"];
+          
+          print('Payment successful: $data');
+          
+          // Call API to add charge payment
+          final result = await ApiService.addChargePayment(userId, contractId, sector, chargeId);
+          
+          if (result.statusCode == 200) {
+            _confettiController.play();
+            _showPaymentSuccessDialog();
+          } else {
+            Map<String, dynamic> parsed = jsonDecode(result.body);
+            _showPaymentErrorDialog(parsed["message"]);
+          }
+        } catch (ex) {
+          _showPaymentErrorDialog("Something went wrong");
+          print('Error processing payment success: $ex');
+        }
+      },
+      onError: (error) {
+        Navigator.of(context).pop(); // Close loading dialog if still open
+        setState(() {
+          _checkoutStatus = 'Payment failed: $error';
+        });
+        print('Payment failed: $error');
+        _showPaymentErrorDialog(error.toString());
+      },
+      onClose: () {
+        Navigator.of(context).pop(); // Close loading dialog if still open
+        setState(() {
+          _checkoutStatus = 'Checkout closed';
+        });
+        print('Checkout closed');
+      },
+      onCancel: () {
+        Navigator.of(context).pop(); // Close loading dialog if still open
+        setState(() {
+          _checkoutStatus = 'Checkout cancelled';
+        });
+        print('Checkout cancelled (Android)');
+      },
+    );
+
+    if (!success) {
       Navigator.of(context).pop(); // Close loading dialog
       setState(() {
-        _checkoutStatus = 'Error: $e';
+        _checkoutStatus = 'Failed to start checkout';
       });
-      _showPaymentErrorDialog(e.toString());
+      _showPaymentErrorDialog('Failed to start checkout');
     }
+  } catch (e) {
+    Navigator.of(context).pop(); // Close loading dialog
+    setState(() {
+      _checkoutStatus = 'Error: $e';
+    });
+    _showPaymentErrorDialog(e.toString());
   }
+}
 
   void _showPaymentSuccessDialog() {
     showDialog(

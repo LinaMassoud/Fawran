@@ -2022,7 +2022,7 @@ Future<void> _handleDonePressed() async {
 
           // Bottom Navigation (shown only when dates are selected)
           Container(
-            padding: EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 45),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
@@ -2044,7 +2044,6 @@ Future<void> _handleDonePressed() async {
                 ),
               ],
             ),
-            child: SafeArea(
               child: Row(
                 children: [
                   SizedBox(width: 16),
@@ -2112,7 +2111,6 @@ Future<void> _handleDonePressed() async {
                   ),
                 ],
               ),
-            ),
           ),
         ],
       ),

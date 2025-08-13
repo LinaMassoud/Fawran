@@ -232,6 +232,7 @@
     
     "riyal":"Riyal",
     "days":"Days",
+    "day":"Day",
     "agreementHourly":"I agree to the ",
     "startingFrom":"Starting From",
     "couponCode":"Coupon Code",
@@ -269,7 +270,9 @@
 
       "gettingLocation": "Getting location...",
   "currentLocationSelected": "Current location selected",
-  "autoSelectLocation": "Auto Select Location"
+  "autoSelectLocation": "Auto Select Location",
+
+  "scrubAwayToughStains": "Scrub Away\ntough Stains"
 
 
 }

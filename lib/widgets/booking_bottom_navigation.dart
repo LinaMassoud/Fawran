@@ -19,7 +19,7 @@ class BookingBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 55), // Added more bottom padding
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 45), // Added more bottom padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(

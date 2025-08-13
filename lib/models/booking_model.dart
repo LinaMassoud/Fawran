@@ -8,6 +8,7 @@ class BookingData {
   final int visitsPerWeek;
   final String selectedNationality;
   final String packageName;
+  final int? contractId; // Add contract_id field
 
   BookingData({
     required this.selectedDates,
@@ -19,6 +20,7 @@ class BookingData {
     required this.visitsPerWeek,
     required this.selectedNationality,
     required this.packageName,
+    this.contractId, // Optional contract_id parameter
   });
   
   // Helper method to get the discount amount

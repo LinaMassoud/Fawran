@@ -773,7 +773,7 @@ Widget _buildDaySelectionWidget(AppLocalizations loc) {
             ),
             children: [
               TextSpan(
-                text: '${_visitsPerWeekCount} ${loc.days}',
+                text: '${_visitsPerWeekCount} ${_visitsPerWeekCount == 1 ? loc.day : loc.days}',
                 style: TextStyle(
                   color: Colors.teal,
                   fontWeight: FontWeight.bold,
