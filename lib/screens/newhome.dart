@@ -554,7 +554,7 @@ class Newhome extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const UserDetailsScreen()),
+                            builder: (_) => const MyAccountScreen()),
                       );
                     },
                   ),

@@ -301,7 +301,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get total => 'المجموع';
 
   @override
-  String get start => 'يبدأ';
+  String get start => 'بداية';
 
   @override
   String get congratulations => 'تهانينا!';
@@ -319,7 +319,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get serviceDetails => 'تفاصيل الخدمة';
 
   @override
-  String get startDate => 'تاريخ البدء';
+  String get startDate => 'تاريخ البداية';
 
   @override
   String get workers => 'العمال';
@@ -584,4 +584,103 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get days => 'ايام';
+
+  @override
+  String get agreementHourly => 'أنا أوافق على ';
+
+  @override
+  String get startingFrom => 'ابتداء من';
+
+  @override
+  String get couponCode => 'رمز القسيمة';
+
+  @override
+  String get applied => 'مُطبَّق';
+
+  @override
+  String get promotionApplied => 'تم تطبيق الترقية بنجاح!';
+
+  @override
+  String get pleaseSelect => 'الرجاء التحديد';
+
+  @override
+  String get enterCouponCode => 'أدخل رمز القسيمة';
+
+  @override
+  String get apply => 'يتقدم';
+
+  @override
+  String get promotionAppliedSuccessfully => 'تم تطبيق العرض الترويجي بنجاح!';
+
+  @override
+  String get sunday => 'الأحد';
+
+  @override
+  String get monday => 'الإثنين';
+
+  @override
+  String get tuesday => 'الثلاثاء';
+
+  @override
+  String get wednesday => 'الأربعاء';
+
+  @override
+  String get thursday => 'الخميس';
+
+  @override
+  String get friday => 'الجمعة';
+
+  @override
+  String get saturday => 'السبت';
+
+  @override
+  String get sundayShort => 'ح';
+
+  @override
+  String get mondayShort => 'ن';
+
+  @override
+  String get tuesdayShort => 'ث';
+
+  @override
+  String get wednesdayShort => 'ر';
+
+  @override
+  String get thursdayShort => 'خ';
+
+  @override
+  String get fridayShort => 'ج';
+
+  @override
+  String get saturdayShort => 'س';
+
+  @override
+  String get startDateAutoSet => 'سيتم تعيين تاريخ البداية تلقائياً';
+
+  @override
+  String get selectDaysFirst => 'يرجى اختيار الأيام أولاً';
+
+  @override
+  String get notAvailable => 'غ/م';
+
+  @override
+  String get currency => 'ر.س';
+
+  @override
+  String get chooseService => 'اختر الخدمة';
+
+  @override
+  String get hourlyMaid => 'خادمة بالساعة';
+
+  @override
+  String get permanentMaid => 'خادمة دائمة';
+
+  @override
+  String get gettingLocation => 'جاري تحديد الموقع...';
+
+  @override
+  String get currentLocationSelected => 'تم تحديد الموقع الحالي';
+
+  @override
+  String get autoSelectLocation => 'تحديد الموقع تلقائياً';
 }

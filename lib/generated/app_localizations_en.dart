@@ -301,7 +301,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get total => 'Total';
 
   @override
-  String get start => 'Start';
+  String get start => 'START';
 
   @override
   String get congratulations => 'Congratulations!';
@@ -319,7 +319,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serviceDetails => 'Service Details';
 
   @override
-  String get startDate => 'Start Date';
+  String get startDate => 'Start date';
 
   @override
   String get workers => 'Workers';
@@ -584,4 +584,103 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get days => 'Days';
+
+  @override
+  String get agreementHourly => 'I agree to the ';
+
+  @override
+  String get startingFrom => 'Starting From';
+
+  @override
+  String get couponCode => 'Coupon Code';
+
+  @override
+  String get applied => 'Applied';
+
+  @override
+  String get promotionApplied => 'Promotion applied sucessfully!';
+
+  @override
+  String get pleaseSelect => 'Please select ';
+
+  @override
+  String get enterCouponCode => 'Enter coupon code';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get promotionAppliedSuccessfully => 'Promotion applied successfully!';
+
+  @override
+  String get sunday => 'Sunday';
+
+  @override
+  String get monday => 'Monday';
+
+  @override
+  String get tuesday => 'Tuesday';
+
+  @override
+  String get wednesday => 'Wednesday';
+
+  @override
+  String get thursday => 'Thursday';
+
+  @override
+  String get friday => 'Friday';
+
+  @override
+  String get saturday => 'Saturday';
+
+  @override
+  String get sundayShort => 'S';
+
+  @override
+  String get mondayShort => 'M';
+
+  @override
+  String get tuesdayShort => 'T';
+
+  @override
+  String get wednesdayShort => 'W';
+
+  @override
+  String get thursdayShort => 'T';
+
+  @override
+  String get fridayShort => 'F';
+
+  @override
+  String get saturdayShort => 'S';
+
+  @override
+  String get startDateAutoSet => 'Start date will be set automatically';
+
+  @override
+  String get selectDaysFirst => 'Please select days first';
+
+  @override
+  String get notAvailable => 'N/A';
+
+  @override
+  String get currency => 'SAR';
+
+  @override
+  String get chooseService => 'Choose Service';
+
+  @override
+  String get hourlyMaid => 'Hourly Maid';
+
+  @override
+  String get permanentMaid => 'Permanent Maid';
+
+  @override
+  String get gettingLocation => 'Getting location...';
+
+  @override
+  String get currentLocationSelected => 'Current location selected';
+
+  @override
+  String get autoSelectLocation => 'Auto Select Location';
 }

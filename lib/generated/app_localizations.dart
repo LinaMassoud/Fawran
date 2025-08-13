@@ -683,7 +683,7 @@ abstract class AppLocalizations {
   /// No description provided for @start.
   ///
   /// In en, this message translates to:
-  /// **'Start'**
+  /// **'START'**
   String get start;
 
   /// No description provided for @congratulations.
@@ -719,7 +719,7 @@ abstract class AppLocalizations {
   /// No description provided for @startDate.
   ///
   /// In en, this message translates to:
-  /// **'Start Date'**
+  /// **'Start date'**
   String get startDate;
 
   /// No description provided for @workers.
@@ -1243,6 +1243,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Days'**
   String get days;
+
+  /// No description provided for @agreementHourly.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the '**
+  String get agreementHourly;
+
+  /// No description provided for @startingFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting From'**
+  String get startingFrom;
+
+  /// No description provided for @couponCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon Code'**
+  String get couponCode;
+
+  /// No description provided for @applied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied'**
+  String get applied;
+
+  /// No description provided for @promotionApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotion applied sucessfully!'**
+  String get promotionApplied;
+
+  /// No description provided for @pleaseSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select '**
+  String get pleaseSelect;
+
+  /// No description provided for @enterCouponCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter coupon code'**
+  String get enterCouponCode;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @promotionAppliedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotion applied successfully!'**
+  String get promotionAppliedSuccessfully;
+
+  /// No description provided for @sunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get sunday;
+
+  /// No description provided for @monday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get monday;
+
+  /// No description provided for @tuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get tuesday;
+
+  /// No description provided for @wednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get wednesday;
+
+  /// No description provided for @thursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get thursday;
+
+  /// No description provided for @friday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get friday;
+
+  /// No description provided for @saturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get saturday;
+
+  /// No description provided for @sundayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get sundayShort;
+
+  /// No description provided for @mondayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'M'**
+  String get mondayShort;
+
+  /// No description provided for @tuesdayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'T'**
+  String get tuesdayShort;
+
+  /// No description provided for @wednesdayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'W'**
+  String get wednesdayShort;
+
+  /// No description provided for @thursdayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'T'**
+  String get thursdayShort;
+
+  /// No description provided for @fridayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'F'**
+  String get fridayShort;
+
+  /// No description provided for @saturdayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get saturdayShort;
+
+  /// No description provided for @startDateAutoSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date will be set automatically'**
+  String get startDateAutoSet;
+
+  /// No description provided for @selectDaysFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select days first'**
+  String get selectDaysFirst;
+
+  /// No description provided for @notAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get notAvailable;
+
+  /// No description provided for @currency.
+  ///
+  /// In en, this message translates to:
+  /// **'SAR'**
+  String get currency;
+
+  /// No description provided for @chooseService.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Service'**
+  String get chooseService;
+
+  /// No description provided for @hourlyMaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Hourly Maid'**
+  String get hourlyMaid;
+
+  /// No description provided for @permanentMaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent Maid'**
+  String get permanentMaid;
+
+  /// No description provided for @gettingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting location...'**
+  String get gettingLocation;
+
+  /// No description provided for @currentLocationSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Current location selected'**
+  String get currentLocationSelected;
+
+  /// No description provided for @autoSelectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Select Location'**
+  String get autoSelectLocation;
 }
 
 class _AppLocalizationsDelegate
