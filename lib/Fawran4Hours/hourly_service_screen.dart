@@ -10,6 +10,8 @@ import 'continuous_booking_overlay.dart';
 import 'order_summary_screen.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Service {
   final int id;
@@ -25,7 +27,7 @@ class Service {
   }
 }
 
-class HourlyServiceScreen extends StatefulWidget {
+class HourlyServiceScreen extends ConsumerStatefulWidget {
   final PackageModel? autoOpenPackage;
   final int? autoOpenShift;
   final String serviceType; // Keep this parameter but make it dynamic
@@ -47,7 +49,7 @@ class HourlyServiceScreen extends StatefulWidget {
   _HourlyServiceScreenState createState() => _HourlyServiceScreenState();
 }
 
-class _HourlyServiceScreenState extends State<HourlyServiceScreen> {
+class _HourlyServiceScreenState extends ConsumerState<HourlyServiceScreen>{
   // Global keys for navigation to specific sections
   final _storage = FlutterSecureStorage();
   // Package lists for different groups and shifts
@@ -396,20 +398,25 @@ void _onShiftChangedForGroup(String groupCode, int shift) {
   }
 
 Widget _buildServiceSelector(AppLocalizations loc) {
-  // Show loading while fetching services
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   if (isLoadingServices) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            loc.selectService,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 25,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF091735),
+          Align(
+            alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+            child: Text(
+              loc.selectService,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 25,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF091735),
+              ),
             ),
           ),
           SizedBox(height: 16),
@@ -426,9 +433,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
     );
   }
 
-  // Show service selector if services are available
   if (availableServices.isNotEmpty) {
-    // Ensure selectedServiceId is set
     if (selectedServiceId == null) {
       selectedServiceId = availableServices.first.id;
       selectedServiceName = availableServices.first.name;
@@ -440,21 +445,25 @@ Widget _buildServiceSelector(AppLocalizations loc) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            loc.selectService,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF091735),
+          // Fix text alignment for Arabic
+          Align(
+            alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+            child: Text(
+              loc.selectService,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF091735),
+              ),
             ),
           ),
           SizedBox(height: 10),
-
-          // HORIZONTAL ROW FOR RADIO BUTTONS
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            reverse: isArabic,
             child: Row(
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               children: availableServices
                   .map(
                     (service) => Container(
@@ -462,6 +471,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
                         onTap: () => _onServiceChanged(service.id),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                           children: [
                             Radio<int>(
                               value: service.id,
@@ -490,27 +500,27 @@ Widget _buildServiceSelector(AppLocalizations loc) {
                   .toList(),
             ),
           ),
-
-          
-
           SizedBox(height: 5),
         ],
       ),
     );
   }
 
-  // No services available - show error state with retry
+  // Error state
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 1, vertical: 0),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          loc.selectService,
-          style: TextStyle(
-            fontSize: 25,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+        Align(
+          alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+          child: Text(
+            loc.selectService,
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
         ),
         SizedBox(height: 16),
@@ -521,6 +531,7 @@ Widget _buildServiceSelector(AppLocalizations loc) {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             children: [
               Text(
                 'No services available',
@@ -554,325 +565,329 @@ void didChangeDependencies() {
 }
 
  @override
-Widget build(BuildContext context) {
-  final loc = AppLocalizations.of(context)!;
-  return Scaffold(
-    backgroundColor: Colors.grey[100],
-    body: Stack(
-      children: [
-        CustomScrollView(
-          slivers: [
-            // Sticky Header with overlap
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: 0,
-              toolbarHeight: 65,
-              backgroundColor: Color(0xFF10295C),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
-                ),
-              ),
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        body: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                // Sticky Header with overlap
+                SliverAppBar(
+  pinned: true,
+  expandedHeight: 0,
+  toolbarHeight: 65,
+  backgroundColor: Color(0xFF10295C),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(24),
+      bottomRight: Radius.circular(24),
+    ),
+  ),
               leading: GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  padding: EdgeInsets.all(8),
-                  child: Icon(
-                    Icons.arrow_back_ios,
-                    color: Color(0xFFFFA200),
-                    size: 22,
-                  ),
-                ),
-              ),
-              title: Text(
-                loc.hourlyServices,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 24,
-                  color: Color(0xFFFFA200),
-                ),
-              ),
-              centerTitle: true,
-              elevation: 0,
-              // Add floating behavior for overlap effect
-              floating: false,
-              snap: false,
-            ),
-            
-            // Add negative margin to create overlap
-            SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: Offset(0, -40), // Negative offset to create overlap
-                child: Column(
-                  children: [
-                    // Header Section with Video/Image
-                    Container(
-                      height: 300,
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 300,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(24), // Add top border radius
-                                topRight: Radius.circular(24),
-                              ),
-                              child: Image.asset(
-                                'assets/images/cleaning_hero1.jpg',
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(24),
-                                        topRight: Radius.circular(24),
-                                      ),
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          Colors.grey[300]!,
-                                          Colors.grey[500]!,
-                                        ],
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.cleaning_services,
-                                        size: 80,
-                                        color: Colors.white.withOpacity(0.7),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(24),
-                                topRight: Radius.circular(24),
-                              ),
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.1),
-                                  Colors.black.withOpacity(0.4),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 20,
-                            bottom: 40,
-                            child: Text(
-                              'Scrub Away\ntough Stains',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                height: 1.2,
-                                shadows: [
-                                  Shadow(
-                                    offset: Offset(0, 2),
-                                    blurRadius: 4,
-                                    color: Colors.black.withOpacity(0.5),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Main content with consistent padding
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Service selector (only shows when multiple services)
-                          _buildServiceSelector(loc),
-
-                          // Divider line
-                          Container(
-                            width: double.infinity,
-                            height: 2,
-                            color: Colors.grey[300],
-                            margin: EdgeInsets.symmetric(vertical: 10),
-                          ),
-
-                          // Service title - only show if professionId is not 61
-                          if (widget.serviceId != 62)
-                            Text(
-                              dynamicServiceTitle,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF091735),
-                              ),
-                            ),
-                          if (widget.serviceId != 62)
-                            SizedBox(height: 16),
-                          SizedBox(height: 1),
-
-                          // Design your card button - only show if professionId is not 61
-                          if (widget.serviceId != 62) ...[
-                            _buildDesignCardButton(loc),
-                            SizedBox(height: 22),
-                          ] else
-                            SizedBox(height: 16),
-
-                          // Dynamic package sections
-                          ...countryGroups.map((group) {
-                            final groupCode = group['group_code'].toString();
-                            final groupName = group['group_name'].toString();
-                            
-                            return Column(
-                              children: [
-                                _buildPackageSection(
-                                  sectionTitle: groupName,
-                                  packages: packagesByGroup[groupCode] ?? [],
-                                  filteredPackages: filteredPackagesByGroup[groupCode] ?? [],
-                                  isLoading: loadingStatesByGroup[groupCode] ?? false,
-                                  errorMessage: errorMessagesByGroup[groupCode],
-                                  onRetry: () => fetchPackagesForGroup(groupCode),
-                                  groupCode: groupCode,
-                                  loc: loc,
-                                ),
-                                SizedBox(height: 40),
-                              ],
-                            );
-                          }).toList(),
-                          SizedBox(height: completedBooking != null ? 120 : 20),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        // Bottom Order View - Show when booking is completed
-        if (completedBooking != null)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Congratulations banner
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    color: Colors.green,
-                    child: Row(
+    onTap: () => Navigator.of(context).pop(),
+    child: Container(
+      padding: EdgeInsets.all(8),
+      child: Icon(
+        Icons.arrow_back_ios,
+        color: Color(0xFFFFA200),
+        size: 22,
+      ),
+    ),
+  ),
+  title: Text(
+    loc.hourlyServices,
+    style: TextStyle(
+      fontFamily: 'Poppins',
+      fontWeight: FontWeight.w600,
+      fontSize: 24,
+      color: Color(0xFFFFA200),
+    ),
+  ),
+  centerTitle: true,
+  elevation: 0,
+  floating: false,
+  snap: false,
+),
+                
+                // ... rest of your existing SliverToBoxAdapter content remains the same
+                SliverToBoxAdapter(
+                  child: Transform.translate(
+                    offset: Offset(0, -40),
+                    child: Column(
                       children: [
-                        Icon(
-                          Icons.local_offer,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          '${loc.congratulations} SAR${completedBooking!.discountAmount.toStringAsFixed(1)} ${loc.saved} ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Price and View Order section
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        // Header Section with Video/Image
+                        Container(
+                          height: 300,
+                          child: Stack(
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'SAR ${completedBooking!.totalPrice}',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF091735),
-                                    ),
+                              Container(
+                                width: double.infinity,
+                                height: 300,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(24),
+                                    topRight: Radius.circular(24),
                                   ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'SAR ${completedBooking!.originalPrice}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: const Color(0xFF768090),
-                                      decoration: TextDecoration.lineThrough,
-                                    ),
+                                  child: Image.asset(
+                                    'assets/images/cleaning_hero1.jpg',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(24),
+                                            topRight: Radius.circular(24),
+                                          ),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Colors.grey[300]!,
+                                              Colors.grey[500]!,
+                                            ],
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.cleaning_services,
+                                            size: 80,
+                                            color: Colors.white.withOpacity(0.7),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ],
+                                ),
                               ),
+                              Container(
+                                width: double.infinity,
+                                height: 300,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(24),
+                                    topRight: Radius.circular(24),
+                                  ),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.black.withOpacity(0.1),
+                                      Colors.black.withOpacity(0.4),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                              // Change positioning for RTL
+                              left: isArabic ? null : 20,
+                              right: isArabic ? 20 : null,
+                              bottom: 40,
+                              child: Text(
+                                loc.scrubAwayToughStains, // Changed from hardcoded 'Scrub Away\ntough Stains'
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                  shadows: [
+                                    Shadow(
+                                      offset: Offset(0, 2),
+                                      blurRadius: 4,
+                                      color: Colors.black.withOpacity(0.5),
+                                    ),
+                                  ],
+                                ),
+                                // Add text direction
+                                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                              ),
+                            ),
                             ],
                           ),
                         ),
-                        ElevatedButton(
-                          onPressed: _viewOrder,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF10295C),
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 25, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                          child: Text(
-                            loc.viewOrder,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+
+                        // ... rest of your content remains the same
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildServiceSelector(loc),
+                              Container(
+                                width: double.infinity,
+                                height: 2,
+                                color: Colors.grey[300],
+                                margin: EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              if (widget.serviceId != 62)
+                                Text(
+                                  dynamicServiceTitle,
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF091735),
+                                  ),
+                                  // Add text direction
+                                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                                ),
+                              if (widget.serviceId != 62)
+                                SizedBox(height: 16),
+                              SizedBox(height: 1),
+                              if (widget.serviceId != 62) ...[
+                                _buildDesignCardButton(loc),
+                                SizedBox(height: 22),
+                              ] else
+                                SizedBox(height: 16),
+                              ...countryGroups.map((group) {
+                                final groupCode = group['group_code'].toString();
+                                final groupName = group['group_name'].toString();
+                                
+                                return Column(
+                                  children: [
+                                    _buildPackageSection(
+                                      sectionTitle: groupName,
+                                      packages: packagesByGroup[groupCode] ?? [],
+                                      filteredPackages: filteredPackagesByGroup[groupCode] ?? [],
+                                      isLoading: loadingStatesByGroup[groupCode] ?? false,
+                                      errorMessage: errorMessagesByGroup[groupCode],
+                                      onRetry: () => fetchPackagesForGroup(groupCode),
+                                      groupCode: groupCode,
+                                      loc: loc,
+                                    ),
+                                    SizedBox(height: 40),
+                                  ],
+                                );
+                              }).toList(),
+                              SizedBox(height: completedBooking != null ? 120 : 20),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-      ],
-    ),
-  );
-}
+
+            // ... rest of your existing bottom order view code remains the same
+            if (completedBooking != null)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        color: Colors.green,
+                        child: Row(
+                          // Add text direction support
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                          children: [
+                            Icon(
+                              Icons.local_offer,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              '${loc.congratulations} SAR${completedBooking!.discountAmount.toStringAsFixed(1)} ${loc.saved} ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        child: Row(
+                          // Add text direction support
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    // Add text direction support
+                                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                                    children: [
+                                      Text(
+                                        'SAR ${completedBooking!.totalPrice}',
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF091735),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'SAR ${completedBooking!.originalPrice}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: const Color(0xFF768090),
+                                          decoration: TextDecoration.lineThrough,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: _viewOrder,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF10295C),
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                              ),
+                              child: Text(
+                                loc.viewOrder,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
 
 void _showPackageDetailsOverlay(PackageModel package, AppLocalizations loc) {
@@ -1512,22 +1527,26 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
   required String groupCode,
   required AppLocalizations loc,
 }) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   return Container(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Always show section title if not loading and no error
         if (!isLoading && errorMessage == null)
-          Text(
-            sectionTitle,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF091735),
+          Align(
+            alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+            child: Text(
+              sectionTitle,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF091735),
+              ),
             ),
           ),
 
-        // Always show shift selector if not loading and no error (regardless of filteredPackages)
         if (!isLoading && errorMessage == null)
           Column(
             children: [
@@ -1537,7 +1556,6 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
             ],
           ),
 
-        // Show loading, error, or packages
         if (isLoading)
           Center(child: CircularProgressIndicator())
         else if (errorMessage != null)
@@ -1579,21 +1597,24 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
                 fontSize: 16,
                 fontStyle: FontStyle.italic,
               ),
-              textAlign: TextAlign.center,
+              textAlign: isArabic ? TextAlign.right : TextAlign.center,
             ),
           )
         else if (filteredPackages.isNotEmpty)
-          // HORIZONTAL SCROLLING CONTAINER
           Container(
-            height: 320, // Fixed height for horizontal scroll
+            height: 320,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              reverse: isArabic,
               padding: EdgeInsets.symmetric(horizontal: 4),
               itemCount: filteredPackages.length,
               itemBuilder: (context, index) {
                 return Container(
-                  width: 280, // Fixed width for each card
-                  margin: EdgeInsets.only(right: 16),
+                  width: 280,
+                  margin: EdgeInsets.only(
+                    right: isArabic ? 0 : 16,
+                    left: isArabic ? 16 : 0,
+                  ),
                   child: _buildCompactServiceCard(filteredPackages[index], loc),
                 );
               },

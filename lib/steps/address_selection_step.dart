@@ -80,6 +80,7 @@ class AddressSelectionStep extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 20),
                 GestureDetector(
                   onTap: onAddNewAddress,
                   child: Container(

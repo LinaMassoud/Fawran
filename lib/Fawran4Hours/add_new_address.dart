@@ -1575,7 +1575,7 @@ Widget build(BuildContext context) {
   left: 0,
   right: 0,
   child: Container(
-    padding: EdgeInsets.fromLTRB(20, 20, 20, 55), // Changed to match booking_bottom_navigation
+    padding: EdgeInsets.fromLTRB(20, 20, 20, 45), // Changed to match booking_bottom_navigation
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: const BorderRadius.only(

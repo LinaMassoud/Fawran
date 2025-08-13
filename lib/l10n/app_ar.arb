@@ -233,6 +233,7 @@
     "delivery_fee":"توصيل العامل للمنزل (100 ريال)",
     "riyal":"ريال",
     "days":"ايام",
+    "day":"يوم",
 
     "agreementHourly":"أنا أوافق على ",
     "startingFrom":"ابتداء من",
@@ -271,7 +272,9 @@
 
   "gettingLocation": "جاري تحديد الموقع...",
   "currentLocationSelected": "تم تحديد الموقع الحالي",
-  "autoSelectLocation": "تحديد الموقع تلقائياً"
+  "autoSelectLocation": "تحديد الموقع تلقائياً",
+
+  "scrubAwayToughStains": "اكشط البقع\nالصعبة"
 
 
 }
