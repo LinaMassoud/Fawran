@@ -76,7 +76,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     return BackgroundContainer(
       showBackButton: true,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.12,
+      topSectionHeight: MediaQuery.of(context).size.height * 0.16,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       topRightWidget: GestureDetector(
         onTap: () {
