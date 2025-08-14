@@ -232,6 +232,7 @@
     
     "riyal":"Riyal",
     "days":"Days",
+    "day":"Day",
     "agreementHourly":"I agree to the ",
     "startingFrom":"Starting From",
     "couponCode":"Coupon Code",
@@ -284,6 +285,7 @@
   "nationalIdLabel": "National ID"
 
 
+  "scrubAwayToughStains": "Scrub Away\ntough Stains"
 
 
 }

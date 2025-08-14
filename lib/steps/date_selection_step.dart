@@ -694,7 +694,7 @@ Widget _buildDaySelectionWidget(AppLocalizations loc) {
             ),
             children: [
               TextSpan(
-                text: '${_formatNumber(_visitsPerWeekCount, loc)} ${loc.days}',
+                text: '${_formatNumber(_visitsPerWeekCount, loc)} ${_visitsPerWeekCount == 1 ? loc.day : loc.days}',
                 style: TextStyle(
                   color: Colors.teal,
                   fontWeight: FontWeight.bold,
@@ -1366,7 +1366,7 @@ Widget build(BuildContext context) {
       ),
       // Bottom section remains fixed - UPDATE THE PRICE DISPLAY
       Container(
-  padding: EdgeInsets.fromLTRB(20, 20, 20, 55), // Added more bottom padding
+  padding: EdgeInsets.fromLTRB(20, 20, 20, 45), // Added more bottom padding
   decoration: BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.only(

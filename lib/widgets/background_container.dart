@@ -80,7 +80,7 @@ class BackgroundContainer extends StatelessWidget {
           // Back button positioned higher in the colored section
           if (showBackButton)
             Positioned(
-              top: statusBarHeight -5, // Reduced from 16 to 8 for higher positioning
+              top: effectiveTopHeight - 50, // Position 50px above the white container
               left: -1,
               child: GestureDetector(
                 onTap: onBackPressed ?? () => Navigator.of(context).pop(),
@@ -109,10 +109,10 @@ class BackgroundContainer extends StatelessWidget {
               ),
             ),
 
-          // Top right widget positioned higher in the colored section
+          // Replace the top right widget positioned widget (around line 99) with:
           if (topRightWidget != null)
             Positioned(
-              top: statusBarHeight - 5, // Reduced from 16 to 8 for higher positioning
+              top: effectiveTopHeight - 50, // Position 50px above the white container
               right: 16,
               child: topRightWidget!,
             ),
