@@ -573,7 +573,7 @@ static bool _promotionShown = false;
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => const UserDetailsScreen()));
+                              builder: (_) => const MyAccountScreen()));
                     },
                   ),
                   _buildDrawerItem(
