@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -17,9 +19,86 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _confirmPasswordController = TextEditingController();
   final _storage = FlutterSecureStorage();
 
+  String? _oldPasswordError;
+  String? _newPasswordError;
+  String? _confirmPasswordError;
+
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+
+  void _validateAndSubmit() async {
+    setState(() {
+      _oldPasswordError = null;
+      _newPasswordError = null;
+      _confirmPasswordError = null;
+    });
+
+    final oldPassword = _oldPasswordController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    bool hasError = false;
+
+    // Required checks
+    if (oldPassword.isEmpty) {
+      _oldPasswordError = "Old password is required";
+      hasError = true;
+    }
+    if (newPassword.isEmpty) {
+      _newPasswordError = "New password is required";
+      hasError = true;
+    } else if (newPassword.length < 6) {
+      _newPasswordError = "Password must be at least 6 characters";
+      hasError = true;
+    }
+    if (confirmPassword.isEmpty) {
+      _confirmPasswordError = "Please confirm your password";
+      hasError = true;
+    } else if (confirmPassword != newPassword) {
+      _confirmPasswordError = "Passwords do not match";
+      hasError = true;
+    }
+
+    if (hasError) {
+      setState(() {}); // Refresh UI with error messages
+      return;
+    }
+
+    // Call API if no errors
+    final phoneNumber = await _storage.read(key: 'phone_number') ?? '';
+    final response = await ApiService.changePassword(
+      phoneNumber: phoneNumber,
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    );
+
+    if (response.statusCode == 200) {
+      _oldPasswordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+
+      // Show SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Password changed successfully"),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      final responseBody = json.decode(response.body);
+      // Show error from API
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseBody["message"] ?? "Failed to change password"),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +107,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header (same style as MyAccountScreen)
+            // Header
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
@@ -55,7 +134,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // Spacer for symmetry
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -76,6 +155,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         _obscureOld = !_obscureOld;
                       });
                     },
+                    errorText: _oldPasswordError,
                   ),
                   const SizedBox(height: 16),
                   _passwordField(
@@ -87,6 +167,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         _obscureNew = !_obscureNew;
                       });
                     },
+                    errorText: _newPasswordError,
                   ),
                   const SizedBox(height: 16),
                   _passwordField(
@@ -98,6 +179,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         _obscureConfirm = !_obscureConfirm;
                       });
                     },
+                    errorText: _confirmPasswordError,
                   ),
                 ],
               ),
@@ -130,18 +212,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () async {
-                        final phoneNumber =
-                            await _storage.read(key: 'phone_number') ?? '';
-                        final oldPassword = _oldPasswordController.text.trim();
-
-                        final newPassword = _newPasswordController.text.trim();
-
-                        ApiService.changePassword(
-                            phoneNumber: phoneNumber,
-                            oldPassword: _oldPasswordController.text.trim(),
-                            newPassword: _newPasswordController.text.trim());
-                      },
+                      onPressed: _validateAndSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0A2A66),
                         shape: RoundedRectangleBorder(
@@ -170,38 +241,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     required String label,
     required bool obscureText,
     required VoidCallback toggleObscure,
+    String? errorText,
   }) {
     return SizedBox(
-      height: 52,
+      height: errorText != null ? 72 : 52,
       child: TextField(
         controller: controller,
         obscureText: obscureText,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
-
-          // Prefix icon (lock)
+          errorText: errorText,
           prefix: Padding(
             padding: const EdgeInsets.fromLTRB(1, 8, 3, 1),
             child: SvgPicture.asset(
               'assets/images/lock.svg',
-              color: Color.fromRGBO(216, 219, 219, 1),
+              color: const Color.fromRGBO(216, 219, 219, 1),
               width: 14,
               height: 14,
             ),
           ),
-
-          // Suffix icon (eye)
           suffixIcon: IconButton(
             icon: SvgPicture.asset(
               'assets/images/eye.svg',
-              color: Color.fromRGBO(216, 219, 219, 1),
+              color: const Color.fromRGBO(216, 219, 219, 1),
               width: 14,
               height: 14,
             ),
             onPressed: toggleObscure,
           ),
-
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.grey),
