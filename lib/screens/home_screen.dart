@@ -38,7 +38,8 @@ class HomeScreen extends ConsumerWidget {
     String encodedPath = Uri.encodeFull(sanitizedPath);
     return "http://fawran.ddns.net:8080/$encodedPath";
   }
-static bool _promotionShown = false;
+
+  static bool _promotionShown = false;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.watch(localeNotifierProvider);
@@ -72,11 +73,11 @@ static bool _promotionShown = false;
     );
 
     if (!_promotionShown) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadAndShowPromotions(context);
-      _promotionShown = true; // Mark as shown
-    });
-  }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadAndShowPromotions(context);
+        _promotionShown = true; // Mark as shown
+      });
+    }
 
     void navigateToCleaningWithOffer(PackageModel package, int shift) {
       Navigator.push(
@@ -421,94 +422,93 @@ static bool _promotionShown = false;
     );
   }
 
-
   void _showPromotionPopup(BuildContext context, PromotionModel promotion) {
-  // Only show popup if imageUrl exists
-  if (promotion.imageUrl == null || promotion.imageUrl!.isEmpty) {
-    print('No image URL found in promotion, skipping popup');
-    return;
-  }
+    // Only show popup if imageUrl exists
+    if (promotion.imageUrl == null || promotion.imageUrl!.isEmpty) {
+      print('No image URL found in promotion, skipping popup');
+      return;
+    }
 
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    builder: (BuildContext context) {
-      return BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: Stack(
-            children: [
-              // Main image container
-              Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                height: MediaQuery.of(context).size.height * 0.7,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    getFullImageUrl(promotion.imageUrl!),
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: Colors.black54,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                            color: Colors.white,
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: Stack(
+              children: [
+                // Main image container
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      getFullImageUrl(promotion.imageUrl!),
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.black54,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      print('Error loading promotion image: $error');
-                      // Close dialog if image fails to load
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        Navigator.of(context).pop();
-                      });
-                      return SizedBox.shrink();
-                    },
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        print('Error loading promotion image: $error');
+                        // Close dialog if image fails to load
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.of(context).pop();
+                        });
+                        return SizedBox.shrink();
+                      },
+                    ),
                   ),
                 ),
-              ),
-              
-              // Close button positioned at top-right
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 20,
+
+                // Close button positioned at top-right
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildSideDrawer(
     BuildContext context,
@@ -608,7 +608,7 @@ static bool _promotionShown = false;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => SocialMediaPage()),
+                            builder: (context) => ConnectWithUsScreen()),
                       );
                     },
                   ),
@@ -728,28 +728,30 @@ static bool _promotionShown = false;
   Future<void> _loadAndShowPromotions(BuildContext context) async {
     // Add this check at the beginning of the method
     if (_promotionShown) return;
-    
+
     try {
       // Get current city name
       String cityName = await LocationService.getCurrentCityName();
       print('Current city: $cityName');
-      
+
       // Fetch promotions for the city
-      List<PromotionModel> promotions = await ApiService.getValidPromotions(cityName);
-      
+      List<PromotionModel> promotions =
+          await ApiService.getValidPromotions(cityName);
+
       if (promotions.isNotEmpty) {
         // Filter promotions that have valid image URLs
         List<PromotionModel> validPromotions = promotions
-            .where((promotion) => promotion.imageUrl != null && promotion.imageUrl!.isNotEmpty)
+            .where((promotion) =>
+                promotion.imageUrl != null && promotion.imageUrl!.isNotEmpty)
             .toList();
-        
+
         if (validPromotions.isNotEmpty) {
           // Show the first valid promotion
           PromotionModel firstValidPromotion = validPromotions.first;
-          
+
           // Delay to ensure the screen is fully loaded
           await Future.delayed(Duration(milliseconds: 500));
-          
+
           if (context.mounted) {
             _showPromotionPopup(context, firstValidPromotion);
           }
@@ -795,7 +797,4 @@ static bool _promotionShown = false;
       },
     );
   }
-
-
-
 }

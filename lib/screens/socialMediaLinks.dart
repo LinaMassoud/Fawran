@@ -1,86 +1,80 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import FontAwesome icons
+import 'package:flutter_svg/flutter_svg.dart';
 
-class SocialMediaPage extends StatelessWidget {
+class ConnectWithUsScreen extends StatelessWidget {
+  const ConnectWithUsScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[900],
+      backgroundColor: const Color(0xFFF8F9FF), // light background
       appBar: AppBar(
-        title: Text('Connect With Me'),
-        backgroundColor: Colors.orange,
+        backgroundColor: const Color(0xFF0B2A74), // dark blue
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios,
+              color: Color(0xFFFFA726)), // orange
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Connect With Us",
+          style: TextStyle(
+            color: Color(0xFFFFA726), // orange
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            CircleAvatar(
-              radius: 60,
-              backgroundImage: AssetImage('assets/image.jpeg'),
+          children: [
+            // Logo
+            SvgPicture.asset(
+              "assets/images/imdadLogo.svg",
+              width: 120,
             ),
-            SizedBox(height: 20),
-            Text(
-              'Emdad',
+            const SizedBox(height: 12),
+            // Subtitle
+            const Text(
+              "Follow Us In Social Media",
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Social Media Links',
-              style: TextStyle(
-                color: Colors.orangeAccent,
                 fontSize: 16,
+                color: Colors.black87,
               ),
             ),
-            SizedBox(height: 40),
-            SocialMediaButtons(),
+            const SizedBox(height: 20),
+            // Social media icons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/images/facebook.svg",
+                  width: 40,
+                  height: 40,
+                ),
+                const SizedBox(width: 16),
+                SvgPicture.asset(
+                  "assets/images/insta.svg",
+                  width: 40,
+                  height: 40,
+                ),
+                const SizedBox(width: 16),
+                SvgPicture.asset(
+                  "assets/images/x.svg",
+                  width: 40,
+                  height: 40,
+                ),
+                const SizedBox(width: 16),
+                SvgPicture.asset(
+                  "assets/images/linkedin.svg",
+                  width: 40,
+                  height: 40,
+                ),
+              ],
+            )
           ],
         ),
       ),
-    );
-  }
-}
-
-class SocialMediaButtons extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        IconButton(
-          icon: Icon(FontAwesomeIcons.facebook,
-              color: Colors.blue[800], size: 40),
-          onPressed: () {
-            // Open Facebook link
-          },
-        ),
-        IconButton(
-          icon: Icon(FontAwesomeIcons.instagram,
-              color: Colors.pinkAccent, size: 40),
-          onPressed: () {
-            // Open Instagram link
-          },
-        ),
-        IconButton(
-          icon:
-              Icon(FontAwesomeIcons.twitter, color: Colors.lightBlue, size: 40),
-          onPressed: () {
-            // Open Twitter link
-          },
-        ),
-        IconButton(
-          icon: Icon(FontAwesomeIcons.linkedin,
-              color: Colors.blue[600], size: 40),
-          onPressed: () {
-            // Open LinkedIn link
-          },
-        ),
-      ],
     );
   }
 }
