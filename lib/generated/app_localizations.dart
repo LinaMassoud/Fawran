@@ -1244,6 +1244,12 @@ abstract class AppLocalizations {
   /// **'Days'**
   String get days;
 
+  /// No description provided for @day.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get day;
+
   /// No description provided for @agreementHourly.
   ///
   /// In en, this message translates to:
@@ -1507,6 +1513,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'National ID'**
   String get nationalIdLabel;
+
+  /// No description provided for @scrubAwayToughStains.
+  ///
+  /// In en, this message translates to:
+  /// **'Scrub Away\ntough Stains'**
+  String get scrubAwayToughStains;
 }
 
 class _AppLocalizationsDelegate

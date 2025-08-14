@@ -586,6 +586,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get days => 'ايام';
 
   @override
+  String get day => 'يوم';
+
+  @override
   String get agreementHourly => 'أنا أوافق على ';
 
   @override
@@ -716,4 +719,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get nationalIdLabel => 'الرقم الوطني';
+
+  @override
+  String get scrubAwayToughStains => 'اكشط البقع\nالصعبة';
 }
