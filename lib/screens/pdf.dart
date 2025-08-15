@@ -6,7 +6,6 @@ import 'package:fawran/providers/package_provider.dart';
 import 'package:fawran/screens/bookings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -267,26 +266,6 @@ Map<String, String> _extractLocationParts() {
 );
  }
 
-  Future<void> _downloadPdf(String pdfPath) async {
-  bool granted = await _requestStoragePermission();
-  if (!granted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Storage permission denied')),
-    );
-    return;
-  }
-
-  final downloadsDir = await getExternalStorageDirectory();
-  final savePath = '${downloadsDir!.path}/generated_contract.pdf';
-
-  await FlutterDownloader.enqueue(
-    url: 'file://$pdfPath', // Can be a local file path if you prefix with file://
-    savedDir: downloadsDir.path,
-    fileName: 'generated_contract.pdf',
-    showNotification: true, // show notification in status bar
-    openFileFromNotification: true, // tap notification to open file
-  );
-}
 
 Future<bool> _requestStoragePermission() async {
   if (Platform.isAndroid) {
