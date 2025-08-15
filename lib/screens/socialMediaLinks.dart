@@ -8,32 +8,64 @@ class ConnectWithUsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF), // light background
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0B2A74), // dark blue
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios,
-              color: Color(0xFFFFA726)), // orange
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Connect With Us",
-          style: TextStyle(
-            color: Color(0xFFFFA726), // orange
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+appBar: PreferredSize(
+  preferredSize: const Size.fromHeight(80),
+  child: AppBar(
+    backgroundColor: const Color(0xFF0B2A74),
+    elevation: 0,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        bottom: Radius.circular(20),
       ),
-      body: Center(
+    ),
+    automaticallyImplyLeading: false,
+    flexibleSpace: Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+      child: Stack(
+        children: [
+          // Back arrow at bottom left
+          Positioned(
+            bottom: -7, // align to bottom
+            left: 0,
+            child: IconButton(
+              padding: EdgeInsets.zero, // remove internal padding
+              constraints: const BoxConstraints(), // remove default min size
+              icon: const Icon(
+                Icons.arrow_back_ios,
+                color: Color(0xFFFFA726),
+                size: 24,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          // Title at bottom center
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: const Text(
+              "Connect With Us",
+              style: TextStyle(
+                color: Color(0xFFFFA726),
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+)
+, body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo
             SvgPicture.asset(
               "assets/images/imdadLogo.svg",
-              width: 120,
+              width: 227,
+              height: 60,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 30),
             // Subtitle
             const Text(
               "Follow Us In Social Media",
@@ -42,7 +74,7 @@ class ConnectWithUsScreen extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             // Social media icons
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
