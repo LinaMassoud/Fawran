@@ -30,7 +30,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int currentStep = 0;
   final int totalSteps = 6;
 
-  int? selectedNationality;
+  Nationality? selectedNationality;
   String? selectedPackage;
   String? selectedLaborSource;
   String? selectedDriver;
@@ -143,7 +143,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
         .read(nationalitiesProvider)
         .asData
         ?.value
-        .firstWhere((n) => n?.id == selectedNationality);
+        .firstWhere((n) => n?.id == selectedNationality?.id);
 
     if (selectedPackage == null || selectedNationalityData == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -184,13 +184,13 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
           .createPermanentContract(requestBody);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Order submitted successfully!")),
-        );
+   final parsed= jsonDecode(response.body);
         setState(() {
           isLoading = false;
         });
-        Navigator.pushReplacementNamed(context, '/bookings');
+        Navigator.pushReplacementNamed(context, '/pdf'  , arguments: {
+   'contract_Id':parsed["contract_id"]
+  },);
       } else {
         setState(() {
           isLoading = false;
@@ -245,14 +245,14 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButtonFormField<int>(
+                    child: DropdownButtonFormField<Nationality>(
                       value: selectedNationality,
                       hint: Text(loc.choose + " " + loc.nationality),
                       decoration:
                           const InputDecoration(border: InputBorder.none),
-                      items: nationalities.map<DropdownMenuItem<int>>((nat) {
+                      items: nationalities.map<DropdownMenuItem<Nationality>>((nat) {
                         return DropdownMenuItem(
-                          value: nat?.id,
+                          value: nat,
                           child: Text(nat != null ? nat.name : ""),
                         );
                       }).toList(),

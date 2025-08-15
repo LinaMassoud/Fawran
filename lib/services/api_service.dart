@@ -128,12 +128,13 @@ class ApiService {
           'token': responseData['token'],
           'refresh_token': responseData['refresh_token'],
           'user_id': responseData['user_id'].toString(),
+          'user_ref': responseData['user_ref'].toString(),
           'phone_number': responseData['phone_number'],
           'first_name': responseData['first_name'],
           'middle_name': responseData['middle_name'],
           'last_name': responseData['last_name'],
-          'username': responseData['username'],
           'national_id': responseData['nationalid'],
+          'email': responseData['email'],
         };
 
         for (var entry in fieldsToStore.entries) {
@@ -1593,7 +1594,7 @@ class ApiService {
 
   static Future<List<Laborer>> fetchLaborers({
     required int professionId,
-    required int nationality,
+    required int? nationality,
   }) async {
     try {
       final url =

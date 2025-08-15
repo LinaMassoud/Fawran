@@ -1,3 +1,4 @@
+import 'package:fawran/models/Nationality.dart';
 import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/contractsProvider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
@@ -23,7 +24,7 @@ class CombinedOrderScreen extends ConsumerStatefulWidget {
 }
 
 class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
-  int? selectedNationality;
+  Nationality? selectedNationality;
   int? selectedPackageIndex;
   int? selectedLaborId;
   String? selectedLaborSource; // "company" or "app"
@@ -169,7 +170,7 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: nationalityAsync.when(
-                data: (list) => DropdownButtonFormField<int>(
+                data: (list) => DropdownButtonFormField<Nationality>(
                   decoration: inputDecoration("Select nationality"),
                   value: selectedNationality,
                   onChanged: (v) {
@@ -183,8 +184,8 @@ class _CombinedOrderScreenState extends ConsumerState<CombinedOrderScreen> {
                     });
                   },
                   items: list
-                      .map((n) => DropdownMenuItem<int>(
-                            value: n?.id,
+                      .map((n) => DropdownMenuItem<Nationality>(
+                            value: n,
                             child: Text(n?.name ?? ''),
                           ))
                       .toList(),
