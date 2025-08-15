@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ConnectWithUsScreen extends StatelessWidget {
   const ConnectWithUsScreen({super.key});
@@ -67,13 +68,14 @@ appBar: PreferredSize(
             ),
             const SizedBox(height: 30),
             // Subtitle
-            const Text(
-              "Follow Us In Social Media",
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
-            ),
+        Text(
+  "Follow Us In Social Media",
+  style: GoogleFonts.poppins(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: Color(0xFF091735),
+  ),
+),
             const SizedBox(height: 30),
             // Social media icons
             Row(
