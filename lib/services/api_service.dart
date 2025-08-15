@@ -762,14 +762,14 @@ class ApiService {
       required String oldPassword,
       required String newPassword}) async {
     final requestBody = {
-      "phone_number": phoneNumber,
+      "phone": phoneNumber,
       "old_passowrd": oldPassword,
       "new_password": newPassword
     };
     try {
       final response = await makeAuthenticatedRequest(
         method: 'POST',
-        url: '$_baseUrl/hourly/contract/create',
+        url: '$_baseUrl/change-password',
         body: json.encode(requestBody),
       );
 
