@@ -87,7 +87,8 @@ class ApiService {
         // Handle server errors
         final result = safeJsonDecode(response.body);
         print('💥 [SIGNUP] Server error: $result');
-        return result ?? {'error': 'Internal server error. Please try again later.'};
+        return result ??
+            {'error': 'Internal server error. Please try again later.'};
       } else {
         // Handle other status codes
         final result = safeJsonDecode(response.body);
@@ -96,7 +97,9 @@ class ApiService {
       }
     } catch (ex) {
       print('🧨 [SIGNUP] Exception occurred: $ex');
-      return {'error': 'Network error. Please check your connection and try again.'};
+      return {
+        'error': 'Network error. Please check your connection and try again.'
+      };
     }
   }
 
@@ -130,6 +133,7 @@ class ApiService {
           'middle_name': responseData['middle_name'],
           'last_name': responseData['last_name'],
           'username': responseData['username'],
+          'national_id': responseData['nationalid'],
         };
 
         for (var entry in fieldsToStore.entries) {
@@ -753,6 +757,32 @@ class ApiService {
     }
   }
 
+  static Future<http.Response> changePassword(
+      {required String phoneNumber,
+      required String oldPassword,
+      required String newPassword}) async {
+    final requestBody = {
+      "phone_number": phoneNumber,
+      "old_passowrd": oldPassword,
+      "new_password": newPassword
+    };
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: '$_baseUrl/hourly/contract/create',
+        body: json.encode(requestBody),
+      );
+
+      return response;
+    } catch (e) {
+      print('Error fetching promotions: $e');
+      return http.Response(
+        jsonEncode({"error": e.toString()}),
+        500, // Internal Server Error
+      );
+    }
+  }
+
   static Future<Map<String, dynamic>> createContract({
     required int customerId,
     required int serviceId,
@@ -917,31 +947,28 @@ class ApiService {
     }
   }
 
-
-    static Future<http.Response> addChargePayment(String userId,String contractId,String sector,String chargeId ) async {
+  static Future<http.Response> addChargePayment(
+      String userId, String contractId, String sector, String chargeId) async {
     try {
       final response = await makeAuthenticatedRequest(
         method: 'POST',
         url: '$_baseUrl/add_charge_payment',
         body: jsonEncode({
           "user_id": userId,
-  "contract_id":contractId,
-  "sector_type": sector,
-  "charge_id": chargeId
+          "contract_id": contractId,
+          "sector_type": sector,
+          "charge_id": chargeId
         }),
       );
-return response;
-      
-      
+      return response;
     } catch (e) {
       print('Error fetching promotions: $e');
       return http.Response(
-    jsonEncode({"error": e.toString()}),
-    500, // Internal Server Error
-  );
+        jsonEncode({"error": e.toString()}),
+        500, // Internal Server Error
+      );
     }
   }
-
 
   static Future<http.Response> createPermanentContract({
     required Map<String, dynamic> requestBody,
@@ -1329,47 +1356,48 @@ return response;
     }
   }
 
- static Future<Map<String, dynamic>?> validatePromotion({
-  required String promotionCode,
-  required int shiftId,
-  required int cityCode,
-  required double originalPrice,
-  required double hourPrice,
-  int? totalVisits, // optional named parameter
-}) async {
-  try {
-    final url = '$_baseUrl/validate-promotion';
-    // Build the request body
-    final body = {
-      'promotion_code': promotionCode,
-      'shift_id': shiftId,
-      'city': cityCode,
-      'original_price': originalPrice,
-      'hour_price': hourPrice,
-      if (totalVisits != null) 'total_visits': totalVisits,
-    };
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: url,
-      body: json.encode(body),
-    );
-    print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
-    print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
+  static Future<Map<String, dynamic>?> validatePromotion({
+    required String promotionCode,
+    required int shiftId,
+    required int cityCode,
+    required double originalPrice,
+    required double hourPrice,
+    int? totalVisits, // optional named parameter
+  }) async {
+    try {
+      final url = '$_baseUrl/validate-promotion';
+      // Build the request body
+      final body = {
+        'promotion_code': promotionCode,
+        'shift_id': shiftId,
+        'city': cityCode,
+        'original_price': originalPrice,
+        'hour_price': hourPrice,
+        if (totalVisits != null) 'total_visits': totalVisits,
+      };
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: url,
+        body: json.encode(body),
+      );
+      print('🔍 [VALIDATE_PROMOTION] Response status: ${response.statusCode}');
+      print('🔍 [VALIDATE_PROMOTION] Response body: ${response.body}');
 
- 
-    if (response.statusCode == 200 || response.statusCode == 404 || response.statusCode == 400) {
-      final responseData = json.decode(response.body);
-      return responseData;
-    } else {
-      print('❌ [VALIDATE_PROMOTION] Failed with status: ${response.statusCode}');
+      if (response.statusCode == 200 ||
+          response.statusCode == 404 ||
+          response.statusCode == 400) {
+        final responseData = json.decode(response.body);
+        return responseData;
+      } else {
+        print(
+            '❌ [VALIDATE_PROMOTION] Failed with status: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('💥 [VALIDATE_PROMOTION] Error: $e');
       return null;
     }
-  } catch (e) {
-    print('💥 [VALIDATE_PROMOTION] Error: $e');
-    return null;
   }
-}
-
 
   static Future<List<dynamic>> fetchFAQs() async {
     try {
