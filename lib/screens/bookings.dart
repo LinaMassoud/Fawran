@@ -249,7 +249,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
               title: Text(success
-                  ? '🎉 Payment Successful!' + data
+                  ? '🎉 Payment Successful!' 
                   : 'Payment Declined'),
               content: Text(success ? 'Thank you for your purchase.' : data),
               actions: [

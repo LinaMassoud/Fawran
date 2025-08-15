@@ -32,7 +32,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
     if (isFirstLaunch) {
       await prefs.setBool('isFirstLaunch', false);
       setState(() {
-        _nextScreen = const LoginScreen();
+        _nextScreen = const OnboardingScreen();
         _isLoading = false;
       });
     } else {
