@@ -22,6 +22,10 @@
 	<string>????</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs location access to help you select your address</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to save PDF files</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>This app needs access to save PDF files</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
