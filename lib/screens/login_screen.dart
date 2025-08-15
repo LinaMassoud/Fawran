@@ -101,23 +101,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       showBackButton: false,
       topSectionHeight: MediaQuery.of(context).size.height * 0.25,
       topRightWidget: GestureDetector(
-        onTap: () {
-          final newLocale = isArabic ? const Locale('en') : const Locale('ar');
-          ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
-        },
-        child: Container(
-          padding: const EdgeInsets.only(top: 20),
-          child: SvgPicture.asset(
-            'assets/icons/language.svg',
-            width: 23,
-            height: 23,
-            colorFilter: const ColorFilter.mode(
-              Color(0xFFFFA200),
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
+  onTap: () {
+    final newLocale = isArabic ? const Locale('en') : const Locale('ar');
+    ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
+  },
+  child: Container(
+    padding: const EdgeInsets.all(8),
+    child: SvgPicture.asset(
+      'assets/icons/language.svg',
+      width: 24,
+      height: 24,
+      colorFilter: const ColorFilter.mode(
+        Color(0xFFFFA200),
+        BlendMode.srcIn,
       ),
+    ),
+  ),
+),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -79,43 +79,42 @@ class BackgroundContainer extends StatelessWidget {
 
           // Back button positioned higher in the colored section
           if (showBackButton)
-            Positioned(
-              top: effectiveTopHeight - 50, // Position 50px above the white container
-              left: -1,
-              child: GestureDetector(
-                onTap: onBackPressed ?? () => Navigator.of(context).pop(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.chevron_left,
-                        color: Color(0xFFFFA200),
-                        size: 28,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        loc.back,
-                        style: const TextStyle(
-                          color: Color(0xFFFFA200),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+  Positioned(
+    top: statusBarHeight + 20, // Positioned in the blue area
+    left: 16,
+    child: GestureDetector(
+      onTap: onBackPressed ?? () => Navigator.of(context).pop(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.chevron_left,
+              color: Color(0xFFFFA200),
+              size: 28,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              loc.back,
+              style: const TextStyle(
+                color: Color(0xFFFFA200),
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
               ),
             ),
-
+          ],
+        ),
+      ),
+    ),
+  ),
           // Replace the top right widget positioned widget (around line 99) with:
           if (topRightWidget != null)
-            Positioned(
-              top: effectiveTopHeight - 50, // Position 50px above the white container
-              right: 16,
-              child: topRightWidget!,
-            ),
+  Positioned(
+    top: statusBarHeight + 20, // Positioned in the blue area
+    right: 16,
+    child: topRightWidget!,
+  ),
         ],
       ),
     );

@@ -18,8 +18,9 @@ class BookingBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+    
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 45), // Added more bottom padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -41,92 +42,98 @@ class BookingBottomNavigation extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Price Section - Only show if price > 0
-          if (price > 0) ...[
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  loc.startingFrom,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF091735),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'SAR ${price.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Color(0xFFF2582A),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            Spacer(), // Push the button to the rightmost side
-            // Next Button positioned at the rightmost edge when price > 0
-            Container(
-              width: MediaQuery.of(context).size.width * 0.50, // Smaller width when price is shown
-              child: ElevatedButton(
-                onPressed: canProceed ? onNextPressed : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: canProceed 
-                      ? Color(0xFF10295C)
-                      : Colors.grey[400],
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: canProceed ? 2 : 0,
-                ),
-                child: Text(
-                  isLastStep ? 'Complete Booking' : loc.next,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ] else ...[
-            // Next Button centered with reduced width when price = 0
-            Expanded(
-              child: Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8, // Reduced width when centered
-                  child: ElevatedButton(
-                    onPressed: canProceed ? onNextPressed : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: canProceed 
-                          ? Color(0xFF10295C)
-                          : Colors.grey[400],
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      elevation: canProceed ? 2 : 0,
+      child: SafeArea(
+        top: false, // Don't add top safe area since we're at bottom
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 15),
+          child: Row(
+          children: [
+            // Price Section - Only show if price > 0
+            if (price > 0) ...[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    loc.startingFrom,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF091735),
+                      fontWeight: FontWeight.w600,
                     ),
-                    child: Text(
-                      isLastStep ? 'Complete Booking' : loc.next,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  Text(
+                    'SAR ${price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Color(0xFFF2582A),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Spacer(), // Push the button to the rightmost side
+              // Next Button positioned at the rightmost edge when price > 0
+              Container(
+                width: MediaQuery.of(context).size.width * 0.50, // Smaller width when price is shown
+                child: ElevatedButton(
+                  onPressed: canProceed ? onNextPressed : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: canProceed 
+                        ? Color(0xFF10295C)
+                        : Colors.grey[400],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    elevation: canProceed ? 2 : 0,
+                  ),
+                  child: Text(
+                    isLastStep ? 'Complete Booking' : loc.next,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-            ),
+            ] else ...[
+              // Next Button centered with reduced width when price = 0
+              Expanded(
+                child: Center(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.8, // Reduced width when centered
+                    child: ElevatedButton(
+                      onPressed: canProceed ? onNextPressed : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: canProceed 
+                            ? Color(0xFF10295C)
+                            : Colors.grey[400],
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        elevation: canProceed ? 2 : 0,
+                      ),
+                      child: Text(
+                        isLastStep ? 'Complete Booking' : loc.next,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
+      ),
       ),
     );
   }

@@ -396,7 +396,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     String statusText = status;
 
     switch (status.toLowerCase()) {
-      case "active":
+      case "confirmed":
         backgroundColor = const Color(0xFFE8F5E8); // Light green background
         textColor = const Color(0xFF1EAC1E); // --Done-green
         statusText = "Confirmed";
@@ -572,46 +572,47 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: status.toLowerCase() == "cancelled" ||
-                        status.toLowerCase() == "canceled" ||
-                        isCancelled
-                    ? null
-                    : () =>
-                        _startCheckout(booking, isHourly: false, sector: 'I'),
-                child: Text(
-                  "Pay Now",
-                  style: TextStyle(
-                    color: (status.toLowerCase() == "cancelled" ||
-                            status.toLowerCase() == "canceled" ||
-                            isCancelled)
-                        ? Colors.grey
-                        : const Color(0xFF2196F3),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+              onPressed: status.toLowerCase() == "cancelled" ||
+                      status.toLowerCase() == "canceled" ||
+                      status.toLowerCase() == "confirmed" ||  // Add this condition
+                      isCancelled
+                  ? null
+                  : () => _startCheckout(booking, isHourly: false, sector: 'I'),
+              child: Text(
+                "Pay Now",
+                style: TextStyle(
+                  color: (status.toLowerCase() == "cancelled" ||
+                          status.toLowerCase() == "canceled" ||
+                          status.toLowerCase() == "confirmed" ||  // Add this condition
+                          isCancelled)
+                      ? Colors.grey
+                      : const Color(0xFF2196F3),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
                 ),
               ),
+            ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: isCancelled
-                    ? null
-                    : () {
-                        ref.read(contractsProvider.notifier).cancelPermContract(
-                              booking["contract_id"].toString(),
-                              isHourly: false,
-                            );
-                      },
-                child: Text(
-                  "Cancel",
-                  style: TextStyle(
-                    color: isCancelled
-                        ? Colors.grey
-                        : const Color(0xFF2196F3), // Same blue color as Pay Now
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+              onPressed: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
+                  ? null
+                  : () {
+                      ref.read(contractsProvider.notifier).cancelPermContract(
+                            booking["contract_id"].toString(),
+                            isHourly: false,
+                          );
+                    },
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
+                      ? Colors.grey
+                      : const Color(0xFF2196F3),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
                 ),
               ),
+            ),
             ],
           ),
         ],
@@ -696,48 +697,49 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: status.toLowerCase() == "cancelled" ||
-                        status.toLowerCase() == "canceled" ||
-                        isCancelled
-                    ? null
-                    : () =>
-                        _startCheckout(booking, isHourly: true, sector: 'H'),
-                child: Text(
-                  loc.payNow ?? "Pay Now",
-                  style: TextStyle(
-                    color: (status.toLowerCase() == "cancelled" ||
-                            status.toLowerCase() == "canceled" ||
-                            isCancelled)
-                        ? Colors.grey
-                        : const Color(0xFF2196F3),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+              onPressed: status.toLowerCase() == "cancelled" ||
+                      status.toLowerCase() == "canceled" ||
+                      status.toLowerCase() == "confirmed" ||  // Add this condition
+                      isCancelled
+                  ? null
+                  : () => _startCheckout(booking, isHourly: true, sector: 'H'),
+              child: Text(
+                loc.payNow ?? "Pay Now",
+                style: TextStyle(
+                  color: (status.toLowerCase() == "cancelled" ||
+                          status.toLowerCase() == "canceled" ||
+                          status.toLowerCase() == "confirmed" ||  // Add this condition
+                          isCancelled)
+                      ? Colors.grey
+                      : const Color(0xFF2196F3),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
                 ),
               ),
+            ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: isCancelled
-                    ? null
-                    : () {
-                        ref
-                            .read(contractsProvider.notifier)
-                            .cancelHourlyContract(
-                              booking["service_contract_id"].toString(),
-                              isHourly: false,
-                            );
-                      },
-                child: Text(
-                  loc.cancel ?? "Cancel",
-                  style: TextStyle(
-                    color: isCancelled
-                        ? Colors.grey
-                        : const Color(0xFF2196F3), // Same blue color as Pay Now
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+              onPressed: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
+                  ? null
+                  : () {
+                      ref
+                          .read(contractsProvider.notifier)
+                          .cancelHourlyContract(
+                            booking["service_contract_id"].toString(),
+                            isHourly: false,
+                          );
+                    },
+              child: Text(
+                loc.cancel ?? "Cancel",
+                style: TextStyle(
+                  color: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
+                      ? Colors.grey
+                      : const Color(0xFF2196F3),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
                 ),
               ),
+            ),
             ],
           ),
         ],

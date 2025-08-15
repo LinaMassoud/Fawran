@@ -1575,52 +1575,59 @@ Widget build(BuildContext context) {
   left: 0,
   right: 0,
   child: Container(
-    padding: EdgeInsets.fromLTRB(20, 20, 20, 45), // Changed to match booking_bottom_navigation
+    padding: EdgeInsets.only(
+      left: 20,
+      right: 20,
+      top: 20,
+      bottom: MediaQuery.of(context).padding.bottom > 0 
+        ? MediaQuery.of(context).padding.bottom + 10  // For devices with home indicator (iOS)
+        : 25, // For devices without home indicator (most Android)
+    ),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(25), // Changed from 24 to 25
-        topRight: Radius.circular(25), // Changed from 24 to 25
+        topLeft: Radius.circular(25),
+        topRight: Radius.circular(25),
       ),
       boxShadow: [
         BoxShadow(
-          color: Color(0xFF1E49A0).withOpacity(0.15), // Changed to blue tinted shadow
-          blurRadius: 20, // Changed from 10 to 20
-          spreadRadius: 2, // Changed from 0 to 2
-          offset: const Offset(0, -5), // Changed from -2 to -5
+          color: Color(0xFF1E49A0).withOpacity(0.15),
+          blurRadius: 20,
+          spreadRadius: 2,
+          offset: const Offset(0, -5),
         ),
         BoxShadow(
-          color: Color(0xFF1E49A0).withOpacity(0.08), // Added additional lighter blue shadow
+          color: Color(0xFF1E49A0).withOpacity(0.08),
           blurRadius: 40,
           spreadRadius: 5,
           offset: const Offset(0, -10),
         ),
       ],
     ),
-    child: Center( // Added Center widget
+    child: Center(
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.8, // Reduced width when centered
-        child: ElevatedButton( // Changed from GestureDetector to ElevatedButton
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: ElevatedButton(
           onPressed: (_canProceedToDetails && _areAllFieldsValid())
               ? _saveAddress
               : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: (_canProceedToDetails && _areAllFieldsValid())
-                ? Color(0xFF10295C) // Changed from Color(0xFF1E3A8A) to match
+                ? Color(0xFF10295C)
                 : null,
             foregroundColor: Colors.white,
             disabledBackgroundColor: Color(0xFF768090),
-            padding: EdgeInsets.symmetric(vertical: 12), // Changed from 16 to 12
+            padding: EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25), // Changed from 30 to 25
+              borderRadius: BorderRadius.circular(25),
             ),
-            elevation: (_canProceedToDetails && _areAllFieldsValid()) ? 2 : 0, // Added elevation
+            elevation: (_canProceedToDetails && _areAllFieldsValid()) ? 2 : 0,
           ),
           child: Text(
             loc.save,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 19, // Changed from 18 to 19
+              fontSize: 19,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),

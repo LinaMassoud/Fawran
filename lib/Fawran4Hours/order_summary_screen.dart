@@ -649,7 +649,14 @@ Widget build(BuildContext context) {
 
               // Proceed to pay button
               Container(
-                padding: EdgeInsets.fromLTRB(24, 16, 24, 45), // Updated to match BookingBottomNavigation
+                padding: EdgeInsets.fromLTRB(
+                24, 
+                16, 
+                24, 
+                MediaQuery.of(context).padding.bottom > 0 
+                  ? MediaQuery.of(context).padding.bottom + 10 
+                  : 25
+              ), // Updated to match BookingBottomNavigation
                 child: SizedBox(
                   width: double.infinity,
                   height: 50,
