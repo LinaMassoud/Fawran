@@ -26,4 +26,4 @@ final nationalitiesProvider = FutureProvider<List<Nationality?>>((ref) async {
   return data.map((json) => Nationality.fromJson(json)).toList();
 });
 
-final selectedNationalityProvider = StateProvider<int?>((ref) => null);
+final selectedNationalityProvider = StateProvider<Nationality?>((ref) => null);

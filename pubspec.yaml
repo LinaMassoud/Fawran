@@ -37,6 +37,12 @@ dependencies:
   google_fonts: ^4.0.3
   carousel_slider: ^4.2.1
   auto_size_text: ^3.0.0
+  flutter_html_to_pdf: ^0.7.0
+  flutter_pdfview: ^1.0.4
+  intl: 0.20.2   # match the version required by flutter_localizations
+  hijri: ^3.0.0
+  open_file: ^3.2.1
+  flutter_downloader: ^1.12.0
 
 
 dev_dependencies:
@@ -51,6 +57,7 @@ flutter:
 
   
   assets:
+    - assets/responsive_my_rep.html
     - assets/cvs/
     - assets/images/
     - assets/icons/

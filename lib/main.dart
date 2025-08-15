@@ -7,10 +7,12 @@ import 'package:fawran/screens/location_screen.dart';
 import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/screens/newcombined.dart';
 import 'package:fawran/screens/newhome.dart';
+import 'package:fawran/screens/pdf.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/userProfile.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,6 +21,9 @@ import 'package:flashy_flushbar/flashy_flushbar.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+    await FlutterDownloader.initialize(
+    debug: true, // set false in release
+  );
 
   runApp(
     const ProviderScope(
@@ -49,7 +54,7 @@ class MyApp extends ConsumerWidget {
         AppLocalizations.delegate,
       ],
       builder: FlashyFlushbarProvider.init(),
-      home: const LaunchScreen(),
+      home: const LoginScreen(),
       routes: {
         // '/login' key routes to LoginScreen widget
         '/login': (context) => const LoginScreen(),
@@ -58,7 +63,8 @@ class MyApp extends ConsumerWidget {
         '/location': (context) => const LocationScreen(),
         '/home': (contex) => Newhome(),
         '/hourly': (context) => HourlyServiceScreen(),
-        '/selectAddress': (context) => AddressSelectionScreen()
+        '/selectAddress': (context) => AddressSelectionScreen(),
+        '/pdf': (context) => HtmlToPdfScreen(title: "contract",htmlAssetPath: "assets/responsive_my_rep.html")
 
         // '/profile' key routes to UserProfileScreen widget
       },
