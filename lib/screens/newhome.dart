@@ -604,7 +604,7 @@ class Newhome extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => SocialMediaPage()),
+                            builder: (context) => ConnectWithUsScreen()),
                       );
                     },
                   ),

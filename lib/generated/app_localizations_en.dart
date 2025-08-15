@@ -156,8 +156,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tapToSelect => 'Tap to select';
 
   @override
-  String get dialogForPrevious =>
-      'Please select Contract Duration and Visits Per Week first';
+  String get dialogForPrevious => 'Please select Contract Duration and Visits Per Week first';
 
   @override
   String get selectNationality => 'Select Nationality';
@@ -514,15 +513,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failedSendOTP => 'Failed to send OTP. Please try again.';
 
   @override
-  String get failedResetPassword =>
-      'Failed to reset password. Please try again.';
+  String get failedResetPassword => 'Failed to reset password. Please try again.';
 
   @override
   String get errorOccurred => 'An error occurred. Please try again.';
 
   @override
-  String get intro_text =>
-      'A variety of services at your fingertips — ready to start?';
+  String get intro_text => 'A variety of services at your fingertips — ready to start?';
 
   @override
   String get popular => 'Popular';
@@ -555,8 +552,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delivery => 'Deliver laborer to home';
 
   @override
-  String get delivery_not_available =>
-      'Delivery option is not available currently.';
+  String get delivery_not_available => 'Delivery option is not available currently.';
 
   @override
   String get from_company => 'From Company';
