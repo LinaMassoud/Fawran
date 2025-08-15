@@ -60,7 +60,7 @@ class ConnectWithUsScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
                 SvgPicture.asset(
-                  "assets/images/x.svg",
+                  "assets/images/xplat.svg",
                   width: 40,
                   height: 40,
                 ),
