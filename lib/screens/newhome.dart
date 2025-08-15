@@ -68,46 +68,51 @@ class Newhome extends ConsumerWidget {
           child: Column(
             children: [
               // Top Bar
-              Container(
-                height: 124,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF10295C),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
-                child: Row(
-                  children: [
-                    Builder(
-                      builder: (context) => Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.menu,
-                                color: Color(0xFFFFA200), size: 28),
-                            onPressed: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                          ),
-                          const SizedBox(width: 2),
-                          IconButton(
-                            icon: const Icon(Icons.notifications_none,
-                                color: Color(0xFFFFA200), size: 26),
-                            onPressed: () {},
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    Image.asset(
-                      'assets/images/logo.png',
-                      height: 32,
-                      fit: BoxFit.contain,
-                    ),
-                  ],
-                ),
-              ),
+      Container(
+  height: 100,
+  decoration: const BoxDecoration(
+    color: Color(0xFF10295C),
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(24),
+      bottomRight: Radius.circular(24),
+    ),
+  ),
+  padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+  child: Row(
+    crossAxisAlignment: CrossAxisAlignment.start, // align children at top
+    children: [
+      Builder(
+        builder: (context) => Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.menu,
+                  color: Color(0xFFFFA200), size: 28),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            ),
+            const SizedBox(width: 2),
+            IconButton(
+              icon: const Icon(Icons.notifications_none,
+                  color: Color(0xFFFFA200), size: 26),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ),
+      const Spacer(),
+      // Use Transform to move the logo downward
+      Transform.translate(
+        offset: const Offset(0, 10), // move 10 pixels down
+        child: Image.asset(
+          'assets/images/logo.png',
+          height: 32,
+          fit: BoxFit.contain,
+        ),
+      ),
+    ],
+  ),
+),
 
               // Main content
               Expanded(
@@ -194,7 +199,7 @@ class Newhome extends ConsumerWidget {
                               Column(
                                 children: [
                                   SizedBox(
-                                    height: 150,
+                                    height: 230,
                                     child: PageView.builder(
                                       controller: pageController,
                                       itemCount: items.length,

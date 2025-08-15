@@ -20,6 +20,6 @@ final laborersProvider = FutureProvider<List<Laborer>>((ref) async {
 
   return await ApiService.fetchLaborers(
     professionId: profession.positionId,
-    nationality: nationality,
+    nationality: nationality?.id,
   );
 });

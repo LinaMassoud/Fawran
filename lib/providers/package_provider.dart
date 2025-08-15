@@ -19,7 +19,7 @@ final packageProvider = FutureProvider<List<DomesticPackageModel>>((ref) async {
 
   final result = await ApiService.fetchPermPackages(
     positionId: selectedProfession.positionId,
-    nationality: selectedNationality,
+    nationality: selectedNationality?.id,
     cityCode: selectedAddress?.cityCode,
   );
 
