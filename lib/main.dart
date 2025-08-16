@@ -12,7 +12,6 @@ import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/userProfile.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -52,7 +51,7 @@ class MyApp extends ConsumerWidget {
         AppLocalizations.delegate,
       ],
       builder: FlashyFlushbarProvider.init(),
-      home: const LoginScreen(),
+      home: const LaunchScreen(),
       routes: {
         // '/login' key routes to LoginScreen widget
         '/login': (context) => const LoginScreen(),

@@ -6,7 +6,6 @@ import 'package:fawran/providers/package_provider.dart';
 import 'package:fawran/screens/bookings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -98,7 +97,12 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   /// Replace placeholders in the HTML string
   Future<String> _replacePlaceholders(String html,String? contractId) async {
     String todayHijry ="${ HijriCalendar.now().hDay}/${ HijriCalendar.now().hMonth}/${ HijriCalendar.now().hYear}";
-  final userId = await _storage.read(key: 'user_id') ?? '';
+  String userId = await _storage.read(key: 'user_id') ?? '';
+  String nationalId = await _storage.read(key: 'national_id') ?? '';
+  String lastName = await _storage.read(key: 'last_name') ?? '';
+  String middleName = await _storage.read(key: 'middle_name') ?? '';
+  String firstName = await _storage.read(key: 'first_name') ?? '';
+  
 
     final selectedProfession = ref.watch(selectedProfessionProvider);
     
@@ -114,6 +118,11 @@ double finalPrice = selectedPackage == null ? 0.0:  selectedPackage.contractAmou
     String result = html;
   
       result = result.replaceAll("#CONTRACT_ID#", contractId??'');
+      result = result.replaceAll("#CLIENT_NAME#", "$firstName $middleName $lastName");
+      result = result.replaceAll("#ID_NUMBER#", nationalId);
+
+  
+
       result = result.replaceAll("#PROFFESSION#", selectedProfession?.positionName??'');
   result = result.replaceAll("#CITY#", locationParts['city'] ?? '');
   result = result.replaceAll("#DISTIRTICT#", locationParts['area'] ?? '');
@@ -284,26 +293,6 @@ Map<String, String> _extractLocationParts() {
 );
  }
 
-  Future<void> _downloadPdf(String pdfPath) async {
-  bool granted = await _requestStoragePermission();
-  if (!granted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Storage permission denied')),
-    );
-    return;
-  }
-
-  final downloadsDir = await getExternalStorageDirectory();
-  final savePath = '${downloadsDir!.path}/generated_contract.pdf';
-
-  await FlutterDownloader.enqueue(
-    url: 'file://$pdfPath', // Can be a local file path if you prefix with file://
-    savedDir: downloadsDir.path,
-    fileName: 'generated_contract.pdf',
-    showNotification: true, // show notification in status bar
-    openFileFromNotification: true, // tap notification to open file
-  );
-}
 
 Future<bool> _requestStoragePermission() async {
   if (Platform.isAndroid) {
