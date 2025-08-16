@@ -43,8 +43,17 @@ Future<void> initNotifications() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
+  const DarwinInitializationSettings initializationSettingsIOS =
+      DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+    onDidReceiveLocalNotification: _onDidReceiveLocalNotification,
+  );
+
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
+    iOS: initializationSettingsIOS,
   );
 
   await flutterLocalNotificationsPlugin.initialize(
@@ -56,6 +65,14 @@ Future<void> initNotifications() async {
       }
     },
   );
+}
+
+void _onDidReceiveLocalNotification(
+    int id, String? title, String? body, String? payload) async {
+  // Handle iOS local notification received while app is in foreground
+  if (payload != null) {
+    await OpenFile.open(payload);
+  }
 }
 
 class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
@@ -322,44 +339,73 @@ Future<void> downloadLocalPdf(String pdfPath) async {
 }
 
 Future<void> downloadPdfWithNotification(String pdfPath) async {
-  // Request storage permission
+  String? newPath; 
+  
   if (Platform.isAndroid) {
     var status = await Permission.storage.request();
     if (!status.isGranted) return;
+
+    // Save to Downloads folder on Android
+    final downloadsDir = Directory('/storage/emulated/0/Download');
+    if (!await downloadsDir.exists()) {
+      await downloadsDir.create(recursive: true);
+    }
+
+    final fileName = 'generated_contract.pdf';
+    newPath = '${downloadsDir.path}/$fileName';
+
+    final sourceFile = File(pdfPath);
+    await sourceFile.copy(newPath);
+    
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'pdf_channel',
+      'PDF Downloads',
+      channelDescription: 'Notifications for PDF downloads',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'PDF Downloaded',
+    );
+
+    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'PDF Ready',
+      'Tap to open generated_contract.pdf',
+      platformDetails,
+      payload: newPath,
+    );
+  } else if (Platform.isIOS) {
+    final documentsDir = await getApplicationDocumentsDirectory();
+    final fileName = 'generated_contract.pdf';
+    newPath = '${documentsDir.path}/$fileName';
+
+    final sourceFile = File(pdfPath);
+    await sourceFile.copy(newPath);
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails platformDetails = NotificationDetails(iOS: iosDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'PDF Ready',
+      'Tap to open generated_contract.pdf',
+      platformDetails,
+      payload: newPath,
+    );
+  } else {
+    print('Platform not supported for file download');
+    return;
   }
 
-  // Save to Downloads folder
-  final downloadsDir = Directory('/storage/emulated/0/Download');
-  if (!await downloadsDir.exists()) {
-    await downloadsDir.create(recursive: true);
+  if (newPath != null) {
+    print('File saved to $newPath');
   }
-
-  final fileName = 'generated_contract.pdf';
-  final newPath = '${downloadsDir.path}/$fileName';
-
-  final sourceFile = File(pdfPath);
-  await sourceFile.copy(newPath);
-
-  // Show notification
-  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-    'pdf_channel',
-    'PDF Downloads',
-    channelDescription: 'Notifications for PDF downloads',
-    importance: Importance.max,
-    priority: Priority.high,
-    ticker: 'PDF Downloaded',
-  );
-
-  const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
-
-  await flutterLocalNotificationsPlugin.show(
-    0,
-    'PDF Ready',
-    'Tap to open $fileName',
-    platformDetails,
-    payload: newPath, // Path to open on tap
-  );
 }
-
 
 }

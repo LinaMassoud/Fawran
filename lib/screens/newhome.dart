@@ -31,6 +31,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/promotion_model.dart';
 import 'package:fawran/services/location_service.dart';
 import 'dart:ui';
+import 'package:fawran/screens/ticket_support_screen.dart';
 
 class Newhome extends ConsumerWidget {
   const Newhome({super.key});
@@ -627,6 +628,25 @@ class Newhome extends ConsumerWidget {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const FAQPage()),
+                      );
+                    },
+                  ),
+
+                  _buildDrawerItem(
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/ticketSupport.svg',
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0),
+                    ),
+                    title: loc.ticketSupport,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TicketsSupportScreen(),
+                        ),
                       );
                     },
                   ),

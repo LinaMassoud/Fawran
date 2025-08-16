@@ -456,6 +456,141 @@ class ApiService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> getTickets(String customerId) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/get-tickets/$customerId',
+    );
+
+    print('Get tickets response status: ${response.statusCode}');
+    print('Get tickets response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      
+      // Handle different response formats
+      if (responseData is List) {
+        return List<Map<String, dynamic>>.from(responseData);
+      } else if (responseData is Map && responseData['tickets'] != null) {
+        return List<Map<String, dynamic>>.from(responseData['tickets']);
+      } else if (responseData is Map && responseData['data'] != null) {
+        return List<Map<String, dynamic>>.from(responseData['data']);
+      } else {
+        return [];
+      }
+    } else {
+      print('Failed to fetch tickets: ${response.statusCode}');
+      return [];
+    }
+  } catch (e) {
+    print('Error fetching tickets: $e');
+    return [];
+  }
+}
+
+static Future<List<Map<String, dynamic>>> fetchCitiesForTicket() async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: '$_baseUrl/cities',
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> citiesJson = json.decode(response.body);
+      return citiesJson.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Failed to load cities');
+    }
+  } catch (e) {
+    print('Error fetching cities: $e');
+    throw Exception('Error fetching cities: $e');
+  }
+}
+
+// Fetch ticket categories based on sector type
+static Future<List<Map<String, dynamic>>> fetchTicketCategories(String sectorType) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: 'http://fawran.ddns.net:8080/ords/emdad/fawran/ticket-categories/$sectorType',
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> categoriesJson = json.decode(response.body);
+      return categoriesJson.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Failed to load ticket categories');
+    }
+  } catch (e) {
+    print('Error fetching ticket categories: $e');
+    throw Exception('Error fetching ticket categories: $e');
+  }
+}
+
+// Fetch ticket types based on category ID
+static Future<List<Map<String, dynamic>>> fetchTicketTypes(int categoryId) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: 'http://fawran.ddns.net:8080/ords/emdad/fawran/ticket_types/$categoryId',
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> typesJson = json.decode(response.body);
+      return typesJson.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Failed to load ticket types');
+    }
+  } catch (e) {
+    print('Error fetching ticket types: $e');
+    throw Exception('Error fetching ticket types: $e');
+  }
+}
+
+// Create new ticket
+static Future<Map<String, dynamic>?> createTicket({
+  required String customerId,
+  required String cityCode,
+  required String sectorType,
+  required int ticketCategoryId,
+  required int ticketTypeId,
+  required String details,
+  String priority = "High",
+  int assignedTo = 1,
+  String fileName = "",
+  String commentText = "",
+}) async {
+  try {
+    final response = await makeAuthenticatedRequest(
+      method: 'POST',
+      url: 'http://fawran.ddns.net:8080/ords/emdad/fawran/create-ticket',
+      body: json.encode({
+        "customer_id": int.parse(customerId),
+        "city_code": cityCode,
+        "sector_type": sectorType,
+        "ticket_category_id": ticketCategoryId,
+        "ticket_type_id": ticketTypeId,
+        "details": details,
+        "priority": priority,
+        "file_name": fileName,
+        "comment_text": commentText,
+      }),
+    );
+
+    print('Create ticket response: ${response.statusCode} - ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      return null;
+    }
+  } catch (e) {
+    print('Error creating ticket: $e');
+    return null;
+  }
+}
+
   static Future<List<City>> fetchCities(int serviceId, {WidgetRef? ref}) async {
     try {
       final response = await makeAuthenticatedRequest(

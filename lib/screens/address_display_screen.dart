@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_svg/flutter_svg.dart'; // Add this import
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/address_model.dart';
 import 'package:fawran/services/api_service.dart';
-import 'package:fawran/Fawran4Hours/add_new_address.dart';
-import 'package:fawran/screens/address_display_screen.dart';
 
 class AddressDisplayScreen extends ConsumerStatefulWidget {
   const AddressDisplayScreen({Key? key}) : super(key: key);
@@ -95,52 +93,60 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
     return 'Address';
   }
 
-  void _navigateToAddAddress() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddNewAddressScreen(),
-      ),
-    );
-    
-    // If an address was added, refresh the list
-    if (result == true) {
-      _fetchAddresses();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        toolbarHeight: 65,
+        backgroundColor: const Color(0xFF10295C),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(24),
+            bottomRight: Radius.circular(24),
+          ),
+        ),
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              isRtl ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
+              color: const Color(0xFFFFA200),
+              size: 20,
+            ),
+          ),
+        ),
         title: Text(
           loc.myAddresses,
           style: const TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFFFFA200),
           ),
         ),
         centerTitle: true,
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          // Content Section
-          Expanded(
-            child: _buildContent(context, loc),
-          ),
-        ],
+      body: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            Expanded(
+              child: _buildAddressContent(context),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, AppLocalizations loc) {
+  Widget _buildAddressContent(BuildContext context) {
     if (isLoading) {
       return const Center(
         child: Column(
@@ -199,24 +205,31 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Display SVG image
-            SvgPicture.asset(
-              'assets/images/no_addresses_found.svg',
-              width: 200,
+            // Display the custom illustration SVG
+            SizedBox(
+              width: 280,
               height: 200,
-              fit: BoxFit.contain,
+              child: SvgPicture.asset(
+                'assets/images/no_addresses_found.svg',
+                fit: BoxFit.contain,
+              ),
             ),
-            const SizedBox(height: 24),
-            
-            
-            
+            const SizedBox(height: 20),
+            const SizedBox(height: 8),
+            Text(
+              'No addresses found',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: addresses.length,
       itemBuilder: (context, index) {
         final address = addresses[index];
@@ -232,26 +245,18 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
               ),
               borderRadius: BorderRadius.circular(15),
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange[100],
+                    color: const Color(0xFF1E49A0).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.location_on,
-                    color: Colors.orange[600],
+                    color: Color(0xFF1E49A0),
                     size: 24,
                   ),
                 ),
@@ -263,17 +268,21 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
                       Text(
                         _extractLocationName(address.cardText),
                         style: const TextStyle(
+                          fontFamily: 'Poppins',
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          fontWeight: FontWeight.w700,
+                          fontStyle: FontStyle.normal,
+                          color: Color(0xFF10295C),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         address.cardText,
-                        style: TextStyle(
+                        style: const TextStyle(
+                          fontFamily: 'poppins',
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: Color(0xFF768090),
+                          fontWeight: FontWeight.w500,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
