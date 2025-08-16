@@ -25,14 +25,9 @@
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
-        android:usesCleartextTraffic="true"
-        
+        android:usesCleartextTraffic="true" 
         >
-<provider
-    android:name="vn.hunghd.flutterdownloader.DownloadedFileProvider"
-    android:authorities="${applicationId}.flutter_downloader.provider"
-    android:exported="false"
-    android:grantUriPermissions="true"/>
+
         
         <!-- Your Google Maps API key -->
         <meta-data

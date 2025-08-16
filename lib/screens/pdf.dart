@@ -80,7 +80,12 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   /// Replace placeholders in the HTML string
   Future<String> _replacePlaceholders(String html,String? contractId) async {
     String todayHijry ="${ HijriCalendar.now().hDay}/${ HijriCalendar.now().hMonth}/${ HijriCalendar.now().hYear}";
-  final userId = await _storage.read(key: 'user_id') ?? '';
+  String userId = await _storage.read(key: 'user_id') ?? '';
+  String nationalId = await _storage.read(key: 'national_id') ?? '';
+  String lastName = await _storage.read(key: 'last_name') ?? '';
+  String middleName = await _storage.read(key: 'middle_name') ?? '';
+  String firstName = await _storage.read(key: 'first_name') ?? '';
+  
 
     final selectedProfession = ref.watch(selectedProfessionProvider);
     
@@ -96,6 +101,11 @@ double finalPrice = selectedPackage == null ? 0.0:  selectedPackage.contractAmou
     String result = html;
   
       result = result.replaceAll("#CONTRACT_ID#", contractId??'');
+      result = result.replaceAll("#CLIENT_NAME#", "$firstName $middleName $lastName");
+      result = result.replaceAll("#ID_NUMBER#", nationalId);
+
+  
+
       result = result.replaceAll("#PROFFESSION#", selectedProfession?.positionName??'');
   result = result.replaceAll("#CITY#", locationParts['city'] ?? '');
   result = result.replaceAll("#DISTIRTICT#", locationParts['area'] ?? '');
