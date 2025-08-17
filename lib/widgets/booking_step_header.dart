@@ -18,6 +18,8 @@ class BookingStepHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final currentLocale = Localizations.localeOf(context);
+    final isArabic = currentLocale.languageCode == 'ar';
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -30,12 +32,13 @@ class BookingStepHeader extends StatelessWidget {
         ),
       ),
       child: Row(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         children: [
           if (showBackButton)
             GestureDetector(
               onTap: onBackPressed,
               child: Icon(
-                Icons.arrow_back_ios,
+                isArabic ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
                 size: 16,
                 color: Colors.grey.shade700,
               ),
@@ -52,6 +55,7 @@ class BookingStepHeader extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: Colors.grey.shade700,
                 ),
+                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               ),
             ),
           ),

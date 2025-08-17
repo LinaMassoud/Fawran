@@ -27,6 +27,7 @@ class BackgroundContainer extends StatelessWidget {
     final effectiveTopHeight = topSectionHeight ?? screenHeight * 0.4;
     final loc = AppLocalizations.of(context)!;
     final statusBarHeight = MediaQuery.of(context).padding.top;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       body: Stack(
@@ -80,18 +81,22 @@ class BackgroundContainer extends StatelessWidget {
           // Back button positioned higher in the colored section
           if (showBackButton)
   Positioned(
-    top: statusBarHeight + 20, // Positioned in the blue area
-    left: 16,
+    top: statusBarHeight + 20,
+    // Switch positions based on language
+    left: isArabic ? null : 16,
+    right: isArabic ? 16 : null,
     child: GestureDetector(
       onTap: onBackPressed ?? () => Navigator.of(context).pop(),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
           children: [
-            const Icon(
+            Icon(
+              // Use different chevron icons based on language direction
               Icons.chevron_left,
-              color: Color(0xFFFFA200),
+              color: const Color(0xFFFFA200),
               size: 28,
             ),
             const SizedBox(width: 4),
@@ -102,17 +107,21 @@ class BackgroundContainer extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
               ),
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             ),
           ],
         ),
       ),
     ),
   ),
+
           // Replace the top right widget positioned widget (around line 99) with:
           if (topRightWidget != null)
   Positioned(
-    top: statusBarHeight + 20, // Positioned in the blue area
-    right: 16,
+    top: statusBarHeight + 20,
+    // Switch positions based on language - opposite to back button
+    left: isArabic ? 16 : null,
+    right: isArabic ? null : 16,
     child: topRightWidget!,
   ),
         ],

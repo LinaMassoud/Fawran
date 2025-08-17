@@ -286,7 +286,38 @@
 
 
   "scrubAwayToughStains": "Scrub Away\ntough Stains",
-  "ticketSupport": "Ticket Support"
+  "ticketSupport": "Ticket Support",
+  "saudiArabia": "Saudi Arabia",
+  "currencyHourly": "SAR",
+
+  "noTicketsFound": "No tickets found",
+  "ticketCategory": "Ticket Category",
+  "ticketType": "Ticket Type", 
+  "date": "Date",
+  "statusPending": "Pending",
+  "statusClosed": "Closed",
+
+  "createSupportTicket": "Create Support Ticket",
+    "city": "City",
+    "sectorType": "Sector Type",
+    "ticketCategory": "Ticket Category",
+    "ticketType": "Ticket Type",
+    "chooseCity": "Choose City",
+    "chooseSector": "Choose Sector",
+    "chooseCategory": "Choose Category",
+    "chooseType": "Choose Type",
+    "individual": "Individual",
+    "hourly": "Hourly",
+    "ticketDetails": "Ticket Details",
+    "uploadAttach": "Upload Attach",
+    "send": "Send",
+    "unknown": "Unknown",
+    "pleaseSelectCity": "Please select a city",
+    "pleaseSelectSectorType": "Please select a sector type",
+    "pleaseSelectCategory": "Please select a category",
+    "pleaseSelectTicketType": "Please select a ticket type",
+    "pleaseEnterTicketDetails": "Please enter ticket details",
+    "uploadFunctionalityImplemented": "Upload functionality to be implemented"
 
 
 }

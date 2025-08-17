@@ -52,34 +52,34 @@
   "selectAddressTitle": "حدد العنوان",
   "next": "التالي",
   "nationality": "جنسية",
-  "professionals": "كم عدد المحترفين الذين تحتاجهم",
+  "professionals": "كم عدد العاملين الذين تحتاجهم",
   "contractDuration": "مدة العقد",
-  "time": "وقت",
+  "time": "الفترة",
   "durationOfVisit": "مدة الزيارة",
   "visitsWeeksNumber": "عدد الزيارات في الاسبوع",
   "date": "حدد التاريخ",
 
-  "select": "يختار",
+  "select": "اختر",
   "tapToSelect": "انقر للتحديد",
   "dialogForPrevious": "الرجاء تحديد مدة العقد وعدد الزيارات في الأسبوع أولاً",
   "selectNationality": "اختر الجنسية",
   "selectContractDuration": "حدد مدة العقد",
-  "selectTimeSlot": "حدد فتحة زمنية",
+  "selectTimeSlot": "حدد الفترة الزمنية",
   "selectVisitDuration": "حدد فتحة زمنية",
   "selectVisitsPerWeek": "اختر عدد الزيارات في الأسبوع",
 
 
   "noOfEmployee":"عدد الموظفين",
-  "duration":"مدة",
+  "duration":"المدة الزمنية",
   "weeklyVisits":"الزيارات الأسبوعية",
   "totalPrice":"السعر الإجمالي",
   "packageDetails":"تفاصيل الحزمة",
-  "get":"يحصل",
+  "get":"احصل على خصم",
   "off":"عن",
   "hours":"ساعات",
   "weeks":"أسابيع",
 
-  "add":"يضيف",
+  "add":"اضافة",
   "back":"رجوع",
 
   "insertAddress":"أدخل العنوان",
@@ -140,12 +140,12 @@
   "onFinalBill":"على الفاتورة النهائية",
   "agreement":"أنا أوافق على ",
   "termsAndCond":"الشروط والأحكام",
-  "close":"يغلق",
+  "close":"اغلاق",
 
 
-  "proceedToPay":"المضي قدما في الدفع",
+  "proceedToPay":"متابعة الدفع",
 
-  "done":"منتهي",
+  "done":"التالي",
   "totalIncVat":"الإجمالي (شامل ضريبة القيمة المضافة)",
 
   "eastAsia":"شرق آسيا",
@@ -237,12 +237,12 @@
 
     "agreementHourly":"أنا أوافق على ",
     "startingFrom":"ابتداء من",
-    "couponCode":"رمز القسيمة",
-    "applied":"مُطبَّق",
+    "couponCode":"كود الخصم",
+    "applied":"تم التطبيق",
     "promotionApplied":"تم تطبيق الترقية بنجاح!",
     "pleaseSelect":"الرجاء التحديد",
-    "enterCouponCode":"أدخل رمز القسيمة",
-    "apply":"يتقدم",
+    "enterCouponCode":"ادخل كود الخصم",
+    "apply":"تطبيق",
     "promotionAppliedSuccessfully": "تم تطبيق العرض الترويجي بنجاح!",
 
     "sunday": "الأحد",
@@ -290,8 +290,39 @@
   "lastNameLabel": "اسم العائلة",
   "nationalIdLabel": "الرقم الوطني",
 
-  "scrubAwayToughStains": "اكشط البقع\nالصعبة",
-  "ticketSupport": "دعم التذاكر"
+  "scrubAwayToughStains": "تنظيف البقع\nالصعبة",
+  "ticketSupport": "دعم التذاكر",
+  "saudiArabia": "المملكة العربية السعودية",
+  "currencyHourly": "ريال",
+
+  "noTicketsFound": "لم يتم العثور على تذاكر",
+  "ticketCategory": "فئة التذكرة",
+  "ticketType": "نوع التذكرة",
+  "date": "التاريخ",
+  "statusClosed": "مغلق", 
+  "statusPending": "في الانتظار",
+
+  "createSupportTicket": "إنشاء تذكرة دعم",
+    "city": "المدينة",
+    "sectorType": "نوع القطاع",
+    "ticketCategory": "فئة التذكرة",
+    "ticketType": "نوع التذكرة",
+    "chooseCity": "اختر المدينة",
+    "chooseSector": "اختر القطاع",
+    "chooseCategory": "اختر الفئة",
+    "chooseType": "اختر النوع",
+    "individual": "فردي",
+    "hourly": "بالساعة",
+    "ticketDetails": "تفاصيل التذكرة",
+    "uploadAttach": "رفع مرفق",
+    "send": "إرسال",
+    "unknown": "غير معروف",
+    "pleaseSelectCity": "يرجى اختيار مدينة",
+    "pleaseSelectSectorType": "يرجى اختيار نوع القطاع",
+    "pleaseSelectCategory": "يرجى اختيار فئة",
+    "pleaseSelectTicketType": "يرجى اختيار نوع التذكرة",
+    "pleaseEnterTicketDetails": "يرجى إدخال تفاصيل التذكرة",
+    "uploadFunctionalityImplemented": "سيتم تنفيذ وظيفة الرفع"
 
 
 

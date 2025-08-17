@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/models/address_model.dart';
 import 'package:fawran/services/api_service.dart';
+import 'package:fawran/providers/localProvider.dart';
 
 class AddressDisplayScreen extends ConsumerStatefulWidget {
   const AddressDisplayScreen({Key? key}) : super(key: key);
@@ -96,57 +97,62 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    final isRtl = isArabic;
     
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        toolbarHeight: 65,
-        backgroundColor: const Color(0xFF10295C),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(24),
-            bottomRight: Radius.circular(24),
-          ),
-        ),
-        leading: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            child: Icon(
-              isRtl ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
-              color: const Color(0xFFFFA200),
-              size: 20,
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          toolbarHeight: 65,
+          backgroundColor: const Color(0xFF10295C),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
           ),
-        ),
-        title: Text(
-          loc.myAddresses,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFFFFA200),
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            Expanded(
-              child: _buildAddressContent(context),
+          leading: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                Icons.arrow_back_ios,
+                color: const Color(0xFFFFA200),
+                size: 20,
+              ),
             ),
-          ],
+          ),
+          title: Text(
+            loc.myAddresses,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFFFA200),
+            ),
+          ),
+          centerTitle: true,
+          elevation: 0,
+        ),
+        body: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Expanded(
+                child: _buildAddressContent(context, isRtl, isArabic),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildAddressContent(BuildContext context) {
+  Widget _buildAddressContent(BuildContext context, bool isRtl, bool isArabic) {
     if (isLoading) {
       return const Center(
         child: Column(
@@ -247,6 +253,7 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
               color: Colors.white,
             ),
             child: Row(
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -263,16 +270,20 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
                 const SizedBox(width: 15),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _extractLocationName(address.cardText),
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          fontStyle: FontStyle.normal,
-                          color: Color(0xFF10295C),
+                      Align(
+                        alignment: isRtl ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Text(
+                          _extractLocationName(address.cardText),
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.normal,
+                            color: Color(0xFF10295C),
+                          ),
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -286,6 +297,8 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        textAlign: isRtl ? TextAlign.right : TextAlign.left,
                       ),
                     ],
                   ),

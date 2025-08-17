@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/api_service.dart';
+import 'package:fawran/generated/app_localizations.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CreateTicketScreen extends StatefulWidget {
+class CreateTicketScreen extends ConsumerStatefulWidget {
   const CreateTicketScreen({Key? key}) : super(key: key);
 
   @override
-  State<CreateTicketScreen> createState() => _CreateTicketScreenState();
+  ConsumerState<CreateTicketScreen> createState() => _CreateTicketScreenState();
 }
 
-class _CreateTicketScreenState extends State<CreateTicketScreen> {
+class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   final _formKey = GlobalKey<FormState>();
   final _detailsController = TextEditingController();
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
@@ -183,106 +186,114 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    final loc = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
 
-    return Scaffold(
-  backgroundColor: Colors.grey[50],
-  appBar: AppBar(
-    toolbarHeight: 65,
-    backgroundColor: const Color(0xFF10295C),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(24),
-        bottomRight: Radius.circular(24),
-      ),
-    ),
-    leading: GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        child: Icon(
-          isRtl ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
-          color: const Color(0xFFFFA200),
-          size: 20,
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          toolbarHeight: 65,
+          backgroundColor: const Color(0xFF10295C),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+            ),
+          ),
+          leading: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+               Icons.arrow_back_ios,
+                color: const Color(0xFFFFA200),
+                size: 20,
+              ),
+            ),
+          ),
+          title: Text(
+            loc.createSupportTicket, // Replace hardcoded text
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFFFA200),
+            ),
+          ),
+          centerTitle: true,
+          elevation: 0,
         ),
-      ),
-    ),
-    title: const Text(
-      'Create Support Ticket',
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFFFFA200),
-      ),
-    ),
-    centerTitle: true,
-    elevation: 0,
-  ),
-  body: GestureDetector(
-    onTap: () {
-      // Dismiss keyboard when tapping anywhere on the screen
-      FocusScope.of(context).unfocus();
-    },
-    child: Form(
-    key: _formKey,
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100), // Add bottom padding for fixed button
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          
-          // City Dropdown
-          _buildSectionTitle('City'),
-          const SizedBox(height: 8),
-          _buildCityDropdown(),
-          const SizedBox(height: 24),
+        body: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+              child: Column(
+                crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  
+                  // City Dropdown
+                  _buildSectionTitle(loc.city, isArabic),
+                  const SizedBox(height: 8),
+                  _buildCityDropdown(loc, isArabic),
+                  const SizedBox(height: 24),
 
-          // Sector Type Dropdown
-          _buildSectionTitle('Sector Type'),
-          const SizedBox(height: 8),
-          _buildSectorTypeDropdown(),
-          const SizedBox(height: 24),
+                  // Sector Type Dropdown
+                  _buildSectionTitle(loc.sectorType, isArabic),
+                  const SizedBox(height: 8),
+                  _buildSectorTypeDropdown(loc, isArabic),
+                  const SizedBox(height: 24),
 
-          // Ticket Category Dropdown
-          _buildSectionTitle('Ticket Category'),
-          const SizedBox(height: 8),
-          _buildCategoryDropdown(),
-          const SizedBox(height: 24),
+                  // Ticket Category Dropdown
+                  _buildSectionTitle(loc.ticketCategory, isArabic),
+                  const SizedBox(height: 8),
+                  _buildCategoryDropdown(loc, isArabic),
+                  const SizedBox(height: 24),
 
-          // Ticket Type Dropdown
-          _buildSectionTitle('Ticket Type'),
-          const SizedBox(height: 8),
-          _buildTicketTypeDropdown(),
-          const SizedBox(height: 24),
+                  // Ticket Type Dropdown
+                  _buildSectionTitle(loc.ticketType, isArabic),
+                  const SizedBox(height: 8),
+                  _buildTicketTypeDropdown(loc, isArabic),
+                  const SizedBox(height: 24),
 
-          _buildDetailsField(),
-          const SizedBox(height: 24),
+                  _buildDetailsField(loc, isArabic),
+                  const SizedBox(height: 24),
 
-          // Upload Attach Button
-          _buildUploadButton(),
-          const SizedBox(height: 20),
-        ],
-      ),
-    ),
-  ),
-  ),
-  bottomNavigationBar: _buildFixedBottomSendButton(),
-);
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF091735),
+                  // Upload Attach Button
+                  _buildUploadButton(loc, isArabic),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: _buildFixedBottomSendButton(loc, isArabic),
       ),
     );
   }
 
-  Widget _buildCityDropdown() {
+  Widget _buildSectionTitle(String title, bool isArabic) {
+    return Align(
+      alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF091735),
+        ),
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown(AppLocalizations loc, bool isArabic) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -291,26 +302,29 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       ),
       child: DropdownButtonFormField<Map<String, dynamic>>(
         value: selectedCity,
-        decoration: const InputDecoration(
-          hintText: 'Choose City',
-          hintStyle: TextStyle(color: Colors.grey),
+        decoration: InputDecoration(
+          hintText: loc.chooseCity,
+          hintStyle: const TextStyle(color: Colors.grey),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.grey,
+        ),
+        isExpanded: true,
         items: isLoadingCities
           ? []
           : cities.map((city) {
               return DropdownMenuItem<Map<String, dynamic>>(
                 value: city,
-                child: Expanded(
-                  child: Text(
-                    city['city_name']?.toString() ?? 
-                    city['name']?.toString() ?? 'Unknown',
-                    style: const TextStyle(color: Color(0xFF091735)),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
+                child: Text(
+                  city['city_name']?.toString() ?? 
+                  city['name']?.toString() ?? loc.unknown,
+                  style: const TextStyle(color: Color(0xFF091735)),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                 ),
               );
             }).toList(),
@@ -323,7 +337,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               },
         validator: (value) {
           if (value == null) {
-            return 'Please select a city';
+            return loc.pleaseSelectCity;
           }
           return null;
         },
@@ -331,7 +345,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     );
   }
 
-  Widget _buildSectorTypeDropdown() {
+  Widget _buildSectorTypeDropdown(AppLocalizations loc, bool isArabic) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -340,22 +354,34 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       ),
       child: DropdownButtonFormField<String>(
         value: selectedSectorType,
-        decoration: const InputDecoration(
-          hintText: 'Choose Sector',
-          hintStyle: TextStyle(color: Colors.grey),
+        decoration: InputDecoration(
+          hintText: loc.chooseSector,
+          hintStyle: const TextStyle(color: Colors.grey),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-        items: sectorTypes.map((sector) {
-          return DropdownMenuItem<String>(
-            value: sector['value'],
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.grey,
+        ),
+        items: [
+          DropdownMenuItem<String>(
+            value: 'I',
             child: Text(
-              sector['label']!,
+              loc.individual,
               style: const TextStyle(color: Color(0xFF091735)),
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             ),
-          );
-        }).toList(),
+          ),
+          DropdownMenuItem<String>(
+            value: 'H',
+            child: Text(
+              loc.hourly,
+              style: const TextStyle(color: Color(0xFF091735)),
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+            ),
+          ),
+        ],
         onChanged: (value) {
           setState(() {
             selectedSectorType = value;
@@ -368,7 +394,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         },
         validator: (value) {
           if (value == null) {
-            return 'Please select a sector type';
+            return loc.pleaseSelectSectorType;
           }
           return null;
         },
@@ -376,7 +402,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     );
   }
 
-  Widget _buildCategoryDropdown() {
+  Widget _buildCategoryDropdown(AppLocalizations loc, bool isArabic) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -385,26 +411,29 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       ),
       child: DropdownButtonFormField<Map<String, dynamic>>(
         value: selectedCategory,
-        decoration: const InputDecoration(
-          hintText: 'Choose Category',
-          hintStyle: TextStyle(color: Colors.grey),
+        decoration: InputDecoration(
+          hintText: loc.chooseCategory,
+          hintStyle: const TextStyle(color: Colors.grey),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.grey,
+        ),
+        isExpanded: true,
         items: isLoadingCategories
           ? []
           : categories.map((category) {
               return DropdownMenuItem<Map<String, dynamic>>(
                 value: category,
-                child: Expanded(
-                  child: Text(
-                    category['category_name']?.toString() ?? 
-                    category['name']?.toString() ?? 'Unknown',
-                    style: const TextStyle(color: Color(0xFF091735)),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
+                child: Text(
+                  category['category_name']?.toString() ?? 
+                  category['name']?.toString() ?? loc.unknown,
+                  style: const TextStyle(color: Color(0xFF091735)),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                 ),
               );
             }).toList(),
@@ -424,7 +453,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               },
         validator: (value) {
           if (value == null) {
-            return 'Please select a category';
+            return loc.pleaseSelectCategory;
           }
           return null;
         },
@@ -432,56 +461,59 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     );
   }
 
-  Widget _buildTicketTypeDropdown() {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.grey.shade300),
-    ),
-    child: DropdownButtonFormField<Map<String, dynamic>>(
-      value: selectedTicketType,
-      decoration: const InputDecoration(
-        hintText: 'Choose Type',
-        hintStyle: TextStyle(color: Colors.grey),
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  Widget _buildTicketTypeDropdown(AppLocalizations loc, bool isArabic) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
       ),
-      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-      isExpanded: true, // Add this line to prevent overflow
-      items: isLoadingTicketTypes
-        ? []
-        : ticketTypes.map((type) {
-            return DropdownMenuItem<Map<String, dynamic>>(
-              value: type,
-              child: Text(
-                type['type_name']?.toString() ?? 
-                type['name']?.toString() ?? 'Unknown',
-                style: const TextStyle(color: Color(0xFF091735)),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            );
-          }).toList(),
+      child: DropdownButtonFormField<Map<String, dynamic>>(
+        value: selectedTicketType,
+        decoration: InputDecoration(
+          hintText: loc.chooseType,
+          hintStyle: const TextStyle(color: Colors.grey),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.grey,
+        ),
+        isExpanded: true,
+        items: isLoadingTicketTypes
+          ? []
+          : ticketTypes.map((type) {
+              return DropdownMenuItem<Map<String, dynamic>>(
+                value: type,
+                child: Text(
+                  type['type_name']?.toString() ?? 
+                  type['name']?.toString() ?? loc.unknown,
+                  style: const TextStyle(color: Color(0xFF091735)),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              );
+            }).toList(),
+        onChanged: isLoadingTicketTypes
+            ? null
+            : (value) {
+                setState(() {
+                  selectedTicketType = value;
+                });
+              },
+        validator: (value) {
+          if (value == null) {
+            return loc.pleaseSelectTicketType;
+          }
+          return null;
+        },
+      ),
+    );
+  }
 
-      onChanged: isLoadingTicketTypes
-          ? null
-          : (value) {
-              setState(() {
-                selectedTicketType = value;
-              });
-            },
-      validator: (value) {
-        if (value == null) {
-          return 'Please select a ticket type';
-        }
-        return null;
-      },
-    ),
-  );
-}
-
-  Widget _buildDetailsField() {
+  Widget _buildDetailsField(AppLocalizations loc, bool isArabic) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -491,15 +523,17 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       child: TextFormField(
         controller: _detailsController,
         maxLines: 6,
-        decoration: const InputDecoration(
-          hintText: 'Ticket Details',
-          hintStyle: TextStyle(color: Colors.grey),
+        textAlign: isArabic ? TextAlign.right : TextAlign.left,
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        decoration: InputDecoration(
+          hintText: loc.ticketDetails,
+          hintStyle: const TextStyle(color: Colors.grey),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.all(16),
+          contentPadding: const EdgeInsets.all(16),
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'Please enter ticket details';
+            return loc.pleaseEnterTicketDetails;
           }
           return null;
         },
@@ -507,7 +541,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     );
   }
 
-  Widget _buildUploadButton() {
+  Widget _buildUploadButton(AppLocalizations loc, bool isArabic) {
     return Container(
       width: double.infinity,
       height: 50,
@@ -520,28 +554,45 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(25),
           onTap: () {
-            // TODO: Implement file upload functionality
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Upload functionality to be implemented')),
+              SnackBar(content: Text(loc.uploadFunctionalityImplemented)),
             );
           },
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             children: [
-              Text(
-                'Upload Attach',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              if (!isArabic) ...[
+                Text(
+                  loc.uploadAttach,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              SizedBox(width: 8),
-              Icon(
-                Icons.upload,
-                color: Colors.white,
-                size: 20,
-              ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.upload,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ] else ...[
+                const Icon(
+                  Icons.upload,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  loc.uploadAttach,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -549,70 +600,70 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     );
   }
 
-Widget _buildFixedBottomSendButton() {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(25),
-        topRight: Radius.circular(25),
+Widget _buildFixedBottomSendButton(AppLocalizations loc, bool isArabic) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E49A0).withOpacity(0.15),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, -5),
+          ),
+          BoxShadow(
+            color: const Color(0xFF1E49A0).withOpacity(0.08),
+            blurRadius: 40,
+            spreadRadius: 5,
+            offset: const Offset(0, -10),
+          ),
+        ],
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Color(0xFF1E49A0).withOpacity(0.15),
-          blurRadius: 20,
-          spreadRadius: 2,
-          offset: Offset(0, -5),
-        ),
-        BoxShadow(
-          color: Color(0xFF1E49A0).withOpacity(0.08),
-          blurRadius: 40,
-          spreadRadius: 5,
-          offset: Offset(0, -10),
-        ),
-      ],
-    ),
-    child: SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, 15),
-        child: Container(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: isSubmitting ? null : _submitTicket,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isSubmitting 
-                  ? Colors.grey[400]
-                  : const Color(0xFF10295C),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 15),
+          child: Container(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: isSubmitting ? null : _submitTicket,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isSubmitting 
+                    ? Colors.grey[400]
+                    : const Color(0xFF10295C),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                elevation: isSubmitting ? 0 : 2,
               ),
-              elevation: isSubmitting ? 0 : 2,
+              child: isSubmitting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      loc.send,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
-            child: isSubmitting
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text(
-                    'Send',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

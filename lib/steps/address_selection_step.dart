@@ -4,8 +4,10 @@ import '../Fawran4Hours/add_new_address.dart';
 import '../widgets/booking_bottom_navigation.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddressSelectionStep extends StatelessWidget {
+class AddressSelectionStep extends ConsumerWidget {
   final List<Address> addresses;
   final Address? selectedAddress;
   final Function(int) onAddressSelected;
@@ -70,73 +72,85 @@ class AddressSelectionStep extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context)!;
-    return Column(
-      children: [
-        Flexible(
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 20),
-                GestureDetector(
-                  onTap: onAddNewAddress,
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xFF1E49A0), width: 1), // Updated border color
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add, color: Color(0xFF1E49A0), size: 25), // Updated icon color
-                        SizedBox(width: 10),
-                        Text(
-                          loc.addNewAddress,
-                          style: TextStyle(
-                            color: Color(0xFF1E49A0), // Updated text color
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
+    final locale = ref.watch(localeNotifierProvider);
+    final isArabic = locale.languageCode == 'ar';
+    
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Column(
+        children: [
+          Flexible(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: onAddNewAddress,
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Color(0xFF1E49A0), width: 1),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        children: [
+                          Icon(Icons.add, color: Color(0xFF1E49A0), size: 25),
+                          SizedBox(width: 10),
+                          Text(
+                            loc.addNewAddress,
+                            style: TextStyle(
+                              color: Color(0xFF1E49A0),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  loc.selectAddressTitle,
-                  style: TextStyle(
-                    fontFamily: 'poppins',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF091735),
+                  SizedBox(height: 20),
+                  Align(
+                  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Text(
+                    loc.selectAddressTitle,
+                    style: TextStyle(
+                      fontFamily: 'poppins',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF091735),
+                    ),
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
-                SizedBox(height: 20),
-                Expanded(
-                  child: _buildAddressContent(context),
-                ),
-              ],
+                  SizedBox(height: 20),
+                  Expanded(
+                    child: _buildAddressContent(context, isArabic),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        BookingBottomNavigation(
-        price: isCustomBooking ? 0.0 : price, // Conditional price
-        canProceed: _hasSelectedAddress && !isLoading && error == null,
-        isLastStep: false,
-        onNextPressed: onNextPressed,
+          BookingBottomNavigation(
+            price: isCustomBooking ? 0.0 : price,
+            canProceed: _hasSelectedAddress && !isLoading && error == null,
+            isLastStep: false,
+            onNextPressed: onNextPressed,
+          ),
+        ],
       ),
-      ],
     );
   }
 
-  Widget _buildAddressContent(BuildContext context) {
+  Widget _buildAddressContent(BuildContext context, bool isArabic) {
   if (isLoading) {
     return Center(
       child: Column(
@@ -210,85 +224,92 @@ class AddressSelectionStep extends StatelessWidget {
   }
 
   return ListView.builder(
-    itemCount: addresses.length,
-    itemBuilder: (context, index) {
-      final address = addresses[index];
-      final isSelected = selectedAddress?.addressId == address.addressId;
-      
-      return Container(
-        margin: EdgeInsets.only(bottom: 15),
-        child: GestureDetector(
-          onTap: () => onAddressSelected(address.addressId),
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected ? Color(0xFF1E49A0) : Colors.grey[300]!,
-                width: isSelected ? 1 : 1.5,
+      itemCount: addresses.length,
+      itemBuilder: (context, index) {
+        final address = addresses[index];
+        final isSelected = selectedAddress?.addressId == address.addressId;
+        
+        return Container(
+          margin: EdgeInsets.only(bottom: 15),
+          child: GestureDetector(
+            onTap: () => onAddressSelected(address.addressId),
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isSelected ? Color(0xFF1E49A0) : Colors.grey[300]!,
+                  width: isSelected ? 1 : 1.5,
+                ),
+                borderRadius: BorderRadius.circular(15),
+                color: isSelected ? Color(0xFFE0EAFF) : Colors.white,
               ),
-              borderRadius: BorderRadius.circular(15),
-              color: isSelected ? Color(0xFFE0EAFF) : Colors.white,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected 
-                          ? Color(0xFF1E49A0)
-                          : Colors.grey[400]!,
-                      width: 2,
+              child: Row(
+                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected 
+                            ? Color(0xFF1E49A0)
+                            : Colors.grey[400]!,
+                        width: 2,
+                      ),
                     ),
+                    child: isSelected
+                        ? Center(
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(color: Color(0xFF1E49A0), shape: BoxShape.circle),
+                            ),
+                          )
+                        : null,
                   ),
-                  child: isSelected
-                      ? Center(
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(color: Color(0xFF1E49A0), shape: BoxShape.circle),
+                  SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                        alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Text(
+                          _extractLocationName(address.cardText),
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.normal,
+                            color: const Color(0xFF10295C),
                           ),
-                        )
-                      : null,
-                ),
-                SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                      _extractLocationName(address.cardText),
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        fontStyle: FontStyle.normal,
-                        color: const Color(0xFF10295C),
-                      ),
-                    ),
-                      SizedBox(height: 4),
-                      Text(
-                        address.cardText,
-                        style: TextStyle(
-                          fontFamily: 'poppins',
-                          fontSize: 14,
-                          color: const Color(0xFF768090),
-                          fontWeight: FontWeight.w500,
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
+                        SizedBox(height: 4),
+                        Text(
+                          address.cardText,
+                          style: TextStyle(
+                            fontFamily: 'poppins',
+                            fontSize: 14,
+                            color: const Color(0xFF768090),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
+        );
+      },
+    );
 }
 }

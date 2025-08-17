@@ -655,7 +655,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final locale = ref.watch(localeNotifierProvider);
     final isArabic = locale.languageCode == 'ar';
 
-    return BackgroundContainer(
+    return Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: BackgroundContainer(
       showBackButton: true,
       onBackPressed: _handleBackButton,
       topSectionHeight: MediaQuery.of(context).size.height * 0.25,
@@ -687,6 +689,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
