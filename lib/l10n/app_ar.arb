@@ -331,7 +331,12 @@
     "selectLocationWithinBoundary": "يرجى اختيار موقع داخل حدود المنطقة",
     "locationPermissionDenied": "تم رفض إذن الموقع",
     "locationPermissionPermanentlyDenied": "تم رفض إذن الموقع نهائياً. يرجى التفعيل من الإعدادات.",
-    "failedToGetLocation": "فشل في الحصول على الموقع الحالي"
+    "failedToGetLocation": "فشل في الحصول على الموقع الحالي",
+
+    "searchFaqs": "البحث في الأسئلة الشائعة",
+    "commonQuestions": "الأسئلة الشائعة",
+    "noFaqsAvailable": "لا توجد أسئلة شائعة متاحة.",
+    "noFaqsFoundMatching": "لم يتم العثور على أسئلة شائعة تطابق بحثك."
 
 
 }
