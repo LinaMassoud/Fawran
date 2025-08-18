@@ -377,7 +377,7 @@ abstract class AppLocalizations {
   /// No description provided for @date.
   ///
   /// In en, this message translates to:
-  /// **'Select Date'**
+  /// **'Date'**
   String get date;
 
   /// No description provided for @select.
@@ -1519,6 +1519,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scrub Away\ntough Stains'**
   String get scrubAwayToughStains;
+
+  /// No description provided for @ticketSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket Support'**
+  String get ticketSupport;
+
+  /// No description provided for @saudiArabia.
+  ///
+  /// In en, this message translates to:
+  /// **'Saudi Arabia'**
+  String get saudiArabia;
+
+  /// No description provided for @currencyHourly.
+  ///
+  /// In en, this message translates to:
+  /// **'SAR'**
+  String get currencyHourly;
+
+  /// No description provided for @noTicketsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No tickets found'**
+  String get noTicketsFound;
+
+  /// No description provided for @ticketCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket Category'**
+  String get ticketCategory;
+
+  /// No description provided for @ticketType.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket Type'**
+  String get ticketType;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
+  /// No description provided for @statusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get statusClosed;
+
+  /// No description provided for @createSupportTicket.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Support Ticket'**
+  String get createSupportTicket;
+
+  /// No description provided for @city.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get city;
+
+  /// No description provided for @sectorType.
+  ///
+  /// In en, this message translates to:
+  /// **'Sector Type'**
+  String get sectorType;
+
+  /// No description provided for @chooseCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose City'**
+  String get chooseCity;
+
+  /// No description provided for @chooseSector.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Sector'**
+  String get chooseSector;
+
+  /// No description provided for @chooseCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Category'**
+  String get chooseCategory;
+
+  /// No description provided for @chooseType.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Type'**
+  String get chooseType;
+
+  /// No description provided for @individual.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual'**
+  String get individual;
+
+  /// No description provided for @hourly.
+  ///
+  /// In en, this message translates to:
+  /// **'Hourly'**
+  String get hourly;
+
+  /// No description provided for @ticketDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket Details'**
+  String get ticketDetails;
+
+  /// No description provided for @uploadAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Attach'**
+  String get uploadAttach;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknown;
+
+  /// No description provided for @pleaseSelectCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a city'**
+  String get pleaseSelectCity;
+
+  /// No description provided for @pleaseSelectSectorType.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a sector type'**
+  String get pleaseSelectSectorType;
+
+  /// No description provided for @pleaseSelectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a category'**
+  String get pleaseSelectCategory;
+
+  /// No description provided for @pleaseSelectTicketType.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a ticket type'**
+  String get pleaseSelectTicketType;
+
+  /// No description provided for @pleaseEnterTicketDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter ticket details'**
+  String get pleaseEnterTicketDetails;
+
+  /// No description provided for @uploadFunctionalityImplemented.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload functionality to be implemented'**
+  String get uploadFunctionalityImplemented;
+
+  /// No description provided for @satellite.
+  ///
+  /// In en, this message translates to:
+  /// **'Satellite'**
+  String get satellite;
+
+  /// No description provided for @moveMapToPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'MOVE MAP TO POSITION PIN ON YOUR LOCATION'**
+  String get moveMapToPosition;
+
+  /// No description provided for @confirmLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Location'**
+  String get confirmLocation;
+
+  /// No description provided for @selectLocationWithinBoundary.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a location within the district boundary'**
+  String get selectLocationWithinBoundary;
+
+  /// No description provided for @locationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied'**
+  String get locationPermissionDenied;
+
+  /// No description provided for @locationPermissionPermanentlyDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission permanently denied. Please enable in settings.'**
+  String get locationPermissionPermanentlyDenied;
+
+  /// No description provided for @failedToGetLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to get current location'**
+  String get failedToGetLocation;
+
+  /// No description provided for @searchFaqs.
+  ///
+  /// In en, this message translates to:
+  /// **'Search FAQs'**
+  String get searchFaqs;
+
+  /// No description provided for @commonQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Common Questions'**
+  String get commonQuestions;
+
+  /// No description provided for @noFaqsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No FAQs available.'**
+  String get noFaqsAvailable;
+
+  /// No description provided for @noFaqsFoundMatching.
+  ///
+  /// In en, this message translates to:
+  /// **'No FAQs found matching your search.'**
+  String get noFaqsFoundMatching;
+
+  /// No description provided for @changePass.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePass;
+
+  /// No description provided for @oldPass.
+  ///
+  /// In en, this message translates to:
+  /// **'Old Password'**
+  String get oldPass;
+
+  /// No description provided for @newPass.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPass;
+
+  /// No description provided for @confirmPass.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPass;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @successChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed successfully'**
+  String get successChange;
+
+  /// No description provided for @failChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to change password'**
+  String get failChange;
+
+  /// No description provided for @oldPassRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Old password is required'**
+  String get oldPassRequired;
+
+  /// No description provided for @newPassRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'New password is required'**
+  String get newPassRequired;
+
+  /// No description provided for @newPassMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get newPassMin;
+
+  /// No description provided for @confirmPassRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your password'**
+  String get confirmPassRequired;
+
+  /// No description provided for @confirmPassNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get confirmPassNotMatch;
 }
 
 class _AppLocalizationsDelegate

@@ -50,6 +50,13 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         AppLocalizations.delegate,
       ],
+       theme: ThemeData(
+    scaffoldBackgroundColor: Colors.white, // overrides default gray
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.white, // optional, match AppBar
+      elevation: 0,
+    ),
+  ),
       builder: FlashyFlushbarProvider.init(),
       home: const LaunchScreen(),
       routes: {
