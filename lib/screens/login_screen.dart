@@ -97,7 +97,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     });
 
-    return BackgroundContainer(
+    return Directionality(
+  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+  child: BackgroundContainer(
       showBackButton: false,
       topSectionHeight: MediaQuery.of(context).size.height * 0.25,
       topRightWidget: GestureDetector(
@@ -120,7 +122,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 ),
       child: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.stretch,
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
           children: [
             const SizedBox(height: 20),
 
@@ -133,6 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF10295C),
                 ),
+                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               ),
             ),
             const SizedBox(height: 40),
@@ -148,18 +152,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ? 'أدخل رقم هاتفك'
                     : 'Enter your phone number',
                 floatingLabelBehavior: FloatingLabelBehavior.always,
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: SvgPicture.asset(
-                    'assets/icons/phone.svg',
-                    width: 16,
-                    height: 16,
-                    colorFilter: ColorFilter.mode(
-                      Colors.grey.shade400,
-                      BlendMode.srcIn,
-                    ),
+                prefixIcon: isArabic ? Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: SvgPicture.asset(
+                  'assets/icons/phone.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey.shade400,
+                    BlendMode.srcIn,
                   ),
                 ),
+              ) : Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: SvgPicture.asset(
+                  'assets/icons/phone.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey.shade400,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
@@ -226,40 +241,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 labelText: loc.password,
                 hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
                 floatingLabelBehavior: FloatingLabelBehavior.always,
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: SvgPicture.asset(
-                    'assets/icons/lock.svg',
-                    width: 16,
-                    height: 16,
-                    fit: BoxFit.contain,
-                    colorFilter: ColorFilter.mode(
-                      Colors.grey.shade400,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-                suffixIcon: IconButton(
-                  icon: Padding(
-                    padding: const EdgeInsets.all(2.0),
+                // Lock icon positioning - leading edge
+                prefixIcon: isArabic ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Lock icon for RTL (leading edge)
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
                     child: SvgPicture.asset(
-                      _passwordVisible
-                          ? 'assets/icons/eye-regular-full.svg'
-                          : 'assets/icons/eye-slash-regular-full.svg',
-                      width: 20,
-                      height: 20,
+                      'assets/icons/lock.svg',
+                      width: 16,
+                      height: 16,
+                      fit: BoxFit.contain,
                       colorFilter: ColorFilter.mode(
                         Colors.grey.shade400,
                         BlendMode.srcIn,
                       ),
                     ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _passwordVisible = !_passwordVisible;
-                    });
-                  },
+                ],
+              ) : Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: SvgPicture.asset(
+                  'assets/icons/lock.svg',
+                  width: 16,
+                  height: 16,
+                  fit: BoxFit.contain,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey.shade400,
+                    BlendMode.srcIn,
+                  ),
                 ),
+              ),
+              suffixIcon: IconButton(
+                icon: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: SvgPicture.asset(
+                    _passwordVisible
+                        ? 'assets/icons/eye-regular-full.svg'
+                        : 'assets/icons/eye-slash-regular-full.svg',
+                    width: 20,
+                    height: 20,
+                    colorFilter: ColorFilter.mode(
+                      Colors.grey.shade400,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _passwordVisible = !_passwordVisible;
+                  });
+                },
+              ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
@@ -322,10 +356,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 alignment: isArabic ? Alignment.centerLeft : Alignment.centerRight,
                 child: GestureDetector(
                   onTap: () {
-                    // Clear any existing error messages
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    
-                    // Navigate to forgot password screen
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -338,8 +369,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF1A69DD),
+                      color: Color(0xFF1A69DD),
                     ),
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
               ),
@@ -347,6 +379,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
             // Login Button
             SizedBox(
+              width: double.infinity,
               height: 50,
               child: ElevatedButton(
                 onPressed: authState.isLoading ? null : _handleLogin,
@@ -381,6 +414,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             // Sign Up Link
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 Text(
                   "${loc.dontHaveAccount} ",
@@ -388,6 +422,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     color: Colors.grey.shade600,
                     fontSize: 14,
                   ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                 ),
                 GestureDetector(
                   onTap: () {
@@ -403,10 +438,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Text(
                     loc.signUp,
                     style: const TextStyle(
-                      color: const Color(0xFF1A69DD),
+                      color: Color(0xFF1A69DD),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
               ],
@@ -415,6 +451,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ],
         ),
       ),
+  ),
     );
   }
 }

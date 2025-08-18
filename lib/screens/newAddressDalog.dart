@@ -9,8 +9,11 @@ import 'dart:convert';
 import '../models/package_model.dart';
 import '../models/address_model.dart';
 import '../widgets/reusable_header_scaffold.dart';
+import 'package:fawran/generated/app_localizations.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MapSelectorDialog extends StatefulWidget {
+class MapSelectorDialog extends ConsumerStatefulWidget {
   final LatLng initialLocation;
   final Function(LatLng) onLocationSelected;
   final List<LatLng>? boundaryCoordinates;
@@ -26,7 +29,7 @@ class MapSelectorDialog extends StatefulWidget {
   _MapSelectorDialogState createState() => _MapSelectorDialogState();
 }
 
-class _MapSelectorDialogState extends State<MapSelectorDialog> {
+class _MapSelectorDialogState extends ConsumerState<MapSelectorDialog> {
   GoogleMapController? _mapController;
   LatLng? _selectedLocation;
   bool _hasUserMovedMap = false;
@@ -60,14 +63,20 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
     });
 
     try {
-      // Check location permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          final loc = AppLocalizations.of(context)!;
+          final currentLocale = ref.read(localeNotifierProvider);
+          final isArabic = currentLocale.languageCode == 'ar';
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Location permission denied'),
+              content: Text(
+                loc.locationPermissionDenied, // Use localized string
+                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -79,9 +88,16 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
       }
 
       if (permission == LocationPermission.deniedForever) {
+        final loc = AppLocalizations.of(context)!;
+        final currentLocale = ref.read(localeNotifierProvider);
+        final isArabic = currentLocale.languageCode == 'ar';
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Location permission permanently denied. Please enable in settings.'),
+            content: Text(
+              loc.locationPermissionPermanentlyDenied, // Use localized string
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -91,12 +107,10 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
         return;
       }
 
-      // Get current location
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      // Move camera to current location
       if (_mapController != null) {
         await _mapController!.animateCamera(
           CameraUpdate.newCameraPosition(
@@ -113,9 +127,16 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
       });
     } catch (e) {
       print('Error getting current location: $e');
+      final loc = AppLocalizations.of(context)!;
+      final currentLocale = ref.read(localeNotifierProvider);
+      final isArabic = currentLocale.languageCode == 'ar';
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to get current location'),
+          content: Text(
+            loc.failedToGetLocation, // Use localized string
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -126,284 +147,297 @@ class _MapSelectorDialogState extends State<MapSelectorDialog> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Dialog(
-    insetPadding: EdgeInsets.zero,
-    child: Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Column(
-        children: [
-          // Header with same styling as cleaning service screen
-          Container(
-            height: 65,
-            decoration: BoxDecoration(
-              color: Color(0xFF10295C),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.arrow_back_ios,
-                        color: Color(0xFFFFA200),
-                        size: 20,
-                      ),
-                    ),
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Dialog(
+        insetPadding: EdgeInsets.zero,
+        child: Scaffold(
+          backgroundColor: Colors.grey[100],
+          body: Column(
+            children: [
+              // Header with RTL support
+              Container(
+                height: 65,
+                decoration: BoxDecoration(
+                  color: Color(0xFF10295C),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
                   ),
-                  Expanded(
-                    child: Text(
-                      'Select Location',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFFA200),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 48), // Balance the back button width
-                ],
-              ),
-            ),
-          ),
-          
-          // Map content - removed the negative offset to prevent overlap
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.only(top: 8), // Small gap between header and map
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
                 ),
-                child: Stack(
-                  children: [
-                    GoogleMap(
-                      onMapCreated: (GoogleMapController controller) {
-                        _mapController = controller;
-                      },
-                      initialCameraPosition: CameraPosition(
-                        target: widget.initialLocation,
-                        zoom: 15.0,
-                      ),
-                      onCameraMove: _onCameraMove,
-                      onCameraIdle: _onCameraIdle,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: false,
-                      mapType: _currentMapType,
-                      zoomControlsEnabled: false,
-                      polygons: _polygons,
-                      buildingsEnabled: true,
-                      trafficEnabled: false,
-                    ),
-                    // Fixed center pin - always visible
-                    Center(
-                      child: Icon(
-                        Icons.location_on,
-                        color: Colors.red,
-                        size: 40,
-                      ),
-                    ),
-                    // Custom zoom controls (top right)
-                    Positioned(
-                      top: 20,
-                      right: 20,
-                      child: Column(
-                        children: [
-                          // Zoom in button
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: Icon(Icons.add, color: Colors.black54, size: 24),
-                              onPressed: _zoomIn,
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          // Zoom out button
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: Icon(Icons.remove, color: Colors.black54, size: 24),
-                              onPressed: _zoomOut,
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          // Current location button
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: _isGettingLocation 
-                                  ? SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
-                                      ),
-                                    )
-                                  : Icon(Icons.my_location, color: Colors.black54, size: 24),
-                              onPressed: _isGettingLocation ? null : null,
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Map type selector (positioned properly above the confirm button)
-                    Positioned(
-                      bottom: 100,
-                      left: 20,
-                      right: 20,
-                      child: Center(
+                child: SafeArea(
+                  bottom: false,
+                  child: Row(
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
                         child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 6,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // MAP button
-                              GestureDetector(
-                                onTap: () => _changeMapType(MapType.normal),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: _currentMapType == MapType.normal 
-                                        ? Color(0xFF1E3A8A) 
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(8),
-                                      bottomLeft: Radius.circular(8),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Map',
-                                    style: TextStyle(
-                                      color: _currentMapType == MapType.normal 
-                                          ? Colors.white 
-                                          : Colors.black87,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // SATELLITE button
-                              GestureDetector(
-                                onTap: () => _changeMapType(MapType.hybrid),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: _currentMapType == MapType.hybrid
-                                        ? Color(0xFF1E3A8A) 
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(8),
-                                      bottomRight: Radius.circular(8),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Satellite',
-                                    style: TextStyle(
-                                      color: _currentMapType == MapType.hybrid
-                                          ? Colors.white 
-                                          : Colors.black87,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          padding: EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.arrow_back_ios,
+                            color: Color(0xFFFFA200),
+                            size: 20,
                           ),
                         ),
                       ),
-                    ),
-                    // Bottom button
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
+                      Expanded(
+                        child: Text(
+                          loc.selectLocation, // Use localized string
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFFFA200),
                           ),
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                         ),
-                        child: _buildMapActionButton(),
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 48),
+                    ],
+                  ),
                 ),
               ),
-            ),
+              
+              // Map content with RTL adjustments
+              Expanded(
+                child: Container(
+                  margin: EdgeInsets.only(top: 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                    child: Stack(
+                      children: [
+                        // GoogleMap remains the same
+                        GoogleMap(
+                          onMapCreated: (GoogleMapController controller) {
+                            _mapController = controller;
+                          },
+                          initialCameraPosition: CameraPosition(
+                            target: widget.initialLocation,
+                            zoom: 15.0,
+                          ),
+                          onCameraMove: _onCameraMove,
+                          onCameraIdle: _onCameraIdle,
+                          myLocationEnabled: true,
+                          myLocationButtonEnabled: false,
+                          mapType: _currentMapType,
+                          zoomControlsEnabled: false,
+                          polygons: _polygons,
+                          buildingsEnabled: true,
+                          trafficEnabled: false,
+                        ),
+                        // Center pin remains the same
+                        Center(
+                          child: Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 40,
+                          ),
+                        ),
+                        // Custom zoom controls with RTL positioning
+                        Positioned(
+                          top: 20,
+                          left: isArabic ? 20 : null,
+                          right: isArabic ? null : 20,
+                          child: Column(
+                            children: [
+                              // Zoom controls remain the same structure
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  icon: Icon(Icons.add, color: Colors.black54, size: 24),
+                                  onPressed: _zoomIn,
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  icon: Icon(Icons.remove, color: Colors.black54, size: 24),
+                                  onPressed: _zoomOut,
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  icon: _isGettingLocation 
+                                      ? SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+                                          ),
+                                        )
+                                      : Icon(Icons.my_location, color: Colors.black54, size: 24),
+                                  onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Map type selector with RTL support
+                        Positioned(
+                          bottom: 100,
+                          left: 20,
+                          right: 20,
+                          child: Center(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                                children: [
+                                  // MAP button
+                                  GestureDetector(
+                                    onTap: () => _changeMapType(MapType.normal),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: _currentMapType == MapType.normal 
+                                            ? Color(0xFF1E3A8A) 
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: isArabic ? Radius.zero : Radius.circular(8),
+                                          bottomLeft: isArabic ? Radius.zero : Radius.circular(8),
+                                          topRight: isArabic ? Radius.circular(8) : Radius.zero,
+                                          bottomRight: isArabic ? Radius.circular(8) : Radius.zero,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        loc.map, // Use localized string
+                                        style: TextStyle(
+                                          color: _currentMapType == MapType.normal 
+                                              ? Colors.white 
+                                              : Colors.black87,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // SATELLITE button
+                                  GestureDetector(
+                                    onTap: () => _changeMapType(MapType.hybrid),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: _currentMapType == MapType.hybrid
+                                            ? Color(0xFF1E3A8A) 
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.only(
+                                          topRight: isArabic ? Radius.zero : Radius.circular(8),
+                                          bottomRight: isArabic ? Radius.zero : Radius.circular(8),
+                                          topLeft: isArabic ? Radius.circular(8) : Radius.zero,
+                                          bottomLeft: isArabic ? Radius.circular(8) : Radius.zero,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        loc.satellite, // Use localized string
+                                        style: TextStyle(
+                                          color: _currentMapType == MapType.hybrid
+                                              ? Colors.white 
+                                              : Colors.black87,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Bottom button with RTL support
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                            child: _buildMapActionButton(loc, isArabic),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-  Widget _buildMapActionButton() {
+  Widget _buildMapActionButton(AppLocalizations loc, bool isArabic) {
     if (!_hasUserMovedMap) {
-      // Initial state - show instruction text
       return Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 16),
@@ -413,7 +447,7 @@ Widget build(BuildContext context) {
         ),
         child: Center(
           child: Text(
-            'MOVE MAP TO POSITION PIN ON YOUR LOCATION',
+            loc.moveMapToPosition, // Use localized string
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -421,11 +455,11 @@ Widget build(BuildContext context) {
               letterSpacing: 0.5,
             ),
             textAlign: TextAlign.center,
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
           ),
         ),
       );
     } else {
-      // User has moved map - show confirm button (ENABLED)
       return GestureDetector(
         onTap: _confirmLocationSelection,
         child: Container(
@@ -437,13 +471,14 @@ Widget build(BuildContext context) {
           ),
           child: Center(
             child: Text(
-              'Confirm Location',
+              loc.confirmLocation, // Use localized string
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
               ),
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             ),
           ),
         ),
@@ -499,10 +534,16 @@ Widget build(BuildContext context) {
         widget.onLocationSelected(_selectedLocation!);
         Navigator.of(context).pop();
       } else {
-        // Show error message if location is outside boundary
+        final loc = AppLocalizations.of(context)!;
+        final currentLocale = ref.read(localeNotifierProvider);
+        final isArabic = currentLocale.languageCode == 'ar';
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Please select a location within the district boundary'),
+            content: Text(
+              loc.selectLocationWithinBoundary, // Use localized string
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+            ),
             backgroundColor: Colors.red,
           ),
         );

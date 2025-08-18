@@ -811,7 +811,7 @@ void didChangeDependencies() {
                             ),
                             SizedBox(width: 8),
                             Text(
-                              '${loc.congratulations} SAR${completedBooking!.discountAmount.toStringAsFixed(1)} ${loc.saved} ',
+                              '${loc.congratulations} ${completedBooking!.discountAmount.toStringAsFixed(1)}${loc.currencyHourly} ${loc.saved} ',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -837,7 +837,7 @@ void didChangeDependencies() {
                                     textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                                     children: [
                                       Text(
-                                        'SAR ${completedBooking!.totalPrice}',
+                                        '${completedBooking!.totalPrice} ${loc.currencyHourly}',
                                         style: TextStyle(
                                           fontSize: 24,
                                           fontWeight: FontWeight.w600,
@@ -846,7 +846,7 @@ void didChangeDependencies() {
                                       ),
                                       SizedBox(width: 8),
                                       Text(
-                                        'SAR ${completedBooking!.originalPrice}',
+                                        '${completedBooking!.originalPrice} ${loc.currencyHourly}',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: const Color(0xFF768090),
@@ -891,231 +891,248 @@ void didChangeDependencies() {
 
 
 void _showPackageDetailsOverlay(PackageModel package, AppLocalizations loc) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   showDialog(
     context: context,
     barrierDismissible: true,
     builder: (BuildContext context) {
-      return Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 8, vertical: 60), // Reduced horizontal margin for more width
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with close button
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      loc.packageDetails,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+      return Directionality(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 8, vertical: 60),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with close button
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Row(
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        loc.packageDetails,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(Icons.close, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Package image with discount badge - Made smaller
-              Container(
-                height: 140, // Reduced from 200 to 140
-                margin: EdgeInsets.symmetric(horizontal: 16),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: Icon(Icons.close, color: Colors.grey[600]),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          'assets/images/cleaning_service_card.jpg',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.brown[100],
-                              child: Center(
-                                child: Icon(
-                                  Icons.cleaning_services,
-                                  size: 50, // Reduced from 60 to 50
-                                  color: Colors.white.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                
+                // Package image with discount badge
+                Container(
+                  height: 140,
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset(
+                            'assets/images/cleaning_service_card.jpg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.brown[100],
+                                child: Center(
+                                  child: Icon(
+                                    Icons.cleaning_services,
+                                    size: 50,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.1),
+                              Colors.black.withOpacity(0.3),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 12,
+                        left: isArabic ? null : 12,
+                        right: isArabic ? 12 : null,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isArabic 
+                              ? '${loc.get} ${package.discountPercentage}%'
+                              : '${loc.get} ${package.discountPercentage}% ${loc.off}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Package details
+                Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    children: [
+                      // Package name
+                      Align(
+                        alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Text(
+                          package.packageName,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      
+                      // Package details grid
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildDetailRow(loc.noOfEmployee, package.noOfEmployee.toString(), isArabic),
+                            SizedBox(height: 8),
+                            _buildDetailRow(loc.duration, '${package.duration} ${loc.hours}', isArabic),
+                            SizedBox(height: 8),
+                            _buildDetailRow(loc.weeklyVisits, '${package.visitsWeekly}', isArabic),
+                            SizedBox(height: 8),
+                            _buildDetailRow(loc.contractDuration, '${package.noOfWeeks.toString()} ${loc.weeks}', isArabic),
+                          ],
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Price section
+                      Row(
+                        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${loc.totalPrice}:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          Row(
+                            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                            children: [
+                              Text(
+                                '${package.finalPrice.round()} ${loc.currencyHourly}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: double.infinity,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.1),
-                            Colors.black.withOpacity(0.3),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '${loc.get} ${package.discountPercentage}% ${loc.off}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                              SizedBox(width: 8),
+                              Text(
+                                '${package.packagePrice.round()} ${loc.currencyHourly}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[600],
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Package details
-              Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Package name
-                    Text(
-                      package.packageName,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    
-                    // Package details grid
-                    Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildDetailRow(loc.noOfEmployee, package.noOfEmployee.toString()),
-                          SizedBox(height: 8),
-                          _buildDetailRow(loc.duration, '${package.duration} ${loc.hours}'),
-                          SizedBox(height: 8),
-                          _buildDetailRow(loc.weeklyVisits, '${package.visitsWeekly}'),
-                          SizedBox(height: 8),
-                          _buildDetailRow(loc.contractDuration, '${package.noOfWeeks.toString()} ${loc.weeks}'),
                         ],
                       ),
-                    ),
-                    
-                    SizedBox(height: 16),
-                    
-                    // Price section - outside of grid
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${loc.totalPrice}:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              'SAR ${package.finalPrice.round()}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
+                      
+                      SizedBox(height: 20),
+                      
+                      // Add to cart button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            ContinuousBookingOverlay.showAsOverlay(
+                              context,
+                              package: package,
+                              selectedShift: selectedShiftsByGroup.values.isNotEmpty ? selectedShiftsByGroup.values.first : 1,
+                              serviceId: selectedServiceId ?? widget.serviceId,
+                              professionId: widget.professionId,
+                              onBookingCompleted: _onBookingCompleted,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF10295C),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
                             ),
-                            SizedBox(width: 8),
-                            Text(
-                              'SAR ${package.packagePrice.round()}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[600],
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    
-                    SizedBox(height: 20),
-                    
-                    // Add to cart button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Close overlay first
-                          ContinuousBookingOverlay.showAsOverlay(
-                            context,
-                            package: package,
-                            selectedShift: selectedShiftsByGroup.values.isNotEmpty ? selectedShiftsByGroup.values.first : 1,
-                            serviceId: selectedServiceId ?? widget.serviceId,
-                            professionId: widget.professionId,
-                            onBookingCompleted: _onBookingCompleted,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF10295C),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                            elevation: 2,
                           ),
-                          elevation: 2,
-                        ),
-                        child: Text(
-                          loc.add,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                          child: Text(
+                            loc.add,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -1124,8 +1141,9 @@ void _showPackageDetailsOverlay(PackageModel package, AppLocalizations loc) {
 }
 
 // Helper method for detail rows - improved alignment
-Widget _buildDetailRow(String label, String value) {
+Widget _buildDetailRow(String label, String value, bool isArabic) {
   return Row(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -1144,6 +1162,7 @@ Widget _buildDetailRow(String label, String value) {
           fontWeight: FontWeight.w600,
           color: Colors.black87,
         ),
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       ),
     ],
   );
@@ -1691,6 +1710,8 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
 }
 
   Widget _buildCompactServiceCard(PackageModel package, AppLocalizations loc) {
+    final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
   return GestureDetector(
     onTap: () => _showPackageDetailsOverlay(package, loc), // Add this line
     child: Container(
@@ -1761,24 +1782,28 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
                   ),
                 ),
                 Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(4),
+                top: 8,
+                left: isArabic ? null : 8,
+                right: isArabic ? 8 : null,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    isArabic 
+                      ? '${loc.get} ${package.discountPercentage}%'
+                      : '${loc.get} ${package.discountPercentage}% ${loc.off}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
                     ),
-                    child: Text(
-                      '${loc.get} ${package.discountPercentage}% ${loc.off}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
+              ),
               ],
             ),
           ),
@@ -1819,7 +1844,7 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
                   Row(
                     children: [
                       Text(
-                        'SAR ${package.finalPrice}',
+                        '${package.finalPrice} ${loc.currencyHourly}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800, // Made more bold
@@ -1828,7 +1853,7 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
                       ),
                       SizedBox(width: 6),
                       Text(
-                        'SAR ${package.packagePrice}',
+                        '${package.packagePrice} ${loc.currencyHourly}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],

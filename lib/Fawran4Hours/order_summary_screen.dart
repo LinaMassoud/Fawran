@@ -10,8 +10,10 @@ import 'package:fawran/generated/app_localizations.dart';
 import 'package:checkout_flutter/checkout_flutter.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OrderSummaryScreen extends StatefulWidget {
+class OrderSummaryScreen extends ConsumerStatefulWidget {
   final BookingData bookingData;
   final double totalSavings;
   final double originalPrice;
@@ -31,7 +33,7 @@ class OrderSummaryScreen extends StatefulWidget {
   _OrderSummaryScreenState createState() => _OrderSummaryScreenState();
 }
 
-class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
+class _OrderSummaryScreenState extends ConsumerState<OrderSummaryScreen> {
   bool _isPaymentSummaryExpanded = false;
   bool _agreeToTerms = false;
   bool _isLoadingTerms = false; 
@@ -88,89 +90,95 @@ void _showTermsAndConditions(AppLocalizations loc) async {
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      return Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    loc.termsAndCond,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close, color: Colors.grey[600]),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              Container(
-                height: 1,
-                color: Colors.grey[300],
-                margin: EdgeInsets.symmetric(vertical: 16),
-              ),
-              
-              // Content
-              Expanded(
-                child: _isLoadingTerms
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            color: Color(0xFF10295C),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'Loading terms and conditions...',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
+      final currentLocale = ref.watch(localeNotifierProvider);
+      final isArabic = currentLocale.languageCode == 'ar';
+      
+      return Directionality(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      loc.termsAndCond,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                    )
-                  : SingleChildScrollView(
-                      child: _buildFormattedTerms(),
                     ),
-              ),
-              
-              // Close button
-              SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF10295C),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.grey[600]),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text(
-                    loc.close,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  ],
+                ),
+                Container(
+                  height: 1,
+                  color: Colors.grey[300],
+                  margin: EdgeInsets.symmetric(vertical: 16),
+                ),
+                
+                // Content
+                Expanded(
+                  child: _isLoadingTerms
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              color: Color(0xFF10295C),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Loading terms and conditions...',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        child: _buildFormattedTerms(),
+                      ),
+                ),
+                
+                // Close button
+                SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF10295C),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text(
+                      loc.close,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -180,6 +188,9 @@ void _showTermsAndConditions(AppLocalizations loc) async {
 
 // Add this new method to format the terms properly
 Widget _buildFormattedTerms() {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   try {
     // Try to parse _termsContent as JSON array
     final List<dynamic> termsList = json.decode(_termsContent);
@@ -192,6 +203,7 @@ Widget _buildFormattedTerms() {
             padding: EdgeInsets.only(bottom: 16.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 Container(
                   width: 24,
@@ -215,6 +227,8 @@ Widget _buildFormattedTerms() {
                 Expanded(
                   child: Text(
                     termsList[i].toString(),
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    textAlign: isArabic ? TextAlign.right : TextAlign.left,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
@@ -231,6 +245,8 @@ Widget _buildFormattedTerms() {
     // Fallback to plain text display if JSON parsing fails
     return Text(
       _termsContent,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      textAlign: isArabic ? TextAlign.right : TextAlign.left,
       style: TextStyle(
         fontSize: 14,
         color: Colors.black87,
@@ -242,7 +258,12 @@ Widget _buildFormattedTerms() {
   @override
 Widget build(BuildContext context) {
   final loc = AppLocalizations.of(context)!;
-  return Scaffold(
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
+  return Directionality(
+  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+  child: Scaffold(
     backgroundColor: Colors.grey[100],
     body: Stack(
       children: [
@@ -401,7 +422,7 @@ Widget build(BuildContext context) {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
+                                        '${widget.bookingData.totalPrice.toStringAsFixed(1)} ${loc.currencyHourly}',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
@@ -457,10 +478,10 @@ Widget build(BuildContext context) {
 
                           // Payment breakdown
                           _buildPaymentRow(loc.itemTotal,
-                              'SAR ${(widget.bookingData.originalPrice).toStringAsFixed(1)}'),
+                              '${(widget.bookingData.originalPrice).toStringAsFixed(1)} ${loc.currencyHourly}'),
                           SizedBox(height: 12),
                           _buildPaymentRow(loc.packDiscount,
-                              '-SAR ${widget.bookingData.discountAmount.toStringAsFixed(1)}',
+                              '${widget.bookingData.discountAmount.toStringAsFixed(1)}-${loc.currencyHourly}',
                               isDiscount: true),
                           SizedBox(height: 16),
                           Container(height: 1, color: Colors.black87),
@@ -482,7 +503,7 @@ Widget build(BuildContext context) {
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  '${loc.savedSummary} SAR ${widget.bookingData.discountAmount.toStringAsFixed(0)} ${loc.onFinalBill}',
+                                  '${loc.savedSummary} ${widget.bookingData.discountAmount.toStringAsFixed(0)} ${loc.currencyHourly} ${loc.onFinalBill}',
                                   style: TextStyle(
                                     color: Colors.green[700],
                                     fontWeight: FontWeight.w600,
@@ -508,7 +529,7 @@ Widget build(BuildContext context) {
                               ),
                             ),
                             Text(
-                              'SAR ${widget.bookingData.totalPrice.toStringAsFixed(1)}',
+                              '${widget.bookingData.totalPrice.toStringAsFixed(1)} ${loc.currencyHourly}',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -692,6 +713,7 @@ Widget build(BuildContext context) {
         ),
       ],
     ),
+  ),
   );
 }
 
@@ -845,17 +867,27 @@ String _getLocalizedContractDurationSimple(int contractDuration, AppLocalization
 
   // Helper method to get address details based on selected address
   String _getAddressDetails(String selectedAddress) {
-    // You can customize this based on your address structure
-    // For now, providing default details based on the address name
-    switch (selectedAddress) {
-      case 'Al rashidiya':
-        return 'Riyadh Province, Riyadh Principality, Riyadh';
-      case 'Al Abha':
-        return 'Asir Province, Al Abha Principality, Al Abha';
-      default:
-        return 'Saudi Arabia'; // Default fallback
-    }
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  final loc = AppLocalizations.of(context)!;
+  
+  // You can customize this based on your address structure
+  // For now, providing default details based on the address name
+  switch (selectedAddress) {
+    case 'Al rashidiya':
+      return isArabic 
+        ? 'منطقة الرياض، إمارة الرياض، الرياض'
+        : 'Riyadh Province, Riyadh Principality, Riyadh';
+    case 'Al Abha':
+      return isArabic 
+        ? 'منطقة عسير، إمارة أبها، أبها'
+        : 'Asir Province, Al Abha Principality, Al Abha';
+    default:
+      return isArabic 
+        ? loc.saudiArabia ?? 'المملكة العربية السعودية'
+        : 'Saudi Arabia'; // Default fallback
   }
+}
 
   Future<void> _startCheckout() async {
   try {
@@ -889,9 +921,11 @@ String _getLocalizedContractDurationSimple(int contractDuration, AppLocalization
     print('Contract ID: $contractId');
     print('Sector: $sector');
 
+    final currentLocale = ref.watch(localeNotifierProvider);
+
     Map<String, dynamic> configurations = {
       "hashString": "",
-      "language": "en",
+      "language": currentLocale.languageCode == 'ar' ? "ar" : "en",
       "themeMode": "light",
       "supportedPaymentMethods": ["VISA", "MASTERCARD", "APPLE_PAY", "MADA","GOOGLE_PAY","STC_PAY"],
       "paymentType": "ALL",

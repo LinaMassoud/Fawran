@@ -74,7 +74,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final locale = ref.watch(localeNotifierProvider);
     final isArabic = locale.languageCode == 'ar';
 
-    return BackgroundContainer(
+    return Directionality(
+  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+  child:  BackgroundContainer(
       showBackButton: true,
       topSectionHeight: MediaQuery.of(context).size.height * 0.16,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -97,20 +99,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             children: [
               // Title
               Center(
-                child: Text(
-                  loc.getStarted,
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF10295C),
-                  ),
+              child: Text(
+                loc.getStarted,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF10295C),
                 ),
+                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               ),
+            ),
               const SizedBox(height: 24),
 
               // Form fields
@@ -340,30 +344,34 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
               // Login navigation
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "${loc.alreadyHaveAccount} ",
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
+              mainAxisAlignment: MainAxisAlignment.center,
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+              children: [
+                Text(
+                  "${loc.alreadyHaveAccount} ",
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    loc.login,
+                    style: const TextStyle(
+                      color: Color(0xFF4A90E2),
                       fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      loc.login,
-                      style: const TextStyle(
-                        color: Color(0xFF4A90E2),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
+            ),
+
 
               // Extra bottom padding for safe scrolling
               const SizedBox(height: 32),
@@ -371,6 +379,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ),
         ),
       ),
+  ),
     );
   }
 
@@ -399,7 +408,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         hintText: hintText,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         prefixIcon: iconPath != null
-            ? Padding(
+        ? isArabic 
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SvgPicture.asset(
+                      iconPath,
+                      color: Colors.grey.shade400,
+                      width: 16,
+                      height: 16,
+                    ),
+                  ),
+                ],
+              )
+            : Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: SvgPicture.asset(
                   iconPath,
@@ -408,13 +432,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   height: 16,
                 ),
               )
-            : icon != null
-                ? Icon(
-                    icon,
-                    color: Colors.grey.shade400,
-                    size: 16,
-                  )
-                : null,
+        : icon != null
+            ? Icon(
+                icon,
+                color: Colors.grey.shade400,
+                size: 16,
+              )
+            : null,
         suffixIcon: toggleVisibility != null
             ? IconButton(
                 icon: Icon(

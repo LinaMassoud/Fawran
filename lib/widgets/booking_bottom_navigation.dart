@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BookingBottomNavigation extends StatelessWidget {
+class BookingBottomNavigation extends ConsumerWidget {
   final double price;
   final bool canProceed;
   final bool isLastStep;
@@ -16,11 +18,15 @@ class BookingBottomNavigation extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context)!;
+    final locale = ref.watch(localeNotifierProvider);
+    final isArabic = locale.languageCode == 'ar';
     final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     
-    return Container(
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -63,12 +69,13 @@ class BookingBottomNavigation extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'SAR ${price.toStringAsFixed(2)}',
+                    '${price.toStringAsFixed(2)} ${loc.currencyHourly}',
                     style: TextStyle(
                       fontSize: 21,
                       color: Color(0xFFF2582A),
                       fontWeight: FontWeight.bold,
                     ),
+                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ],
               ),
@@ -133,6 +140,7 @@ class BookingBottomNavigation extends StatelessWidget {
             ],
           ],
         ),
+      ),
       ),
       ),
     );

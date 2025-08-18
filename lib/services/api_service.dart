@@ -1348,12 +1348,21 @@ static Future<Map<String, dynamic>?> createTicket({
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'data': json.decode(response.body),
-          'message': 'Address created successfully!'
-        };
-      } else {
+      // Parse the response to get the actual message
+      final responseData = json.decode(response.body);
+      String successMessage = 'Address created successfully!'; // Default fallback
+      
+      // Extract message from API response
+      if (responseData is Map<String, dynamic> && responseData.containsKey('message')) {
+        successMessage = responseData['message'] ?? successMessage;
+      }
+
+      return {
+        'success': true,
+        'data': responseData,
+        'message': successMessage // Use actual API message
+      };
+    } else {
         // Handle error responses
         String errorMessage = 'Failed to create address. Please try again.';
 

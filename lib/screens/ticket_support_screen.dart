@@ -3,15 +3,17 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/api_service.dart';
 import 'create_ticket_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
-class TicketsSupportScreen extends StatefulWidget {
+class TicketsSupportScreen extends ConsumerStatefulWidget {
   const TicketsSupportScreen({Key? key}) : super(key: key);
 
-  @override
-  State<TicketsSupportScreen> createState() => _TicketsSupportScreenState();
+  ConsumerState<TicketsSupportScreen> createState() => _TicketsSupportScreenState();
 }
 
-class _TicketsSupportScreenState extends State<TicketsSupportScreen> {
+class _TicketsSupportScreenState extends ConsumerState<TicketsSupportScreen> {
   List<Map<String, dynamic>> tickets = [];
   Set<String> expandedTickets = {};
   bool isLoading = true;
@@ -119,13 +121,14 @@ class _TicketsSupportScreenState extends State<TicketsSupportScreen> {
   }
 
   String _getStatusText(String? status) {
+    final loc = AppLocalizations.of(context)!;
     switch (status?.toLowerCase()) {
       case 'open':
         return 'Open';
       case 'closed':
-        return 'Closed';
+        return loc.statusClosed;
       case 'pending':
-        return 'Pending';
+        return loc.statusPending;
       case 'in_progress':
         return 'In Progress';
       case 'resolved':
@@ -149,9 +152,14 @@ class _TicketsSupportScreenState extends State<TicketsSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    final loc = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    final isRtl = isArabic;
     
-    return Scaffold(
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         toolbarHeight: 65,
@@ -167,14 +175,14 @@ class _TicketsSupportScreenState extends State<TicketsSupportScreen> {
           child: Container(
             padding: EdgeInsets.all(8),
             child: Icon(
-              isRtl ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
+              Icons.arrow_back_ios,
               color: Color(0xFFFFA200),
               size: 20,
             ),
           ),
         ),
         title: Text(
-          'Tickets Support',
+          loc.ticketsSupport,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -255,325 +263,281 @@ class _TicketsSupportScreenState extends State<TicketsSupportScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 Widget _buildTicketCard(Map<String, dynamic> ticket) {
-  final ticketId = ticket['ticket_id']?.toString() ??
-      ticket['id']?.toString() ??
-      'Unknown';
-  final status = ticket['status']?.toString() ?? 'open';
-  
-  // Use the fetched names directly from the ticket data
-  final category = ticket['category_name'] ?? 'Unknown Category';
-  final ticketType = ticket['type_name'] ?? 'Unknown Type';
-  final cityName = ticket['city_name'] ?? 'Unknown City';
-  
-  final description = ticket['description']?.toString() ??
-      ticket['subject']?.toString() ??
-      'No description';
-  final createdDate = ticket['created_at']?.toString() ??
-      ticket['date']?.toString() ??
-      ticket['created_date']?.toString();
-  final details = ticket['details']?.toString() ?? '';
+  final loc = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    
+    final ticketId = ticket['ticket_id']?.toString() ??
+        ticket['id']?.toString() ??
+        'Unknown';
+    final status = ticket['status']?.toString() ?? 'open';
+    
+    // Use the fetched names directly from the ticket data
+    final category = ticket['category_name'] ?? 'Unknown Category';
+    final ticketType = ticket['type_name'] ?? 'Unknown Type';
+    final cityName = ticket['city_name'] ?? 'Unknown City';
+    
+    final description = ticket['description']?.toString() ??
+        ticket['subject']?.toString() ??
+        'No description';
+    final createdDate = ticket['created_at']?.toString() ??
+        ticket['date']?.toString() ??
+        ticket['created_date']?.toString();
+    final details = ticket['details']?.toString() ?? '';
 
-  final isExpanded = expandedTickets.contains(ticketId);
+    final isExpanded = expandedTickets.contains(ticketId);
 
-  return GestureDetector(
-    onTap: () {
-      setState(() {
-        if (isExpanded) {
-          expandedTickets.remove(ticketId);
-        } else {
-          expandedTickets.add(ticketId);
-        }
-      });
-    },
-    child: AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Color(0xFFE0EAFF), // White-Blue background
-        border: Border.all(
-          color: Color(0xFF1E49A0), // Second-blue border
-          width: 1,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isExpanded) {
+            expandedTickets.remove(ticketId);
+          } else {
+            expandedTickets.add(ticketId);
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Color(0xFFE0EAFF), // White-Blue background
+          border: Border.all(
+            color: Color(0xFF1E49A0), // Second-blue border
+            width: 1,
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            // Background SVG positioned at bottom right
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: SvgPicture.asset(
-                  'assets/images/design.svg', // Your background SVG path
-                  width: 96, // Adjust size as needed
-                  height: 96, // Adjust size as needed
-                  fit: BoxFit.contain,
-                ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            
-            // Main content column
-            Column(
-              children: [
-                // Main card content with Stack
-                Stack(
-                  children: [
-                    // Main ticket content with padding
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 32), // Space at top
-                          _buildTicketDetail(
-                            iconPath: 'assets/icons/info.svg',
-                            text: 'Ticket Category: $category',
-                          ),
-                          const SizedBox(height: 8),
-                          _buildTicketDetail(
-                            iconPath: 'assets/icons/info.svg',
-                            text: 'Ticket Type: $ticketType',
-                          ),
-                          const SizedBox(height: 8),
-                          _buildTicketDetail(
-                            iconPath: 'assets/icons/info.svg',
-                            text: 'Date: ${_formatDate(createdDate)}',
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Positioned ticket number container
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: Container(
-                        width: 140,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF1E3A8A),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            bottomRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          'T CS $ticketId',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Positioned status and expand button
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Container(
-                        height: 40,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              // Background SVG positioned at bottom right for LTR, bottom left for RTL
+              Positioned(
+                bottom: 0,
+                right: isArabic ? null : 0,
+                left: isArabic ? 0 : null,
+                child: SvgPicture.asset(
+                    'assets/images/design.svg', // Your background SVG path
+                    width: 96, // Adjust size as needed
+                    height: 96, // Adjust size as needed
+                    fit: BoxFit.contain,
+                  ),
+              ),
+              
+              // Main content column
+              Column(
+                children: [
+                  // Main card content with Stack
+                  Stack(
+                    children: [
+                      // Main ticket content with padding
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(status),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Text(
-                                _getStatusText(status),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                            const SizedBox(height: 32), // Space at top
+                            _buildTicketDetail(
+                              iconPath: 'assets/icons/info.svg',
+                              text: '${loc.ticketCategory}: $category',
+                              isArabic: isArabic,
                             ),
-                            const SizedBox(width: 8),
-                            AnimatedRotation(
-                              turns: isExpanded ? 0.5 : 0,
-                              duration: Duration(milliseconds: 300),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF90A3B2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.keyboard_arrow_down,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
+                            const SizedBox(height: 8),
+                            _buildTicketDetail(
+                              iconPath: 'assets/icons/info.svg',
+                              text: '${loc.ticketType}: $ticketType',
+                              isArabic: isArabic,
+                            ),
+                            const SizedBox(height: 8),
+                            _buildTicketDetail(
+                              iconPath: 'assets/icons/info.svg',
+                              text: '${loc.date}: ${_formatDate(createdDate)}',
+                              isArabic: isArabic,
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
 
-                // Expandable details section
-                AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  height: isExpanded && details.isNotEmpty ? null : 0,
-                  child: isExpanded && details.isNotEmpty
-                      ? Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      // Positioned ticket number container - adjust for RTL
+                      Positioned(
+                        top: 0,
+                        left: isArabic ? null : 0,
+                        right: isArabic ? 0 : null,
+                        child: Container(
+                          width: 140,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Color(0xFF1E3A8A),
                             borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(15),
-                              bottomRight: Radius.circular(15),
+                              topLeft: isArabic ? Radius.zero : Radius.circular(16),
+                              topRight: isArabic ? Radius.circular(16) : Radius.zero,
+                              bottomLeft: isArabic ? Radius.circular(16) : Radius.zero,
+                              bottomRight: isArabic ? Radius.zero : Radius.circular(16),
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Text(
+                            'T CS $ticketId',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                          ),
+                        ),
+                      ),
+
+                      // Positioned status and expand button - adjust for RTL
+                      Positioned(
+                        top: 0,
+                        right: isArabic ? null : 0,
+                        left: isArabic ? 0 : null,
+                        child: Container(
+                          height: 40,
+                          padding: EdgeInsets.only(
+                            right: isArabic ? 0 : 16,
+                            left: isArabic ? 16 : 0,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                             children: [
-                              Text(
-                                details,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF091735),
-                                  height: 1.4,
-                                  fontWeight: FontWeight.w600,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(status),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Text(
+                                  _getStatusText(status),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              AnimatedRotation(
+                                turns: isExpanded ? 0.5 : 0,
+                                duration: Duration(milliseconds: 300),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF90A3B2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        )
-                      : SizedBox.shrink(),
-                ),
-              ],
-            ),
-          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Expandable details section
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    height: isExpanded && details.isNotEmpty ? null : 0,
+                    child: isExpanded && details.isNotEmpty
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(15),
+                                bottomRight: Radius.circular(15),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                                  child: Text(
+                                    details,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF091735),
+                                      height: 1.4,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                                    textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
 
   Widget _buildTicketDetail({
-  required String iconPath, // Changed from IconData to String for SVG path
-  required String text,
-}) {
-  return Row(
-    children: [
-      Container( // Slightly increased padding
-        child: SvgPicture.asset(
-          iconPath,
-          width: 12,
-          height: 12,
-          colorFilter: ColorFilter.mode(Color((0xFF1E49A0)), BlendMode.srcIn),
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFF091735),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    ],
-  );
-}
-
-  Widget _buildDetailRow(String label, String value) {
+    required String iconPath,
+    required String text,
+    required bool isArabic,
+  }) {
     return Row(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       children: [
         Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: Color(0xFFFF9800),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.info_outline,
-            size: 12,
-            color: Colors.white,
+          child: SvgPicture.asset(
+            iconPath,
+            width: 12,
+            height: 12,
+            colorFilter: ColorFilter.mode(Color((0xFF1E49A0)), BlendMode.srcIn),
           ),
         ),
         const SizedBox(width: 12),
-        Text(
-          '$label ',
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.white,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
         Expanded(
           child: Text(
-            value,
+            text,
             style: const TextStyle(
               fontSize: 13,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
+              color: Color(0xFF091735),
+              fontWeight: FontWeight.w600,
             ),
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
           ),
         ),
       ],
     );
   }
 
-  void _editTicket(Map<String, dynamic> ticket) {
-    // Navigate to edit ticket screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit ticket functionality to be implemented')),
-    );
-  }
-
-  void _closeTicket(Map<String, dynamic> ticket) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Close Ticket'),
-        content: Text('Are you sure you want to close ticket CST ${ticket['ticket_id'] ?? ticket['id']}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Implement close ticket API call here
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ticket closed successfully')),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Close Ticket', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
 }

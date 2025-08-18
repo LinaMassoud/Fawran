@@ -7,8 +7,12 @@ import '../models/address_model.dart';
 import '../services/api_service.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DateSelectionStep extends StatefulWidget {
+import 'dart:ui' as ui;
+
+class DateSelectionStep extends ConsumerStatefulWidget {
   final List<DateTime> selectedDates;
   final Function(List<DateTime>) onDatesChanged;
   final Function(List<String>)? onSelectedDaysChanged;
@@ -50,7 +54,7 @@ class DateSelectionStep extends StatefulWidget {
   _DateSelectionStepState createState() => _DateSelectionStepState();
 }
 
-class _DateSelectionStepState extends State<DateSelectionStep> {
+class _DateSelectionStepState extends ConsumerState<DateSelectionStep>  {
   late PageController _pageController;
   late DateTime _currentMonth;
   List<DateTime> _selectedDates = [];
@@ -108,6 +112,8 @@ void _updatePromotionMessageLocalization() {
     });
   }
 }
+
+
 
 void _validateCouponCode() async {
   if (_couponController.text.trim().isEmpty) {
@@ -240,7 +246,7 @@ Widget _buildCouponSection(AppLocalizations loc) {
               child: TextField(
                 controller: _couponController,
                 decoration: InputDecoration(
-                  hintText: 'Enter coupon code',
+                  hintText: loc.enterCouponCode,
                   hintStyle: TextStyle(color: Colors.grey.shade500),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -1315,12 +1321,16 @@ void _showSnackBarWithShake(String message) {
 @override
 Widget build(BuildContext context) {
   final loc = AppLocalizations.of(context)!;
+    final locale = ref.watch(localeNotifierProvider);
+    final isArabic = locale.languageCode == 'ar';
   _updatePromotionMessageLocalization(); 
-  return Column(
+  return Directionality(
+      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+      child:  Column(
     children: [
       Container(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        alignment: Alignment.centerLeft,
+        alignment: AlignmentDirectional.centerStart,
         child: Text(
           loc.selectDate,
           style: TextStyle(
@@ -1424,8 +1434,8 @@ Widget build(BuildContext context) {
           // UPDATE THIS PART TO SHOW DISCOUNTED PRICE
           Text(
             _isCouponApplied && _discountedPrice > 0
-                ? 'SAR ${_discountedPrice.toInt()}'
-                : 'SAR ${(widget.package?.originalPrice ?? widget.totalPrice).toInt()}',
+                ? '${_discountedPrice.toInt()} ${loc.currencyHourly}'
+                : '${(widget.package?.originalPrice ?? widget.totalPrice).toInt()} ${loc.currencyHourly}',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -1466,6 +1476,7 @@ Widget build(BuildContext context) {
   ),
 ),
     ],
+      ),
   );
 }
 }

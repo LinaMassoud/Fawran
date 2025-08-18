@@ -15,24 +15,26 @@ import 'package:fawran/generated/app_localizations.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
 import '../widgets/reusable_header_scaffold.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddNewAddressScreen extends StatefulWidget {
+class AddNewAddressScreen extends ConsumerStatefulWidget {
   final PackageModel? package;
   final int? serviceId;
-  final String? user_id; // Add serviceId parameter
+  final String? user_id;
 
   const AddNewAddressScreen({
     Key? key,
     this.package,
     this.user_id,
-    this.serviceId, // Add serviceId parameter
+    this.serviceId,
   }) : super(key: key);
 
   @override
   _AddNewAddressScreenState createState() => _AddNewAddressScreenState();
 }
 
-class _AddNewAddressScreenState extends State<AddNewAddressScreen> {
+class _AddNewAddressScreenState extends ConsumerState<AddNewAddressScreen> {
   // Controllers for form fields
   final TextEditingController _addressTitleController = TextEditingController();
   final TextEditingController _streetNameController = TextEditingController();
@@ -821,47 +823,51 @@ Future<void> _getCurrentLocation() async {
     _createAddressAPI();
   }
 
-  Widget _buildStepIndicator(
-      int stepNumber, String title, bool isCompleted, bool isActive) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: isCompleted
-                ? Colors.green
-                : (isActive ? Color(0xFF1E3A8A) : Colors.grey[300]),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: isCompleted
-                ? Icon(Icons.check, color: Colors.white, size: 20)
-                : Text(
-                    stepNumber.toString(),
-                    style: TextStyle(
-                      color: isActive ? Colors.white : Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+  Widget _buildStepIndicator(int stepNumber, String title, bool isCompleted, bool isActive) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    children: [
+      Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: isCompleted
+              ? Colors.green
+              : (isActive ? Color(0xFF1E3A8A) : Colors.grey[300]),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: isCompleted
+              ? Icon(Icons.check, color: Colors.white, size: 20)
+              : Text(
+                  stepNumber.toString(),
+                  style: TextStyle(
+                    color: isActive ? Colors.white : Colors.grey[600],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-          ),
+                ),
         ),
-        SizedBox(width: 15),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: isCompleted
-                ? Colors.green
-                : (isActive ? Color(0xFF1E3A8A) : Colors.grey[500]),
-          ),
+      ),
+      SizedBox(width: 15),
+      Text(
+        title,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: isCompleted
+              ? Colors.green
+              : (isActive ? Color(0xFF1E3A8A) : Colors.grey[500]),
         ),
-      ],
-    );
-  }
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      ),
+    ],
+  );
+}
 
   Widget _buildCityDropdown(AppLocalizations loc) {
     if (_isLoadingCities) {
@@ -1029,17 +1035,19 @@ Future<void> _getCurrentLocation() async {
   }
   
   Widget _buildCurrentLocationButton({required AppLocalizations loc}) {
-  // Don't show the button if current location failed and user hasn't tried again
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   if (_currentLocationFailed && _hasTriedCurrentLocation) {
-    return SizedBox.shrink(); // This removes the button completely
+    return SizedBox.shrink();
   }
 
   return Container(
     width: double.infinity,
     margin: EdgeInsets.only(bottom: 20),
-    child: Center( // Center the button
+    child: Center(
       child: Container(
-        width: 325, // Set fixed width to match the image
+        width: 325,
         child: ElevatedButton.icon(
           onPressed: _isGettingCurrentLocation ? null : _toggleCurrentLocation,
           icon: _isGettingCurrentLocation
@@ -1057,10 +1065,13 @@ Future<void> _getCurrentLocation() async {
                       color: Colors.white,
                     )
                   : Padding(
-                    padding: EdgeInsets.only(right: 8), // Reduced spacing
+                    padding: EdgeInsets.only(
+                      right: isArabic ? 0 : 8, // Conditional padding for RTL
+                      left: isArabic ? 8 : 0,
+                    ),
                     child: SvgPicture.asset(
                       'assets/icons/my_location.svg',
-                      width: 20, // Slightly smaller icon
+                      width: 20,
                       height: 20,
                       colorFilter: ColorFilter.mode(
                         Color(0xFF1E3A8A),
@@ -1076,9 +1087,10 @@ Future<void> _getCurrentLocation() async {
                     : loc.autoSelectLocation,
             style: TextStyle(
               color: _useCurrentLocation ? Colors.white : Color(0xFF1E3A8A),
-              fontSize: 20, // Slightly smaller font
-              fontWeight: FontWeight.w600, // Reduced from w700
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
             ),
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: _useCurrentLocation ? Color(0xFF1E3A8A) : Colors.grey[100],
@@ -1087,9 +1099,9 @@ Future<void> _getCurrentLocation() async {
               color: Color(0xFF1E3A8A),
               width: 1,
             ),
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), // More compact padding
+            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25), // Slightly smaller border radius
+              borderRadius: BorderRadius.circular(25),
             ),
             elevation: _useCurrentLocation ? 2 : 0,
           ),
@@ -1203,37 +1215,64 @@ Future<void> _getCurrentLocation() async {
   }
 
   Widget _buildTextField(String hint, TextEditingController controller,
-      {int maxLines = 1, bool enabled = true, int? maxLength}) {
-    return Container(
-      width: double.infinity,
-      padding:
-          EdgeInsets.symmetric(horizontal: 16, vertical: maxLines > 1 ? 16 : 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: enabled ? Colors.white : Colors.grey[100],
-      ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        enabled: enabled,
-        maxLength: maxLength,
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-              color: enabled ? Colors.grey[600] : Colors.grey[400],
-              fontSize: 16),
-          border: InputBorder.none,
-        ),
-        style: TextStyle(
+    {int maxLines = 1, bool enabled = true, int? maxLength}) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: maxLines > 1 ? 16 : 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: TextField(
+      controller: controller,
+      maxLines: maxLines,
+      enabled: enabled,
+      maxLength: maxLength,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      textAlign: isArabic ? TextAlign.right : TextAlign.left,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          color: enabled ? Colors.grey[600] : Colors.grey[400],
           fontSize: 16,
-          color: enabled ? Colors.black : Colors.grey[400],
         ),
+        border: InputBorder.none,
       ),
-    );
-  }
+      style: TextStyle(
+        fontSize: 16,
+        color: enabled ? Colors.black : Colors.grey[400],
+      ),
+    ),
+  );
+}
 
-  Widget _buildMapSelector({bool enabled = true,required AppLocalizations loc}) {
+
+Widget _buildFormLabel(String text, {bool required = false}) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
+  return Align(
+    alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+    child: Text(
+      required ? '$text *' : text,
+      style: TextStyle(
+        fontSize: 16,
+        color: _canProceedToDetails ? Colors.grey[600] : Colors.grey[400],
+        fontWeight: FontWeight.w500,
+      ),
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    ),
+  );
+}
+
+  Widget _buildMapSelector({bool enabled = true, required AppLocalizations loc}) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   return GestureDetector(
     onTap: enabled ? _openMapSelector : null,
     child: Container(
@@ -1245,6 +1284,7 @@ Future<void> _getCurrentLocation() async {
         color: enabled ? Colors.white : Colors.grey[100],
       ),
       child: Row(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         children: [
           SizedBox(width: 16),
           if (_isLoadingDistrictMap && _selectedDistrictCode != null) ...[
@@ -1264,6 +1304,7 @@ Future<void> _getCurrentLocation() async {
                   fontSize: 16,
                   color: enabled ? Colors.grey[600] : Colors.grey[400],
                 ),
+                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               ),
             ),
           ] else ...[
@@ -1276,6 +1317,7 @@ Future<void> _getCurrentLocation() async {
                       ? (_isMapCompleted ? Colors.black : Colors.grey[600])
                       : Colors.grey[400],
                 ),
+                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               ),
             ),
             Text(
@@ -1284,6 +1326,7 @@ Future<void> _getCurrentLocation() async {
                 color: enabled ? Colors.grey[700] : Colors.grey[400],
                 fontSize: 16,
               ),
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
             ),
           ],
           SizedBox(width: 16),
@@ -1296,8 +1339,12 @@ Future<void> _getCurrentLocation() async {
   @override
 Widget build(BuildContext context) {
   final loc = AppLocalizations.of(context)!;
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
   
-  return Scaffold(
+  return Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: Scaffold(
     backgroundColor: Colors.grey[100],
     body: Stack(
       children: [
@@ -1387,16 +1434,7 @@ Widget build(BuildContext context) {
                           ),
                           const SizedBox(height: 25),
 
-                          Text(
-                            '${loc.fullAddress} *',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: _canProceedToDetails
-                                  ? Colors.grey[600]
-                                  : Colors.grey[400],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          _buildFormLabel(loc.fullAddress, required: true),
                           const SizedBox(height: 8),
                           _buildTextField('${loc.selectAddress}',
                               _addressTitleController,
@@ -1638,6 +1676,7 @@ Widget build(BuildContext context) {
   ),
 ),
       ],
+    ),
     ),
   );
 }

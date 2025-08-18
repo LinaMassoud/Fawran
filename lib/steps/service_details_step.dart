@@ -7,8 +7,13 @@ import 'custom_date_selection.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import '../models/address_model.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ServiceDetailsStep extends StatefulWidget {
+import 'dart:ui' as ui;
+
+
+class ServiceDetailsStep extends ConsumerStatefulWidget {
   final String selectedNationality;
   final int workerCount;
   final int contractDuration; // Changed from String to int (weeks)
@@ -83,7 +88,7 @@ class ServiceDetailsStep extends StatefulWidget {
   @override
   _ServiceDetailsStepState createState() => _ServiceDetailsStepState();
 }
-class _ServiceDetailsStepState extends State<ServiceDetailsStep> {
+class _ServiceDetailsStepState extends ConsumerState<ServiceDetailsStep> {
   final List<String> weekDays = [
     'Sunday',
     'Monday',
@@ -939,154 +944,163 @@ Future<bool> _validateWorkers() async {
 }
 
 Widget _buildCouponCodeField(AppLocalizations loc) {
-  // Only show coupon field if price calculation is complete
-  bool canApplyCoupon = _apiPricePerVisit > 0 && _apiTotalPrice > 0 && _apiHourPrice > 0;
-  
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    margin: EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      color: canApplyCoupon ? Colors.grey.shade50 : Colors.grey.shade100,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: canApplyCoupon ? Colors.grey.shade200 : Colors.grey.shade300,
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    bool canApplyCoupon = _apiPricePerVisit > 0 && _apiTotalPrice > 0 && _apiHourPrice > 0;
+    
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: canApplyCoupon ? Colors.grey.shade50 : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: canApplyCoupon ? Colors.grey.shade200 : Colors.grey.shade300,
+        ),
       ),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          loc.couponCode,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: canApplyCoupon ? Color(0xFF091735) : const Color(0xFF768090),
+      child: Column(
+        crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Align(
+  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+  child: Text(
+            loc.couponCode,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: canApplyCoupon ? Color(0xFF091735) : const Color(0xFF768090),
+            ),
+            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
           ),
-        ),
-        
-        SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _couponController,
-                enabled: canApplyCoupon,
-                onChanged: canApplyCoupon ? (value) {
-                  setState(() {
-                    _couponCode = value;
-                    _couponMessage = ''; // Clear previous messages
-                  });
-                } : null,
-                decoration: InputDecoration(
-                  hintText: loc.enterCouponCode,
-                  hintStyle: TextStyle(
-                    color: canApplyCoupon ? Colors.grey.shade500 : Colors.grey.shade400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
-                    ),
-                  ),
-                  disabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: canApplyCoupon ? Color(0xFF1E3A8A) : Colors.grey.shade400,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  filled: true,
-                  fillColor: canApplyCoupon ? Colors.white : Colors.grey.shade200,
-                  suffixIcon: (_isCouponApplied && canApplyCoupon)
-                      ? IconButton(
-                          icon: Icon(Icons.close, color: Colors.red),
-                          onPressed: _removeCoupon,
-                        )
-                      : null,
-                ),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: canApplyCoupon ? Colors.black : const Color(0xFF768090),
-                ),
-              ),
-            ),
-            SizedBox(width: 12),
-            Container(
-              height: 36,
-              child: ElevatedButton(
-                onPressed: (canApplyCoupon && !_isValidatingCoupon) ? _validateCouponCode : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: canApplyCoupon 
-                      ? (_isCouponApplied ? Colors.green : Color(0xFF1E3A8A))
-                      : Colors.grey.shade400,
-                  disabledBackgroundColor: Color(0xFF768090),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 25),
-                  minimumSize: Size(80, 48),
-                ),
-                child: _isValidatingCoupon
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Text(
-                        _isCouponApplied ? loc.applied : loc.apply,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
-          ],
-        ),
-        if (_couponMessage.isNotEmpty && canApplyCoupon) ...[
-          SizedBox(height: 8),
+          ),
+          
+          SizedBox(height: 12),
           Row(
+            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
             children: [
-              Icon(
-                _isCouponValid ? Icons.check_circle : Icons.error,
-                size: 16,
-                color: _isCouponValid ? Colors.green : Colors.red,
-              ),
-              SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  _couponMessage,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _isCouponValid ? Colors.green.shade700 : Colors.red.shade700,
-                    fontWeight: FontWeight.w500,
+                child: TextField(
+                  controller: _couponController,
+                  enabled: canApplyCoupon,
+                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                  onChanged: canApplyCoupon ? (value) {
+                    setState(() {
+                      _couponCode = value;
+                      _couponMessage = '';
+                    });
+                  } : null,
+                  decoration: InputDecoration(
+                    hintText: loc.enterCouponCode,
+                    hintStyle: TextStyle(
+                      color: canApplyCoupon ? Colors.grey.shade500 : Colors.grey.shade400,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
+                      ),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: canApplyCoupon ? Color(0xFF1E3A8A) : Colors.grey.shade400,
+                      ),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    filled: true,
+                    fillColor: canApplyCoupon ? Colors.white : Colors.grey.shade200,
+                    suffixIcon: (_isCouponApplied && canApplyCoupon)
+                        ? IconButton(
+                            icon: Icon(Icons.close, color: Colors.red),
+                            onPressed: _removeCoupon,
+                          )
+                        : null,
                   ),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: canApplyCoupon ? Colors.black : const Color(0xFF768090),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Container(
+                height: 36,
+                child: ElevatedButton(
+                  onPressed: (canApplyCoupon && !_isValidatingCoupon) ? _validateCouponCode : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: canApplyCoupon 
+                        ? (_isCouponApplied ? Colors.green : Color(0xFF1E3A8A))
+                        : Colors.grey.shade400,
+                    disabledBackgroundColor: Color(0xFF768090),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(horizontal: 25),
+                    minimumSize: Size(80, 48),
+                  ),
+                  child: _isValidatingCoupon
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          _isCouponApplied ? loc.applied : loc.apply,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ],
           ),
+          if (_couponMessage.isNotEmpty && canApplyCoupon) ...[
+            SizedBox(height: 8),
+            Row(
+              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+              children: [
+                Icon(
+                  _isCouponValid ? Icons.check_circle : Icons.error,
+                  size: 16,
+                  color: _isCouponValid ? Colors.green : Colors.red,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _couponMessage,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _isCouponValid ? Colors.green.shade700 : Colors.red.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
 
 // Add this method to build the Select Date field
   Widget _buildSelectDateField(AppLocalizations loc) {
@@ -1464,197 +1478,212 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
   }
 
   Widget _buildDropdownField(
-  String label,
-  String value,
-  List<String> options,
-  Function(String) onChanged, {
-  bool isEnabled = true,
-  String? customTitle,
-  bool isLoading = false,
-  required AppLocalizations loc,
-}) {
-  // Check if value is empty or not in options
-  bool hasValidValue = value.isNotEmpty && options.contains(value);
+    String label,
+    String value,
+    List<String> options,
+    Function(String) onChanged, {
+    bool isEnabled = true,
+    String? customTitle,
+    bool isLoading = false,
+    required AppLocalizations loc,
+  }) {
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    bool hasValidValue = value.isNotEmpty && options.contains(value);
 
-  return Container(
-    margin: EdgeInsets.only(bottom: 15),
-    child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: isEnabled && !isLoading
-            ? () => _showCustomDropdown(
-                context, options, value, onChanged, customTitle)
-            : null,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!, width: 1.5),
-            borderRadius: BorderRadius.circular(12),
-            color: Colors.white,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: const Color(0xFF768090),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              if (isEnabled) ...[
-                if (isLoading)
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
-                    ),
-                  )
-                else ...[
-                  Text(
-                    hasValidValue ? value : loc.select,
+    return Container(
+      margin: EdgeInsets.only(bottom: 15),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isEnabled && !isLoading
+              ? () => _showCustomDropdown(
+                  context, options, value, onChanged, customTitle)
+              : null,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!, width: 1.5),
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+            ),
+            child: Row(
+              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
                     style: TextStyle(
                       fontSize: 16,
-                      color: hasValidValue ? const Color(0xFF10295C) : const Color(0xFF768090),
-                      fontWeight:
-                          hasValidValue ? FontWeight.w700 : FontWeight.w700,
+                      color: const Color(0xFF768090),
+                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down,
-                      color: Colors.grey[600], size: 20),
-                ],
-              ] else
-                Text(
-                  hasValidValue ? value : 'Select',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: hasValidValue ? const Color(0xFF10295C) : Colors.grey[500],
-                    fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w600,
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
                   ),
                 ),
-            ],
+                if (isEnabled) ...[
+                  if (isLoading)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+                      ),
+                    )
+                  else ...[
+                    Text(
+                      hasValidValue ? value : loc.select,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: hasValidValue ? const Color(0xFF10295C) : const Color(0xFF768090),
+                        fontWeight:
+                            hasValidValue ? FontWeight.w700 : FontWeight.w700,
+                      ),
+                      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      isArabic ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_down,
+                      color: Colors.grey[600], 
+                      size: 20
+                    ),
+                  ],
+                ] else
+                  Text(
+                    hasValidValue ? value : 'Select',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: hasValidValue ? const Color(0xFF10295C) : Colors.grey[500],
+                      fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w600,
+                    ),
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showCustomDropdown(
-  BuildContext context,
-  List<String> options,
-  String currentValue,
-  Function(String) onChanged,
-  String? customTitle,
-) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * 0.6,
-    ),
-    builder: (BuildContext context) {
-      return Container(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(height: 20),
+    BuildContext context,
+    List<String> options,
+    String currentValue,
+    Function(String) onChanged,
+    String? customTitle,
+  ) {
+    final currentLocale = ref.watch(localeNotifierProvider);
+    final isArabic = currentLocale.languageCode == 'ar';
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      builder: (BuildContext context) {
+        return Directionality(
+          textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 20),
 
-            // Title
-            Text(
-              customTitle ?? 'Select Option',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF091735),
-              ),
-            ),
-            SizedBox(height: 10),
+                // Title
+                Text(
+                  customTitle ?? 'Select Option',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF091735),
+                  ),
+                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                ),
+                SizedBox(height: 10),
 
-            Divider(color: Colors.grey[200]),
+                Divider(color: Colors.grey[200]),
 
-            // Scrollable options
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (context, index) {
-                  final option = options[index];
-                  final isSelected = currentValue.isNotEmpty && option == currentValue;
+                // Scrollable options
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options[index];
+                      final isSelected = currentValue.isNotEmpty && option == currentValue;
 
-                  return InkWell(
-                    onTap: () async {
-                      Navigator.pop(context);
-                      
-                      // Call the onChanged callback and handle if it's async
-                      final result = onChanged(option);
-                      if (result is Future) {
-                        await result;
-                      }
-                      
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Color(0xFF1E3A8A).withOpacity(0.1)
-                            : Colors.transparent,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              option,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: isSelected
-                                    ? Color(0xFF1E3A8A)
-                                    : Color(0xFF091735),
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                              ),
-                            ),
+                      return InkWell(
+                        onTap: () async {
+                          Navigator.pop(context);
+                          
+                          final result = onChanged(option);
+                          if (result is Future) {
+                            await result;
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Color(0xFF1E3A8A).withOpacity(0.1)
+                                : Colors.transparent,
                           ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check,
-                              color: Color(0xFF1E3A8A),
-                              size: 20,
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                          child: Row(
+                            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: isSelected
+                                        ? Color(0xFF1E3A8A)
+                                        : Color(0xFF091735),
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
+                                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: Color(0xFF1E3A8A),
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    },
-  );
-}
+          ),
+        );
+      },
+    );
+  }
 
 Future<void> _handleDonePressed() async {
   if (!_isValidDateSelection()) {
@@ -1856,7 +1885,12 @@ Future<void> _handleDonePressed() async {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return Scaffold(
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
+  return Directionality(
+  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+  child: Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
@@ -2062,7 +2096,7 @@ Future<void> _handleDonePressed() async {
                         ),
                       ),
                       Text(
-                        'SAR ${(_calculatedTotalPrice > 0 && _internalSelectedDates.isNotEmpty) ? _calculatedTotalPrice.toStringAsFixed(2) : '0.0'}',
+                        '${(_calculatedTotalPrice > 0 && _internalSelectedDates.isNotEmpty) ? _calculatedTotalPrice.toStringAsFixed(2) : '0.0'} ${loc.currencyHourly}',
                         style: TextStyle(
                           fontSize: 20,
                           color: Color(0xFF091735),
@@ -2114,6 +2148,7 @@ Future<void> _handleDonePressed() async {
           ),
         ],
       ),
+    ),
     );
   }
 }
