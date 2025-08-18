@@ -106,7 +106,7 @@
   "selectHouseType":"اختر نوع المنزل",
   "selectFloor":"اختر الكلمة",
   "selectNote":"رقم الوحدة، رمز الدخول، إلخ",
-  "selectLocation":"حدد الموقع",
+  "selectLocation":"اختر الموقع",
   "mapSelected":"تم تحديد الخريطة",
   "edit":"يحرر",
   "save":"يحفظ",
@@ -322,8 +322,16 @@
     "pleaseSelectCategory": "يرجى اختيار فئة",
     "pleaseSelectTicketType": "يرجى اختيار نوع التذكرة",
     "pleaseEnterTicketDetails": "يرجى إدخال تفاصيل التذكرة",
-    "uploadFunctionalityImplemented": "سيتم تنفيذ وظيفة الرفع"
+    "uploadFunctionalityImplemented": "سيتم تنفيذ وظيفة الرفع",
 
+    "map": "خريطة",
+    "satellite": "قمر صناعي",
+    "moveMapToPosition": "حرك الخريطة لوضع الدبوس على موقعك",
+    "confirmLocation": "تأكيد الموقع",
+    "selectLocationWithinBoundary": "يرجى اختيار موقع داخل حدود المنطقة",
+    "locationPermissionDenied": "تم رفض إذن الموقع",
+    "locationPermissionPermanentlyDenied": "تم رفض إذن الموقع نهائياً. يرجى التفعيل من الإعدادات.",
+    "failedToGetLocation": "فشل في الحصول على الموقع الحالي"
 
 
 }

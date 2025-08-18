@@ -317,7 +317,16 @@
     "pleaseSelectCategory": "Please select a category",
     "pleaseSelectTicketType": "Please select a ticket type",
     "pleaseEnterTicketDetails": "Please enter ticket details",
-    "uploadFunctionalityImplemented": "Upload functionality to be implemented"
+    "uploadFunctionalityImplemented": "Upload functionality to be implemented",
+
+    "map": "Map",
+    "satellite": "Satellite",
+    "moveMapToPosition": "MOVE MAP TO POSITION PIN ON YOUR LOCATION",
+    "confirmLocation": "Confirm Location",
+    "selectLocationWithinBoundary": "Please select a location within the district boundary",
+    "locationPermissionDenied": "Location permission denied",
+    "locationPermissionPermanentlyDenied": "Location permission permanently denied. Please enable in settings.",
+    "failedToGetLocation": "Failed to get current location"
 
 
 }
