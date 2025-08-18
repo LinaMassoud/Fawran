@@ -850,6 +850,7 @@ Future<bool> _validateWorkers() async {
       final isValid = validationResult['valid'] == true;
       final availableWorkers = validationResult['available_workers'] ?? 0;
       final workerIds = (validationResult['worker_ids'] as List?)?.cast<int>() ?? [];
+      final message = validationResult['message'] ?? "No workers available for the selected time and dates. Please try different options.";
 
       print('✅ [_validateWorkers] Validation complete:');
       print('  - Valid: $isValid');
@@ -869,7 +870,7 @@ Future<bool> _validateWorkers() async {
         return true;
       } else {
         // Show error message for no available workers
-        _showValidationMessage('No workers available for the selected time and dates. Please try different options.');
+        _showValidationMessage(message);
         return false;
       }
     } else {
@@ -1104,155 +1105,166 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
 
 // Add this method to build the Select Date field
   Widget _buildSelectDateField(AppLocalizations loc) {
-    bool hasSelectedDates = _internalSelectedDates.isNotEmpty;
-    bool canSelectDates = widget.contractDuration > 0 && widget.visitsPerWeek > 0;
+  bool hasSelectedDates = _internalSelectedDates.isNotEmpty;
+  bool canSelectDates = widget.contractDuration > 0 && widget.visitsPerWeek > 0;
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 15),
-      child: Column(
-        children: [
-          if (!canSelectDates)
-            Container(
-              margin: EdgeInsets.only(bottom: 8),
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
-              ),
-              child: Text(
-                loc.dialogForPrevious,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.orange[700],
-                  fontWeight: FontWeight.w700,
-                ),
+  return Container(
+    margin: EdgeInsets.only(bottom: 15),
+    child: Column(
+      children: [
+        if (!canSelectDates)
+          Container(
+            margin: EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+            ),
+            child: Text(
+              loc.dialogForPrevious,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.orange[700],
+                fontWeight: FontWeight.w700,
               ),
             ),
-          // Date selection trigger field
-
-          GestureDetector(
-            onTap: canSelectDates
-                ? () {
-                    setState(() {
-                      _showCalendar = !_showCalendar;
-                    });
-                  }
-                : () {
-                    _showValidationMessage(
-                        loc.dialogForPrevious);
-                  },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!, width: 1.5),
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      loc.date,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: const Color(0xFF768090),
-                        fontWeight: FontWeight.w600,
-                      ),
+          ),
+        // Date selection trigger field
+        GestureDetector(
+          onTap: canSelectDates
+              ? () {
+                  setState(() {
+                    _showCalendar = !_showCalendar;
+                  });
+                }
+              : () {
+                  _showValidationMessage(
+                      loc.dialogForPrevious);
+                },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!, width: 1.5),
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+            ),
+            child: Row(
+              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+              children: [
+                Expanded(
+                  child: Text(
+                    loc.date,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: const Color(0xFF768090),
+                      fontWeight: FontWeight.w600,
                     ),
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
                   ),
-                  if (hasSelectedDates)
-                    Text(
-                      '${_internalSelectedDates.length} dates selected',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: const Color(0xFF10295C),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    )
-                  else
-                    Text(
-                      loc.tapToSelect,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: const Color(0xFF768090),
-                        fontWeight: FontWeight.w700,
-                      ),
+                ),
+                if (hasSelectedDates)
+                  Text(
+                    isArabic
+                        ? (_internalSelectedDates.length == 1
+                            ? 'تم اختيار تاريخ واحد'
+                            : 'تم اختيار ${_internalSelectedDates.length} تواريخ')
+                        : (_internalSelectedDates.length == 1
+                            ? '1 date selected'
+                            : '${_internalSelectedDates.length} dates selected'),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: const Color(0xFF10295C),
+                      fontWeight: FontWeight.w700,
                     ),
-                  SizedBox(width: 4),
-                  Icon(
-                      _showCalendar
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: Colors.grey[600],
-                      size: 20),
-                ],
-              ),
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                  )
+                else
+                  Text(
+                    loc.tapToSelect,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: const Color(0xFF768090),
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                  ),
+                SizedBox(width: 4),
+                Icon(
+                    _showCalendar
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: Colors.grey[600],
+                    size: 20),
+              ],
             ),
           ),
+        ),
 
-          // Animated calendar container
-          AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            height: _showCalendar ? 650 : 0,
-            curve: Curves.easeInOut,
-            child: _showCalendar
-                ? Container(
-                    margin: EdgeInsets.only(top: 10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.white,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: CustomDateSelectionStep(
-                        selectedDates: _internalSelectedDates,
-                        onDatesChanged: (dates) {
-                          setState(() {
-                            _internalSelectedDates = dates;
-                          });
+        // Animated calendar container
+        AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          height: _showCalendar ? 650 : 0,
+          curve: Curves.easeInOut,
+          child: _showCalendar
+              ? Container(
+                  margin: EdgeInsets.only(top: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CustomDateSelectionStep(
+                      selectedDates: _internalSelectedDates,
+                      onDatesChanged: (dates) {
+                        setState(() {
+                          _internalSelectedDates = dates;
+                        });
 
-                          // Convert dates to day names and update parent
-                          List<String> dayNames = dates.map((d) => DateFormat('EEEE').format(d)).toList();
-                          widget.onSelectedDaysChanged(dayNames);
-                          
-                          // Add this callback for selected dates
-                          if (widget.onSelectedDatesChanged != null) {
-                            widget.onSelectedDatesChanged!(dates);
-                          }
-                        },
-                        onTotalPriceChanged: (price) {
-                          setState(() {
-                            _calculatedTotalPrice = price;
-                          });
+                        // Convert dates to day names and update parent
+                        List<String> dayNames = dates.map((d) => DateFormat('EEEE').format(d)).toList();
+                        widget.onSelectedDaysChanged(dayNames);
+                        
+                        // Add this callback for selected dates
+                        if (widget.onSelectedDatesChanged != null) {
+                          widget.onSelectedDatesChanged!(dates);
+                        }
+                      },
+                      onTotalPriceChanged: (price) {
+                        setState(() {
+                          _calculatedTotalPrice = price;
+                        });
 
-                          // Update parent with total price if callback is available
-                          if (widget.onTotalPriceChanged != null) {
-                            widget.onTotalPriceChanged!(_calculatedTotalPrice);
-                          }
-                        },
-                        onNextPressed: null,
-                        // Pass the correct price based on coupon status
-                        pricePerVisit: _isCouponApplied && _isCouponValid 
-                            ? _apiPricePerVisit  // Use discounted price when coupon is applied
-                            : (_apiPricePerVisit > 0 ? _apiPricePerVisit : widget.pricePerVisit),
-                        contractDuration: widget.contractDuration,
-                        visitsPerWeek: widget.visitsPerWeek,
-                        maxSelectableDates: _getMaxSelectableDates(),
-                        showBottomNavigation: false,
-                        vatAmount: _isCouponApplied && _isCouponValid ? 0.0 : _vatAmount, // No additional VAT when coupon is applied
-                        professionId: widget.professionId,
-                        workerCount: widget.workerCount,
-                      )
-                    ),
-                  )
-                : SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
+                        // Update parent with total price if callback is available
+                        if (widget.onTotalPriceChanged != null) {
+                          widget.onTotalPriceChanged!(_calculatedTotalPrice);
+                        }
+                      },
+                      onNextPressed: null,
+                      // Pass the correct price based on coupon status
+                      pricePerVisit: _isCouponApplied && _isCouponValid 
+                          ? _apiPricePerVisit  // Use discounted price when coupon is applied
+                          : (_apiPricePerVisit > 0 ? _apiPricePerVisit : widget.pricePerVisit),
+                      contractDuration: widget.contractDuration,
+                      visitsPerWeek: widget.visitsPerWeek,
+                      maxSelectableDates: _getMaxSelectableDates(),
+                      showBottomNavigation: false,
+                      vatAmount: _isCouponApplied && _isCouponValid ? 0.0 : _vatAmount, // No additional VAT when coupon is applied
+                      professionId: widget.professionId,
+                      workerCount: widget.workerCount,
+                    )
+                  ),
+                )
+              : SizedBox.shrink(),
+        ),
+      ],
+    ),
+  );
+}
 
   bool _isValidDateSelection() {
     // Check if all required fields are selected
@@ -1809,7 +1821,7 @@ Future<void> _handleDonePressed() async {
                   child: Container(
                     width: 50,
                     height: 50,
-                    margin: EdgeInsets.only(right: i < 4 ? 16 : 0),
+                    margin: EdgeInsets.only(right: i < 4 ? 16 : 16),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: widget.workerCount == i
