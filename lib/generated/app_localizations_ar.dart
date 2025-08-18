@@ -132,13 +132,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nationality => 'الجنسية';
 
   @override
-  String get professionals => 'كم عدد المحترفين الذين تحتاجهم';
+  String get professionals => 'كم عدد العاملين الذين تحتاجهم';
 
   @override
   String get contractDuration => 'مدة العقد';
 
   @override
-  String get time => 'وقت';
+  String get time => 'الفترة';
 
   @override
   String get durationOfVisit => 'مدة الزيارة';
@@ -147,10 +147,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get visitsWeeksNumber => 'عدد الزيارات في الاسبوع';
 
   @override
-  String get date => 'حدد التاريخ';
+  String get date => 'التاريخ';
 
   @override
-  String get select => 'يختار';
+  String get select => 'اختر';
 
   @override
   String get tapToSelect => 'انقر للتحديد';
@@ -166,7 +166,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectContractDuration => 'حدد مدة العقد';
 
   @override
-  String get selectTimeSlot => 'حدد فتحة زمنية';
+  String get selectTimeSlot => 'حدد الفترة الزمنية';
 
   @override
   String get selectVisitDuration => 'حدد فتحة زمنية';
@@ -178,7 +178,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noOfEmployee => 'عدد الموظفين';
 
   @override
-  String get duration => 'مدة';
+  String get duration => 'المدة الزمنية';
 
   @override
   String get weeklyVisits => 'الزيارات الأسبوعية';
@@ -190,7 +190,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get packageDetails => 'تفاصيل الحزمة';
 
   @override
-  String get get => 'يحصل';
+  String get get => 'احصل على خصم';
 
   @override
   String get off => 'عن';
@@ -202,7 +202,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get weeks => 'أسابيع';
 
   @override
-  String get add => 'يضيف';
+  String get add => 'اضافة';
 
   @override
   String get back => 'رجوع';
@@ -214,7 +214,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get district => 'يصرف';
 
   @override
-  String get map => 'رسم خريطة';
+  String get map => 'خريطة';
 
   @override
   String get details => 'تفاصيل';
@@ -277,7 +277,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectNote => 'رقم الوحدة، رمز الدخول، إلخ';
 
   @override
-  String get selectLocation => 'حدد الموقع';
+  String get selectLocation => 'اختر الموقع';
 
   @override
   String get edit => 'يحرر';
@@ -361,13 +361,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get termsAndCond => 'الشروط والأحكام';
 
   @override
-  String get close => 'يغلق';
+  String get close => 'اغلاق';
 
   @override
-  String get proceedToPay => 'المضي قدما في الدفع';
+  String get proceedToPay => 'متابعة الدفع';
 
   @override
-  String get done => 'منتهي';
+  String get done => 'التالي';
 
   @override
   String get totalIncVat => 'الإجمالي (شامل ضريبة القيمة المضافة)';
@@ -415,7 +415,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get payNow => 'ادفع الآن';
 
   @override
-  String get cancel => 'يلغي';
+  String get cancel => 'إلغاء';
 
   @override
   String get noPhoneNumber => 'لا يوجد رقم هاتف';
@@ -595,10 +595,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get startingFrom => 'ابتداء من';
 
   @override
-  String get couponCode => 'رمز القسيمة';
+  String get couponCode => 'كود الخصم';
 
   @override
-  String get applied => 'مُطبَّق';
+  String get applied => 'تم التطبيق';
 
   @override
   String get promotionApplied => 'تم تطبيق الترقية بنجاح!';
@@ -607,10 +607,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseSelect => 'الرجاء التحديد';
 
   @override
-  String get enterCouponCode => 'أدخل رمز القسيمة';
+  String get enterCouponCode => 'ادخل كود الخصم';
 
   @override
-  String get apply => 'يتقدم';
+  String get apply => 'تطبيق';
 
   @override
   String get promotionAppliedSuccessfully => 'تم تطبيق العرض الترويجي بنجاح!';
@@ -721,5 +721,157 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nationalIdLabel => 'الرقم الوطني';
 
   @override
-  String get scrubAwayToughStains => 'اكشط البقع\nالصعبة';
+  String get scrubAwayToughStains => 'تنظيف البقع\nالصعبة';
+
+  @override
+  String get ticketSupport => 'دعم التذاكر';
+
+  @override
+  String get saudiArabia => 'المملكة العربية السعودية';
+
+  @override
+  String get currencyHourly => 'ريال';
+
+  @override
+  String get noTicketsFound => 'لم يتم العثور على تذاكر';
+
+  @override
+  String get ticketCategory => 'فئة التذكرة';
+
+  @override
+  String get ticketType => 'نوع التذكرة';
+
+  @override
+  String get statusPending => 'في الانتظار';
+
+  @override
+  String get statusClosed => 'مغلق';
+
+  @override
+  String get createSupportTicket => 'إنشاء تذكرة دعم';
+
+  @override
+  String get city => 'المدينة';
+
+  @override
+  String get sectorType => 'نوع القطاع';
+
+  @override
+  String get chooseCity => 'اختر المدينة';
+
+  @override
+  String get chooseSector => 'اختر القطاع';
+
+  @override
+  String get chooseCategory => 'اختر الفئة';
+
+  @override
+  String get chooseType => 'اختر النوع';
+
+  @override
+  String get individual => 'فردي';
+
+  @override
+  String get hourly => 'بالساعة';
+
+  @override
+  String get ticketDetails => 'تفاصيل التذكرة';
+
+  @override
+  String get uploadAttach => 'رفع مرفق';
+
+  @override
+  String get send => 'إرسال';
+
+  @override
+  String get unknown => 'غير معروف';
+
+  @override
+  String get pleaseSelectCity => 'يرجى اختيار مدينة';
+
+  @override
+  String get pleaseSelectSectorType => 'يرجى اختيار نوع القطاع';
+
+  @override
+  String get pleaseSelectCategory => 'يرجى اختيار فئة';
+
+  @override
+  String get pleaseSelectTicketType => 'يرجى اختيار نوع التذكرة';
+
+  @override
+  String get pleaseEnterTicketDetails => 'يرجى إدخال تفاصيل التذكرة';
+
+  @override
+  String get uploadFunctionalityImplemented => 'سيتم تنفيذ وظيفة الرفع';
+
+  @override
+  String get satellite => 'قمر صناعي';
+
+  @override
+  String get moveMapToPosition => 'حرك الخريطة لوضع الدبوس على موقعك';
+
+  @override
+  String get confirmLocation => 'تأكيد الموقع';
+
+  @override
+  String get selectLocationWithinBoundary =>
+      'يرجى اختيار موقع داخل حدود المنطقة';
+
+  @override
+  String get locationPermissionDenied => 'تم رفض إذن الموقع';
+
+  @override
+  String get locationPermissionPermanentlyDenied =>
+      'تم رفض إذن الموقع نهائياً. يرجى التفعيل من الإعدادات.';
+
+  @override
+  String get failedToGetLocation => 'فشل في الحصول على الموقع الحالي';
+
+  @override
+  String get searchFaqs => 'البحث في الأسئلة الشائعة';
+
+  @override
+  String get commonQuestions => 'الأسئلة الشائعة';
+
+  @override
+  String get noFaqsAvailable => 'لا توجد أسئلة شائعة متاحة.';
+
+  @override
+  String get noFaqsFoundMatching => 'لم يتم العثور على أسئلة شائعة تطابق بحثك.';
+
+  @override
+  String get changePass => 'تغيير كلمة المرور';
+
+  @override
+  String get oldPass => 'كلمة المرور القديمة';
+
+  @override
+  String get newPass => 'كلمة المرور الجديدة';
+
+  @override
+  String get confirmPass => 'تأكيد كلمة المرور';
+
+  @override
+  String get saveChanges => 'حفظ التغييرات';
+
+  @override
+  String get successChange => 'تم تغيير كلمة المرور بنجاح';
+
+  @override
+  String get failChange => 'فشل في تغيير كلمة المرور';
+
+  @override
+  String get oldPassRequired => 'كلمة المرور القديمة مطلوبة';
+
+  @override
+  String get newPassRequired => 'كلمة المرور الجديدة مطلوبة';
+
+  @override
+  String get newPassMin => 'يجب أن تكون كلمة المرور على الأقل 6 أحرف';
+
+  @override
+  String get confirmPassRequired => 'يرجى تأكيد كلمة المرور';
+
+  @override
+  String get confirmPassNotMatch => 'كلمات المرور غير متطابقة';
 }

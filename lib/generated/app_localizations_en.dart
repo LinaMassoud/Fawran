@@ -147,7 +147,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visitsWeeksNumber => 'Visits week number';
 
   @override
-  String get date => 'Select Date';
+  String get date => 'Date';
 
   @override
   String get select => 'Select';
@@ -722,4 +722,157 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scrubAwayToughStains => 'Scrub Away\ntough Stains';
+
+  @override
+  String get ticketSupport => 'Ticket Support';
+
+  @override
+  String get saudiArabia => 'Saudi Arabia';
+
+  @override
+  String get currencyHourly => 'SAR';
+
+  @override
+  String get noTicketsFound => 'No tickets found';
+
+  @override
+  String get ticketCategory => 'Ticket Category';
+
+  @override
+  String get ticketType => 'Ticket Type';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusClosed => 'Closed';
+
+  @override
+  String get createSupportTicket => 'Create Support Ticket';
+
+  @override
+  String get city => 'City';
+
+  @override
+  String get sectorType => 'Sector Type';
+
+  @override
+  String get chooseCity => 'Choose City';
+
+  @override
+  String get chooseSector => 'Choose Sector';
+
+  @override
+  String get chooseCategory => 'Choose Category';
+
+  @override
+  String get chooseType => 'Choose Type';
+
+  @override
+  String get individual => 'Individual';
+
+  @override
+  String get hourly => 'Hourly';
+
+  @override
+  String get ticketDetails => 'Ticket Details';
+
+  @override
+  String get uploadAttach => 'Upload Attach';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get pleaseSelectCity => 'Please select a city';
+
+  @override
+  String get pleaseSelectSectorType => 'Please select a sector type';
+
+  @override
+  String get pleaseSelectCategory => 'Please select a category';
+
+  @override
+  String get pleaseSelectTicketType => 'Please select a ticket type';
+
+  @override
+  String get pleaseEnterTicketDetails => 'Please enter ticket details';
+
+  @override
+  String get uploadFunctionalityImplemented =>
+      'Upload functionality to be implemented';
+
+  @override
+  String get satellite => 'Satellite';
+
+  @override
+  String get moveMapToPosition => 'MOVE MAP TO POSITION PIN ON YOUR LOCATION';
+
+  @override
+  String get confirmLocation => 'Confirm Location';
+
+  @override
+  String get selectLocationWithinBoundary =>
+      'Please select a location within the district boundary';
+
+  @override
+  String get locationPermissionDenied => 'Location permission denied';
+
+  @override
+  String get locationPermissionPermanentlyDenied =>
+      'Location permission permanently denied. Please enable in settings.';
+
+  @override
+  String get failedToGetLocation => 'Failed to get current location';
+
+  @override
+  String get searchFaqs => 'Search FAQs';
+
+  @override
+  String get commonQuestions => 'Common Questions';
+
+  @override
+  String get noFaqsAvailable => 'No FAQs available.';
+
+  @override
+  String get noFaqsFoundMatching => 'No FAQs found matching your search.';
+
+  @override
+  String get changePass => 'Change Password';
+
+  @override
+  String get oldPass => 'Old Password';
+
+  @override
+  String get newPass => 'New Password';
+
+  @override
+  String get confirmPass => 'Confirm Password';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get successChange => 'Password changed successfully';
+
+  @override
+  String get failChange => 'Failed to change password';
+
+  @override
+  String get oldPassRequired => 'Old password is required';
+
+  @override
+  String get newPassRequired => 'New password is required';
+
+  @override
+  String get newPassMin => 'Password must be at least 6 characters';
+
+  @override
+  String get confirmPassRequired => 'Please confirm your password';
+
+  @override
+  String get confirmPassNotMatch => 'Passwords do not match';
 }

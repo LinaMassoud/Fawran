@@ -336,7 +336,22 @@
     "searchFaqs": "البحث في الأسئلة الشائعة",
     "commonQuestions": "الأسئلة الشائعة",
     "noFaqsAvailable": "لا توجد أسئلة شائعة متاحة.",
-    "noFaqsFoundMatching": "لم يتم العثور على أسئلة شائعة تطابق بحثك."
+    "noFaqsFoundMatching": "لم يتم العثور على أسئلة شائعة تطابق بحثك.",
+
+
+      "changePass": "تغيير كلمة المرور",
+  "oldPass": "كلمة المرور القديمة",
+  "newPass": "كلمة المرور الجديدة",
+  "confirmPass": "تأكيد كلمة المرور",
+  "cancel": "إلغاء",
+  "saveChanges": "حفظ التغييرات",
+  "successChange": "تم تغيير كلمة المرور بنجاح",
+  "failChange": "فشل في تغيير كلمة المرور",
+  "oldPassRequired": "كلمة المرور القديمة مطلوبة",
+  "newPassRequired": "كلمة المرور الجديدة مطلوبة",
+  "newPassMin": "يجب أن تكون كلمة المرور على الأقل 6 أحرف",
+  "confirmPassRequired": "يرجى تأكيد كلمة المرور",
+  "confirmPassNotMatch": "كلمات المرور غير متطابقة"
 
 
 }

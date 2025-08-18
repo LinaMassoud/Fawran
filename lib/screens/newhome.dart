@@ -264,25 +264,28 @@ class Newhome extends ConsumerWidget {
                               ),
 
                               // Fixed "Popular" tag at bottom left of slider
-                              Positioned(
-                                bottom: 40, // adjust this to your liking
-                                left: 16,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.lightBlue.shade50,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    loc.popular,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            Positioned(
+  bottom: 40, // adjust this to your liking
+  left: 16,
+  child: Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.lightBlue.shade50,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: Colors.white, // border color
+        width: 2,          // thin border
+      ),
+    ),
+    child: Text(
+      loc.popular,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
+      ),
+    ),
+  ),
+),
                             ],
                           );
                         },
@@ -406,7 +409,7 @@ class Newhome extends ConsumerWidget {
                                             style: GoogleFonts.poppins(
                                               fontWeight: FontWeight.w600,
                                               fontSize:
-                                                  14, // starting font size
+                                                  12, // starting font size
                                               color: Colors.white,
                                             ),
                                             minFontSize:

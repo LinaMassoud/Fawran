@@ -1,10 +1,11 @@
 import 'dart:convert';
-
 import 'package:fawran/services/api_service.dart';
+import 'package:fawran/widgets/custome_password_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({Key? key}) : super(key: key);
@@ -17,7 +18,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
 
   String? _oldPasswordError;
   String? _newPasswordError;
@@ -28,6 +29,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscureConfirm = true;
 
   void _validateAndSubmit() async {
+    final loc = AppLocalizations.of(context)!;
+
     setState(() {
       _oldPasswordError = null;
       _newPasswordError = null;
@@ -40,32 +43,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     bool hasError = false;
 
-    // Required checks
     if (oldPassword.isEmpty) {
-      _oldPasswordError = "Old password is required";
+      _oldPasswordError = loc.oldPassRequired;
       hasError = true;
     }
     if (newPassword.isEmpty) {
-      _newPasswordError = "New password is required";
+      _newPasswordError = loc.newPassRequired;
       hasError = true;
     } else if (newPassword.length < 6) {
-      _newPasswordError = "Password must be at least 6 characters";
+      _newPasswordError = loc.newPassMin;
       hasError = true;
     }
     if (confirmPassword.isEmpty) {
-      _confirmPasswordError = "Please confirm your password";
+      _confirmPasswordError = loc.confirmPassRequired;
       hasError = true;
     } else if (confirmPassword != newPassword) {
-      _confirmPasswordError = "Passwords do not match";
+      _confirmPasswordError = loc.confirmPassNotMatch;
       hasError = true;
     }
 
     if (hasError) {
-      setState(() {}); // Refresh UI with error messages
+      setState(() {});
       return;
     }
 
-    // Call API if no errors
     final phoneNumber = await _storage.read(key: 'phone_number') ?? '';
     final response = await ApiService.changePassword(
       phoneNumber: phoneNumber,
@@ -78,10 +79,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       _newPasswordController.clear();
       _confirmPasswordController.clear();
 
-      // Show SnackBar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Password changed successfully"),
+          content: Text(loc.successChange),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -89,10 +89,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       );
     } else {
       final responseBody = json.decode(response.body);
-      // Show error from API
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(responseBody["message"] ?? "Failed to change password"),
+          content: Text(responseBody["message"] ?? loc.failChange),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -101,13 +100,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+@override
+Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
+  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+  return Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // 🔹 Header
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
@@ -125,7 +131,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   Expanded(
                     child: Text(
-                      "Change Password",
+                      loc.changePass,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 18,
@@ -139,55 +145,65 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
             ),
 
-            const SizedBox(height: 32),
-
-            // Form Fields
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  _passwordField(
-                    controller: _oldPasswordController,
-                    label: "Old Password",
-                    obscureText: _obscureOld,
-                    toggleObscure: () {
-                      setState(() {
-                        _obscureOld = !_obscureOld;
-                      });
-                    },
-                    errorText: _oldPasswordError,
-                  ),
-                  const SizedBox(height: 16),
-                  _passwordField(
-                    controller: _newPasswordController,
-                    label: "New Password",
-                    obscureText: _obscureNew,
-                    toggleObscure: () {
-                      setState(() {
-                        _obscureNew = !_obscureNew;
-                      });
-                    },
-                    errorText: _newPasswordError,
-                  ),
-                  const SizedBox(height: 16),
-                  _passwordField(
-                    controller: _confirmPasswordController,
-                    label: "Confirm Password",
-                    obscureText: _obscureConfirm,
-                    toggleObscure: () {
-                      setState(() {
-                        _obscureConfirm = !_obscureConfirm;
-                      });
-                    },
-                    errorText: _confirmPasswordError,
-                  ),
-                ],
+            // 🔹 Form Fields (scrollable)
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  children: [
+                  CustomPasswordField(
+  controller: _oldPasswordController,
+  label: loc.oldPass,
+  hint: isArabic ? "أدخل كلمة المرور القديمة" : "Enter old password",
+  isArabic: isArabic,
+  obscureText: _obscureOld,
+  isPasswordVisible: !_obscureOld,
+  onToggleVisibility: () {
+    setState(() {
+      _obscureOld = !_obscureOld;
+    });
+  },
+  showError: _oldPasswordError != null,
+  errorText: _oldPasswordError,
+),
+                    const SizedBox(height: 16),
+                CustomPasswordField(
+  controller: _newPasswordController,
+  label: loc.newPass,
+  hint: isArabic ? "أدخل كلمة المرور الجديدة" : "Enter new password",
+  isArabic: isArabic,
+  obscureText: _obscureOld,
+  isPasswordVisible: !_obscureOld,
+  onToggleVisibility: () {
+    setState(() {
+      _obscureOld = !_obscureOld;
+    });
+  },
+  showError: _newPasswordError != null,
+  errorText: _newPasswordError,
+),
+                    const SizedBox(height: 16),
+             CustomPasswordField(
+  controller: _confirmPasswordController,
+  label: loc.oldPass,
+  hint: isArabic ? "أدخل تاكيد كلمة المرور الجديدة" : "Enter new password confirmation",
+  isArabic: isArabic,
+  obscureText: _obscureOld,
+  isPasswordVisible: !_obscureOld,
+  onToggleVisibility: () {
+    setState(() {
+      _obscureOld = !_obscureOld;
+    });
+  },
+  showError: _confirmPasswordError != null,
+  errorText: _confirmPasswordError,
+),
+                  ],
+                ),
               ),
             ),
 
-            const Spacer(),
-
-            // Buttons
+            // 🔹 Bottom Buttons (fixed)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Row(
@@ -203,9 +219,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: Text(
-                        "Cancel",
+                        loc.cancel,
                         style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold, color: Colors.white),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -221,9 +239,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: Text(
-                        "Save Changes",
+                        loc.saveChanges,
                         style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold, color: Colors.white),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -233,51 +253,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _passwordField({
-    required TextEditingController controller,
-    required String label,
-    required bool obscureText,
-    required VoidCallback toggleObscure,
-    String? errorText,
-  }) {
-    return SizedBox(
-      height: errorText != null ? 72 : 52,
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
-          errorText: errorText,
-          prefix: Padding(
-            padding: const EdgeInsets.fromLTRB(1, 8, 3, 1),
-            child: SvgPicture.asset(
-              'assets/images/lock.svg',
-              color: const Color.fromRGBO(216, 219, 219, 1),
-              width: 14,
-              height: 14,
-            ),
-          ),
-          suffixIcon: IconButton(
-            icon: SvgPicture.asset(
-              'assets/images/eye.svg',
-              color: const Color.fromRGBO(216, 219, 219, 1),
-              width: 14,
-              height: 14,
-            ),
-            onPressed: toggleObscure,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-      ),
-    );
-  }
 }

@@ -899,7 +899,7 @@ static Future<Map<String, dynamic>?> createTicket({
       required String newPassword}) async {
     final requestBody = {
       "phone": phoneNumber,
-      "old_passowrd": oldPassword,
+      "old_password": oldPassword,
       "new_password": newPassword
     };
     try {

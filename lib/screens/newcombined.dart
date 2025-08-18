@@ -10,6 +10,7 @@ import 'package:fawran/providers/labour_provider.dart';
 import 'package:fawran/providers/nationality_provider.dart';
 import 'package:fawran/providers/package_provider.dart';
 import 'package:fawran/screens/laborerProfile.dart';
+import 'package:fawran/screens/newcombined.dart' as controller;
 import 'package:fawran/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,10 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int? minExperience;
   String? selectedStatus;
   final _storage = FlutterSecureStorage();
+
+
+
+
   Widget _buildHeader(BuildContext context) {
     final selectedProfession = ref.watch(selectedProfessionProvider);
 
@@ -71,8 +76,11 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             top: 0,
             bottom: 0,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              
+              icon: const Icon(Icons.arrow_back, color: Colors.white, textDirection: TextDirection.ltr,),
               onPressed: () {
+                   ref.read(selectedPackageProvider.notifier).state =
+                                null;
                 Navigator.pop(context);
               },
             ),
@@ -472,42 +480,64 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
           ),
         // Step 5: Delivery
         if (currentStep >= 4)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(loc.pickup_or_delivey,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              RadioListTile<String>(
-                title: Text(loc.pickup),
-                value: "pickup",
-                groupValue: pickupOption,
-                onChanged: (val) {
-                  setState(() => pickupOption = val);
-                  if (currentStep == 4) {
-                    goToNextStep();
-                  } // extra statement
-                  // anotherAction();
-                },
+        Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text(
+      loc.pickup_or_delivey,
+      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+    ),
+    RadioListTile<String>(
+      title: Text(
+        loc.pickup,
+        style: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: Color.fromRGBO(118, 128, 144, 1.0),
+        ),
+      ),
+      value: "pickup",
+      groupValue: pickupOption,
+      onChanged: (val) {
+        setState(() => pickupOption = val);
+        if (currentStep == 4) goToNextStep();
+      },
+      controlAffinity: ListTileControlAffinity.leading, // radio on left
+      dense: true, // makes the tile more compact
+    ),
+    RadioListTile<String>(
+      title: Text(
+        loc.delivery,
+        style: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: Color.fromRGBO(118, 128, 144, 1.0),
+        ),
+      ),
+      value: "delivery",
+      groupValue: pickupOption,
+      onChanged: deliveryAvailable
+          ? (val) {
+              setState(() => pickupOption = val);
+              if (currentStep == 4) goToNextStep();
+            }
+          : null,
+      subtitle: !deliveryAvailable
+          ? Text(
+              loc.delivery_not_available,
+              style: GoogleFonts.poppins(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
               ),
-              RadioListTile<String>(
-                title: Text(loc.delivery),
-                value: "delivery",
-                groupValue: pickupOption,
-                onChanged: deliveryAvailable
-                    ? (val) {
-                        setState(() => pickupOption = val);
-                        if (currentStep == 4)
-                          goToNextStep(); // another statement
-                      }
-                    : null,
-                subtitle: !deliveryAvailable
-                    ? Text(loc.delivery_not_available,
-                        style: TextStyle(color: Colors.red))
-                    : null,
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            )
+          : null,
+      controlAffinity: ListTileControlAffinity.leading,
+      dense: true,
+    ),
+    const SizedBox(height: 24),
+  ],
+),
 
         // Step 6: Agreement
         if (currentStep == 5)
@@ -601,55 +631,55 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     );
   }
 
-  Widget _buildMinimalRadio({
-    required String label,
-    required String value,
-  }) {
-    final isSelected = selectedLaborSource == value;
-    final isRTL = Directionality.of(context) == TextDirection.rtl;
+Widget _buildMinimalRadio({
+  required String label,
+  required String value,
+}) {
+  final isSelected = selectedLaborSource == value;
+  final isRTL = Directionality.of(context) == TextDirection.rtl;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: isRTL ? 0 : 10, // push right in LTR
-        right: 8, // push left in RTL
-        bottom: 8, // optional vertical spacing between radios
-      ),
+  return Padding(
+    padding: EdgeInsets.only(
+      left: isRTL ? 0 : 10, // push right in LTR
+      right: 8, // push left in RTL
+      bottom: 8, // optional vertical spacing between radios
+    ),
+    child: InkWell(
+      onTap: () {
+        setState(() {
+          selectedLaborSource = value;
+          if (value == "company") {
+            currentStep = 4;
+          } else if (value == "app") {
+            currentStep = 3;
+          }
+        });
+      },
+      borderRadius: BorderRadius.circular(12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 30, // fixed width for radio button alignment
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedLaborSource = value;
-                  if (value == "company") {
-                    currentStep = 4;
-                  } else if (value == "app") {
-                    currentStep = 3;
-                  }
-                });
-              },
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey, width: 1.5),
-                ),
-                child: isSelected
-                    ? Center(
-                        child: Container(
-                          width: 5,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      )
-                    : null,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey, width: 1.5),
               ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 5,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
           ),
           Expanded(
@@ -668,8 +698,9 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _handleStepNavigation(String value) {
     if (value == "company") {
@@ -713,46 +744,67 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     }
   }
 
-  Widget _buildFooterStepper() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black12, blurRadius: 3, offset: Offset(0, -2)),
-        ],
+Widget _buildFooterStepper() {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(16),  // adjust the value as needed
+        topRight: Radius.circular(16),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(totalSteps, (index) {
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0x338789C8), // #3789C8 with 20% opacity
+          blurRadius: 19, // make the shadow softer
+          spreadRadius: 4,
+          offset: const Offset(0, -4), // shadow goes upwards
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+    child: Row(
+      children: List.generate(totalSteps * 2 - 1, (index) {
+        if (index.isEven) {
+          int stepIndex = index ~/ 2;
           Color color;
-          if (index < currentStep) {
+          if (stepIndex < currentStep) {
             color = Colors.blue[900]!;
-          } else if (index == currentStep) {
+          } else if (stepIndex == currentStep) {
             color = Colors.lightBlue;
           } else {
             color = Colors.grey.shade300;
           }
 
           return Container(
-            width: 28,
-            height: 28,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
-                '${index + 1}',
+                '${stepIndex + 1}',
                 style: const TextStyle(color: Colors.white),
               ),
             ),
           );
-        }),
-      ),
-    );
-  }
+        } else {
+          int lineIndex = (index - 1) ~/ 2;
+          Color lineColor =
+              lineIndex < currentStep ? Colors.blue[900]! : Colors.grey.shade300;
+
+          return Expanded(
+            child: Container(
+              height: 4,
+              color: lineColor,
+            ),
+          );
+        }
+      }),
+    ),
+  );
+}
 
   void _openFilterDialog() {
     showModalBottomSheet(
@@ -993,27 +1045,31 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final nationalityAsync = ref.watch(nationalitiesProvider);
 
-    return Directionality(
-      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(120),
-          child: _buildHeader(context),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: _buildSteps(),
-              ),
-            ),
-            _buildFooterStepper(),
-          ],
-        ),
+    return 
+    
+      Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: Scaffold(
+      backgroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(120),
+        child: _buildHeader(context),
       ),
-    );
-  }
+      body: SingleChildScrollView(
+  child: Container(
+    color: Colors.white,
+    constraints: BoxConstraints(
+      minHeight: MediaQuery.of(context).size.height -
+          kToolbarHeight - // adjust for AppBar
+          kBottomNavigationBarHeight, // adjust for footer
+    ),
+    padding: const EdgeInsets.all(16),
+    child: _buildSteps(),
+  ),
+),
+      bottomNavigationBar: _buildFooterStepper(), // move footer here
+    ),
+  );  }
 }
 
 Widget buildPackageCard({
