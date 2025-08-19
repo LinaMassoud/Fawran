@@ -345,6 +345,11 @@
   "newPassRequired": "New password is required",
   "newPassMin": "Password must be at least 6 characters",
   "confirmPassRequired": "Please confirm your password",
-  "confirmPassNotMatch": "Passwords do not match"
+  "confirmPassNotMatch": "Passwords do not match",
+
+  "customServicePackage": "Custom Service Package",
+
+  "uploading": "Uploading...",
+  "fileRemovedSuccessfully": "File removed successfully"
 
 }

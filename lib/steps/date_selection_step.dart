@@ -632,6 +632,7 @@ Future<void> _validateAndProceed() async {
       // Extract validation data from the new API response format
       bool isValid = validationResult['valid'] == true;
       int availableWorkers = validationResult['available_workers'] ?? 0;
+      final message = validationResult['message'] ?? "No workers available for the selected time and dates. Please try different options.";
       List<int>? workerIds;
       
       // Extract worker_ids if present
@@ -656,7 +657,7 @@ Future<void> _validateAndProceed() async {
         // Validation failed - show specific error message
         String errorMessage;
         if (!isValid) {
-          errorMessage = 'No workers are available for the selected dates and times.';
+          errorMessage = message;
         } else {
           errorMessage = 'Only $availableWorkers worker(s) available, but you need ${widget.workerCount}.';
         }

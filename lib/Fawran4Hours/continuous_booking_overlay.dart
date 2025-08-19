@@ -21,6 +21,7 @@ import '../widgets/booking_step_header.dart';
 import '../providers/address_provider.dart';
 import '../providers/auth_provider.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
+import 'package:fawran/generated/app_localizations.dart';
 
 class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   final PackageModel? package; // Made optional
@@ -918,7 +919,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
     visitsPerWeek: visitsPerWeek,
     selectedNationality: selectedNationality,
     packageName: widget.isCustomBooking
-        ? 'Custom Service Package'
+        ? AppLocalizations.of(context)!.customServicePackage
         : widget.package!.packageName,
   );
 
@@ -938,7 +939,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
     visitsPerWeek: visitsPerWeek,
     selectedNationality: selectedNationality,
     packageName: widget.isCustomBooking
-        ? 'Custom Service Package'
+        ? AppLocalizations.of(context)!.customServicePackage
         : widget.package!.packageName,
     contractId: contractResult['success'] == true ? contractResult['contract_id'] : null,
   );

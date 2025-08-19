@@ -83,8 +83,8 @@
   "back":"رجوع",
 
   "insertAddress":"أدخل العنوان",
-  "district":"يصرف",
-  "map":"رسم خريطة",
+  "district":"اختر المنطقة والمدينة",
+  "map":"حدد موقعك على الخريطة",
   "details":"تفاصيل",
   "addressTitle":"عنوان العنوان",
   "houseType":"نوع المنزل",
@@ -108,8 +108,8 @@
   "selectNote":"رقم الوحدة، رمز الدخول، إلخ",
   "selectLocation":"اختر الموقع",
   "mapSelected":"تم تحديد الخريطة",
-  "edit":"يحرر",
-  "save":"يحفظ",
+  "edit":"تعديل",
+  "save":"حفظ",
 
   "step":"خطوة",
   "ofStep":"ل",
@@ -351,7 +351,12 @@
   "newPassRequired": "كلمة المرور الجديدة مطلوبة",
   "newPassMin": "يجب أن تكون كلمة المرور على الأقل 6 أحرف",
   "confirmPassRequired": "يرجى تأكيد كلمة المرور",
-  "confirmPassNotMatch": "كلمات المرور غير متطابقة"
+  "confirmPassNotMatch": "كلمات المرور غير متطابقة",
+
+  "customServicePackage": "بكج خدمة مخصص",
+
+  "uploading": "جارٍ الرفع...",
+  "fileRemovedSuccessfully": "تم حذف الملف بنجاح"
 
 
 }
