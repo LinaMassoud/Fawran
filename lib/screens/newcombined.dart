@@ -77,7 +77,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             bottom: 0,
             child: IconButton(
               
-              icon: const Icon(Icons.arrow_back, color: Colors.white, textDirection: TextDirection.ltr,),
+              icon: const Icon(Icons.arrow_back, color: Color(0xFFFFA200), textDirection: TextDirection.ltr,),
               onPressed: () {
                    ref.read(selectedPackageProvider.notifier).state =
                                 null;
@@ -92,7 +92,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             child: Text(
               "${selectedProfession?.positionName}",
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFFFFA200),
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -746,6 +746,7 @@ Widget _buildMinimalRadio({
 
 Widget _buildFooterStepper() {
   return Container(
+    height: 90,
     decoration: BoxDecoration(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(16),  // adjust the value as needed
@@ -754,14 +755,14 @@ Widget _buildFooterStepper() {
       color: Colors.white,
       boxShadow: [
         BoxShadow(
-          color: const Color(0x338789C8), // #3789C8 with 20% opacity
+          color: const Color.fromARGB(51, 156, 159, 243), // #3789C8 with 20% opacity
           blurRadius: 19, // make the shadow softer
-          spreadRadius: 4,
-          offset: const Offset(0, -4), // shadow goes upwards
+          spreadRadius: 12,
+          offset: const Offset(0, -8), // shadow goes upwards
         ),
       ],
     ),
-    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+    padding: const EdgeInsets.fromLTRB(30,10,30,30),
     child: Row(
       children: List.generate(totalSteps * 2 - 1, (index) {
         if (index.isEven) {
