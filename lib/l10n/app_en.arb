@@ -347,6 +347,9 @@
   "confirmPassRequired": "Please confirm your password",
   "confirmPassNotMatch": "Passwords do not match",
 
-  "customServicePackage": "Custom Service Package"
+  "customServicePackage": "Custom Service Package",
+
+  "uploading": "Uploading...",
+  "fileRemovedSuccessfully": "File removed successfully"
 
 }

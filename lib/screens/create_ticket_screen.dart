@@ -4,6 +4,8 @@ import '../services/api_service.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/localProvider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as path;
 
 class CreateTicketScreen extends ConsumerStatefulWidget {
   const CreateTicketScreen({Key? key}) : super(key: key);
@@ -16,6 +18,10 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   final _formKey = GlobalKey<FormState>();
   final _detailsController = TextEditingController();
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+
+  String? uploadedFilePath;
+String? uploadedFileName;
+bool isUploadingFile = false;
 
   // Dropdown values
   Map<String, dynamic>? selectedCity;
@@ -116,55 +122,56 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   }
 
   Future<void> _submitTicket() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (selectedCity == null ||
-        selectedSectorType == null ||
-        selectedCategory == null ||
-        selectedTicketType == null) {
-      _showErrorSnackBar('Please fill all required fields');
-      return;
-    }
-
-    try {
-      setState(() {
-        isSubmitting = true;
-      });
-
-      final customerId = await _secureStorage.read(key: 'user_id');
-      if (customerId == null) {
-        _showErrorSnackBar('User not found. Please login again.');
-        return;
-      }
-
-      final result = await ApiService.createTicket(
-        customerId: customerId,
-        cityCode: selectedCity!['city_code']?.toString() ?? 
-                  selectedCity!['code']?.toString() ?? '',
-        sectorType: selectedSectorType!,
-        ticketCategoryId: selectedCategory!['category_id'] ?? 
-                         selectedCategory!['id'] ?? 0,
-        ticketTypeId: selectedTicketType!['type_id'] ?? 
-                     selectedTicketType!['id'] ?? 0,
-        details: _detailsController.text.trim(),
-      );
-
-      if (result != null) {
-        _showSuccessSnackBar('Ticket created successfully');
-        Navigator.pop(context, true); // Return true to indicate success
-      } else {
-        _showErrorSnackBar('Failed to create ticket. Please try again.');
-      }
-    } catch (e) {
-      _showErrorSnackBar('An error occurred. Please try again.');
-    } finally {
-      setState(() {
-        isSubmitting = false;
-      });
-    }
+  if (!_formKey.currentState!.validate()) {
+    return;
   }
+
+  if (selectedCity == null ||
+      selectedSectorType == null ||
+      selectedCategory == null ||
+      selectedTicketType == null) {
+    _showErrorSnackBar('Please fill all required fields');
+    return;
+  }
+
+  try {
+    setState(() {
+      isSubmitting = true;
+    });
+
+    final customerId = await _secureStorage.read(key: 'user_id');
+    if (customerId == null) {
+      _showErrorSnackBar('User not found. Please login again.');
+      return;
+    }
+
+    final result = await ApiService.createTicket(
+      customerId: customerId,
+      cityCode: selectedCity!['city_code']?.toString() ?? 
+                selectedCity!['code']?.toString() ?? '',
+      sectorType: selectedSectorType!,
+      ticketCategoryId: selectedCategory!['category_id'] ?? 
+                       selectedCategory!['id'] ?? 0,
+      ticketTypeId: selectedTicketType!['type_id'] ?? 
+                   selectedTicketType!['id'] ?? 0,
+      details: _detailsController.text.trim(),
+      fileName: uploadedFilePath ?? "", // Pass the uploaded file path
+    );
+
+    if (result != null) {
+      _showSuccessSnackBar(result['message'] ?? 'Ticket created successfully');
+      Navigator.pop(context, true);
+    } else {
+      _showErrorSnackBar('Failed to create ticket. Please try again.');
+    }
+  } catch (e) {
+    _showErrorSnackBar('An error occurred. Please try again.');
+  } finally {
+    setState(() {
+      isSubmitting = false;
+    });
+  }
+}
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -183,6 +190,71 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       ),
     );
   }
+
+  Future<void> _pickAndUploadFile() async {
+  try {
+    setState(() {
+      isUploadingFile = true;
+    });
+
+    // Pick file
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+      allowMultiple: false,
+      withData: true,
+    );
+
+    if (result != null && result.files.single.bytes != null) {
+      final file = result.files.single;
+      final fileName = file.name;
+      final fileExtension = path.extension(fileName).toLowerCase();
+      
+      // Determine file type
+      String fileType;
+      if (['.jpg', '.jpeg', '.png'].contains(fileExtension)) {
+        fileType = 'image';
+      } else if (fileExtension == '.pdf') {
+        fileType = 'document';
+      } else {
+        _showErrorSnackBar('Unsupported file type. Please select JPG, PNG, or PDF files.');
+        return;
+      }
+
+      // Get user ID
+      final userId = await _secureStorage.read(key: 'user_id');
+      if (userId == null) {
+        _showErrorSnackBar('User not found. Please login again.');
+        return;
+      }
+
+      // Upload file
+      final uploadResponse = await ApiService.uploadFile(
+        file: file,
+        fileName: fileName,
+        type: fileType,
+        userId: userId,
+      );
+
+      if (uploadResponse != null) {
+        setState(() {
+          uploadedFilePath = uploadResponse['file_path'] ?? uploadResponse['path'];
+          uploadedFileName = fileName;
+        });
+        _showSuccessSnackBar(uploadResponse['message'] ?? 'File uploaded successfully');
+      } else {
+        _showErrorSnackBar('Failed to upload file. Please try again.');
+      }
+    }
+  } catch (e) {
+    _showErrorSnackBar('Error selecting file. Please try again.');
+    print('Error picking/uploading file: $e');
+  } finally {
+    setState(() {
+      isUploadingFile = false;
+    });
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -541,27 +613,72 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     );
   }
 
-  Widget _buildUploadButton(AppLocalizations loc, bool isArabic) {
-    return Container(
-      width: double.infinity,
-      height: 50,
-      decoration: BoxDecoration(
-        color: const Color(0xFF4A6FA5),
+Widget _buildUploadButton(AppLocalizations loc, bool isArabic) {
+  return Container(
+    height: 50,
+    decoration: BoxDecoration(
+      color: uploadedFileName != null 
+          ? const Color(0xFF10295C) 
+          : const Color(0xFF4A6FA5),
+      borderRadius: BorderRadius.circular(25),
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(25),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(25),
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(loc.uploadFunctionalityImplemented)),
-            );
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-            children: [
+        onTap: isUploadingFile ? null : _pickAndUploadFile,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+          children: [
+            if (isUploadingFile) ...[
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: 2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                loc.uploading,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ] else if (uploadedFileName != null) ...[
+              // File name in center
+              Expanded(
+                child: Text(
+                  uploadedFileName!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              // Cross icon positioned based on language
+              Align(
+                alignment: isArabic ? Alignment.centerLeft : Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: _removeUploadedFile,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ] else ...[
               if (!isArabic) ...[
                 Text(
                   loc.uploadAttach,
@@ -594,11 +711,22 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 ),
               ],
             ],
-          ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+
+void _removeUploadedFile() {
+  final loc = AppLocalizations.of(context)!;
+  setState(() {
+    uploadedFilePath = null;
+    uploadedFileName = null;
+  });
+  _showSuccessSnackBar(loc.fileRemovedSuccessfully ?? 'File removed successfully');
+}
 
 Widget _buildFixedBottomSendButton(AppLocalizations loc, bool isArabic) {
     return Container(

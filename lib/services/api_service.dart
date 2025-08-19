@@ -12,6 +12,8 @@ import 'package:intl/intl.dart';
 import '../models/address_model.dart';
 import '../models/promotion_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String _baseUrl = 'http://5.195.129.137:8080/ords/emdad/fawran';
@@ -467,7 +469,10 @@ class ApiService {
     print('Get tickets response body: ${response.body}');
 
     if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
+      // Fix the JSON by properly escaping backslashes before parsing
+      String fixedResponseBody = response.body.replaceAll(r'\', r'\\');
+      
+      final responseData = json.decode(fixedResponseBody);
       
       // Handle different response formats
       if (responseData is List) {
@@ -513,7 +518,7 @@ static Future<List<Map<String, dynamic>>> fetchTicketCategories(String sectorTyp
   try {
     final response = await makeAuthenticatedRequest(
       method: 'GET',
-      url: 'http://fawran.ddns.net:8080/ords/emdad/fawran/ticket-categories/$sectorType',
+      url: '$_baseUrl/ticket-categories/$sectorType',
     );
 
     if (response.statusCode == 200) {
@@ -533,7 +538,7 @@ static Future<List<Map<String, dynamic>>> fetchTicketTypes(int categoryId) async
   try {
     final response = await makeAuthenticatedRequest(
       method: 'GET',
-      url: 'http://fawran.ddns.net:8080/ords/emdad/fawran/ticket_types/$categoryId',
+      url: '$_baseUrl/ticket_types/$categoryId',
     );
 
     if (response.statusCode == 200) {
@@ -564,7 +569,7 @@ static Future<Map<String, dynamic>?> createTicket({
   try {
     final response = await makeAuthenticatedRequest(
       method: 'POST',
-      url: 'http://fawran.ddns.net:8080/ords/emdad/fawran/create-ticket',
+      url: '$_baseUrl/create-ticket',
       body: json.encode({
         "customer_id": int.parse(customerId),
         "city_code": cityCode,
@@ -1564,6 +1569,113 @@ static Future<Map<String, dynamic>?> createTicket({
       throw Exception('Error loading FAQs: $e');
     }
   }
+
+  static Future<Map<String, dynamic>?> uploadFile({
+  required PlatformFile file,
+  required String fileName,
+  required String type,
+  required String userId,
+  int retryCount = 0,
+}) async {
+  try {
+    final url = Uri.parse('$_baseUrl/upload_file');
+    final token = await _secureStorage.read(key: 'token');
+    final local = await _secureStorage.read(key: 'lang_code');
+    
+    var request = http.MultipartRequest('POST', url);
+    
+    // Sanitize filename for HTTP header - remove/replace invalid characters
+    String sanitizedFileName = fileName
+        .replaceAll(' ', '_')           // Replace spaces with underscores
+        .replaceAll(RegExp(r'[^\w\-_\.]'), '_'); // Replace invalid chars with underscores
+    
+    // Add headers with sanitized filename
+    request.headers.addAll({
+      'token': token ?? '',
+      'file_name': sanitizedFileName,  // Use sanitized filename in header
+      'type': type,
+      'user_id': userId,
+      if (local != null) 'language': local,
+    });
+    
+    // Add file to form-data (use original filename here as it's not in header)
+    if (file.bytes != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'image', // Key name as specified
+          file.bytes!,
+          filename: fileName, // Original filename for the file itself
+        ),
+      );
+    }
+    
+    print('🔄 [UPLOAD_FILE] Uploading file: $sanitizedFileName (original: $fileName)');
+    
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    print('📡 [UPLOAD_FILE] Response status: ${response.statusCode}');
+    print('📡 [UPLOAD_FILE] Response body: ${response.body}');
+    
+    // Handle 401 (unauthorized) response with token refresh
+    if (response.statusCode == 401 && retryCount == 0) {
+      print('🔄 [UPLOAD_FILE] Received 401, attempting token refresh...');
+      
+      final refreshSuccess = await refreshToken();
+      if (refreshSuccess) {
+        print('✅ [UPLOAD_FILE] Token refreshed, retrying file upload...');
+        // Retry the upload with the new token
+        return uploadFile(
+          file: file,
+          fileName: fileName,
+          type: type,
+          userId: userId,
+          retryCount: 1, // Prevent infinite retry loop
+        );
+      } else {
+        print('❌ [UPLOAD_FILE] Token refresh failed, clearing only tokens...');
+        // Clear only authentication tokens, preserve user data
+        await _secureStorage.delete(key: 'token');
+        await _secureStorage.delete(key: 'refresh_token');
+        return null;
+      }
+    }
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      try {
+        // Fix the JSON by properly escaping backslashes
+        String fixedResponseBody = response.body.replaceAll(r'\', r'\\');
+        final responseData = json.decode(fixedResponseBody);
+        print('✅ [UPLOAD_FILE] File uploaded successfully: ${responseData['file_path']}');
+        return responseData;
+      } catch (e) {
+        print('❌ [UPLOAD_FILE] Error parsing response: $e');
+        print('Raw response: ${response.body}');
+        
+        // If JSON parsing fails but we got 200, try to extract file_path manually
+        final regex = RegExp(r'"file_path":\s*"([^"]*)"');
+        final match = regex.firstMatch(response.body);
+        if (match != null) {
+          String filePath = match.group(1) ?? '';
+          // Fix backslashes in the extracted path
+          filePath = filePath.replaceAll(r'\', '/');
+          return {
+            'file_path': filePath,
+            'message': 'File uploaded successfully',
+            'status': 'success'
+          };
+        }
+        return null;
+      }
+    } else {
+      print('❌ [UPLOAD_FILE] Failed to upload file: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('💥 [UPLOAD_FILE] Error uploading file: $e');
+    return null;
+  }
+}
 
   static Future<Map<String, dynamic>?> validateWorkersHourly({
     required int positionId,

@@ -353,7 +353,10 @@
   "confirmPassRequired": "يرجى تأكيد كلمة المرور",
   "confirmPassNotMatch": "كلمات المرور غير متطابقة",
 
-  "customServicePackage": "بكج خدمة مخصص"
+  "customServicePackage": "بكج خدمة مخصص",
+
+  "uploading": "جارٍ الرفع...",
+  "fileRemovedSuccessfully": "تم حذف الملف بنجاح"
 
 
 }
