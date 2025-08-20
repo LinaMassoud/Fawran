@@ -378,119 +378,127 @@ Future<void> downloadLocalPdf(String pdfPath) async {
 }
 
 Future<void> downloadPdfWithNotification(String pdfPath) async {
-  String? newPath; 
+  String? newPath;
 
-  if (Platform.isAndroid) {
-    // 🔒 Request storage permission (needed only pre-Android 11)
-    var status = await Permission.storage.request();
-    if (!status.isGranted) return;
-
-    // 📂 Downloads folder
-    final downloadsDir = Directory('/storage/emulated/0/Download');
-    if (!await downloadsDir.exists()) {
-      await downloadsDir.create(recursive: true);
-    }
-
-final timestamp = DateTime.now().millisecondsSinceEpoch;
-final fileName = 'generated_contract_$timestamp.pdf';
-final newPath = '${downloadsDir.path}/$fileName';
-
-// Correct: sourceFile = original PDF path
-final sourceFile = File(pdfPath);
-final targetFile = File(newPath);
-
-// Delete if exists (optional, but safe)
-if (await targetFile.exists()) {
   try {
-    await targetFile.delete();
-    print("Old file deleted at $newPath");
-  } catch (e) {
-    print("Could not delete existing file: $e");
+    if (Platform.isAndroid) {
+      // 🔒 Request storage permission (loop until granted or permanently denied)
+      var status = await Permission.storage.request();
+
+      if (status.isDenied) {
+        // Ask again
+        status = await Permission.storage.request();
+      }
+
+      if (status.isPermanentlyDenied) {
+        // 🚫 User selected "Don't ask again"
+        print("Storage permission permanently denied");
+        openAppSettings(); // Optional: redirect user to settings
+        return;
+      }
+
+      if (!status.isGranted) {
+        print("❌ Storage permission not granted");
+        return;
+      }
+
+      // 📂 Downloads folder
+      final downloadsDir = Directory('/storage/emulated/0/Download');
+      if (!await downloadsDir.exists()) {
+        await downloadsDir.create(recursive: true);
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'generated_contract_$timestamp.pdf';
+      newPath = '${downloadsDir.path}/$fileName';
+
+      final sourceFile = File(pdfPath);
+      final targetFile = File(newPath);
+
+      // 🗑️ Delete if exists
+      if (await targetFile.exists()) {
+        try {
+          await targetFile.delete();
+          print("Old file deleted at $newPath");
+        } catch (e) {
+          print("Could not delete existing file: $e");
+        }
+      }
+
+      // 📄 Copy the file
+      await sourceFile.copy(newPath);
+
+      // 🔔 Android notification
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+        'pdf_channel',
+        'PDF Downloads',
+        channelDescription: 'Notifications for PDF downloads',
+        importance: Importance.max,
+        priority: Priority.high,
+        ticker: 'PDF Downloaded',
+      );
+
+      const NotificationDetails platformDetails =
+          NotificationDetails(android: androidDetails);
+
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        'PDF Ready',
+        'Tap to open $fileName',
+        platformDetails,
+        payload: newPath,
+      );
+    } else if (Platform.isIOS) {
+      // 📂 App docs folder for iOS
+      final documentsDir = await getApplicationDocumentsDirectory();
+      final fileName = 'generated_contract.pdf';
+      newPath = '${documentsDir.path}/$fileName';
+
+      final sourceFile = File(pdfPath);
+      final targetFile = File(newPath);
+
+      if (await targetFile.exists()) {
+        try {
+          await targetFile.delete();
+          print("Old file deleted at $newPath");
+        } catch (e) {
+          print("Could not delete existing file: $e");
+        }
+      }
+
+      await sourceFile.copy(newPath);
+
+      // 🔔 iOS notification
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const NotificationDetails platformDetails =
+          NotificationDetails(iOS: iosDetails);
+
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        'PDF Ready',
+        'Tap to open $fileName',
+        platformDetails,
+        payload: newPath,
+      );
+    } else {
+      print('Platform not supported for file download');
+      return;
+    }
+
+    if (newPath != null) {
+      print('✅ File saved to $newPath');
+    }
+  } catch (e, stack) {
+    print("⚠️ Error in downloadPdfWithNotification: $e");
+    print(stack);
   }
 }
 
-// Copy to Downloads
-await sourceFile.copy(newPath);
 
-    // 🗑️ Delete if already exists
-    if (await targetFile.exists()) {
-      try {
-        await targetFile.delete();
-        print("Old file deleted at $newPath");
-      } catch (e) {
-        print("Could not delete existing file: $e");
-      }
-    }
-
-    // 📄 Copy the file
-    await sourceFile.copy(newPath);
-
-    // 🔔 Android notification
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'pdf_channel',
-      'PDF Downloads',
-      channelDescription: 'Notifications for PDF downloads',
-      importance: Importance.max,
-      priority: Priority.high,
-      ticker: 'PDF Downloaded',
-    );
-
-    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
-
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      'PDF Ready',
-      'Tap to open generated_contract.pdf',
-      platformDetails,
-      payload: newPath,
-    );
-
-  } else if (Platform.isIOS) {
-    // 📂 App docs folder for iOS
-    final documentsDir = await getApplicationDocumentsDirectory();
-    final fileName = 'generated_contract.pdf';
-    newPath = '${documentsDir.path}/$fileName';
-
-    final sourceFile = File(pdfPath);
-    final targetFile = File(newPath);
-
-    // 🗑️ Delete if already exists
-    if (await targetFile.exists()) {
-      try {
-        await targetFile.delete();
-        print("Old file deleted at $newPath");
-      } catch (e) {
-        print("Could not delete existing file: $e");
-      }
-    }
-
-    // 📄 Copy the file
-    await sourceFile.copy(newPath);
-
-    // 🔔 iOS notification
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    const NotificationDetails platformDetails = NotificationDetails(iOS: iosDetails);
-
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      'PDF Ready',
-      'Tap to open generated_contract.pdf',
-      platformDetails,
-      payload: newPath,
-    );
-
-  } else {
-    print('Platform not supported for file download');
-    return;
-  }
-
-  if (newPath != null) {
-    print('✅ File saved to $newPath');
-  }
-}
 }
