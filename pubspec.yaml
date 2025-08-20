@@ -42,8 +42,7 @@ dependencies:
   intl: 0.20.2   # match the version required by flutter_localizations
   hijri: ^3.0.0
   open_file: ^3.2.1
-  file_picker: ^8.0.0+1
-  path: ^1.8.3
+  file_picker: ^8.0.0
   
 
 

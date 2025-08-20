@@ -36,7 +36,7 @@
  "housemaidoffer":"House Maid \n 7 days",
   "privateDriver":"Private Driver \n 7 days",
   "tenpercent":" %10 OFF",
-    "welcome":"Welcome",
+  "welcome":"Welcome",
 
   "designYourCard": "Design Your Card",
 
@@ -347,9 +347,42 @@
   "confirmPassRequired": "Please confirm your password",
   "confirmPassNotMatch": "Passwords do not match",
 
-  "customServicePackage": "Custom Service Package",
+
+  "myBooking": "My Booking",
+  "all": "All",
+  "permanent": "Permanent",
+  "hourly": "Hourly",
+  "noBookings": "No bookings found",
+  "yourBookingsAppear": "Your bookings will appear here",
+  "payNow": "Pay Now",
+  "cancel": "Cancel",
+  "contractDeadline": "Contract {id} expires in {minutes} minutes. Please confirm or it will be cancelled.",
+  "contractDeadlineTitle": "Contract Deadline Alert",
+  "permanentService": "Permanent Service",
+  "hourlyService": "Hourly Service",
+  "serviceContractId": "Service Contract ID",
+  "contractId": "Contract ID",
+  "nationality": "Nationality",
+  "service": "Service",
+  "customer": "Customer",
+  "totalPrice": "Total Price",
+  "vat": "VAT",
+  "status": "Status",
+  "startDate": "Start Date",
+  "cancelledTime": "Cancelled Time",
+  "timeRemaining": "Time remaining for payment",
+  "paymentSuccessful": "🎉 Payment Successful!",
+  "paymentDeclined": "Payment Declined",
+  "thankYou": "Thank you for your purchase.",
+  "ok": "OK",
+  "uploadContract": "Upload Contract PDF",
+  
+   "customServicePackage": "Custom Service Package",
 
   "uploading": "Uploading...",
-  "fileRemovedSuccessfully": "File removed successfully"
-
+  "fileRemovedSuccessfully": "File removed successfully",
+  "downloadLocalPdf":"Download pdf",
+  "displayfile":"Display file",
+  "completecontract":"complete contract"
+  
 }

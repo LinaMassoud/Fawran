@@ -719,7 +719,7 @@ abstract class AppLocalizations {
   /// No description provided for @startDate.
   ///
   /// In en, this message translates to:
-  /// **'Start date'**
+  /// **'Start Date'**
   String get startDate;
 
   /// No description provided for @workers.
@@ -1819,6 +1819,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Passwords do not match'**
   String get confirmPassNotMatch;
+
+  /// No description provided for @myBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'My Booking'**
+  String get myBooking;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @permanent.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent'**
+  String get permanent;
+
+  /// No description provided for @noBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings found'**
+  String get noBookings;
+
+  /// No description provided for @yourBookingsAppear.
+  ///
+  /// In en, this message translates to:
+  /// **'Your bookings will appear here'**
+  String get yourBookingsAppear;
+
+  /// No description provided for @contractDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract {id} expires in {minutes} minutes. Please confirm or it will be cancelled.'**
+  String contractDeadline(Object id, Object minutes);
+
+  /// No description provided for @contractDeadlineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract Deadline Alert'**
+  String get contractDeadlineTitle;
+
+  /// No description provided for @permanentService.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent Service'**
+  String get permanentService;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @cancelledTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled Time'**
+  String get cancelledTime;
+
+  /// No description provided for @timeRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining for payment'**
+  String get timeRemaining;
+
+  /// No description provided for @paymentSuccessful.
+  ///
+  /// In en, this message translates to:
+  /// **'🎉 Payment Successful!'**
+  String get paymentSuccessful;
+
+  /// No description provided for @paymentDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Declined'**
+  String get paymentDeclined;
+
+  /// No description provided for @thankYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for your purchase.'**
+  String get thankYou;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @uploadContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Contract PDF'**
+  String get uploadContract;
+
+  /// No description provided for @customServicePackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Service Package'**
+  String get customServicePackage;
+
+  /// No description provided for @uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading...'**
+  String get uploading;
+
+  /// No description provided for @fileRemovedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'File removed successfully'**
+  String get fileRemovedSuccessfully;
+
+  /// No description provided for @downloadLocalPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Download pdf'**
+  String get downloadLocalPdf;
+
+  /// No description provided for @displayfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Display file'**
+  String get displayfile;
+
+  /// No description provided for @completecontract.
+  ///
+  /// In en, this message translates to:
+  /// **'complete contract'**
+  String get completecontract;
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:file_picker/file_picker.dart';
 import 'package:checkout_flutter/checkout_flutter.dart';
 import 'package:confetti/confetti.dart';
 import 'package:fawran/providers/contractsProvider.dart';
@@ -12,6 +12,7 @@ import '../providers/auth_provider.dart';
 import 'package:fawran/generated/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final String? initialTab;
@@ -50,7 +51,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     super.dispose();
   }
 
-  Future<void> _startCheckout(Map<String, dynamic> booking,
+  Future<void> _startCheckout(Map<String, dynamic> booking,bool isArabic,AppLocalizations loc,
       {required bool isHourly, required String sector}) async {
     try {
       setState(() {
@@ -93,7 +94,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
       Map<String, dynamic> configurations = {
         "hashString": "",
-        "language": "en",
+        "language": isArabic?"ar":"en",
         "themeMode": "light",
         "supportedPaymentMethods": [
           "VISA",
@@ -190,14 +191,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
             if (result.statusCode == 200) {
               _confettiController.play();
-              _showSuccessDialog(data, true);
+              _showSuccessDialog(data, true,loc);
               // Refresh contracts after successful payment
             } else {
               Map<String, dynamic> parsed = jsonDecode(result.body);
-              _showSuccessDialog(parsed["message"], false);
+              _showSuccessDialog(parsed["message"], false,loc);
             }
           } catch (ex) {
-            _showSuccessDialog("somethig went wrong", false);
+            _showSuccessDialog("somethig went wrong", false,loc);
             final r = ex;
             print(ex);
           }
@@ -208,7 +209,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           setState(() {
             _checkoutStatus = 'Payment failed: $error';
           });
-          _showSuccessDialog("somethig went wrong", false);
+          _showSuccessDialog("somethig went wrong", false,loc);
           print('Payment failed: $error');
         },
         onClose: () {
@@ -237,7 +238,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
   }
 
-  void _showSuccessDialog(String data, bool success) {
+  void _showSuccessDialog(String data, bool success,AppLocalizations loc) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -249,16 +250,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
               title: Text(success
-                  ? '🎉 Payment Successful!' 
-                  : 'Payment Declined'),
-              content: Text(success ? 'Thank you for your purchase.' : data),
+                  ? loc.paymentSuccessful 
+                  : loc.paymentDeclined),
+              content: Text(success ? loc.thankYou : data),
               actions: [
                 TextButton(
                   onPressed: () {
                     ref.read(contractsProvider.notifier).fetchContracts();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('OK'),
+                  child:  Text(loc.ok),
                 ),
               ],
             ),
@@ -457,7 +458,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _buildTimeRemainingBadge(String? timeInfo, String status) {
+  Widget _buildTimeRemainingBadge(String? timeInfo, String status,AppLocalizations loc) {
     if (status.toLowerCase() != "not confirmed" ||
         timeInfo == null ||
         timeInfo.isEmpty) {
@@ -474,7 +475,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         border: Border.all(color: Colors.red.shade200),
       ),
       child: Text(
-        "Time remaining for payment - $timeInfo",
+        "${loc.timeRemaining}   - $timeInfo",
         style: TextStyle(
           color: Colors.red.shade700,
           fontWeight: FontWeight.w500,
@@ -513,77 +514,89 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _buildPermanentContractCard(Map<String, dynamic> booking) {
-    String status = booking["status"] ?? "success";
-    bool isCancelled =
-        _isContractCancelled(booking, false); // false for permanent contracts
+Widget _buildPermanentContractCard(
+    Map<String, dynamic> booking,
+    AppLocalizations loc,
+    BuildContext context,
+    ) {
+  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            spreadRadius: 0,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Time remaining badge
-          _buildTimeRemainingBadge(booking["time_info"], status),
-          // Header with service type and status badges
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildServiceTypeBadge(
-                  "Permanent Service", const Color(0xFFD9F0F9)),
-              _buildStatusBadge(status),
-            ],
-          ),
+  String status = booking["status"] ?? "success";
+  bool isCancelled = _isContractCancelled(booking, false); // false for permanent contracts
 
-          const SizedBox(height: 16),
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          spreadRadius: 0,
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Time remaining badge
+        _buildTimeRemainingBadge(booking["time_info"], status,loc),
 
-          // Contract details
-          _buildInfoRow("Service Contract ID", booking["contract_id"] ?? ""),
-          _buildInfoRow("Contract ID", booking["contract_id"] ?? ""),
-          _buildInfoRow("Nationality", booking["nationality_name"] ?? ""),
-          _buildInfoRow("Service", booking["profession_name"] ?? ""),
-          _buildInfoRow("Total Price", "${booking["amount_to_pay"] ?? 0}"),
-          _buildInfoRow("VAT", "${booking["vat_amount"] ?? 0}"),
-          _buildInfoRow("Status", status),
+        // Header with service type and status badges
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildServiceTypeBadge(loc.permanentService ?? "Permanent Service",
+                const Color(0xFFD9F0F9)),
+            _buildStatusBadge(status),
+          ],
+        ),
 
-          // Show cancelled time if status is cancelled
-          if (isCancelled)
-            _buildInfoRow("Cancelled Time",
-                _formatDeadlineTime(booking["time_info"], status)),
+        const SizedBox(height: 16),
 
-          const SizedBox(height: 16),
+        // Contract details (flipped like hourly)
+        // _buildInfoRow(loc.serviceContractId ?? "Service Contract ID",
+        //     booking["service_contract_id"]?.toString() ?? ""),
+        _buildInfoRow(loc.contractId ?? "Contract ID",
+            booking["contract_id"]?.toString() ?? ""),
+        _buildInfoRow(loc.nationality ?? "Nationality",
+            booking["nationality_name"] ?? ""),
+        _buildInfoRow(loc.service ?? "Service",
+            booking["profession_name"] ?? ""),
+        _buildInfoRow(loc.totalPrice ?? "Total Price",
+            "${booking["amount_to_pay"] ?? 0}"),
+        _buildInfoRow(loc.vat ?? "VAT", "${booking["vat_amount"] ?? 0}"),
+        _buildInfoRow(loc.status ?? "Status", status),
 
-          // Action buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
+        // Show cancelled time if status is cancelled
+        if (isCancelled)
+          _buildInfoRow(loc.cancelledTime ?? "Cancelled Time",
+              _formatDeadlineTime(booking["time_info"], status)),
+
+        const SizedBox(height: 16),
+
+        // Action buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
               onPressed: status.toLowerCase() == "cancelled" ||
                       status.toLowerCase() == "canceled" ||
-                      status.toLowerCase() == "confirmed" ||  // Add this condition
+                      status.toLowerCase() == "confirmed" ||
                       isCancelled
                   ? null
-                  : () => _startCheckout(booking, isHourly: false, sector: 'I'),
+                  : () => _startCheckout(booking, isArabic,loc,
+                      isHourly: false, sector: 'I'),
               child: Text(
-                "Pay Now",
+                loc.payNow ?? "Pay Now",
                 style: TextStyle(
                   color: (status.toLowerCase() == "cancelled" ||
                           status.toLowerCase() == "canceled" ||
-                          status.toLowerCase() == "confirmed" ||  // Add this condition
+                          status.toLowerCase() == "confirmed" ||
                           isCancelled)
                       ? Colors.grey
                       : const Color(0xFF2196F3),
@@ -592,9 +605,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 ),
               ),
             ),
-              const SizedBox(width: 8),
-              TextButton(
-              onPressed: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: isCancelled || status.toLowerCase() == "confirmed"
                   ? null
                   : () {
                       ref.read(contractsProvider.notifier).cancelPermContract(
@@ -603,9 +616,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           );
                     },
               child: Text(
-                "Cancel",
+                loc.cancel ?? "Cancel",
                 style: TextStyle(
-                  color: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
+                  color: isCancelled || status.toLowerCase() == "confirmed"
                       ? Colors.grey
                       : const Color(0xFF2196F3),
                   fontWeight: FontWeight.w500,
@@ -613,30 +626,87 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 ),
               ),
             ),
-            ],
-          ),
-        ],
-      ),
+            if (!isCancelled) 
+   
+  TextButton(
+  onPressed: () async {
+  try {
+    // Open file picker
+          final _storage = FlutterSecureStorage();
+  final userId = await _storage.read(key: 'user_id') ?? '';
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'png'], // restrict to PDF/images
+      withData: true, // important to get file.bytes
     );
+
+    if (result != null && result.files.isNotEmpty) {
+      PlatformFile file = result.files.first;
+
+      print("📂 Picked file: ${file.name} (${file.size} bytes)");
+
+      // Call your upload function
+      final response = await ApiService.uploadFile(
+        file: file,
+        fileName: file.name,
+        type: "contract", // <-- pass your type
+        userId: userId, // <-- pass user_id
+      );
+
+      if (response != null) {
+        print("✅ Upload success: ${response['file_path']}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("File uploaded successfully!")),
+        );
+      } else {
+        print("❌ Upload failed");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Upload failed. Try again.")),
+        );
+      }
+    } else {
+      print("⚠️ No file selected");
+    }
+  } catch (e) {
+    print("💥 File pick/upload error: $e");
+  }
+},
+    child: Text(
+      loc.uploadContract,
+      style: const TextStyle(
+        color: Color(0xFF2196F3),
+        fontWeight: FontWeight.w500,
+        fontSize: 14,
+      ),
+    ),
+  ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildHourlyContractCard(
+    Map<String, dynamic> booking, AppLocalizations loc, BuildContext context) {
+  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+  String status = booking["status"] ?? "success";
+  bool isCancelled = _isContractCancelled(booking, true);
+
+  String formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return "Not specified";
+    try {
+      final date = DateTime.parse(dateStr);
+      return "${date.day}/${date.month}/${date.year}";
+    } catch (_) {
+      return dateStr;
+    }
   }
 
-  Widget _buildHourlyContractCard(
-      Map<String, dynamic> booking, AppLocalizations loc) {
-    String status = booking["status"] ?? "success";
-    bool isCancelled =
-        _isContractCancelled(booking, true); // true for hourly contracts
-
-    String formatDate(String? dateStr) {
-      if (dateStr == null || dateStr.isEmpty) return "Not specified";
-      try {
-        final date = DateTime.parse(dateStr);
-        return "${date.day}/${date.month}/${date.year}";
-      } catch (_) {
-        return dateStr;
-      }
-    }
-
-    return Container(
+  return Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -655,97 +725,84 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Time remaining badge
-          _buildTimeRemainingBadge(booking["time_info"], status),
-          // Header with service type and status badges
+          _buildTimeRemainingBadge(booking["time_info"], status,loc),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildServiceTypeBadge(loc.hourlyService ?? "Hourly Service",
-                  const Color(0xFFD9F0F9)),
+              _buildServiceTypeBadge(loc.hourlyService ?? "Hourly Service", const Color(0xFFD9F0F9)),
               _buildStatusBadge(status),
             ],
           ),
 
           const SizedBox(height: 16),
 
-          // Contract details
-          _buildInfoRow(loc.serviceContractId ?? "Service Contract ID",
-              booking["service_contract_id"]?.toString() ?? ""),
-          _buildInfoRow(loc.contractId ?? "Contract ID",
-              booking["contract_id"]?.toString() ?? ""),
-          _buildInfoRow(
-              loc.customer ?? "Customer", booking["customer_display"] ?? ""),
-          _buildInfoRow(loc.service ?? "Service ID",
-              booking["service_id"]?.toString() ?? ""),
-          _buildInfoRow(loc.totalPrice ?? "Total Price",
-              "${booking["total_price"] ?? 0}"),
+          _buildInfoRow(loc.serviceContractId ?? "Service Contract ID", booking["service_contract_id"]?.toString() ?? ""),
+          _buildInfoRow(loc.contractId ?? "Contract ID", booking["contract_id"]?.toString() ?? ""),
+          _buildInfoRow(loc.customer ?? "Customer", booking["customer_display"] ?? ""),
+          _buildInfoRow(loc.service ?? "Service ID", booking["service_id"]?.toString() ?? ""),
+          _buildInfoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0}"),
           _buildInfoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}"),
-          _buildInfoRow(loc.startDate ?? "Start Date",
-              formatDate(booking["contract_start_date"])),
+          _buildInfoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
           _buildInfoRow("Status", status),
 
-          // Show cancelled time if status is cancelled
           if (isCancelled)
-            _buildInfoRow("Cancelled Time",
-                _formatDeadlineTime(booking["time_info"], status)),
+            _buildInfoRow("Cancelled Time", _formatDeadlineTime(booking["time_info"], status)),
 
           const SizedBox(height: 16),
 
-          // Action buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-              onPressed: status.toLowerCase() == "cancelled" ||
-                      status.toLowerCase() == "canceled" ||
-                      status.toLowerCase() == "confirmed" ||  // Add this condition
-                      isCancelled
-                  ? null
-                  : () => _startCheckout(booking, isHourly: true, sector: 'H'),
-              child: Text(
-                loc.payNow ?? "Pay Now",
-                style: TextStyle(
-                  color: (status.toLowerCase() == "cancelled" ||
-                          status.toLowerCase() == "canceled" ||
-                          status.toLowerCase() == "confirmed" ||  // Add this condition
-                          isCancelled)
-                      ? Colors.grey
-                      : const Color(0xFF2196F3),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+                onPressed: status.toLowerCase() == "cancelled" ||
+                        status.toLowerCase() == "canceled" ||
+                        status.toLowerCase() == "confirmed" ||
+                        isCancelled
+                    ? null
+                    : () => _startCheckout(booking, isArabic,loc, isHourly: true, sector: 'H'),
+                child: Text(
+                  loc.payNow ?? "Pay Now",
+                  style: TextStyle(
+                    color: (status.toLowerCase() == "cancelled" ||
+                            status.toLowerCase() == "canceled" ||
+                            status.toLowerCase() == "confirmed" ||
+                            isCancelled)
+                        ? Colors.grey
+                        : const Color(0xFF2196F3),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
               ),
-            ),
               const SizedBox(width: 8),
               TextButton(
-              onPressed: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
-                  ? null
-                  : () {
-                      ref
-                          .read(contractsProvider.notifier)
-                          .cancelHourlyContract(
-                            booking["service_contract_id"].toString(),
-                            isHourly: false,
-                          );
-                    },
-              child: Text(
-                loc.cancel ?? "Cancel",
-                style: TextStyle(
-                  color: isCancelled || status.toLowerCase() == "confirmed"  // Add confirmed condition
-                      ? Colors.grey
-                      : const Color(0xFF2196F3),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+                onPressed: isCancelled || status.toLowerCase() == "confirmed"
+                    ? null
+                    : () {
+                        ref.read(contractsProvider.notifier).cancelHourlyContract(
+                              booking["service_contract_id"].toString(),
+                              isHourly: false,
+                            );
+                      },
+                child: Text(
+                  loc.cancel ?? "Cancel",
+                  style: TextStyle(
+                    color: isCancelled || status.toLowerCase() == "confirmed"
+                        ? Colors.grey
+                        : const Color(0xFF2196F3),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
               ),
-            ),
             ],
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildEmptyState() {
     return Center(
@@ -781,32 +838,38 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   List<Widget> _getFilteredContracts(List<Map<String, dynamic>> permanent,
-      List<Map<String, dynamic>> hourly, AppLocalizations loc) {
+      List<Map<String, dynamic>> hourly, AppLocalizations loc ,BuildContext context) {
     List<Widget> contracts = [];
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_selectedTab == 'all' || _selectedTab == 'permanent') {
       contracts.addAll(
-          permanent.map((permanent) => _buildPermanentContractCard(permanent)));
+          permanent.map((permanent) => _buildPermanentContractCard(permanent,loc,context)));
     }
 
     if (_selectedTab == 'all' || _selectedTab == 'hourly') {
       contracts.addAll(
-          hourly.map((booking) => _buildHourlyContractCard(booking, loc)));
+          hourly.map((booking) => _buildHourlyContractCard(booking, loc,context)));
     }
 
     return contracts;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    final state = ref.watch(contractsProvider);
-    final notifier = ref.read(contractsProvider.notifier);
+@override
+Widget build(BuildContext context) {
+  final loc = AppLocalizations.of(context)!;
+  final state = ref.watch(contractsProvider);
+  final notifier = ref.read(contractsProvider.notifier);
 
-    return Scaffold(
+  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+  return Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         children: [
+          // Header
           Container(
             height: 124,
             decoration: const BoxDecoration(
@@ -819,12 +882,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
             child: Stack(
               children: [
-                // Left back button
+                // Back button flips automatically in RTL
                 Positioned(
-                  left: 0,
+                  left: isArabic ? null : 0,
+                  right: isArabic ? 0 : null,
                   top: 0,
                   bottom: 0,
-                  child: Container(
+                  child: SizedBox(
                     width: 40,
                     height: 40,
                     child: IconButton(
@@ -836,12 +900,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     ),
                   ),
                 ),
-
-                // Centered title
-                const Center(
+                // Title
+                Center(
                   child: Text(
-                    "My Booking",
-                    style: TextStyle(
+                    loc.myBooking ?? "My Booking",
+                    style: const TextStyle(
                       color: Color(0xFFFFA200),
                       fontWeight: FontWeight.w600,
                       fontSize: 27,
@@ -852,7 +915,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             ),
           ),
 
-          // Content area with tab selector overlapping header
+          // Content area
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -860,12 +923,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               ),
               child: Column(
                 children: [
-                  // Tab selector
+                  // Tabs
                   Container(
                     margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0EAFF), // Light blue background
+                      color: const Color(0xFFE0EAFF),
                       borderRadius: BorderRadius.circular(50),
                       boxShadow: [
                         BoxShadow(
@@ -877,19 +940,38 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       ],
                     ),
                     child: Row(
-                      children: [
-                        Expanded(
+                      children: (isArabic
+                              ? ["hourly", "permanent", "all"] // RTL order
+                              : ["all", "permanent", "hourly"]) // LTR order
+                          .map((tab) {
+                        String label;
+                        switch (tab) {
+                          case "all":
+                            label = loc.all ?? "All";
+                            break;
+                          case "permanent":
+                            label = loc.permanent ?? "Permanent";
+                            break;
+                          case "hourly":
+                            label = loc.hourly ?? "Hourly";
+                            break;
+                          default:
+                            label = tab;
+                        }
+
+                        final isSelected = _selectedTab == tab;
+                        return Expanded(
                           child: GestureDetector(
-                            onTap: () => setState(() => _selectedTab = 'all'),
+                            onTap: () => setState(() => _selectedTab = tab),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   vertical: 10, horizontal: 12),
                               decoration: BoxDecoration(
-                                color: _selectedTab == 'all'
+                                color: isSelected
                                     ? Colors.white
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(50),
-                                boxShadow: _selectedTab == 'all'
+                                boxShadow: isSelected
                                     ? [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.15),
@@ -901,13 +983,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                                     : null,
                               ),
                               child: Text(
-                                'All',
+                                label,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: _selectedTab == 'all'
+                                  color: isSelected
                                       ? const Color(0xFF10295C)
                                       : const Color(0xFF9CA3AF),
-                                  fontWeight: _selectedTab == 'all'
+                                  fontWeight: isSelected
                                       ? FontWeight.w700
                                       : FontWeight.w500,
                                   fontSize: 14,
@@ -915,102 +997,31 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                               ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedTab = 'permanent'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedTab == 'permanent'
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(50),
-                                boxShadow: _selectedTab == 'permanent'
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.15),
-                                          spreadRadius: 0,
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Text(
-                                'Permanent',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _selectedTab == 'permanent'
-                                      ? const Color(0xFF10295C)
-                                      : const Color(0xFF9CA3AF),
-                                  fontWeight: _selectedTab == 'permanent'
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedTab = 'hourly'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: _selectedTab == 'hourly'
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(50),
-                                boxShadow: _selectedTab == 'hourly'
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.15),
-                                          spreadRadius: 0,
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Text(
-                                'Hourly',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _selectedTab == 'hourly'
-                                      ? const Color(0xFF10295C)
-                                      : const Color(0xFF9CA3AF),
-                                  fontWeight: _selectedTab == 'hourly'
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                        );
+                      }).toList(),
                     ),
                   ),
 
-                  // Contracts list
+                  // Contract list
                   Expanded(
                     child: state.isLoading
                         ? const Center(
                             child: CircularProgressIndicator(
-                                color: Color(0xFF1A365D)))
+                              color: Color(0xFF1A365D),
+                            ),
+                          )
                         : RefreshIndicator(
                             onRefresh: notifier.fetchContracts,
                             color: const Color(0xFF1A365D),
                             child: Builder(
                               builder: (context) {
                                 final filtered = _getFilteredContracts(
-                                    state.permanent, state.hourly, loc);
+                                  state.permanent,
+                                  state.hourly,
+                                  loc,
+                                  context,
+                                );
+
                                 if (filtered.isEmpty) {
                                   return SingleChildScrollView(
                                     physics:
@@ -1047,6 +1058,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         elevation: 4,
         child: const Icon(Icons.refresh),
       ),
-    );
-  }
+    ),
+  );
+}
 }

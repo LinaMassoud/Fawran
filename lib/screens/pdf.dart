@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:fawran/generated/app_localizations.dart';
 import 'package:fawran/providers/address_provider.dart';
 import 'package:fawran/providers/home_screen_provider.dart';
 import 'package:fawran/providers/nationality_provider.dart';
@@ -135,6 +136,8 @@ double finalPrice = selectedPackage == null ? 0.0:  selectedPackage.contractAmou
         result = result.replaceAll("#FINAL_PRICE#", finalPrice.toString() );
         result = result.replaceAll("#EMAIL#", email );
         result = result.replaceAll("#NATIONALITY#", selectedNationality?.name??'' );
+        result = result.replaceAll("#PRICE_BEFORE_VAT#", selectedPackage?.contractAmount.toString()??'');
+        result = result.replaceAll("#VAT_AMOUNT##", selectedPackage?.vatAmount.toString()??'' );
 
 
     return result;
@@ -221,6 +224,8 @@ Map<String, String> _extractLocationParts() {
 
   @override
   Widget build(BuildContext context) {
+      final loc = AppLocalizations.of(context)!;
+
       final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
      contractId = args['contract_Id'] as String;
     return
@@ -251,27 +256,58 @@ Map<String, String> _extractLocationParts() {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          ElevatedButton(
-                            onPressed: () async {
+                                     ElevatedButton(
+     onPressed: () async {
                               if (pdfPath != null) {
                                 await OpenFile.open(pdfPath!);
                               }
                             },
-                            child: const Text('Open PDF'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF06214B),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                        loc.displayfile,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+     
+                                 ElevatedButton(
+            onPressed: () async {
                               if (pdfPath != null) {
                                 await downloadPdfWithNotification(pdfPath!);
                               }
                             },
-                            child: const Text('Download PDF'),
-                          ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF06214B),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                        loc.downloadLocalPdf,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+     
                         ],
                       ),
-                      const SizedBox(height: 12), // spacing between rows
-                      ElevatedButton(
-                        onPressed: () {
+                      const SizedBox(height: 12),
+                      
+                                 ElevatedButton(
+           onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Order submitted successfully!")),
         );
@@ -283,9 +319,23 @@ Map<String, String> _extractLocationParts() {
                             ),
                           );
                         },
-                        child: const Text('Complete Contract'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF06214B),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                        loc.completecontract,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ],
+              ),
+                     ],
                   ),
                 ),
               ],

@@ -192,10 +192,13 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
           .createPermanentContract(requestBody);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+              ref.read(selectedPackageProvider.notifier).state =
+                                null;
    final parsed= jsonDecode(response.body);
         setState(() {
           isLoading = false;
         });
+
         Navigator.pushReplacementNamed(context, '/pdf'  , arguments: {
    'contract_Id':parsed["contract_id"]
   },);

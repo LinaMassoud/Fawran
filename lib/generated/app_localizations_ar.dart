@@ -211,7 +211,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get insertAddress => 'أدخل العنوان';
 
   @override
-  String get district => 'يصرف';
+  String get district => 'اختر المنطقة والمدينة';
 
   @override
   String get map => 'خريطة';
@@ -280,13 +280,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectLocation => 'اختر الموقع';
 
   @override
-  String get edit => 'يحرر';
+  String get edit => 'تعديل';
 
   @override
   String get mapSelected => 'تم تحديد الخريطة';
 
   @override
-  String get save => 'يحفظ';
+  String get save => 'حفظ';
 
   @override
   String get step => 'خطوة';
@@ -319,7 +319,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get serviceDetails => 'تفاصيل الخدمة';
 
   @override
-  String get startDate => 'تاريخ البداية';
+  String get startDate => 'تاريخ البدء';
 
   @override
   String get workers => 'العمال';
@@ -382,19 +382,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get months => 'شهور';
 
   @override
-  String get serviceContractId => 'معرف عقد الخدمة';
+  String get serviceContractId => 'معرّف عقد الخدمة';
 
   @override
-  String get contractId => 'معرف العقد';
+  String get contractId => 'معرّف العقد';
 
   @override
-  String get customer => 'عميل';
+  String get customer => 'العميل';
 
   @override
-  String get service => 'خدمة';
+  String get service => 'الخدمة';
 
   @override
-  String get vat => 'ضريبة';
+  String get vat => 'الضريبة';
 
   @override
   String get notConfirmed => 'لم يتم تأكيده';
@@ -409,7 +409,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paid => 'مدفوع';
 
   @override
-  String get hourlyService => 'خدمة كل ساعة';
+  String get hourlyService => 'خدمة بالساعة';
 
   @override
   String get payNow => 'ادفع الآن';
@@ -529,7 +529,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get popular => 'الأكثر شيوعا';
 
   @override
-  String get our_services => 'حدماتنا';
+  String get our_services => 'خدماتنا';
 
   @override
   String get coming_soon => 'قريباّ';
@@ -874,4 +874,72 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get confirmPassNotMatch => 'كلمات المرور غير متطابقة';
+
+  @override
+  String get myBooking => 'حجوزاتي';
+
+  @override
+  String get all => 'الكل';
+
+  @override
+  String get permanent => 'دائم';
+
+  @override
+  String get noBookings => 'لا توجد حجوزات';
+
+  @override
+  String get yourBookingsAppear => 'ستظهر حجوزاتك هنا';
+
+  @override
+  String contractDeadline(Object id, Object minutes) {
+    return 'العقد $id ينتهي خلال $minutes دقيقة. يرجى التأكيد أو سيتم إلغاؤه.';
+  }
+
+  @override
+  String get contractDeadlineTitle => 'تنبيه انتهاء العقد';
+
+  @override
+  String get permanentService => 'خدمة دائمة';
+
+  @override
+  String get status => 'الحالة';
+
+  @override
+  String get cancelledTime => 'وقت الإلغاء';
+
+  @override
+  String get timeRemaining => 'الوقت المتبقي للدفع ';
+
+  @override
+  String get paymentSuccessful => '🎉 تم الدفع بنجاح!';
+
+  @override
+  String get paymentDeclined => 'تم رفض الدفع';
+
+  @override
+  String get thankYou => 'شكراً لشرائك.';
+
+  @override
+  String get ok => 'حسناً';
+
+  @override
+  String get uploadContract => 'تحميل ملف العقد';
+
+  @override
+  String get customServicePackage => 'بكج خدمة مخصص';
+
+  @override
+  String get uploading => 'جارٍ الرفع...';
+
+  @override
+  String get fileRemovedSuccessfully => 'تم حذف الملف بنجاح';
+
+  @override
+  String get downloadLocalPdf => 'تحميل الملف';
+
+  @override
+  String get displayfile => 'عرض الملف';
+
+  @override
+  String get completecontract => 'إتمام التعاقد';
 }
