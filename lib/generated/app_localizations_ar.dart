@@ -947,5 +947,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get followus => 'تابعنا على مواقع التواصل';
 
   @override
+  String get connectwithus => 'تواصل معنا';
+
+  @override
   String get logoutconfirm => 'هل متأكد انك تريد تسجيل الخروج؟';
 }

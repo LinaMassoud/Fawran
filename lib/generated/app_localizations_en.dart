@@ -948,5 +948,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get followus => 'Follow Us In Social Media';
 
   @override
+  String get connectwithus => 'Connect With Us';
+
+  @override
   String get logoutconfirm => 'Are you sure you want to logout?';
 }

@@ -55,7 +55,7 @@ class ConnectWithUsScreen extends StatelessWidget {
                 const Align(
                   alignment: Alignment.bottomCenter,
                   child: Text(
-                    "Connect With Us",
+                    loc.connectwithus,
                     style: TextStyle(
                       color: Color(0xFFFFA726),
                       fontWeight: FontWeight.bold,

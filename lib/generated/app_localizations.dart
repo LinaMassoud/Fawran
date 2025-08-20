@@ -1958,6 +1958,12 @@ abstract class AppLocalizations {
   /// **'Follow Us In Social Media'**
   String get followus;
 
+  /// No description provided for @connectwithus.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect With Us'**
+  String get connectwithus;
+
   /// No description provided for @logoutconfirm.
   ///
   /// In en, this message translates to:
