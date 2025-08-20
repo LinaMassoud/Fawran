@@ -279,28 +279,9 @@ Map<String, String> _extractLocationParts() {
                       ),
               ),
      
-                                 ElevatedButton(
-            onPressed: () async {
-                              if (pdfPath != null) {
-                                await downloadPdfWithNotification(pdfPath!);
-                              }
-                            },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF06214B),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                        loc.downloadLocalPdf,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
+                        
+         
+             
      
                         ],
                       ),
