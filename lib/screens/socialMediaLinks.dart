@@ -52,7 +52,7 @@ class ConnectWithUsScreen extends StatelessWidget {
                   ),
                 ),
                 // Title
-                const Align(
+                Align(
                   alignment: Alignment.bottomCenter,
                   child: Text(
                     loc.connectwithus,
@@ -95,8 +95,8 @@ class ConnectWithUsScreen extends StatelessWidget {
               children: [
                 // Facebook
                 GestureDetector(
-                  onTap: () => _launchUrl(
-                      "https://www.facebook.com/share/1Ry3FMZviX/"),
+                  onTap: () =>
+                      _launchUrl("https://www.facebook.com/share/1Ry3FMZviX/"),
                   child: SvgPicture.asset(
                     "assets/images/facebook.svg",
                     width: 40,
@@ -117,8 +117,8 @@ class ConnectWithUsScreen extends StatelessWidget {
                 const SizedBox(width: 16),
                 // LinkedIn
                 GestureDetector(
-                  onTap: () => _launchUrl(
-                      "https://www.linkedin.com/company/fawranksa/"),
+                  onTap: () =>
+                      _launchUrl("https://www.linkedin.com/company/fawranksa/"),
                   child: SvgPicture.asset(
                     "assets/images/linkedin.svg",
                     width: 40,
