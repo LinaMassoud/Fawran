@@ -110,12 +110,16 @@ Widget build(BuildContext context) {
     child: Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
+      body: Column(
           children: [
             // 🔹 Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: MediaQuery.of(context).padding.top + 12,
+              bottom: 12,
+            ),
               decoration: const BoxDecoration(
                 color: Color(0xFF0A2A66),
                 borderRadius: BorderRadius.only(
@@ -147,6 +151,8 @@ Widget build(BuildContext context) {
 
             // 🔹 Form Fields (scrollable)
             Expanded(
+              child: SafeArea(
+              top: false,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Column(
@@ -202,9 +208,12 @@ Widget build(BuildContext context) {
                 ),
               ),
             ),
+            ),
 
             // 🔹 Bottom Buttons (fixed)
-            Padding(
+            SafeArea(
+            top: false,
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Row(
                 children: [
@@ -250,9 +259,9 @@ Widget build(BuildContext context) {
                 ],
               ),
             ),
+            ),
           ],
         ),
-      ),
     ),
   );
 }
