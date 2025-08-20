@@ -69,51 +69,52 @@ class Newhome extends ConsumerWidget {
           child: Column(
             children: [
               // Top Bar
-      Container(
-  height: 100,
-  decoration: const BoxDecoration(
-    color: Color(0xFF10295C),
-    borderRadius: BorderRadius.only(
-      bottomLeft: Radius.circular(24),
-      bottomRight: Radius.circular(24),
-    ),
-  ),
-  padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-  child: Row(
-    crossAxisAlignment: CrossAxisAlignment.start, // align children at top
-    children: [
-      Builder(
-        builder: (context) => Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.menu,
-                  color: Color(0xFFFFA200), size: 28),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-            const SizedBox(width: 2),
-            IconButton(
-              icon: const Icon(Icons.notifications_none,
-                  color: Color(0xFFFFA200), size: 26),
-              onPressed: () {},
-            ),
-          ],
-        ),
-      ),
-      const Spacer(),
-      // Use Transform to move the logo downward
-      Transform.translate(
-        offset: const Offset(0, 10), // move 10 pixels down
-        child: Image.asset(
-          'assets/images/logo.png',
-          height: 32,
-          fit: BoxFit.contain,
-        ),
-      ),
-    ],
-  ),
-),
+              Container(
+                height: 100,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10295C),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+                child: Row(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // align children at top
+                  children: [
+                    Builder(
+                      builder: (context) => Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.menu,
+                                color: Color(0xFFFFA200), size: 28),
+                            onPressed: () {
+                              Scaffold.of(context).openDrawer();
+                            },
+                          ),
+                          const SizedBox(width: 2),
+                          IconButton(
+                            icon: const Icon(Icons.notifications_none,
+                                color: Color(0xFFFFA200), size: 26),
+                            onPressed: () {},
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    // Use Transform to move the logo downward
+                    Transform.translate(
+                      offset: const Offset(0, 10), // move 10 pixels down
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        height: 32,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               // Main content
               Expanded(
@@ -264,28 +265,29 @@ class Newhome extends ConsumerWidget {
                               ),
 
                               // Fixed "Popular" tag at bottom left of slider
-                            Positioned(
-  bottom: 40, // adjust this to your liking
-  left: 16,
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: Colors.lightBlue.shade50,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: Colors.white, // border color
-        width: 2,          // thin border
-      ),
-    ),
-    child: Text(
-      loc.popular,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
-      ),
-    ),
-  ),
-),
+                              Positioned(
+                                bottom: 40, // adjust this to your liking
+                                left: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.lightBlue.shade50,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white, // border color
+                                      width: 2, // thin border
+                                    ),
+                                  ),
+                                  child: Text(
+                                    loc.popular,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           );
                         },
@@ -634,7 +636,6 @@ class Newhome extends ConsumerWidget {
                       );
                     },
                   ),
-
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/ticketSupport.svg',
@@ -704,7 +705,7 @@ class Newhome extends ConsumerWidget {
                 textColor: Colors.red,
                 onTap: () {
                   Navigator.pop(context);
-                  _showLogoutDialog(context, ref);
+                  _showLogoutDialog(context, ref, loc);
                 },
               ),
             ),
@@ -753,17 +754,18 @@ class Newhome extends ConsumerWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+  void _showLogoutDialog(
+      BuildContext context, WidgetRef ref, AppLocalizations loc) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Logout"),
-          content: const Text("Are you sure you want to logout?"),
+          title: Text(loc.logout),
+          content: Text(loc.logoutconfirm),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Cancel"),
+              child: Text(loc.cancel),
             ),
             TextButton(
               onPressed: () async {
@@ -774,8 +776,8 @@ class Newhome extends ConsumerWidget {
                   (route) => false,
                 );
               },
-              child: const Text(
-                "Logout",
+              child: Text(
+                loc.logout,
                 style: TextStyle(color: Colors.red),
               ),
             ),

@@ -383,6 +383,14 @@
   "fileRemovedSuccessfully": "File removed successfully",
   "downloadLocalPdf":"Download pdf",
   "displayfile":"Display file",
-  "completecontract":"complete contract"
+  "completecontract":"complete contract",
+  "followus":"Follow Us In Social Media",
+  "connectwithus":"Connect With Us",
+
+
+
+  "logoutconfirm":"Are you sure you want to logout?"
+
+
   
 }

@@ -943,4 +943,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get completecontract => 'complete contract';
+
+  @override
+  String get followus => 'Follow Us In Social Media';
+
+  @override
+  String get connectwithus => 'Connect With Us';
+
+  @override
+  String get logoutconfirm => 'Are you sure you want to logout?';
 }
