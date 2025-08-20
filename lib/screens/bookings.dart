@@ -408,11 +408,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         break;
       case "cancelled":
       case "canceled":
+      case "ملغي":
         backgroundColor = const Color(0xFFFFEBEE); // Light red background
         textColor = const Color(0xFFE53935);
         statusText = "Cancelled";
         break;
       case "not confirmed":
+      case "غير مؤكد":
         backgroundColor = const Color(0xFFFFF3E0); // Light orange background
         textColor = const Color(0xFFFFA200); // --Main-Orange
         statusText = "Not Confirmed";

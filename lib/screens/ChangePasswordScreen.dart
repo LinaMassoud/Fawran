@@ -185,7 +185,7 @@ Widget build(BuildContext context) {
                     const SizedBox(height: 16),
              CustomPasswordField(
   controller: _confirmPasswordController,
-  label: loc.oldPass,
+  label: loc.confirmNewPassword,
   hint: isArabic ? "أدخل تاكيد كلمة المرور الجديدة" : "Enter new password confirmation",
   isArabic: isArabic,
   obscureText: _obscureOld,
