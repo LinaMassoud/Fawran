@@ -58,7 +58,7 @@ class MyApp extends ConsumerWidget {
     ),
   ),
       builder: FlashyFlushbarProvider.init(),
-      home: const LoginScreen(),
+      home: const LaunchScreen(),
       routes: {
         // '/login' key routes to LoginScreen widget
         '/login': (context) => const LoginScreen(),
