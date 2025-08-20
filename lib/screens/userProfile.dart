@@ -87,58 +87,74 @@ ref.invalidate(userNameProvider);
     Navigator.pushReplacementNamed(context, '/login');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('User Profile')),
-      body: Padding(
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: const Text('User Profile')),
+    body: SafeArea(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text('Phone Number: $phoneNumber'),
-            const SizedBox(height: 16),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: const InputDecoration(labelText: 'First Name'),
-                  ),
-                  TextFormField(
-                    controller: _middleNameController,
-                    decoration: const InputDecoration(labelText: 'Middle Name'),
-                  ),
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: const InputDecoration(labelText: 'Last Name'),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: updateProfile,
-                    child: const Text('Update Profile'),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: TextButton.icon(
-                  onPressed: logout,
-                  icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.red),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height -
+                kToolbarHeight - MediaQuery.of(context).padding.top,
+          ),
+          child: IntrinsicHeight(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Phone Number: $phoneNumber'),
+                const SizedBox(height: 16),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _firstNameController,
+                        decoration:
+                            const InputDecoration(labelText: 'First Name'),
+                      ),
+                      TextFormField(
+                        controller: _middleNameController,
+                        decoration:
+                            const InputDecoration(labelText: 'Middle Name'),
+                      ),
+                      TextFormField(
+                        controller: _lastNameController,
+                        decoration:
+                            const InputDecoration(labelText: 'Last Name'),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: updateProfile,
+                        child: const Text('Update Profile'),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                const Spacer(),
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: TextButton.icon(
+                      onPressed: logout,
+                      icon: const Icon(Icons.logout, color: Colors.red),
+                      label: const Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+
 }
