@@ -77,7 +77,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             bottom: 0,
             child: IconButton(
               
-              icon: const Icon(Icons.arrow_back, color: Colors.white, textDirection: TextDirection.ltr,),
+              icon: const Icon(Icons.arrow_back, color: Color(0xFFFFA200), textDirection: TextDirection.ltr,),
               onPressed: () {
                    ref.read(selectedPackageProvider.notifier).state =
                                 null;
@@ -92,7 +92,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             child: Text(
               "${selectedProfession?.positionName}",
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFFFFA200),
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),

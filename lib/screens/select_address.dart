@@ -203,7 +203,7 @@ class _AddressSelectionScreenState
                       child: Text(
                         "${selectedProfession?.positionName}",
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Color(0xFFFFA200),
                           fontWeight: FontWeight.w600,
                           fontSize: 18,
                         ),
@@ -213,7 +213,7 @@ class _AddressSelectionScreenState
                       left: 0,
                       child: IconButton(
                         icon: const Icon(Icons.arrow_back_ios,
-                            color: Colors.white),
+                            color: Color(0xFFFFA200)),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ),

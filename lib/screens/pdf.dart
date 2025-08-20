@@ -379,23 +379,53 @@ Future<void> downloadLocalPdf(String pdfPath) async {
 
 Future<void> downloadPdfWithNotification(String pdfPath) async {
   String? newPath; 
-  
+
   if (Platform.isAndroid) {
+    // 🔒 Request storage permission (needed only pre-Android 11)
     var status = await Permission.storage.request();
     if (!status.isGranted) return;
 
-    // Save to Downloads folder on Android
+    // 📂 Downloads folder
     final downloadsDir = Directory('/storage/emulated/0/Download');
     if (!await downloadsDir.exists()) {
       await downloadsDir.create(recursive: true);
     }
 
-    final fileName = 'generated_contract.pdf';
-    newPath = '${downloadsDir.path}/$fileName';
+final timestamp = DateTime.now().millisecondsSinceEpoch;
+final fileName = 'generated_contract_$timestamp.pdf';
+final newPath = '${downloadsDir.path}/$fileName';
 
-    final sourceFile = File(pdfPath);
+// Correct: sourceFile = original PDF path
+final sourceFile = File(pdfPath);
+final targetFile = File(newPath);
+
+// Delete if exists (optional, but safe)
+if (await targetFile.exists()) {
+  try {
+    await targetFile.delete();
+    print("Old file deleted at $newPath");
+  } catch (e) {
+    print("Could not delete existing file: $e");
+  }
+}
+
+// Copy to Downloads
+await sourceFile.copy(newPath);
+
+    // 🗑️ Delete if already exists
+    if (await targetFile.exists()) {
+      try {
+        await targetFile.delete();
+        print("Old file deleted at $newPath");
+      } catch (e) {
+        print("Could not delete existing file: $e");
+      }
+    }
+
+    // 📄 Copy the file
     await sourceFile.copy(newPath);
-    
+
+    // 🔔 Android notification
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'pdf_channel',
       'PDF Downloads',
@@ -414,14 +444,30 @@ Future<void> downloadPdfWithNotification(String pdfPath) async {
       platformDetails,
       payload: newPath,
     );
+
   } else if (Platform.isIOS) {
+    // 📂 App docs folder for iOS
     final documentsDir = await getApplicationDocumentsDirectory();
     final fileName = 'generated_contract.pdf';
     newPath = '${documentsDir.path}/$fileName';
 
     final sourceFile = File(pdfPath);
+    final targetFile = File(newPath);
+
+    // 🗑️ Delete if already exists
+    if (await targetFile.exists()) {
+      try {
+        await targetFile.delete();
+        print("Old file deleted at $newPath");
+      } catch (e) {
+        print("Could not delete existing file: $e");
+      }
+    }
+
+    // 📄 Copy the file
     await sourceFile.copy(newPath);
 
+    // 🔔 iOS notification
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
@@ -437,14 +483,14 @@ Future<void> downloadPdfWithNotification(String pdfPath) async {
       platformDetails,
       payload: newPath,
     );
+
   } else {
     print('Platform not supported for file download');
     return;
   }
 
   if (newPath != null) {
-    print('File saved to $newPath');
+    print('✅ File saved to $newPath');
   }
 }
-
 }
