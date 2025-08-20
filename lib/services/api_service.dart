@@ -135,7 +135,7 @@ class ApiService {
           'first_name': responseData['first_name'],
           'middle_name': responseData['middle_name'],
           'last_name': responseData['last_name'],
-          'national_id': responseData['nationalid'],
+          'national_id': responseData['national_id'],
           'email': responseData['email'],
         };
 
