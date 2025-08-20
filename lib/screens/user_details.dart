@@ -54,112 +54,123 @@ class _MyAccountScreenState extends ConsumerState<MyAccountScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-   body: SafeArea(
-  child: isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : Directionality(
-          textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Top Bar
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0A2A66),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Directionality(
+              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+              child: Column(
+                children: [
+                  // Top Bar - extends to the very top
+                  Container(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: MediaQuery.of(context).padding.top + 12, // Add status bar height
+                      bottom: 12,
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon:
-                            const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF0A2A66),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
                       ),
-                      Expanded(
-                        child: Text(
-                          loc.myAccountTitle,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.orange),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        Expanded(
+                          child: Text(
+                            loc.myAccountTitle,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 48),
-                    ],
+                        const SizedBox(width: 48),
+                      ],
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  // Content area with SafeArea
+                  Expanded(
+                    child: SafeArea(
+                      top: false, // Don't add safe area padding at the top
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 20),
 
-                // Profile Image
-                const CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, size: 50, color: Colors.white),
-                ),
+                            // Profile Image
+                            const CircleAvatar(
+                              radius: 40,
+                              backgroundColor: Colors.grey,
+                              child: Icon(Icons.person, size: 50, color: Colors.white),
+                            ),
 
-                const SizedBox(height: 10),
-                Text(
-                  "$firstName $lastName",
-                  style: GoogleFonts.poppins(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                            const SizedBox(height: 10),
+                            Text(
+                              "$firstName $lastName",
+                              style: GoogleFonts.poppins(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
 
-                const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                // Account Section
-                sectionTitle(loc.accountSection),
-                listTileItem(
-                  icon: Icons.person_outline,
-                  title: loc.personalInformation,
-                  subtitle:
-                      "${loc.firstNameLabel}  : $firstName\n${loc.middleNameLabel}: $middleName\n${loc.lastNameLabel}: $lastName\n${loc.nationalIdLabel}: $nationaId",
-                  onTap: () {},
-                ),
+                            // Account Section
+                            sectionTitle(loc.accountSection),
+                            listTileItem(
+                              icon: Icons.person_outline,
+                              title: loc.personalInformation,
+                              subtitle:
+                                  "${loc.firstNameLabel}  : $firstName\n${loc.middleNameLabel}: $middleName\n${loc.lastNameLabel}: $lastName\n${loc.nationalIdLabel}: $nationaId",
+                              onTap: () {},
+                            ),
 
-                const SizedBox(height: 12),
+                            const SizedBox(height: 12),
 
-                sectionTitle(loc.personalDetailsSection),
-                listTileItem(
-                  svgAsset: 'assets/images/email.svg',
-                  title: loc.email,
-                  subtitle: email,
-                  onTap: () {},
-                ),
-                const SizedBox(height: 12),
-                listTileItem(
-                  icon: Icons.phone_outlined,
-                  title: loc.phone,
-                  subtitle: phoneNumber,
-                  onTap: () {},
-                ),
-                const SizedBox(height: 12),
-                listTileItem(
-                  icon: Icons.lock_outline,
-                  title: loc.changePasswordLabel,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ChangePasswordScreen(),
+                            sectionTitle(loc.personalDetailsSection),
+                            listTileItem(
+                              svgAsset: 'assets/images/email.svg',
+                              title: loc.email,
+                              subtitle: email,
+                              onTap: () {},
+                            ),
+                            const SizedBox(height: 12),
+                            listTileItem(
+                              icon: Icons.phone_outlined,
+                              title: loc.phone,
+                              subtitle: phoneNumber,
+                              onTap: () {},
+                            ),
+                            const SizedBox(height: 12),
+                            listTileItem(
+                              icon: Icons.lock_outline,
+                              title: loc.changePasswordLabel,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ChangePasswordScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-              ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
-),
     );
   }
 
