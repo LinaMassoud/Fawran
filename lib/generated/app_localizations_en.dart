@@ -319,7 +319,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serviceDetails => 'Service Details';
 
   @override
-  String get startDate => 'Start date';
+  String get startDate => 'Start Date';
 
   @override
   String get workers => 'Workers';
@@ -875,4 +875,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmPassNotMatch => 'Passwords do not match';
+
+  @override
+  String get myBooking => 'My Booking';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get permanent => 'Permanent';
+
+  @override
+  String get noBookings => 'No bookings found';
+
+  @override
+  String get yourBookingsAppear => 'Your bookings will appear here';
+
+  @override
+  String contractDeadline(Object id, Object minutes) {
+    return 'Contract $id expires in $minutes minutes. Please confirm or it will be cancelled.';
+  }
+
+  @override
+  String get contractDeadlineTitle => 'Contract Deadline Alert';
+
+  @override
+  String get permanentService => 'Permanent Service';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get cancelledTime => 'Cancelled Time';
+
+  @override
+  String get timeRemaining => 'Time remaining for payment';
+
+  @override
+  String get paymentSuccessful => '🎉 Payment Successful!';
+
+  @override
+  String get paymentDeclined => 'Payment Declined';
+
+  @override
+  String get thankYou => 'Thank you for your purchase.';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get uploadContract => 'Upload Contract PDF';
+
+  @override
+  String get customServicePackage => 'Custom Service Package';
+
+  @override
+  String get uploading => 'Uploading...';
+
+  @override
+  String get fileRemovedSuccessfully => 'File removed successfully';
+
+  @override
+  String get downloadLocalPdf => 'Download pdf';
+
+  @override
+  String get displayfile => 'Display file';
+
+  @override
+  String get completecontract => 'complete contract';
 }

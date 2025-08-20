@@ -209,7 +209,7 @@
   "welcome":"مرحبًا بكم معنا! ",
   "intro_text":"مجموعة متنوعة من الخدمات بين يديكم — هل أنتم مستعدون للبدء؟",
   "popular":"الأكثر شيوعا",
-  "our_services":"حدماتنا",
+  "our_services":"خدماتنا",
    "coming_soon":"قريباّ",
    "unconfirmedcontracts":"لديك عقود غير مدفوعة",
 
@@ -353,10 +353,44 @@
   "confirmPassRequired": "يرجى تأكيد كلمة المرور",
   "confirmPassNotMatch": "كلمات المرور غير متطابقة",
 
-  "customServicePackage": "بكج خدمة مخصص",
+
+  "myBooking": "حجوزاتي",
+  "all": "الكل",
+  "permanent": "دائم",
+  "hourly": "بالساعة",
+  "noBookings": "لا توجد حجوزات",
+  "yourBookingsAppear": "ستظهر حجوزاتك هنا",
+  "payNow": "ادفع الآن",
+  "cancel": "إلغاء",
+  "contractDeadline": "العقد {id} ينتهي خلال {minutes} دقيقة. يرجى التأكيد أو سيتم إلغاؤه.",
+  "contractDeadlineTitle": "تنبيه انتهاء العقد",
+  "permanentService": "خدمة دائمة",
+  "hourlyService": "خدمة بالساعة",
+  "serviceContractId": "معرّف عقد الخدمة",
+  "contractId": "معرّف العقد",
+  "nationality": "الجنسية",
+  "service": "الخدمة",
+  "customer": "العميل",
+  "totalPrice": "السعر الإجمالي",
+  "vat": "الضريبة",
+  "status": "الحالة",
+  "startDate": "تاريخ البدء",
+  "cancelledTime": "وقت الإلغاء",
+  "timeRemaining": "الوقت المتبقي للدفع ",
+  "paymentSuccessful": "🎉 تم الدفع بنجاح!",
+  "paymentDeclined": "تم رفض الدفع",
+  "thankYou": "شكراً لشرائك.",
+  "ok": "حسناً",
+  "uploadContract": "تحميل ملف العقد",
+
+    "customServicePackage": "بكج خدمة مخصص",
 
   "uploading": "جارٍ الرفع...",
-  "fileRemovedSuccessfully": "تم حذف الملف بنجاح"
+  "fileRemovedSuccessfully": "تم حذف الملف بنجاح",
+
+  "downloadLocalPdf" : "تحميل الملف",
+   "displayfile":"عرض الملف",
+  "completecontract":"إتمام التعاقد"
 
 
 }
