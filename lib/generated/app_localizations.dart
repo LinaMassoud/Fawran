@@ -1951,6 +1951,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'complete contract'**
   String get completecontract;
+
+  /// No description provided for @followus.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow Us In Social Media'**
+  String get followus;
+
+  /// No description provided for @logoutconfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to logout?'**
+  String get logoutconfirm;
 }
 
 class _AppLocalizationsDelegate

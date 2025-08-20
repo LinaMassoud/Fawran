@@ -704,7 +704,7 @@ class Newhome extends ConsumerWidget {
                 textColor: Colors.red,
                 onTap: () {
                   Navigator.pop(context);
-                  _showLogoutDialog(context, ref);
+                  _showLogoutDialog(context, ref,loc);
                 },
               ),
             ),
@@ -753,13 +753,13 @@ class Newhome extends ConsumerWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+  void _showLogoutDialog(BuildContext context, WidgetRef ref,AppLocalizations loc) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Logout"),
-          content: const Text("Are you sure you want to logout?"),
+          title:  Text(loc.logout),
+          content:  Text(loc.logoutconfirm),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

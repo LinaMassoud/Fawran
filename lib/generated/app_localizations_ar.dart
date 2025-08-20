@@ -942,4 +942,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get completecontract => 'إتمام التعاقد';
+
+  @override
+  String get followus => 'تابعنا على مواقع التواصل';
+
+  @override
+  String get logoutconfirm => 'هل متأكد انك تريد تسجيل الخروج؟';
 }
