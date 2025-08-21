@@ -218,7 +218,7 @@
    "pickup_or_delivey":"PickUp or Delivery",
    "agreement":"Agreement",
    "submit_order":"Submit Order",
-   "pickup":"Pick up laborer yourself",
+   "pickup":"From Company",
    "delivery":"Deliver laborer to home",
    "delivery_not_available":"Delivery option is not available currently.",
    

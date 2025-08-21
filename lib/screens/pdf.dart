@@ -137,9 +137,10 @@ double finalPrice = selectedPackage == null ? 0.0:  selectedPackage.contractAmou
         result = result.replaceAll("#EMAIL#", email );
         result = result.replaceAll("#NATIONALITY#", selectedNationality?.name??'' );
         result = result.replaceAll("#PRICE_BEFORE_VAT#", selectedPackage?.contractAmount.toString()??'');
-        result = result.replaceAll("#VAT_AMOUNT##", selectedPackage?.vatAmount.toString()??'' );
+        result = result.replaceAll("#VAT_AMOUNT#", selectedPackage?.vatAmount.toString()??'' );
 
-
+ref.read(selectedPackageProvider.notifier).state =
+                                null;
     return result;
   }
 

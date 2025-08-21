@@ -549,7 +549,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get submit_order => 'Submit Order';
 
   @override
-  String get pickup => 'Pick up laborer yourself';
+  String get pickup => 'From Company';
 
   @override
   String get delivery => 'Deliver laborer to home';

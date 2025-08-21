@@ -1175,7 +1175,7 @@ abstract class AppLocalizations {
   /// No description provided for @pickup.
   ///
   /// In en, this message translates to:
-  /// **'Pick up laborer yourself'**
+  /// **'From Company'**
   String get pickup;
 
   /// No description provided for @delivery.
