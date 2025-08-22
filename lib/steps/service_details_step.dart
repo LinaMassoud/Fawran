@@ -1490,96 +1490,114 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
   }
 
   Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String) onChanged, {
-    bool isEnabled = true,
-    String? customTitle,
-    bool isLoading = false,
-    required AppLocalizations loc,
-  }) {
-    final currentLocale = ref.watch(localeNotifierProvider);
-    final isArabic = currentLocale.languageCode == 'ar';
-    bool hasValidValue = value.isNotEmpty && options.contains(value);
+  String label,
+  String value,
+  List<String> options,
+  Function(String) onChanged, {
+  bool isEnabled = true,
+  String? customTitle,
+  bool isLoading = false,
+  required AppLocalizations loc,
+}) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  bool hasValidValue = value.isNotEmpty && options.contains(value);
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 15),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isEnabled && !isLoading
-              ? () => _showCustomDropdown(
-                  context, options, value, onChanged, customTitle)
-              : null,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!, width: 1.5),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white,
+  return Container(
+    margin: EdgeInsets.only(bottom: 15),
+    child: Column(
+      crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        // Label
+        Align(
+          alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              color: isEnabled ? Colors.grey[600] : Colors.grey[400],
+              fontWeight: FontWeight.w500,
             ),
-            child: Row(
-              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: const Color(0xFF768090),
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                  ),
+            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+          ),
+        ),
+        const SizedBox(height: 8),
+        
+        // Dropdown Container
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            color: isEnabled ? Colors.white : Colors.grey[100],
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              hint: Text(
+                loc.select,
+                style: TextStyle(
+                  color: isEnabled ? Colors.grey[600] : Colors.grey[400],
+                  fontSize: 16,
                 ),
-                if (isEnabled) ...[
-                  if (isLoading)
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
-                      ),
-                    )
-                  else ...[
-                    Text(
-                      hasValidValue ? value : loc.select,
+              ),
+              value: hasValidValue ? value : null,
+              items: options.map((String option) {
+                return DropdownMenuItem<String>(
+                  value: option,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      option,
                       style: TextStyle(
                         fontSize: 16,
-                        color: hasValidValue ? const Color(0xFF10295C) : const Color(0xFF768090),
-                        fontWeight:
-                            hasValidValue ? FontWeight.w700 : FontWeight.w700,
+                        color: isEnabled ? Colors.black : Colors.grey[400],
                       ),
+                      textAlign: isArabic ? TextAlign.right : TextAlign.left,
                       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
                     ),
-                    SizedBox(width: 4),
-                    Icon(
-                      isArabic ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_down,
-                      color: Colors.grey[600], 
-                      size: 20
-                    ),
-                  ],
-                ] else
-                  Text(
-                    hasValidValue ? value : 'Select',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: hasValidValue ? const Color(0xFF10295C) : Colors.grey[500],
-                      fontWeight: hasValidValue ? FontWeight.w600 : FontWeight.w600,
-                    ),
-                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
                   ),
-              ],
+                );
+              }).toList(),
+              onChanged: isEnabled && !isLoading ? (String? selectedValue) {
+                if (selectedValue != null) {
+                  onChanged(selectedValue);
+                }
+              } : null,
+              icon: isLoading 
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+                    ),
+                  )
+                : Icon(
+                    Icons.keyboard_arrow_down,
+                    color: isEnabled ? Colors.grey[600] : Colors.grey[400]
+                  ),
+              isExpanded: true,
+              dropdownColor: Colors.white,
+              elevation: 8,
+              borderRadius: BorderRadius.circular(12),
+              menuMaxHeight: 300,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   void _showCustomDropdown(
     BuildContext context,
