@@ -2,7 +2,8 @@ import 'package:fawran/screens/login_screen.dart';
 import 'package:fawran/OnboardingScreens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import '../widgets/background_container.dart'; // Import the reusable component
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Add this import
+import '../widgets/background_container.dart';
 
 // Data class for onboarding content
 class OnboardingContent {
@@ -26,6 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
   bool _showSplash = true;
+  final _secureStorage = const FlutterSecureStorage(); // Add this line
 
   // Different content for each onboarding screen
   final List<OnboardingContent> _onboardingData = [
@@ -61,7 +63,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _clearAuthTokens(); // Add this line to clear any existing tokens
     _checkLocationPermission();
+  }
+
+  // Add this method to clear authentication tokens
+  Future<void> _clearAuthTokens() async {
+    try {
+      await _secureStorage.delete(key: 'token');
+      await _secureStorage.delete(key: 'refresh_token');
+      print('🧹 [ONBOARDING] Cleared authentication tokens');
+    } catch (e) {
+      print('❌ [ONBOARDING] Error clearing tokens: $e');
+    }
   }
 
   void _handleSplashComplete() {

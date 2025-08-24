@@ -112,54 +112,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               width: double.infinity,
               height: double.infinity,
               child: SvgPicture.asset(
-                'assets/images/background.svg',
+                'assets/images/background1.svg',
                 fit: BoxFit.cover,
-                // Add error handling for SVG loading
-                placeholderBuilder: (BuildContext context) {
-                  return Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF06214B),
-                          Color(0xFF2B4C7E),
-                        ],
-                      ),
-                    ),
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cleaning_services_outlined,
-                            size: 80,
-                            color: Colors.white,
-                          ),
-                          SizedBox(height: 24),
-                          Text(
-                            'Fawran',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Home Cleaning Service',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
               ),
             ),
           );

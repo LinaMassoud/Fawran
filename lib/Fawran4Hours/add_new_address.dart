@@ -951,29 +951,35 @@ Future<void> _getCurrentLocation() async {
   }
 
   Widget _buildDropdown(String hint, String? value, List<District> items,
-      Function(String?) onChanged,
-      {bool enabled = true}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: enabled ? Colors.white : Colors.grey[100],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          hint: Text(
-            hint,
-            style: TextStyle(
-              color: enabled ? Colors.grey[600] : Colors.grey[400],
-              fontSize: 16,
-            ),
+    Function(String?) onChanged,
+    {bool enabled = true}) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        hint: Text(
+          hint,
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
           ),
-          value: value,
-          items: items.map((District item) {
-            return DropdownMenuItem<String>(
-              value: item.districtCode,
+        ),
+        value: value,
+        items: items.map((District item) {
+          return DropdownMenuItem<String>(
+            value: item.districtCode,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Text(
                 item.districtName,
                 style: TextStyle(
@@ -981,58 +987,82 @@ Future<void> _getCurrentLocation() async {
                   color: enabled ? Colors.black : Colors.grey[400],
                 ),
               ),
-            );
-          }).toList(),
-          onChanged: enabled ? onChanged : null,
-          icon: Icon(Icons.keyboard_arrow_down,
-              color: enabled ? Colors.grey[600] : Colors.grey[400]),
-          isExpanded: true,
+            ),
+          );
+        }).toList(),
+        onChanged: enabled ? onChanged : null,
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildaCityDropdown(
-      String hint, City? value, List<City> items, Function(City?) onChanged,
-      {bool enabled = true}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: enabled ? Colors.white : Colors.grey[100],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<City>(
-          hint: Text(
-            hint,
-            style: TextStyle(
-              color: enabled ? Colors.grey[600] : Colors.grey[400],
-              fontSize: 16,
-            ),
+    String hint, City? value, List<City> items, Function(City?) onChanged,
+    {bool enabled = true}) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<City>(
+        hint: Text(
+          hint,
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
           ),
-          value: value,
-          items: items.map((City city) {
-            return DropdownMenuItem<City>(
-              value: city,
+        ),
+        value: value,
+        items: items.map((City city) {
+          return DropdownMenuItem<City>(
+            value: city,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Text(
-                city.cityName, // Display city name in the dropdown
+                city.cityName,
                 style: TextStyle(
                   fontSize: 16,
                   color: enabled ? Colors.black : Colors.grey[400],
                 ),
               ),
-            );
-          }).toList(),
-          onChanged: enabled ? onChanged : null,
-          icon: Icon(Icons.keyboard_arrow_down,
-              color: enabled ? Colors.grey[600] : Colors.grey[400]),
-          isExpanded: true,
+            ),
+          );
+        }).toList(),
+        onChanged: enabled ? onChanged : null,
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
   
   Widget _buildCurrentLocationButton({required AppLocalizations loc}) {
   final currentLocale = ref.watch(localeNotifierProvider);
@@ -1134,11 +1164,18 @@ Future<void> _getCurrentLocation() async {
         items: localizedHouseTypes.map((String type) {
           return DropdownMenuItem<String>(
             value: type,
-            child: Text(
-              type,
-              style: TextStyle(
-                fontSize: 16,
-                color: enabled ? Colors.black : Colors.grey[400],
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                type,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: enabled ? Colors.black : Colors.grey[400],
+                ),
               ),
             ),
           );
@@ -1160,34 +1197,48 @@ Future<void> _getCurrentLocation() async {
         icon: Icon(Icons.keyboard_arrow_down,
             color: enabled ? Colors.grey[600] : Colors.grey[400]),
         isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
       ),
     ),
   );
 }
 
 // 5. Update the floor dropdown onChanged to trigger validation
-  Widget _buildFloorDropdown({bool enabled = true,required AppLocalizations loc}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-        color: enabled ? Colors.white : Colors.grey[100],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          hint: Text(
-            '${loc.selectFloor} *',
-            style: TextStyle(
-              color: enabled ? Colors.grey[600] : Colors.grey[400],
-              fontSize: 16,
-            ),
+  Widget _buildFloorDropdown({bool enabled = true, required AppLocalizations loc}) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: enabled ? Colors.white : Colors.grey[100],
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<int>(
+        hint: Text(
+          '${loc.selectFloor} *',
+          style: TextStyle(
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+            fontSize: 16,
           ),
-          value: _selectedFloorNumber,
-          items: _floorNumbers.map((int floor) {
-            return DropdownMenuItem<int>(
-              value: floor,
+        ),
+        value: _selectedFloorNumber,
+        items: _floorNumbers.map((int floor) {
+          return DropdownMenuItem<int>(
+            value: floor,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Text(
                 '${loc.floor} $floor',
                 style: TextStyle(
@@ -1195,24 +1246,33 @@ Future<void> _getCurrentLocation() async {
                   color: enabled ? Colors.black : Colors.grey[400],
                 ),
               ),
-            );
-          }).toList(),
-          onChanged: enabled
-              ? (int? value) {
-                  setState(() {
-                    _selectedFloorNumber = value;
-                    // Trigger validation update
-                    _onFieldChanged();
-                  });
-                }
-              : null,
-          icon: Icon(Icons.keyboard_arrow_down,
-              color: enabled ? Colors.grey[600] : Colors.grey[400]),
-          isExpanded: true,
+            ),
+          );
+        }).toList(),
+        onChanged: enabled
+            ? (int? value) {
+                setState(() {
+                  _selectedFloorNumber = value;
+                  // Trigger validation update
+                  _onFieldChanged();
+                });
+              }
+            : null,
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTextField(String hint, TextEditingController controller,
     {int maxLines = 1, bool enabled = true, int? maxLength}) {
