@@ -163,7 +163,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       return;
     }
 
-    final double deliveryCharge = pickupOption == "delivery" ? 50.0 : 0.0;
+    final double deliveryCharge = pickupOption == "delivery" ? selectedPackage.deliveryCharge : 0.0;
     final double amountToPay = selectedPackage.vatAmount +
         selectedPackage.contractAmount +
         deliveryCharge;
@@ -192,8 +192,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
           .createPermanentContract(requestBody);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-              ref.read(selectedPackageProvider.notifier).state =
-                                null;
+              
    final parsed= jsonDecode(response.body);
         setState(() {
           isLoading = false;

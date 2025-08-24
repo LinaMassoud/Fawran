@@ -178,11 +178,11 @@ Widget build(BuildContext context) {
   label: loc.newPass,
   hint: isArabic ? "أدخل كلمة المرور الجديدة" : "Enter new password",
   isArabic: isArabic,
-  obscureText: _obscureOld,
-  isPasswordVisible: !_obscureOld,
+  obscureText: _obscureNew,
+  isPasswordVisible: !_obscureNew,
   onToggleVisibility: () {
     setState(() {
-      _obscureOld = !_obscureOld;
+      _obscureNew = !_obscureNew;
     });
   },
   showError: _newPasswordError != null,
@@ -194,11 +194,11 @@ Widget build(BuildContext context) {
   label: loc.confirmNewPassword,
   hint: isArabic ? "أدخل تاكيد كلمة المرور الجديدة" : "Enter new password confirmation",
   isArabic: isArabic,
-  obscureText: _obscureOld,
-  isPasswordVisible: !_obscureOld,
+  obscureText: _obscureConfirm,
+  isPasswordVisible: !_obscureConfirm,
   onToggleVisibility: () {
     setState(() {
-      _obscureOld = !_obscureOld;
+      _obscureConfirm = !_obscureConfirm;
     });
   },
   showError: _confirmPasswordError != null,

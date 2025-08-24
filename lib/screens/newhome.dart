@@ -207,30 +207,32 @@ class Newhome extends ConsumerWidget {
                                       itemCount: items.length,
                                       onPageChanged: (index) =>
                                           pageNotifier.value = index,
-                                      itemBuilder: (context, index) {
-                                        final item = items[index];
-                                        final imageUrl =
-                                            getFullImageUrl(item.imageUrl);
+                                 itemBuilder: (context, index) {
+  final item = items[index];
+  final imageUrl = getFullImageUrl(item.imageUrl);
 
-                                        return ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(16),
-                                          child: Image.network(
-                                            imageUrl,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Container(
-                                                color: Colors.grey[300],
-                                                child: const Icon(Icons.error,
-                                                    color: Colors.red),
-                                              );
-                                            },
-                                          ),
-                                        );
-                                      },
-                                    ),
+  return GestureDetector(
+    onTap: () {
+      if (item.externalUrl != null && item.externalUrl!.isNotEmpty) {
+        _launchUrl(item.externalUrl!);
+      }
+    },
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        imageUrl,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[300],
+            child: const Icon(Icons.error, color: Colors.red),
+          );
+        },
+      ),
+    ),
+  );
+},     ),
                                   ),
                                   const SizedBox(height: 8),
                                   // Slider indicator
@@ -462,7 +464,14 @@ class Newhome extends ConsumerWidget {
       ),
     );
   }
-
+Future<void> _launchUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    throw 'Could not launch $url';
+  }
+}
   Widget _buildSideDrawer(
     BuildContext context,
     WidgetRef ref,
