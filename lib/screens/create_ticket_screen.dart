@@ -366,38 +366,43 @@ bool isUploadingFile = false;
   }
 
   Widget _buildCityDropdown(AppLocalizations loc, bool isArabic) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: DropdownButtonFormField<Map<String, dynamic>>(
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: isLoadingCities ? Colors.grey[100] : Colors.white,
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<Map<String, dynamic>>(
+        hint: Text(
+          loc.chooseCity,
+          style: TextStyle(
+            color: isLoadingCities ? Colors.grey[400] : Colors.grey[600],
+            fontSize: 16,
+          ),
+        ),
         value: selectedCity,
-        decoration: InputDecoration(
-          hintText: loc.chooseCity,
-          hintStyle: const TextStyle(color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        icon: Icon(
-          Icons.keyboard_arrow_down,
-          color: Colors.grey,
-        ),
-        isExpanded: true,
         items: isLoadingCities
           ? []
           : cities.map((city) {
               return DropdownMenuItem<Map<String, dynamic>>(
                 value: city,
+                child: Align(
+                alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
                 child: Text(
                   city['city_name']?.toString() ?? 
                   city['name']?.toString() ?? loc.unknown,
-                  style: const TextStyle(color: Color(0xFF091735)),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                  ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                   textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
                 ),
+              ),
               );
             }).toList(),
         onChanged: isLoadingCities
@@ -407,51 +412,69 @@ bool isUploadingFile = false;
                   selectedCity = value;
                 });
               },
-        validator: (value) {
-          if (value == null) {
-            return loc.pleaseSelectCity;
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildSectorTypeDropdown(AppLocalizations loc, bool isArabic) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: isLoadingCities ? Colors.grey[400] : Colors.grey[600]),
+        isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
       ),
-      child: DropdownButtonFormField<String>(
+    ),
+  );
+}
+
+ Widget _buildSectorTypeDropdown(AppLocalizations loc, bool isArabic) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: Colors.white,
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        hint: Text(
+          loc.chooseSector,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 16,
+          ),
+        ),
         value: selectedSectorType,
-        decoration: InputDecoration(
-          hintText: loc.chooseSector,
-          hintStyle: const TextStyle(color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        icon: Icon(
-          Icons.keyboard_arrow_down,
-          color: Colors.grey,
-        ),
         items: [
           DropdownMenuItem<String>(
             value: 'I',
-            child: Text(
-              loc.individual,
-              style: const TextStyle(color: Color(0xFF091735)),
-              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-            ),
+            child: Align(
+  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+  child: Text(
+    loc.individual,
+    style: TextStyle(
+      fontSize: 16,
+      color: Colors.black,
+    ),
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+  ),
+),
           ),
           DropdownMenuItem<String>(
             value: 'H',
-            child: Text(
-              loc.hourly,
-              style: const TextStyle(color: Color(0xFF091735)),
-              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-            ),
+            child: Align(
+  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+  child: Text(
+    loc.hourly,
+    style: TextStyle(
+      fontSize: 16,
+      color: Colors.black,
+    ),
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+  ),
+),
           ),
         ],
         onChanged: (value) {
@@ -464,49 +487,59 @@ bool isUploadingFile = false;
             _loadCategories(value);
           }
         },
-        validator: (value) {
-          if (value == null) {
-            return loc.pleaseSelectSectorType;
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildCategoryDropdown(AppLocalizations loc, bool isArabic) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: DropdownButtonFormField<Map<String, dynamic>>(
-        value: selectedCategory,
-        decoration: InputDecoration(
-          hintText: loc.chooseCategory,
-          hintStyle: const TextStyle(color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        icon: Icon(
-          Icons.keyboard_arrow_down,
-          color: Colors.grey,
-        ),
+        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
         isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildCategoryDropdown(AppLocalizations loc, bool isArabic) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: isLoadingCategories ? Colors.grey[100] : Colors.white,
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<Map<String, dynamic>>(
+        hint: Text(
+          loc.chooseCategory,
+          style: TextStyle(
+            color: isLoadingCategories ? Colors.grey[400] : Colors.grey[600],
+            fontSize: 16,
+          ),
+        ),
+        value: selectedCategory,
         items: isLoadingCategories
           ? []
           : categories.map((category) {
               return DropdownMenuItem<Map<String, dynamic>>(
                 value: category,
-                child: Text(
-                  category['category_name']?.toString() ?? 
-                  category['name']?.toString() ?? loc.unknown,
-                  style: const TextStyle(color: Color(0xFF091735)),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-                ),
+                child: Align(
+  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+  child: Text(
+    category['category_name']?.toString() ?? 
+    category['name']?.toString() ?? loc.unknown,
+    style: TextStyle(
+      fontSize: 16,
+      color: Colors.black,
+    ),
+    overflow: TextOverflow.ellipsis,
+    maxLines: 1,
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+  ),
+),
               );
             }).toList(),
         onChanged: isLoadingCategories
@@ -523,49 +556,57 @@ bool isUploadingFile = false;
                   }
                 }
               },
-        validator: (value) {
-          if (value == null) {
-            return loc.pleaseSelectCategory;
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildTicketTypeDropdown(AppLocalizations loc, bool isArabic) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: DropdownButtonFormField<Map<String, dynamic>>(
-        value: selectedTicketType,
-        decoration: InputDecoration(
-          hintText: loc.chooseType,
-          hintStyle: const TextStyle(color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        icon: Icon(
-          Icons.keyboard_arrow_down,
-          color: Colors.grey,
-        ),
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: isLoadingCategories ? Colors.grey[400] : Colors.grey[600]),
         isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildTicketTypeDropdown(AppLocalizations loc, bool isArabic) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
+      color: isLoadingTicketTypes ? Colors.grey[100] : Colors.white,
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<Map<String, dynamic>>(
+        hint: Text(
+          loc.chooseType,
+          style: TextStyle(
+            color: isLoadingTicketTypes ? Colors.grey[400] : Colors.grey[600],
+            fontSize: 16,
+          ),
+        ),
+        value: selectedTicketType,
         items: isLoadingTicketTypes
           ? []
           : ticketTypes.map((type) {
               return DropdownMenuItem<Map<String, dynamic>>(
                 value: type,
                 child: Text(
-                  type['type_name']?.toString() ?? 
-                  type['name']?.toString() ?? loc.unknown,
-                  style: const TextStyle(color: Color(0xFF091735)),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-                ),
+  type['type_name']?.toString() ?? 
+  type['name']?.toString() ?? loc.unknown,
+  style: TextStyle(
+    fontSize: 16,
+    color: Colors.black,
+  ),
+  overflow: TextOverflow.ellipsis,
+  maxLines: 1,
+  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+),
               );
             }).toList(),
         onChanged: isLoadingTicketTypes
@@ -575,15 +616,21 @@ bool isUploadingFile = false;
                   selectedTicketType = value;
                 });
               },
-        validator: (value) {
-          if (value == null) {
-            return loc.pleaseSelectTicketType;
-          }
-          return null;
-        },
+        icon: Icon(Icons.keyboard_arrow_down,
+            color: isLoadingTicketTypes ? Colors.grey[400] : Colors.grey[600]),
+        isExpanded: true,
+        dropdownColor: Colors.white,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        menuMaxHeight: 300,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDetailsField(AppLocalizations loc, bool isArabic) {
     return Container(

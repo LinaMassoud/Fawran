@@ -1543,27 +1543,19 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
               ),
               value: hasValidValue ? value : null,
               items: options.map((String option) {
-                return DropdownMenuItem<String>(
-                  value: option,
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      option,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isEnabled ? Colors.black : Colors.grey[400],
-                      ),
-                      textAlign: isArabic ? TextAlign.right : TextAlign.left,
-                      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                    ),
-                  ),
-                );
-              }).toList(),
+  return DropdownMenuItem<String>(
+    value: option,
+    child: Text(
+      option,
+      style: TextStyle(
+        fontSize: 16,
+        color: isEnabled ? Colors.black : Colors.grey[400],
+      ),
+      textAlign: isArabic ? TextAlign.right : TextAlign.left,
+      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+    ),
+  );
+}).toList(),
               onChanged: isEnabled && !isLoading ? (String? selectedValue) {
                 if (selectedValue != null) {
                   onChanged(selectedValue);
@@ -2147,7 +2139,7 @@ Future<void> _handleDonePressed() async {
                         padding: EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
                           color: (_isValidDateSelection() && !_isValidatingWorkers)
-                              ? Color(0xFF1E3A8A)
+                              ? Color(0xFF10295C)
                               : Color(0xFF768090),
                           borderRadius: BorderRadius.circular(25),
                         ),

@@ -974,20 +974,13 @@ Future<void> _getCurrentLocation() async {
         items: items.map((District item) {
           return DropdownMenuItem<String>(
             value: item.districtCode,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                item.districtName,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: enabled ? Colors.black : Colors.grey[400],
-                ),
-              ),
-            ),
+            child: Text(
+  item.districtName,
+  style: TextStyle(
+    fontSize: 16,
+    color: enabled ? Colors.black : Colors.grey[400],
+  ),
+),
           );
         }).toList(),
         onChanged: enabled ? onChanged : null,
@@ -1031,20 +1024,13 @@ Future<void> _getCurrentLocation() async {
         items: items.map((City city) {
           return DropdownMenuItem<City>(
             value: city,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                city.cityName,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: enabled ? Colors.black : Colors.grey[400],
-                ),
-              ),
-            ),
+            child: Text(
+  city.cityName,
+  style: TextStyle(
+    fontSize: 16,
+    color: enabled ? Colors.black : Colors.grey[400],
+  ),
+),
           );
         }).toList(),
         onChanged: enabled ? onChanged : null,
@@ -1164,20 +1150,13 @@ Future<void> _getCurrentLocation() async {
         items: localizedHouseTypes.map((String type) {
           return DropdownMenuItem<String>(
             value: type,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                type,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: enabled ? Colors.black : Colors.grey[400],
-                ),
-              ),
-            ),
+            child: Text(
+  type,
+  style: TextStyle(
+    fontSize: 16,
+    color: enabled ? Colors.black : Colors.grey[400],
+  ),
+),
           );
         }).toList(),
         onChanged: enabled
@@ -1233,20 +1212,13 @@ Future<void> _getCurrentLocation() async {
         items: _floorNumbers.map((int floor) {
           return DropdownMenuItem<int>(
             value: floor,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${loc.floor} $floor',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: enabled ? Colors.black : Colors.grey[400],
-                ),
-              ),
-            ),
+            child: Text(
+  '${loc.floor} $floor',
+  style: TextStyle(
+    fontSize: 16,
+    color: enabled ? Colors.black : Colors.grey[400],
+  ),
+),
           );
         }).toList(),
         onChanged: enabled
