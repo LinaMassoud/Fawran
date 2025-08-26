@@ -742,7 +742,7 @@ Widget _buildHourlyContractCard(
           _buildInfoRow(loc.serviceContractId ?? "Service Contract ID", booking["service_contract_id"]?.toString() ?? ""),
           _buildInfoRow(loc.contractId ?? "Contract ID", booking["contract_id"]?.toString() ?? ""),
           _buildInfoRow(loc.customer ?? "Customer", booking["customer_display"] ?? ""),
-          _buildInfoRow(loc.service ?? "Service ID", booking["service_id"]?.toString() ?? ""),
+          _buildInfoRow(loc.service ?? "Service ID", booking["service_name"]?.toString() ?? ""),
           _buildInfoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0}"),
           _buildInfoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}"),
           _buildInfoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
