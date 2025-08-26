@@ -953,6 +953,9 @@ Future<void> _getCurrentLocation() async {
   Widget _buildDropdown(String hint, String? value, List<District> items,
     Function(String?) onChanged,
     {bool enabled = true}) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   return Container(
     width: double.infinity,
     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -974,13 +977,17 @@ Future<void> _getCurrentLocation() async {
         items: items.map((District item) {
           return DropdownMenuItem<String>(
             value: item.districtCode,
-            child: Text(
-  item.districtName,
-  style: TextStyle(
-    fontSize: 16,
-    color: enabled ? Colors.black : Colors.grey[400],
-  ),
-),
+              child: Align(
+                alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                child: Text(
+                  item.districtName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: enabled ? Colors.black : Colors.grey[400],
+                  ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              ),
           );
         }).toList(),
         onChanged: enabled ? onChanged : null,
@@ -1003,6 +1010,9 @@ Future<void> _getCurrentLocation() async {
   Widget _buildaCityDropdown(
     String hint, City? value, List<City> items, Function(City?) onChanged,
     {bool enabled = true}) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   return Container(
     width: double.infinity,
     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1024,13 +1034,17 @@ Future<void> _getCurrentLocation() async {
         items: items.map((City city) {
           return DropdownMenuItem<City>(
             value: city,
-            child: Text(
-  city.cityName,
-  style: TextStyle(
-    fontSize: 16,
-    color: enabled ? Colors.black : Colors.grey[400],
-  ),
-),
+            child: Align(
+                alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                child: Text(
+                  city.cityName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: enabled ? Colors.black : Colors.grey[400],
+                  ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              ),
           );
         }).toList(),
         onChanged: enabled ? onChanged : null,
@@ -1128,6 +1142,8 @@ Future<void> _getCurrentLocation() async {
 }
   Widget _buildHouseTypeDropdown({bool enabled = true, required AppLocalizations loc}) {
   final localizedHouseTypes = _getLocalizedHouseTypes(loc);
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
   
   return Container(
     width: double.infinity,
@@ -1150,13 +1166,17 @@ Future<void> _getCurrentLocation() async {
         items: localizedHouseTypes.map((String type) {
           return DropdownMenuItem<String>(
             value: type,
-            child: Text(
-  type,
-  style: TextStyle(
-    fontSize: 16,
-    color: enabled ? Colors.black : Colors.grey[400],
-  ),
-),
+              child: Align(
+                alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                child: Text(
+                  type,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: enabled ? Colors.black : Colors.grey[400],
+                  ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              ),
           );
         }).toList(),
         onChanged: enabled
@@ -1191,6 +1211,9 @@ Future<void> _getCurrentLocation() async {
 
 // 5. Update the floor dropdown onChanged to trigger validation
   Widget _buildFloorDropdown({bool enabled = true, required AppLocalizations loc}) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
   return Container(
     width: double.infinity,
     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1212,13 +1235,17 @@ Future<void> _getCurrentLocation() async {
         items: _floorNumbers.map((int floor) {
           return DropdownMenuItem<int>(
             value: floor,
-            child: Text(
-  '${loc.floor} $floor',
-  style: TextStyle(
-    fontSize: 16,
-    color: enabled ? Colors.black : Colors.grey[400],
-  ),
-),
+            child: Align(
+                alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                child: Text(
+                  '${loc.floor} $floor',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: enabled ? Colors.black : Colors.grey[400],
+                  ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              ),
           );
         }).toList(),
         onChanged: enabled
@@ -1230,8 +1257,7 @@ Future<void> _getCurrentLocation() async {
                 });
               }
             : null,
-        icon: Icon(Icons.keyboard_arrow_down,
-            color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        icon: Icon(Icons.keyboard_arrow_down, color: enabled ? Colors.grey[600] : Colors.grey[400]),
         isExpanded: true,
         dropdownColor: Colors.white,
         elevation: 8,
