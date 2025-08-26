@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -20,16 +22,64 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs location access to help you select your address</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to save PDF files</string>
-	<key>NSDocumentsFolderUsageDescription</key>
-	<string>This app needs access to save PDF files</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.emdadHR.fawran</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fawran</string>
+				<string>tap-payment</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>staging.tap.company</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<key>tap.company</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan payment cards</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>This app needs access to save PDF files</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to authenticate payments</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs location access to help you select your address</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to select payment card images</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -47,65 +97,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	
-	<!-- ADD THESE ESSENTIAL ENTRIES FOR TAP PAYMENT -->
-	
-	<!-- Network Security Configuration -->
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-		<key>NSAllowsArbitraryLoadsInWebContent</key>
-		<true/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>tap.company</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.0</string>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-			</dict>
-			<key>staging.tap.company</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.0</string>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-			</dict>
-		</dict>
-	</dict>
-	
-	<!-- URL Schemes for Payment Redirects -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.emdadHR.fawran</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>fawran</string>
-				<string>tap-payment</string>
-			</array>
-		</dict>
-	</array>
-	
-	<!-- Camera and Photo Library for Payment Methods -->
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan payment cards</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs photo library access to select payment card images</string>
-	
-	<!-- Face ID for Payment Authentication -->
-	<key>NSFaceIDUsageDescription</key>
-	<string>Use Face ID to authenticate payments</string>
 </dict>
 </plist>
