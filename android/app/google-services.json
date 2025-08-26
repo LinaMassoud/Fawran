@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960407781220",
+    "project_id": "fawran-e4713",
+    "storage_bucket": "fawran-e4713.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960407781220:android:1b109fcb29b07b5892c471",
+        "android_client_info": {
+          "package_name": "com.emdadHR.fawran"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQJhhtEteBXaLd05NHtYYB7KJD_8gU724"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
