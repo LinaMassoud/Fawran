@@ -3,6 +3,7 @@ import 'package:fawran/models/ProffesionModel.dart';
 import 'package:fawran/models/domestic_package_model.dart';
 import 'package:fawran/models/labour.dart';
 import 'package:fawran/models/sliderItem.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/package_model.dart';
@@ -111,7 +112,7 @@ class ApiService {
     required String password,
   }) async {
     final url = Uri.parse('$_baseUrl/login');
-
+    String? fcm_token = await FirebaseMessaging.instance.getToken();
     try {
       final response = await http.post(
         url,
@@ -119,6 +120,7 @@ class ApiService {
         body: json.encode({
           'phone_number': phoneNumber,
           'password': password,
+          'fcm_token': fcm_token
         }),
       );
 
@@ -458,143 +460,147 @@ class ApiService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getTickets(String customerId) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/get-tickets/$customerId',
-    );
+  static Future<List<Map<String, dynamic>>> getTickets(
+      String customerId) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/get-tickets/$customerId',
+      );
 
-    print('Get tickets response status: ${response.statusCode}');
-    print('Get tickets response body: ${response.body}');
+      print('Get tickets response status: ${response.statusCode}');
+      print('Get tickets response body: ${response.body}');
 
-    if (response.statusCode == 200) {
-      // Fix the JSON by properly escaping backslashes before parsing
-      String fixedResponseBody = response.body.replaceAll(r'\', r'\\');
-      
-      final responseData = json.decode(fixedResponseBody);
-      
-      // Handle different response formats
-      if (responseData is List) {
-        return List<Map<String, dynamic>>.from(responseData);
-      } else if (responseData is Map && responseData['tickets'] != null) {
-        return List<Map<String, dynamic>>.from(responseData['tickets']);
-      } else if (responseData is Map && responseData['data'] != null) {
-        return List<Map<String, dynamic>>.from(responseData['data']);
+      if (response.statusCode == 200) {
+        // Fix the JSON by properly escaping backslashes before parsing
+        String fixedResponseBody = response.body.replaceAll(r'\', r'\\');
+
+        final responseData = json.decode(fixedResponseBody);
+
+        // Handle different response formats
+        if (responseData is List) {
+          return List<Map<String, dynamic>>.from(responseData);
+        } else if (responseData is Map && responseData['tickets'] != null) {
+          return List<Map<String, dynamic>>.from(responseData['tickets']);
+        } else if (responseData is Map && responseData['data'] != null) {
+          return List<Map<String, dynamic>>.from(responseData['data']);
+        } else {
+          return [];
+        }
       } else {
+        print('Failed to fetch tickets: ${response.statusCode}');
         return [];
       }
-    } else {
-      print('Failed to fetch tickets: ${response.statusCode}');
+    } catch (e) {
+      print('Error fetching tickets: $e');
       return [];
     }
-  } catch (e) {
-    print('Error fetching tickets: $e');
-    return [];
   }
-}
 
-static Future<List<Map<String, dynamic>>> fetchCitiesForTicket() async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/cities',
-    );
+  static Future<List<Map<String, dynamic>>> fetchCitiesForTicket() async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/cities',
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> citiesJson = json.decode(response.body);
-      return citiesJson.cast<Map<String, dynamic>>();
-    } else {
-      throw Exception('Failed to load cities');
+      if (response.statusCode == 200) {
+        final List<dynamic> citiesJson = json.decode(response.body);
+        return citiesJson.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to load cities');
+      }
+    } catch (e) {
+      print('Error fetching cities: $e');
+      throw Exception('Error fetching cities: $e');
     }
-  } catch (e) {
-    print('Error fetching cities: $e');
-    throw Exception('Error fetching cities: $e');
   }
-}
 
 // Fetch ticket categories based on sector type
-static Future<List<Map<String, dynamic>>> fetchTicketCategories(String sectorType) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/ticket-categories/$sectorType',
-    );
+  static Future<List<Map<String, dynamic>>> fetchTicketCategories(
+      String sectorType) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/ticket-categories/$sectorType',
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> categoriesJson = json.decode(response.body);
-      return categoriesJson.cast<Map<String, dynamic>>();
-    } else {
-      throw Exception('Failed to load ticket categories');
+      if (response.statusCode == 200) {
+        final List<dynamic> categoriesJson = json.decode(response.body);
+        return categoriesJson.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to load ticket categories');
+      }
+    } catch (e) {
+      print('Error fetching ticket categories: $e');
+      throw Exception('Error fetching ticket categories: $e');
     }
-  } catch (e) {
-    print('Error fetching ticket categories: $e');
-    throw Exception('Error fetching ticket categories: $e');
   }
-}
 
 // Fetch ticket types based on category ID
-static Future<List<Map<String, dynamic>>> fetchTicketTypes(int categoryId) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: '$_baseUrl/ticket_types/$categoryId',
-    );
+  static Future<List<Map<String, dynamic>>> fetchTicketTypes(
+      int categoryId) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: '$_baseUrl/ticket_types/$categoryId',
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> typesJson = json.decode(response.body);
-      return typesJson.cast<Map<String, dynamic>>();
-    } else {
-      throw Exception('Failed to load ticket types');
+      if (response.statusCode == 200) {
+        final List<dynamic> typesJson = json.decode(response.body);
+        return typesJson.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to load ticket types');
+      }
+    } catch (e) {
+      print('Error fetching ticket types: $e');
+      throw Exception('Error fetching ticket types: $e');
     }
-  } catch (e) {
-    print('Error fetching ticket types: $e');
-    throw Exception('Error fetching ticket types: $e');
   }
-}
 
 // Create new ticket
-static Future<Map<String, dynamic>?> createTicket({
-  required String customerId,
-  required String cityCode,
-  required String sectorType,
-  required int ticketCategoryId,
-  required int ticketTypeId,
-  required String details,
-  String priority = "High",
-  int assignedTo = 1,
-  String fileName = "",
-  String commentText = "",
-}) async {
-  try {
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: '$_baseUrl/create-ticket',
-      body: json.encode({
-        "customer_id": int.parse(customerId),
-        "city_code": cityCode,
-        "sector_type": sectorType,
-        "ticket_category_id": ticketCategoryId,
-        "ticket_type_id": ticketTypeId,
-        "details": details,
-        "priority": priority,
-        "file_name": fileName,
-        "comment_text": commentText,
-      }),
-    );
+  static Future<Map<String, dynamic>?> createTicket({
+    required String customerId,
+    required String cityCode,
+    required String sectorType,
+    required int ticketCategoryId,
+    required int ticketTypeId,
+    required String details,
+    String priority = "High",
+    int assignedTo = 1,
+    String fileName = "",
+    String commentText = "",
+  }) async {
+    try {
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: '$_baseUrl/create-ticket',
+        body: json.encode({
+          "customer_id": int.parse(customerId),
+          "city_code": cityCode,
+          "sector_type": sectorType,
+          "ticket_category_id": ticketCategoryId,
+          "ticket_type_id": ticketTypeId,
+          "details": details,
+          "priority": priority,
+          "file_name": fileName,
+          "comment_text": commentText,
+        }),
+      );
 
-    print('Create ticket response: ${response.statusCode} - ${response.body}');
+      print(
+          'Create ticket response: ${response.statusCode} - ${response.body}');
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(response.body);
-    } else {
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error creating ticket: $e');
       return null;
     }
-  } catch (e) {
-    print('Error creating ticket: $e');
-    return null;
   }
-}
 
   static Future<List<City>> fetchCities(int serviceId, {WidgetRef? ref}) async {
     try {
@@ -1353,21 +1359,23 @@ static Future<Map<String, dynamic>?> createTicket({
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-      // Parse the response to get the actual message
-      final responseData = json.decode(response.body);
-      String successMessage = 'Address created successfully!'; // Default fallback
-      
-      // Extract message from API response
-      if (responseData is Map<String, dynamic> && responseData.containsKey('message')) {
-        successMessage = responseData['message'] ?? successMessage;
-      }
+        // Parse the response to get the actual message
+        final responseData = json.decode(response.body);
+        String successMessage =
+            'Address created successfully!'; // Default fallback
 
-      return {
-        'success': true,
-        'data': responseData,
-        'message': successMessage // Use actual API message
-      };
-    } else {
+        // Extract message from API response
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('message')) {
+          successMessage = responseData['message'] ?? successMessage;
+        }
+
+        return {
+          'success': true,
+          'data': responseData,
+          'message': successMessage // Use actual API message
+        };
+      } else {
         // Handle error responses
         String errorMessage = 'Failed to create address. Please try again.';
 
@@ -1571,111 +1579,115 @@ static Future<Map<String, dynamic>?> createTicket({
   }
 
   static Future<Map<String, dynamic>?> uploadFile({
-  required PlatformFile file,
-  required String fileName,
-  required String type,
-  required String userId,
-  int retryCount = 0,
-}) async {
-  try {
-    final url = Uri.parse('$_baseUrl/upload_file');
-    final token = await _secureStorage.read(key: 'token');
-    final local = await _secureStorage.read(key: 'lang_code');
-    
-    var request = http.MultipartRequest('POST', url);
-    
-    // Sanitize filename for HTTP header - remove/replace invalid characters
-    String sanitizedFileName = fileName
-        .replaceAll(' ', '_')           // Replace spaces with underscores
-        .replaceAll(RegExp(r'[^\w\-_\.]'), '_'); // Replace invalid chars with underscores
-    
-    // Add headers with sanitized filename
-    request.headers.addAll({
-      'token': token ?? '',
-      'file_name': sanitizedFileName,  // Use sanitized filename in header
-      'type': type,
-      'user_id': userId,
-      if (local != null) 'language': local,
-    });
-    
-    // Add file to form-data (use original filename here as it's not in header)
-    if (file.bytes != null) {
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'image', // Key name as specified
-          file.bytes!,
-          filename: fileName, // Original filename for the file itself
-        ),
-      );
-    }
-    
-    print('🔄 [UPLOAD_FILE] Uploading file: $sanitizedFileName (original: $fileName)');
-    
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    
-    print('📡 [UPLOAD_FILE] Response status: ${response.statusCode}');
-    print('📡 [UPLOAD_FILE] Response body: ${response.body}');
-    
-    // Handle 401 (unauthorized) response with token refresh
-    if (response.statusCode == 401 && retryCount == 0) {
-      print('🔄 [UPLOAD_FILE] Received 401, attempting token refresh...');
-      
-      final refreshSuccess = await refreshToken();
-      if (refreshSuccess) {
-        print('✅ [UPLOAD_FILE] Token refreshed, retrying file upload...');
-        // Retry the upload with the new token
-        return uploadFile(
-          file: file,
-          fileName: fileName,
-          type: type,
-          userId: userId,
-          retryCount: 1, // Prevent infinite retry loop
+    required PlatformFile file,
+    required String fileName,
+    required String type,
+    required String userId,
+    int retryCount = 0,
+  }) async {
+    try {
+      final url = Uri.parse('$_baseUrl/upload_file');
+      final token = await _secureStorage.read(key: 'token');
+      final local = await _secureStorage.read(key: 'lang_code');
+
+      var request = http.MultipartRequest('POST', url);
+
+      // Sanitize filename for HTTP header - remove/replace invalid characters
+      String sanitizedFileName = fileName
+          .replaceAll(' ', '_') // Replace spaces with underscores
+          .replaceAll(RegExp(r'[^\w\-_\.]'),
+              '_'); // Replace invalid chars with underscores
+
+      // Add headers with sanitized filename
+      request.headers.addAll({
+        'token': token ?? '',
+        'file_name': sanitizedFileName, // Use sanitized filename in header
+        'type': type,
+        'user_id': userId,
+        if (local != null) 'language': local,
+      });
+
+      // Add file to form-data (use original filename here as it's not in header)
+      if (file.bytes != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'image', // Key name as specified
+            file.bytes!,
+            filename: fileName, // Original filename for the file itself
+          ),
         );
-      } else {
-        print('❌ [UPLOAD_FILE] Token refresh failed, clearing only tokens...');
-        // Clear only authentication tokens, preserve user data
-        await _secureStorage.delete(key: 'token');
-        await _secureStorage.delete(key: 'refresh_token');
-        return null;
       }
-    }
-    
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      try {
-        // Fix the JSON by properly escaping backslashes
-        String fixedResponseBody = response.body.replaceAll(r'\', r'\\');
-        final responseData = json.decode(fixedResponseBody);
-        print('✅ [UPLOAD_FILE] File uploaded successfully: ${responseData['file_path']}');
-        return responseData;
-      } catch (e) {
-        print('❌ [UPLOAD_FILE] Error parsing response: $e');
-        print('Raw response: ${response.body}');
-        
-        // If JSON parsing fails but we got 200, try to extract file_path manually
-        final regex = RegExp(r'"file_path":\s*"([^"]*)"');
-        final match = regex.firstMatch(response.body);
-        if (match != null) {
-          String filePath = match.group(1) ?? '';
-          // Fix backslashes in the extracted path
-          filePath = filePath.replaceAll(r'\', '/');
-          return {
-            'file_path': filePath,
-            'message': 'File uploaded successfully',
-            'status': 'success'
-          };
+
+      print(
+          '🔄 [UPLOAD_FILE] Uploading file: $sanitizedFileName (original: $fileName)');
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('📡 [UPLOAD_FILE] Response status: ${response.statusCode}');
+      print('📡 [UPLOAD_FILE] Response body: ${response.body}');
+
+      // Handle 401 (unauthorized) response with token refresh
+      if (response.statusCode == 401 && retryCount == 0) {
+        print('🔄 [UPLOAD_FILE] Received 401, attempting token refresh...');
+
+        final refreshSuccess = await refreshToken();
+        if (refreshSuccess) {
+          print('✅ [UPLOAD_FILE] Token refreshed, retrying file upload...');
+          // Retry the upload with the new token
+          return uploadFile(
+            file: file,
+            fileName: fileName,
+            type: type,
+            userId: userId,
+            retryCount: 1, // Prevent infinite retry loop
+          );
+        } else {
+          print(
+              '❌ [UPLOAD_FILE] Token refresh failed, clearing only tokens...');
+          // Clear only authentication tokens, preserve user data
+          await _secureStorage.delete(key: 'token');
+          await _secureStorage.delete(key: 'refresh_token');
+          return null;
         }
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        try {
+          // Fix the JSON by properly escaping backslashes
+          String fixedResponseBody = response.body.replaceAll(r'\', r'\\');
+          final responseData = json.decode(fixedResponseBody);
+          print(
+              '✅ [UPLOAD_FILE] File uploaded successfully: ${responseData['file_path']}');
+          return responseData;
+        } catch (e) {
+          print('❌ [UPLOAD_FILE] Error parsing response: $e');
+          print('Raw response: ${response.body}');
+
+          // If JSON parsing fails but we got 200, try to extract file_path manually
+          final regex = RegExp(r'"file_path":\s*"([^"]*)"');
+          final match = regex.firstMatch(response.body);
+          if (match != null) {
+            String filePath = match.group(1) ?? '';
+            // Fix backslashes in the extracted path
+            filePath = filePath.replaceAll(r'\', '/');
+            return {
+              'file_path': filePath,
+              'message': 'File uploaded successfully',
+              'status': 'success'
+            };
+          }
+          return null;
+        }
+      } else {
+        print('❌ [UPLOAD_FILE] Failed to upload file: ${response.statusCode}');
         return null;
       }
-    } else {
-      print('❌ [UPLOAD_FILE] Failed to upload file: ${response.statusCode}');
+    } catch (e) {
+      print('💥 [UPLOAD_FILE] Error uploading file: $e');
       return null;
     }
-  } catch (e) {
-    print('💥 [UPLOAD_FILE] Error uploading file: $e');
-    return null;
   }
-}
 
   static Future<Map<String, dynamic>?> validateWorkersHourly({
     required int positionId,
