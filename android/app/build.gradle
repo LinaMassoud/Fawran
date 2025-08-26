@@ -1,9 +1,7 @@
-plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id "dev.flutter.flutter-gradle-plugin"
-}
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services' // ✅ Apply Firebase plugin
+apply plugin: 'kotlin-android'
+apply plugin: 'dev.flutter.flutter-gradle-plugin'
 
 android {
     namespace = "com.emdadHR.fawran"
@@ -11,13 +9,12 @@ android {
     ndkVersion = "25.1.8937393"
 
     compileOptions {
-        // ✅ Use Java 17 — required for latest Gradle & SDK tools
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "17" // ✅ Match Java 17
+        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -38,4 +35,14 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:34.1.0')
+
+    // Firebase SDKs you need
+    implementation 'com.google.firebase:firebase-analytics'
+    // implementation 'com.google.firebase:firebase-auth'
+    // implementation 'com.google.firebase:firebase-firestore'
 }

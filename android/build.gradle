@@ -1,3 +1,5 @@
+// Project-level build.gradle
+
 buildscript {
     ext.kotlin_version = '1.9.0'
     repositories {
@@ -6,8 +8,9 @@ buildscript {
     }
 
     dependencies {
-         classpath 'com.android.tools.build:gradle:8.6.0'
-         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:8.6.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.gms:google-services:4.4.3' // ✅ Firebase plugin
     }
 }
 
@@ -18,7 +21,7 @@ allprojects {
     }
 }
 
-// ✅ Add this block
+// Flutter-specific block
 ext {
     flutter = [
         compileSdkVersion: 35,
