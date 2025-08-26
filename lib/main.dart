@@ -11,6 +11,7 @@ import 'package:fawran/screens/pdf.dart';
 import 'package:fawran/screens/select_address.dart';
 import 'package:fawran/screens/userProfile.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +25,8 @@ void main() async {
 
   await dotenv.load();
     await initNotifications();
+
+  await FirebaseMessaging.instance.subscribeToTopic("all");
 
   runApp(
     const ProviderScope(
