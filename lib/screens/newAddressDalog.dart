@@ -326,7 +326,7 @@ class _MapSelectorDialogState extends ConsumerState<MapSelectorDialog> {
                         ),
                         // Map type selector with RTL support
                         Positioned(
-                          bottom: 100,
+                          bottom: 110,
                           left: 20,
                           right: 20,
                           child: Center(
@@ -353,7 +353,7 @@ class _MapSelectorDialogState extends ConsumerState<MapSelectorDialog> {
                                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                       decoration: BoxDecoration(
                                         color: _currentMapType == MapType.normal 
-                                            ? Color(0xFF1E3A8A) 
+                                            ? Color(0xFF10295C) 
                                             : Colors.transparent,
                                         borderRadius: BorderRadius.only(
                                           topLeft: isArabic ? Radius.zero : Radius.circular(8),
@@ -381,7 +381,7 @@ class _MapSelectorDialogState extends ConsumerState<MapSelectorDialog> {
                                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                       decoration: BoxDecoration(
                                         color: _currentMapType == MapType.hybrid
-                                            ? Color(0xFF1E3A8A) 
+                                            ? Color(0xFF10295C) 
                                             : Colors.transparent,
                                         borderRadius: BorderRadius.only(
                                           topRight: isArabic ? Radius.zero : Radius.circular(8),
@@ -408,22 +408,37 @@ class _MapSelectorDialogState extends ConsumerState<MapSelectorDialog> {
                           ),
                         ),
                         // Bottom button with RTL support
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            padding: EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(20),
-                                bottomRight: Radius.circular(20),
-                              ),
-                            ),
-                            child: _buildMapActionButton(loc, isArabic),
-                          ),
-                        ),
+Positioned(
+  bottom: 0,
+  left: 0,
+  right: 0,
+  child: Container(
+    padding: EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(30),
+        topRight: Radius.circular(30),
+      ),
+      boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E49A0).withOpacity(0.15),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, -5),
+          ),
+          BoxShadow(
+            color: const Color(0xFF1E49A0).withOpacity(0.08),
+            blurRadius: 40,
+            spreadRadius: 5,
+            offset: const Offset(0, -10),
+          ),
+        ],
+    ),
+    
+    child: _buildMapActionButton(loc, isArabic),
+  ),
+),
                       ],
                     ),
                   ),
@@ -437,54 +452,56 @@ class _MapSelectorDialogState extends ConsumerState<MapSelectorDialog> {
   }
 
   Widget _buildMapActionButton(AppLocalizations loc, bool isArabic) {
-    if (!_hasUserMovedMap) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.grey[400],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: Text(
-            loc.moveMapToPosition, // Use localized string
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-            textAlign: TextAlign.center,
-            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+  if (!_hasUserMovedMap) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[400],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
+          loc.moveMapToPosition,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
+          textAlign: TextAlign.center,
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         ),
-      );
-    } else {
-      return GestureDetector(
-        onTap: _confirmLocationSelection,
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: Color(0xFF1E3A8A),
-            borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  } else {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _confirmLocationSelection,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF10295C),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
           ),
-          child: Center(
-            child: Text(
-              loc.confirmLocation, // Use localized string
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-            ),
-          ),
+          elevation: 2,
         ),
-      );
-    }
+        child: Text(
+          loc.confirmLocation,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        ),
+      ),
+    );
   }
+}
 
   void _onCameraMove(CameraPosition position) {
     // Update the selected location as the user moves the map

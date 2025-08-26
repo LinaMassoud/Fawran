@@ -1543,27 +1543,22 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
               ),
               value: hasValidValue ? value : null,
               items: options.map((String option) {
-                return DropdownMenuItem<String>(
-                  value: option,
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      option,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isEnabled ? Colors.black : Colors.grey[400],
-                      ),
-                      textAlign: isArabic ? TextAlign.right : TextAlign.left,
-                      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                    ),
-                  ),
-                );
-              }).toList(),
+  return DropdownMenuItem<String>(
+    value: option,
+    child: Align(
+      alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+      child: Text(
+      option,
+      style: TextStyle(
+        fontSize: 16,
+        color: isEnabled ? Colors.black : Colors.grey[400],
+      ),
+      textAlign: isArabic ? TextAlign.right : TextAlign.left,
+      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+    ),
+    ),
+  );
+}).toList(),
               onChanged: isEnabled && !isLoading ? (String? selectedValue) {
                 if (selectedValue != null) {
                   onChanged(selectedValue);
@@ -1599,121 +1594,6 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
   );
 }
 
-  void _showCustomDropdown(
-    BuildContext context,
-    List<String> options,
-    String currentValue,
-    Function(String) onChanged,
-    String? customTitle,
-  ) {
-    final currentLocale = ref.watch(localeNotifierProvider);
-    final isArabic = currentLocale.languageCode == 'ar';
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
-      ),
-      builder: (BuildContext context) {
-        return Directionality(
-          textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle bar
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 20),
-
-                // Title
-                Text(
-                  customTitle ?? 'Select Option',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF091735),
-                  ),
-                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                ),
-                SizedBox(height: 10),
-
-                Divider(color: Colors.grey[200]),
-
-                // Scrollable options
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options[index];
-                      final isSelected = currentValue.isNotEmpty && option == currentValue;
-
-                      return InkWell(
-                        onTap: () async {
-                          Navigator.pop(context);
-                          
-                          final result = onChanged(option);
-                          if (result is Future) {
-                            await result;
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Color(0xFF1E3A8A).withOpacity(0.1)
-                                : Colors.transparent,
-                          ),
-                          child: Row(
-                            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  option,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: isSelected
-                                        ? Color(0xFF1E3A8A)
-                                        : Color(0xFF091735),
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                  ),
-                                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: Color(0xFF1E3A8A),
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
 Future<void> _handleDonePressed() async {
   if (!_isValidDateSelection()) {
@@ -2147,7 +2027,7 @@ Future<void> _handleDonePressed() async {
                         padding: EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
                           color: (_isValidDateSelection() && !_isValidatingWorkers)
-                              ? Color(0xFF1E3A8A)
+                              ? Color(0xFF10295C)
                               : Color(0xFF768090),
                           borderRadius: BorderRadius.circular(25),
                         ),

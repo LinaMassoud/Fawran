@@ -801,13 +801,13 @@ Widget _buildDaySelectionWidget(AppLocalizations loc) {
                   color: isFriday 
                       ? Colors.grey.shade100 
                       : isSelected 
-                          ? Color(0xFF1E3A8A) 
+                          ? Color(0xFF10295C) 
                           : Colors.white,
                   border: Border.all(
                     color: isFriday 
                         ? Colors.grey.shade300 
                         : isSelected 
-                            ? Color(0xFF1E3A8A) 
+                            ? Color(0xFF10295C) 
                             : Colors.grey.shade300,
                     width: 1.5,
                   ),
@@ -904,7 +904,7 @@ Widget _buildDaySelectionWidget(AppLocalizations loc) {
             color: backgroundColor,
             borderRadius: BorderRadius.circular(6),
             border: isSelected ? Border.all(
-              color: isStartDate ? Color(0xFF1E3A8A) : Colors.orange, 
+              color: isStartDate ? Color(0xFF10295C) : Colors.orange, 
               width: 1
             ) : null,
           ),
