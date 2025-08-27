@@ -16,6 +16,7 @@ import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import '../widgets/background_container.dart';
 import 'forgot_password_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -62,6 +63,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _subscribeToFirebaseTopics() async {
+  try {
+    await FirebaseMessaging.instance.subscribeToTopic("all");
+    print("✅ Successfully subscribed to topic 'all' after login");
+  } catch (e) {
+    print("⚠️ Failed to subscribe to topic after login: $e");
+    // Don't show error to user as this is not critical for app functionality
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -71,6 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next.isLoggedIn && next.isVerified) {
+        _subscribeToFirebaseTopics();
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

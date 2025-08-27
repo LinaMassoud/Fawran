@@ -145,14 +145,6 @@ void main() async {
     // iOS only: wait for APNS token
     String? apnsToken = await messaging.getAPNSToken();
     print("📱 APNS Token: $apnsToken");
-
-    if (apnsToken != null) {
-      // Safe to subscribe AFTER token exists
-      await FirebaseMessaging.instance.subscribeToTopic("all");
-      print("✅ Subscribed to topic 'all'");
-    } else {
-      print("⚠️ APNS token still null, will retry later");
-    }
   } else {
     print("❌ User declined permission");
   }
