@@ -1,7 +1,7 @@
 // Project-level build.gradle
 
 buildscript {
-    ext.kotlin_version = "2.0.21"
+    ext.kotlin_version = '1.9.10'
     repositories {
         google()
         mavenCentral()
@@ -10,7 +10,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.6.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.4.3' // ✅ Firebase plugin
+        classpath 'com.google.gms:google-services:4.4.2' // ✅ Firebase plugin
     }
 }
 
@@ -19,7 +19,19 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.all { 
+        subprojects {
+              project.configurations.all {
+                      resolutionStrategy {
+                         force "com.google.firebase:firebase-messaging:24.1.2"
+                         force "com.google.firebase:firebase-common:21.0.0"
+        }
+    }
 }
+
+     }
+}
+
 
 // Flutter-specific block
 ext {

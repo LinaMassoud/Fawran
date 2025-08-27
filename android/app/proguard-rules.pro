@@ -256,3 +256,33 @@
 # Ignore warnings for classes that may not be available in all Android versions
 -dontwarn android.support.**
 -dontwarn androidx.annotation.Keep
+
+
+
+# ========================================
+# FIREBASE & GOOGLE PLAY SERVICES
+# ========================================
+
+# Keep all Firebase classes (Analytics, Messaging, Config, etc.)
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# Keep all Google Play Services classes (Location, Maps, etc.)
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.android.gms.**
+
+# Prevent stripping of Firebase Messaging Service
+-keep class * extends com.google.firebase.messaging.FirebaseMessagingService {
+    <fields>;
+    <methods>;
+}
+
+# Prevent stripping of Firebase Messaging Receiver
+-keep class * extends com.google.firebase.iid.FirebaseInstanceIdReceiver {
+    <fields>;
+    <methods>;
+}
+
+# Keep Google Play Fused Location
+-keep class com.google.android.gms.location.** { *; }
+-dontwarn com.google.android.gms.location.**
