@@ -17,6 +17,7 @@ class DateSelectionStep extends ConsumerStatefulWidget {
   final Function(List<DateTime>) onDatesChanged;
   final Function(List<String>)? onSelectedDaysChanged;
   final Function(List<int>)? onWorkerValidationSuccess;
+  final Function(int?)? onPromotionIdChanged;
   final Function(double)? onPriceChanged;
   final VoidCallback? onNextPressed;
   final int maxSelectableDates;
@@ -48,6 +49,7 @@ class DateSelectionStep extends ConsumerStatefulWidget {
     this.onSelectedDaysChanged,
     this.onWorkerValidationSuccess,
     this.onPriceChanged,
+    this.onPromotionIdChanged,
   }) : super(key: key);
 
   @override
@@ -89,6 +91,10 @@ void initState() {
     _isCouponApplied = true;
     _discountedPrice = widget.package!.finalPrice; // Use the already calculated final price
     _couponMessage = 'Promotion applied successfully!';
+    // PASS THE PROMOTION ID FROM PACKAGE
+    if (widget.package!.promotionId != null && widget.onPromotionIdChanged != null) {
+      widget.onPromotionIdChanged!(widget.package!.promotionId!);
+    }
   }
   
   _calculateContractDetails();
@@ -174,6 +180,12 @@ void _validateCouponCode() async {
           _discountedPrice = (result['final_price'] as num?)?.toDouble() ?? widget.totalPrice;
           _couponMessage = message;
           _showSnackBar('Coupon applied successfully!');
+
+          // EXTRACT AND PASS PROMOTION ID
+          int? promotionId = result['promotion_id'] as int?;
+          if (promotionId != null && widget.onPromotionIdChanged != null) {
+            widget.onPromotionIdChanged!(promotionId);
+          }
           if (widget.onPriceChanged != null) {
           widget.onPriceChanged!(_discountedPrice);
         }
@@ -182,6 +194,10 @@ void _validateCouponCode() async {
           _discountedPrice = 0.0;
           _couponMessage = message.isNotEmpty ? message : 'Invalid coupon code';
           _showSnackBar(_couponMessage);
+
+          if (widget.onPromotionIdChanged != null) {
+            widget.onPromotionIdChanged!(null);
+          }
           if (widget.onPriceChanged != null) {
           widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
         }
@@ -204,6 +220,9 @@ void _validateCouponCode() async {
       _couponMessage = 'Error validating coupon';
     });
     _showSnackBar('Error validating coupon: ${e.toString()}');
+    if (widget.onPromotionIdChanged != null) {
+      widget.onPromotionIdChanged!(null);
+    }
   }
 }
 
@@ -214,6 +233,10 @@ void _removeCoupon() {
     _discountedPrice = 0.0;
     _couponMessage = '';
   });
+  // Clear promotion ID when coupon is removed
+  if (widget.onPromotionIdChanged != null) {
+    widget.onPromotionIdChanged!(null);
+  }
   if (widget.onPriceChanged != null) {
     widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
   }
@@ -1324,7 +1347,11 @@ Widget build(BuildContext context) {
   final loc = AppLocalizations.of(context)!;
     final locale = ref.watch(localeNotifierProvider);
     final isArabic = locale.languageCode == 'ar';
-  _updatePromotionMessageLocalization(); 
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      _updatePromotionMessageLocalization();
+    }
+  });
   return Directionality(
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       child:  Column(
