@@ -377,6 +377,21 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
   }
 
+  bool _shouldDisableButtons(String status, bool isCancelled) {
+  final normalizedStatus = status.toLowerCase().trim();
+  
+  // Check for confirmed status in both languages
+  final isConfirmed = normalizedStatus == "confirmed" || 
+                     normalizedStatus == "مؤكد";
+  
+  // Check for cancelled status in both languages  
+  final isCancelledStatus = normalizedStatus == "cancelled" ||
+                           normalizedStatus == "canceled" ||
+                           normalizedStatus == "ملغي";
+  
+  return isConfirmed || isCancelledStatus || isCancelled;
+}
+
   // Helper method to check if contract is cancelled
   bool _isContractCancelled(Map<String, dynamic> contract, bool isHourly) {
     final statusId = contract["status_id"];
@@ -392,55 +407,53 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Widget _buildStatusBadge(String status) {
-    Color backgroundColor = Colors.grey.shade200;
-    Color textColor = Colors.grey.shade700;
-    String statusText = status;
+  Color backgroundColor = Colors.grey.shade200;
+  Color textColor = Colors.grey.shade700;
+  String statusText = status;
 
-    switch (status.toLowerCase()) {
-      case "confirmed":
-        backgroundColor = const Color(0xFFE8F5E8); // Light green background
-        textColor = const Color(0xFF1EAC1E); // --Done-green
-        statusText = "Confirmed";
-        break;
-      case "pending":
-        backgroundColor = const Color(0xFFFFF3E0); // Light orange background
-        textColor = const Color(0xFFFFA200); // --Main-Orange
-        break;
-      case "cancelled":
-      case "canceled":
-      case "ملغي":
-        backgroundColor = const Color(0xFFFFEBEE); // Light red background
-        textColor = const Color(0xFFE53935);
-        statusText = "Cancelled";
-        break;
-      case "not confirmed":
-      case "غير مؤكد":
-        backgroundColor = const Color(0xFFFFF3E0); // Light orange background
-        textColor = const Color(0xFFFFA200); // --Main-Orange
-        statusText = "Not Confirmed";
-        break;
-      default:
-        backgroundColor = const Color(0xFFE8F5E8); // Light green background
-        textColor = const Color(0xFF1EAC1E); // --Done-green
-        statusText = "Confirmed";
-    }
+  final normalizedStatus = status.toLowerCase();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Text(
-        statusText,
-        style: TextStyle(
-          color: textColor,
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
-        ),
-      ),
-    );
+  if (normalizedStatus == "confirmed" || normalizedStatus == "مؤكد") {
+    backgroundColor = const Color(0xFFE8F5E8); // Light green background
+    textColor = const Color(0xFF1EAC1E); // --Done-green
+    statusText = "Confirmed";
+  } else if (normalizedStatus == "pending") {
+    backgroundColor = const Color(0xFFFFF3E0); // Light orange background
+    textColor = const Color(0xFFFFA200); // --Main-Orange
+    statusText = "Pending";
+  } else if (normalizedStatus == "cancelled" || 
+             normalizedStatus == "canceled" || 
+             normalizedStatus == "ملغي") {
+    backgroundColor = const Color(0xFFFFEBEE); // Light red background
+    textColor = const Color(0xFFE53935);
+    statusText = "Cancelled";
+  } else if (normalizedStatus == "not confirmed" || 
+             normalizedStatus == "غير مؤكد") {
+    backgroundColor = const Color(0xFFFFF3E0); // Light orange background
+    textColor = const Color(0xFFFFA200); // --Main-Orange
+    statusText = "Not Confirmed";
+  } else {
+    backgroundColor = const Color(0xFFE8F5E8); // Light green background
+    textColor = const Color(0xFF1EAC1E); // --Done-green
+    statusText = "Confirmed";
   }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(15),
+    ),
+    child: Text(
+      statusText,
+      style: TextStyle(
+        color: textColor,
+        fontWeight: FontWeight.w500,
+        fontSize: 12,
+      ),
+    ),
+  );
+}
 
   Widget _buildServiceTypeBadge(String serviceType, Color color) {
     return Container(
@@ -460,33 +473,36 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _buildTimeRemainingBadge(String? timeInfo, String status,AppLocalizations loc) {
-    if (status.toLowerCase() != "not confirmed" ||
-        timeInfo == null ||
-        timeInfo.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.shade200),
-      ),
-      child: Text(
-        "${loc.timeRemaining}   - $timeInfo",
-        style: TextStyle(
-          color: Colors.red.shade700,
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
+  Widget _buildTimeRemainingBadge(String? timeInfo, String status, AppLocalizations loc) {
+  // Check for both English and Arabic "not confirmed" status
+  final normalizedStatus = status.toLowerCase().trim();
+  final isNotConfirmed = normalizedStatus == "not confirmed" || 
+                        normalizedStatus == "غير مؤكد";
+  
+  if (!isNotConfirmed || timeInfo == null || timeInfo.isEmpty) {
+    return const SizedBox.shrink();
   }
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    margin: const EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      color: Colors.red.shade50,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: Colors.red.shade200),
+    ),
+    child: Text(
+      "${loc.timeRemaining}   - $timeInfo",
+      style: TextStyle(
+        color: Colors.red.shade700,
+        fontWeight: FontWeight.w500,
+        fontSize: 12,
+      ),
+      textAlign: TextAlign.center,
+    ),
+  );
+}
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
@@ -586,20 +602,14 @@ Widget _buildPermanentContractCard(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton(
-              onPressed: status.toLowerCase() == "cancelled" ||
-                      status.toLowerCase() == "canceled" ||
-                      status.toLowerCase() == "confirmed" ||
-                      isCancelled
+              onPressed:_shouldDisableButtons(status, isCancelled)
                   ? null
                   : () => _startCheckout(booking, isArabic,loc,
                       isHourly: false, sector: 'I'),
               child: Text(
                 loc.payNow ?? "Pay Now",
                 style: TextStyle(
-                  color: (status.toLowerCase() == "cancelled" ||
-                          status.toLowerCase() == "canceled" ||
-                          status.toLowerCase() == "confirmed" ||
-                          isCancelled)
+                  color: _shouldDisableButtons(status, isCancelled)
                       ? Colors.grey
                       : const Color(0xFF2196F3),
                   fontWeight: FontWeight.w500,
@@ -609,7 +619,7 @@ Widget _buildPermanentContractCard(
             ),
             const SizedBox(width: 8),
             TextButton(
-              onPressed: isCancelled || status.toLowerCase() == "confirmed"
+              onPressed: _shouldDisableButtons(status, isCancelled)
                   ? null
                   : () {
                       ref.read(contractsProvider.notifier).cancelPermContract(
@@ -620,7 +630,7 @@ Widget _buildPermanentContractCard(
               child: Text(
                 loc.cancel ?? "Cancel",
                 style: TextStyle(
-                  color: isCancelled || status.toLowerCase() == "confirmed"
+                  color: _shouldDisableButtons(status, isCancelled)
                       ? Colors.grey
                       : const Color(0xFF2196F3),
                   fontWeight: FontWeight.w500,
@@ -746,7 +756,7 @@ Widget _buildHourlyContractCard(
           _buildInfoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0}"),
           _buildInfoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}"),
           _buildInfoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
-          _buildInfoRow("Status", status),
+          _buildInfoRow(loc.status ?? "Status", status),
 
           if (isCancelled)
             _buildInfoRow("Cancelled Time", _formatDeadlineTime(booking["time_info"], status)),
@@ -757,19 +767,13 @@ Widget _buildHourlyContractCard(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: status.toLowerCase() == "cancelled" ||
-                        status.toLowerCase() == "canceled" ||
-                        status.toLowerCase() == "confirmed" ||
-                        isCancelled
+                onPressed: _shouldDisableButtons(status, isCancelled)
                     ? null
                     : () => _startCheckout(booking, isArabic,loc, isHourly: true, sector: 'H'),
                 child: Text(
                   loc.payNow ?? "Pay Now",
                   style: TextStyle(
-                    color: (status.toLowerCase() == "cancelled" ||
-                            status.toLowerCase() == "canceled" ||
-                            status.toLowerCase() == "confirmed" ||
-                            isCancelled)
+                    color: _shouldDisableButtons(status, isCancelled)
                         ? Colors.grey
                         : const Color(0xFF2196F3),
                     fontWeight: FontWeight.w500,
@@ -779,7 +783,7 @@ Widget _buildHourlyContractCard(
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: isCancelled || status.toLowerCase() == "confirmed"
+                onPressed: _shouldDisableButtons(status, isCancelled)
                     ? null
                     : () {
                         ref.read(contractsProvider.notifier).cancelHourlyContract(
@@ -790,7 +794,7 @@ Widget _buildHourlyContractCard(
                 child: Text(
                   loc.cancel ?? "Cancel",
                   style: TextStyle(
-                    color: isCancelled || status.toLowerCase() == "confirmed"
+                    color: _shouldDisableButtons(status, isCancelled)
                         ? Colors.grey
                         : const Color(0xFF2196F3),
                     fontWeight: FontWeight.w500,
