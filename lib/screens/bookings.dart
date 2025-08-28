@@ -377,6 +377,21 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
   }
 
+  bool _shouldDisableButtons(String status, bool isCancelled) {
+  final normalizedStatus = status.toLowerCase().trim();
+  
+  // Check for confirmed status in both languages
+  final isConfirmed = normalizedStatus == "confirmed" || 
+                     normalizedStatus == "مؤكد";
+  
+  // Check for cancelled status in both languages  
+  final isCancelledStatus = normalizedStatus == "cancelled" ||
+                           normalizedStatus == "canceled" ||
+                           normalizedStatus == "ملغي";
+  
+  return isConfirmed || isCancelledStatus || isCancelled;
+}
+
   // Helper method to check if contract is cancelled
   bool _isContractCancelled(Map<String, dynamic> contract, bool isHourly) {
     final statusId = contract["status_id"];
@@ -586,20 +601,14 @@ Widget _buildPermanentContractCard(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton(
-              onPressed: status.toLowerCase() == "cancelled" ||
-                      status.toLowerCase() == "canceled" ||
-                      status.toLowerCase() == "confirmed" ||
-                      isCancelled
+              onPressed:_shouldDisableButtons(status, isCancelled)
                   ? null
                   : () => _startCheckout(booking, isArabic,loc,
                       isHourly: false, sector: 'I'),
               child: Text(
                 loc.payNow ?? "Pay Now",
                 style: TextStyle(
-                  color: (status.toLowerCase() == "cancelled" ||
-                          status.toLowerCase() == "canceled" ||
-                          status.toLowerCase() == "confirmed" ||
-                          isCancelled)
+                  color: _shouldDisableButtons(status, isCancelled)
                       ? Colors.grey
                       : const Color(0xFF2196F3),
                   fontWeight: FontWeight.w500,
@@ -609,7 +618,7 @@ Widget _buildPermanentContractCard(
             ),
             const SizedBox(width: 8),
             TextButton(
-              onPressed: isCancelled || status.toLowerCase() == "confirmed"
+              onPressed: _shouldDisableButtons(status, isCancelled)
                   ? null
                   : () {
                       ref.read(contractsProvider.notifier).cancelPermContract(
@@ -620,7 +629,7 @@ Widget _buildPermanentContractCard(
               child: Text(
                 loc.cancel ?? "Cancel",
                 style: TextStyle(
-                  color: isCancelled || status.toLowerCase() == "confirmed"
+                  color: _shouldDisableButtons(status, isCancelled)
                       ? Colors.grey
                       : const Color(0xFF2196F3),
                   fontWeight: FontWeight.w500,
@@ -757,19 +766,13 @@ Widget _buildHourlyContractCard(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: status.toLowerCase() == "cancelled" ||
-                        status.toLowerCase() == "canceled" ||
-                        status.toLowerCase() == "confirmed" ||
-                        isCancelled
+                onPressed: _shouldDisableButtons(status, isCancelled)
                     ? null
                     : () => _startCheckout(booking, isArabic,loc, isHourly: true, sector: 'H'),
                 child: Text(
                   loc.payNow ?? "Pay Now",
                   style: TextStyle(
-                    color: (status.toLowerCase() == "cancelled" ||
-                            status.toLowerCase() == "canceled" ||
-                            status.toLowerCase() == "confirmed" ||
-                            isCancelled)
+                    color: _shouldDisableButtons(status, isCancelled)
                         ? Colors.grey
                         : const Color(0xFF2196F3),
                     fontWeight: FontWeight.w500,
@@ -779,7 +782,7 @@ Widget _buildHourlyContractCard(
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: isCancelled || status.toLowerCase() == "confirmed"
+                onPressed: _shouldDisableButtons(status, isCancelled)
                     ? null
                     : () {
                         ref.read(contractsProvider.notifier).cancelHourlyContract(
@@ -790,7 +793,7 @@ Widget _buildHourlyContractCard(
                 child: Text(
                   loc.cancel ?? "Cancel",
                   style: TextStyle(
-                    color: isCancelled || status.toLowerCase() == "confirmed"
+                    color: _shouldDisableButtons(status, isCancelled)
                         ? Colors.grey
                         : const Color(0xFF2196F3),
                     fontWeight: FontWeight.w500,
