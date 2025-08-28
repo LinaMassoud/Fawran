@@ -13,6 +13,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
@@ -241,52 +242,50 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   }
 
   Future<void> _saveAndShowPdf() async {
-    if (pdfPath == null) return;
+  if (pdfPath == null) return;
 
-    // Capture the signature
-    if (signatureKey.currentState != null) {
-      final data = await signatureKey.currentState!.toImage(pixelRatio: 3.0);
-      final bytes = await data.toByteData(format: ui.ImageByteFormat.png);
-      _signatureBytes = bytes!.buffer.asUint8List();
-    }
+  final originalPath = "${(await getTemporaryDirectory()).path}/generated_contract.pdf";
+  final pdfDoc = PdfDocument(inputBytes: File(originalPath).readAsBytesSync());
 
-    if (_signatureBytes == null) return; // Nothing drawn
-
-    // Load PDF and add signature
-    final pdfDoc = PdfDocument(inputBytes: File(pdfPath!).readAsBytesSync());
-    final page = pdfDoc.pages[pdfDoc.pages.count - 1];
-
-    final pageSize = page.getClientSize();
-    final double sigWidth = 100;
-    final double sigHeight = 50;
-    final double x = 100; // adjust to align perfectly
-    final double y = pageSize.height - 480;
-
-    page.graphics.drawImage(
-      PdfBitmap(_signatureBytes!),
-      Rect.fromLTWH(x, y, sigWidth, sigHeight),
-    );
-
-    // Save the updated PDF
-    final signedBytes = pdfDoc.saveSync();
-    pdfDoc.dispose();
-
-    final dir = await getApplicationDocumentsDirectory();
-    final signedPath = "${dir.path}/signed_contract.pdf";
-    final signedFile = File(signedPath);
-    await signedFile.writeAsBytes(signedBytes);
-
-    // Store the file in state for later upload
-    setState(() {
-      _signedPdfFile = signedFile;
-      pdfPath = signedPath; // refresh viewer
-      _signatureBytes = null;
-      _hasSigned = true;
-    });
-
-    // Clear signature pad
-    signatureKey.currentState?.clear();
+  // Capture the signature
+  if (signatureKey.currentState != null) {
+    final data = await signatureKey.currentState!.toImage(pixelRatio: 3.0);
+    final bytes = await data.toByteData(format: ui.ImageByteFormat.png);
+    _signatureBytes = bytes!.buffer.asUint8List();
   }
+
+  if (_signatureBytes == null) return;
+
+  final page = pdfDoc.pages[pdfDoc.pages.count - 1];
+  final pageSize = page.getClientSize();
+
+  const sigWidth = 100.0;
+  const sigHeight = 50.0;
+  const x = 100.0;
+  final y = pageSize.height - 490;
+
+  page.graphics.drawImage(
+    PdfBitmap(_signatureBytes!),
+    Rect.fromLTWH(x, y, sigWidth, sigHeight),
+  );
+
+  final signedBytes = pdfDoc.saveSync();
+  pdfDoc.dispose();
+
+  final dir = await getApplicationDocumentsDirectory();
+  final signedPath = "${dir.path}/signed_contract.pdf";
+  final signedFile = File(signedPath);
+  await signedFile.writeAsBytes(signedBytes);
+
+  setState(() {
+    _signedPdfFile = signedFile;
+    pdfPath = signedPath;
+    _hasSigned = true;
+    _signatureBytes = null;
+  });
+
+  signatureKey.currentState?.clear();
+}
 
   Future<void> uploadSignedPdf() async {
     if (_signedPdfFile == null) return;
@@ -342,12 +341,13 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
               : Column(
                   children: [
                     Expanded(
-                      child: SfPdfViewer.file(
-                        File(pdfPath!),
-                        onDocumentLoadFailed: (details) {
-                          print("PDF load failed: ${details.error}");
-                        },
-                      ),
+                      child:PDFView(
+  filePath: pdfPath!,
+  enableSwipe: true,
+  swipeHorizontal: false,
+  autoSpacing: true,
+  pageFling: true,
+)
                     ),
                     // Signature pad container
                     Container(
