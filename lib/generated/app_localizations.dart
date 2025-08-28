@@ -1265,7 +1265,7 @@ abstract class AppLocalizations {
   /// No description provided for @couponCode.
   ///
   /// In en, this message translates to:
-  /// **'Coupon Code'**
+  /// **'Discount Code'**
   String get couponCode;
 
   /// No description provided for @applied.
@@ -1289,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @enterCouponCode.
   ///
   /// In en, this message translates to:
-  /// **'Enter coupon code'**
+  /// **'Enter Discount code'**
   String get enterCouponCode;
 
   /// No description provided for @apply.
@@ -1951,6 +1951,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'complete contract'**
   String get completecontract;
+
+  /// No description provided for @signhere.
+  ///
+  /// In en, this message translates to:
+  /// **'sign here'**
+  String get signhere;
+
+  /// No description provided for @contract.
+  ///
+  /// In en, this message translates to:
+  /// **'contract'**
+  String get contract;
+
+  /// No description provided for @savesign.
+  ///
+  /// In en, this message translates to:
+  /// **'save sign'**
+  String get savesign;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'clear'**
+  String get clear;
 
   /// No description provided for @followus.
   ///

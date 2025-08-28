@@ -391,6 +391,13 @@
   "downloadLocalPdf" : "تحميل الملف",
    "displayfile":"عرض الملف",
   "completecontract":"إتمام التعاقد",
+  "signhere":"وقع هنا",
+  "contract":"العقد",
+  "savesign":"حفظ التوقيع",
+  "clear":"مسح",
+
+
+
   "followus":"تابعنا على مواقع التواصل",
   "connectwithus":"تواصل معنا",
 
