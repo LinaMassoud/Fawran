@@ -29,7 +29,7 @@ class PrivateDriverScreen extends ConsumerStatefulWidget {
 
 class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int currentStep = 0;
-  final int totalSteps = 6;
+  final int totalSteps = 5;
 
   Nationality? selectedNationality;
   String? selectedPackage;
@@ -222,419 +222,367 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     }
   }
 
-  Widget _buildSteps() {
-    final loc = AppLocalizations.of(context)!;
-    final nationalityAsync = ref.watch(nationalitiesProvider);
-    final packagesAsync = ref.watch(packageProvider);
-    final selectedProfession = ref.watch(selectedProfessionProvider);
-    final selectedPackage = ref.watch(
-        selectedPackageProvider); // assuming this is how you track selection
-    final laborersAsync = ref.watch(laborersProvider);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Step 1: Nationality
-        if (currentStep >= 0)
-          // Assuming you have:
+Widget _buildSteps() {
+  final loc = AppLocalizations.of(context)!;
+  final nationalityAsync = ref.watch(nationalitiesProvider);
+  final packagesAsync = ref.watch(packageProvider);
+  final selectedProfession = ref.watch(selectedProfessionProvider);
+  final selectedPackage = ref.watch(selectedPackageProvider);
+  final laborersAsync = ref.watch(laborersProvider);
 
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                loc.nationality,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Step 1: Nationality
+      if (currentStep >= 0)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.nationality,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              const SizedBox(height: 8),
-              nationalityAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Text('Error loading nationalities'),
-                data: (nationalities) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButtonFormField<Nationality>(
-                      value: selectedNationality,
-                      hint: Text(loc.choose + " " + loc.nationality),
-                      decoration:
-                          const InputDecoration(border: InputBorder.none),
-                      items: nationalities.map<DropdownMenuItem<Nationality>>((nat) {
-                        return DropdownMenuItem(
-                          value: nat,
-                          child: Text(nat != null ? nat.name : ""),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        ref.read(selectedNationalityProvider.notifier).state =
-                            val;
-                        checkCarAvailability();
-                        setState(() {
-                          selectedNationality = val;
-                        });
-                        if (currentStep == 0) goToNextStep();
-                      },
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        // Step 2: Package
-        if (currentStep >= 1)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                loc.choose_package,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              packagesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Text("Failed to load packages"),
-                data: (packages) {
-                  return Column(
-                    children:
-                        packages.map<Widget>((DomesticPackageModel package) {
-                      final title =
-                          "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} ${loc.riyal}";
-
-                      final subtitle = [
-                        "${loc.contract_amount}: ${package.contractAmount.toStringAsFixed(2)}  ${loc.riyal}",
-                        "${loc.vat}: ${package.vatAmount.toStringAsFixed(2)}  ${loc.riyal}",
-                        "${loc.duration}: ${package.contractDays}  ${loc.days}",
-                      ].join(" • ");
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: buildPackageCard(
-                          title: title,
-                          subtitle: subtitle,
-                          isSelected:
-                              selectedPackage?.packageId == package.packageId,
-                          onTap: () {
-                            ref.read(selectedPackageProvider.notifier).state =
-                                package;
-                            if (currentStep == 1) goToNextStep();
-                          },
-                        ),
+            ),
+            const SizedBox(height: 8),
+            nationalityAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Text('Error loading nationalities'),
+              data: (nationalities) {
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButtonFormField<Nationality>(
+                    value: selectedNationality,
+                    hint: Text(loc.choose + " " + loc.nationality),
+                    decoration: const InputDecoration(border: InputBorder.none),
+                    items: nationalities.map((nat) {
+                      return DropdownMenuItem(
+                        value: nat,
+                        child: Text(nat.name),
                       );
                     }).toList(),
-                  );
-                },
+                    onChanged: (val) {
+                      ref.read(selectedNationalityProvider.notifier).state = val;
+                      checkCarAvailability();
+                      setState(() {
+                        selectedNationality = val;
+                      });
+                      if (currentStep == 0) goToNextStep();
+                    },
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+
+      // Step 2: Package
+      if (currentStep >= 1)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.choose_package,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        // Step 3: Labor Source
-        if (currentStep >= 2)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                loc.chooselabor,
+            ),
+            const SizedBox(height: 8),
+            packagesAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Text("Failed to load packages"),
+              data: (packages) {
+                return Column(
+                  children: packages.map<Widget>((package) {
+                    final title =
+                        "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} ${loc.riyal}";
+
+                    final subtitle = [
+                      "${loc.contract_amount}: ${package.contractAmount.toStringAsFixed(2)} ${loc.riyal}",
+                      "${loc.vat}: ${package.vatAmount.toStringAsFixed(2)} ${loc.riyal}",
+                      "${loc.duration}: ${package.contractDays} ${loc.days}",
+                    ].join(" • ");
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: buildPackageCard(
+                        title: title,
+                        subtitle: subtitle,
+                        isSelected:
+                            selectedPackage?.packageId == package.packageId,
+                        onTap: () {
+                          ref.read(selectedPackageProvider.notifier).state = package;
+                          if (currentStep == 1) goToNextStep();
+                        },
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+
+      // Step 3: Choose Laborer (from app — always)
+      if (currentStep >= 2)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Choose ${selectedProfession?.positionName}",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                GestureDetector(
+                  onTap: _openFilterDialog,
+                  child: SvgPicture.asset(
+                    "assets/images/filter.svg",
+                    height: 24,
+                    width: 24,
+                    color: Colors.blue,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            laborersAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Text('Error: $err', style: const TextStyle(color: Colors.red)),
+              data: (laborers) {
+                if (laborers.isEmpty) {
+                  return const Text("No drivers found");
+                }
+
+                final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: laborers.length,
+                  itemBuilder: (context, index) {
+                    final laborer = laborers[index];
+                    final driverValue =
+                        "${laborer.employeeName} - ${laborer.employeeNumber}";
+                    final isSelected = selectedDriver == driverValue;
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          ref.read(selectedLaborerProvider.notifier).state = laborer;
+                          selectedDriver = driverValue;
+                          if (currentStep == 2) goToNextStep();
+                        });
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue.shade50 : Colors.white,
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: isRTL
+                              ? _buildDriverCardContent(
+                                  context: context,
+                                  isSelected: isSelected,
+                                  name: laborer.employeeName,
+                                  employeeNumber: laborer.employeeNumber.toString(),
+                                  imageOnRight: true,
+                                  onInfoPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LaborProfilePage(laborer: laborer),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : _buildDriverCardContent(
+                                  context: context,
+                                  isSelected: isSelected,
+                                  name: laborer.employeeName,
+                                  employeeNumber: laborer.employeeNumber.toString(),
+                                  imageOnRight: false,
+                                  onInfoPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LaborProfilePage(laborer: laborer),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+
+      // Step 4: Delivery Method
+      if (currentStep >= 3)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.pickup_or_delivey,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            RadioListTile<String>(
+              title: Text(
+                loc.pickup,
                 style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: const Color.fromRGBO(118, 128, 144, 1.0),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // From Company
-              _buildMinimalRadio(
-                label: loc.from_company, // ✅ required
-                value: "company", // ✅ required
+              value: "pickup",
+              groupValue: pickupOption,
+              onChanged: (val) {
+                setState(() => pickupOption = val);
+                if (currentStep == 3) goToNextStep();
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+            ),
+            RadioListTile<String>(
+              title: Text(
+                loc.delivery,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: const Color.fromRGBO(118, 128, 144, 1.0),
+                ),
               ),
+              value: "delivery",
+              groupValue: pickupOption,
+              onChanged: deliveryAvailable
+                  ? (val) {
+                      setState(() => pickupOption = val);
+                      if (currentStep == 3) goToNextStep();
+                    }
+                  : null,
+              subtitle: !deliveryAvailable
+                  ? Text(
+                      loc.delivery_not_available,
+                      style: GoogleFonts.poppins(
+                        color: Colors.red,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    )
+                  : null,
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
 
-              _buildMinimalRadio(
-                label: loc.from_app,
-                value: "app",
+      // Step 5: Agreement
+      if (currentStep == 4)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.agreement,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade100, Colors.white],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
-
-        if (currentStep >= 3 && selectedLaborSource == 'app')
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Choose ${selectedProfession?.positionName}",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  _textRow(
+                    selectedProfession?.positionName ?? '',
+                    selectedDriver ?? "Not selected",
                   ),
-                  GestureDetector(
-                    onTap: _openFilterDialog, // your filter method
-                    child: SvgPicture.asset(
-                      "assets/images/filter.svg",
-                      height: 24,
-                      width: 24,
-                      color: Colors.blue,
-                    ),
+                  _textRow(
+                    "${loc.nationality}: ",
+                    ref.read(selectedLaborerProvider)?.nationality ?? '',
+                  ),
+                  _textRow(
+                    "${loc.package}: ",
+                    selectedPackage?.packageName ?? "Not selected",
+                  ),
+                  _textRow(
+                    "${loc.vat}: ",
+                    selectedPackage?.vatAmount.toString() ?? '',
+                  ),
+                  _textRow(
+                    "${loc.price}: ",
+                    () {
+                      if (selectedPackage == null) return "N/A";
+                      double basePrice = selectedPackage.contractAmount +
+                          selectedPackage.vatAmount;
+                      if (pickupOption == "delivery") {
+                        basePrice += 100;
+                      }
+                      return "${basePrice.toStringAsFixed(2)} SR";
+                    }(),
+                  ),
+                  _textRow(
+                    "${loc.delivery}: ",
+                    pickupOption == "pickup"
+                        ? loc.pickup
+                        : pickupOption == "delivery"
+                            ? loc.delivery_fee
+                            : "Not selected",
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-
-              // Handle async states
-              laborersAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Text('Error: $err',
-                    style: const TextStyle(color: Colors.red)),
-                data: (laborers) {
-                  if (laborers.isEmpty) {
-                    return const Text("No drivers found");
-                  }
-
-                  final isRTL = Directionality.of(context) == TextDirection.rtl;
-
-                  return ListView.builder(
-                    shrinkWrap: true, // makes list take only needed height
-                    physics:
-                        const NeverScrollableScrollPhysics(), // disables inner scrolling
-                    itemCount: laborers.length,
-                    itemBuilder: (context, index) {
-                      final laborer = laborers[index];
-                      final driverValue =
-                          "${laborer.employeeName} - ${laborer.employeeNumber}";
-                      final isSelected = selectedDriver == driverValue;
-
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            ref.read(selectedLaborerProvider.notifier).state =
-                                laborer;
-                            selectedDriver = driverValue;
-                            if (currentStep == 3) goToNextStep();
-                          });
-                        },
-                        child: Container(
-                          // remove fixed height to allow flexible height
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(
-                              12), // add padding instead of fixed height
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected ? Colors.blue.shade50 : Colors.white,
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.blue
-                                  : Colors.grey.shade300,
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: isRTL
-                                ? _buildDriverCardContent(
-                                    context: context,
-                                    isSelected: isSelected,
-                                    name: laborer.employeeName,
-                                    employeeNumber:
-                                        laborer.employeeNumber.toString(),
-                                    imageOnRight: true,
-                                    onInfoPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              LaborProfilePage(
-                                                  laborer: laborer),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : _buildDriverCardContent(
-                                    context: context,
-                                    isSelected: isSelected,
-                                    name: laborer.employeeName,
-                                    employeeNumber:
-                                        laborer.employeeNumber.toString(),
-                                    imageOnRight: false,
-                                    onInfoPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              LaborProfilePage(
-                                                  laborer: laborer),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                onPressed: submitOrder,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[900],
+                  padding: const EdgeInsets.symmetric(horizontal: 120, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+                child: Text(
+                  loc.submit_order,
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        // Step 5: Delivery
-        if (currentStep >= 4)
-        Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text(
-      loc.pickup_or_delivey,
-      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-    ),
-    RadioListTile<String>(
-      title: Text(
-        loc.pickup,
-        style: GoogleFonts.poppins(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: Color.fromRGBO(118, 128, 144, 1.0),
+            ),
+          ],
         ),
-      ),
-      value: "pickup",
-      groupValue: pickupOption,
-      onChanged: (val) {
-        setState(() => pickupOption = val);
-        if (currentStep == 4) goToNextStep();
-      },
-      controlAffinity: ListTileControlAffinity.leading, // radio on left
-      dense: true, // makes the tile more compact
-    ),
-    RadioListTile<String>(
-      title: Text(
-        loc.delivery,
-        style: GoogleFonts.poppins(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: Color.fromRGBO(118, 128, 144, 1.0),
-        ),
-      ),
-      value: "delivery",
-      groupValue: pickupOption,
-      onChanged: deliveryAvailable
-          ? (val) {
-              setState(() => pickupOption = val);
-              if (currentStep == 4) goToNextStep();
-            }
-          : null,
-      subtitle: !deliveryAvailable
-          ? Text(
-              loc.delivery_not_available,
-              style: GoogleFonts.poppins(
-                color: Colors.red,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-            )
-          : null,
-      controlAffinity: ListTileControlAffinity.leading,
-      dense: true,
-    ),
-    const SizedBox(height: 24),
-  ],
-),
-
-        // Step 6: Agreement
-        if (currentStep == 5)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(loc.agreement,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade100, Colors.white],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, blurRadius: 4),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Show driver only if labor source is app
-                    if (selectedLaborSource == 'app')
-                      _textRow(selectedProfession?.positionName ?? '',
-                          selectedDriver ?? "Not selected"),
-
-                    // Nationality: (show actual selectedNationality if available)
-                    if (selectedLaborSource == 'app')
-                      _textRow("${loc.nationality}: ",
-                          ref.read(selectedLaborerProvider)?.nationality ?? ''),
-
-                    // Package name
-                    _textRow("${loc.package}: ",
-                        selectedPackage?.packageName ?? "Not selected"),
-                    _textRow("${loc.vat}: ",
-                        selectedPackage?.vatAmount.toString() ?? ''),
-                    // Price = contractAmount + vatAmount + delivery fee if delivery
-                    _textRow(
-                      "${loc.price}: ",
-                      () {
-                        if (selectedPackage == null) return "N/A";
-
-                        double basePrice = selectedPackage.contractAmount +
-                            selectedPackage.vatAmount;
-                        if (pickupOption == "delivery") {
-                          basePrice += 100; // Add delivery fee
-                        }
-                        return "${basePrice.toStringAsFixed(2)} SR";
-                      }(),
-                    ),
-
-                    // Delivery method text
-                    _textRow(
-                      "${loc.delivery}: ",
-                      pickupOption == "pickup"
-                          ? loc.pickup
-                          : pickupOption == "delivery"
-                              ? loc.delivery_fee
-                              : "Not selected",
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    submitOrder();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[900],
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 120, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: Text(
-                    loc.submit_order,
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              )
-            ],
-          ),
-      ],
-    );
-  }
+    ],
+  );
+}
 
 Widget _buildMinimalRadio({
   required String label,
