@@ -944,6 +944,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get completecontract => 'إتمام التعاقد';
 
   @override
+  String get signhere => 'وقع هنا';
+
+  @override
+  String get contract => 'العقد';
+
+  @override
+  String get savesign => 'حفظ التوقيع';
+
+  @override
+  String get clear => 'مسح';
+
+  @override
   String get followus => 'تابعنا على مواقع التواصل';
 
   @override

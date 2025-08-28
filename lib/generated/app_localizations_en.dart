@@ -945,6 +945,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completecontract => 'complete contract';
 
   @override
+  String get signhere => 'sign here';
+
+  @override
+  String get contract => 'contract';
+
+  @override
+  String get savesign => 'save sign';
+
+  @override
+  String get clear => 'clear';
+
+  @override
   String get followus => 'Follow Us In Social Media';
 
   @override

@@ -994,9 +994,9 @@ class ApiService {
         print('Including worker IDs in contract creation: $workerIds');
       }
       if (promotionId != null) {
-      requestBody["promotion_id"] = promotionId;
-      print('Including promotion ID in contract creation: $promotionId');
-    }
+        requestBody["promotion_id"] = promotionId;
+        print('Including promotion ID in contract creation: $promotionId');
+      }
 
       if (appointments != null && appointments.isNotEmpty) {
         requestBody["appointments"] = appointments;
@@ -1477,6 +1477,35 @@ class ApiService {
       return filteredPackages;
     } catch (e) {
       throw Exception('Error loading packages by group: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> attachContract({
+    required String? contractId,
+    required String? filePath,
+  }) async {
+    try {
+      final url =
+          'http://fawran.ddns.net:8080/ords/emdad/fawran/attach-contract/$contractId';
+
+      final requestBody = json.encode({
+        'file_name': filePath,
+      });
+
+      final response = await makeAuthenticatedRequest(
+        method: 'PUT',
+        url: url,
+        body: requestBody,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception(
+            'Failed to attach contract. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error attaching contract: $e');
     }
   }
 

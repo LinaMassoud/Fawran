@@ -1952,6 +1952,30 @@ abstract class AppLocalizations {
   /// **'complete contract'**
   String get completecontract;
 
+  /// No description provided for @signhere.
+  ///
+  /// In en, this message translates to:
+  /// **'sign here'**
+  String get signhere;
+
+  /// No description provided for @contract.
+  ///
+  /// In en, this message translates to:
+  /// **'contract'**
+  String get contract;
+
+  /// No description provided for @savesign.
+  ///
+  /// In en, this message translates to:
+  /// **'save sign'**
+  String get savesign;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'clear'**
+  String get clear;
+
   /// No description provided for @followus.
   ///
   /// In en, this message translates to:
