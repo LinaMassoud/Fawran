@@ -466,112 +466,107 @@ Widget build(BuildContext context) {
             ),
           ),
           
-          // Action buttons with Arabic support
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).padding.bottom > 0 
-                  ? MediaQuery.of(context).padding.bottom + 10
-                  : 25,
+          // Action buttons with Arabic support - FIXED: Removed Positioned widget
+          Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).padding.bottom > 0 
+                ? MediaQuery.of(context).padding.bottom + 10
+                : 25,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
               ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(25),
-                  topRight: Radius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0xFF1E49A0).withOpacity(0.15),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, -5),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF1E49A0).withOpacity(0.15),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                    offset: const Offset(0, -5),
-                  ),
-                  BoxShadow(
-                    color: Color(0xFF1E49A0).withOpacity(0.08),
-                    blurRadius: 40,
-                    spreadRadius: 5,
-                    offset: const Offset(0, -10),
-                  ),
-                ],
-              ),
-              child: Row(
-                textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                children: [
-                  Expanded(
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.4,
-                      child: OutlinedButton(
-                        onPressed: _isLoading ? null : () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF10295C)),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          elevation: 0,
+                BoxShadow(
+                  color: Color(0xFF1E49A0).withOpacity(0.08),
+                  blurRadius: 40,
+                  spreadRadius: 5,
+                  offset: const Offset(0, -10),
+                ),
+              ],
+            ),
+            child: Row(
+              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+              children: [
+                Expanded(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    child: OutlinedButton(
+                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF10295C)),
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
                         ),
-                        child: Text(
-                          isArabic ? 'إلغاء' : 'Cancel',
-                          style: const TextStyle(
-                            color: Color(0xFF10295C),
-                            fontSize: 19,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        isArabic ? 'إلغاء' : 'Cancel',
+                        style: const TextStyle(
+                          color: Color(0xFF10295C),
+                          fontSize: 19,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.4,
-                      child: ElevatedButton(
-                        onPressed: _isLoading || _newSelectedDate == null
-                            ? null
-                            : _rescheduleVisit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: (_newSelectedDate != null && !_isLoading)
-                              ? Color(0xFF10295C)
-                              : null,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: Color(0xFF768090),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          elevation: (_newSelectedDate != null && !_isLoading) ? 2 : 0,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    child: ElevatedButton(
+                      onPressed: _isLoading || _newSelectedDate == null
+                          ? null
+                          : _rescheduleVisit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: (_newSelectedDate != null && !_isLoading)
+                            ? Color(0xFF10295C)
+                            : null,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Color(0xFF768090),
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : Text(
-                                isArabic ? 'إعادة الجدولة' : 'Reschedule',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
+                        elevation: (_newSelectedDate != null && !_isLoading) ? 2 : 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
-                        ),
-                    ),
+                            )
+                          : Text(
+                              isArabic ? 'إعادة الجدولة' : 'Reschedule',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                      ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
