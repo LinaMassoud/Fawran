@@ -475,33 +475,36 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _buildTimeRemainingBadge(String? timeInfo, String status,AppLocalizations loc) {
-    if (status.toLowerCase() != "not confirmed" ||
-        timeInfo == null ||
-        timeInfo.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.shade200),
-      ),
-      child: Text(
-        "${loc.timeRemaining}   - $timeInfo",
-        style: TextStyle(
-          color: Colors.red.shade700,
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
+  Widget _buildTimeRemainingBadge(String? timeInfo, String status, AppLocalizations loc) {
+  // Check for both English and Arabic "not confirmed" status
+  final normalizedStatus = status.toLowerCase().trim();
+  final isNotConfirmed = normalizedStatus == "not confirmed" || 
+                        normalizedStatus == "غير مؤكد";
+  
+  if (!isNotConfirmed || timeInfo == null || timeInfo.isEmpty) {
+    return const SizedBox.shrink();
   }
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    margin: const EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      color: Colors.red.shade50,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: Colors.red.shade200),
+    ),
+    child: Text(
+      "${loc.timeRemaining}   - $timeInfo",
+      style: TextStyle(
+        color: Colors.red.shade700,
+        fontWeight: FontWeight.w500,
+        fontSize: 12,
+      ),
+      textAlign: TextAlign.center,
+    ),
+  );
+}
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
