@@ -146,6 +146,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
 
     // 🔧 Prepare form data
     final selectedPackage = ref.read(selectedPackageProvider);
+    final selectedAddress = ref.read(selectedAddressProvider);
 
     final selectedNationalityData = ref
         .read(nationalitiesProvider)
@@ -182,7 +183,9 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       "delivery_charge": deliveryCharge,
       "amount_to_pay": amountToPay,
       "vat_amount": selectedPackage.vatAmount,
-      "worker_id": selectedLabor?.personId
+      "worker_id": selectedLabor?.personId,
+      "address_notes":selectedAddress?.cardText,
+      "address_id":selectedAddress?.addressId,
     };
 
     // 🚀 Submit contract
