@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
+import 'package:fawran/generated/app_localizations.dart';
+import 'package:fawran/providers/localProvider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:ui' as ui;
 
-class RescheduleCalendarScreen extends StatefulWidget {
+class RescheduleCalendarScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> visit;
   final int customerId;
   final VoidCallback? onRescheduleSuccess;
@@ -15,10 +19,10 @@ class RescheduleCalendarScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<RescheduleCalendarScreen> createState() => _RescheduleCalendarScreenState();
+  ConsumerState<RescheduleCalendarScreen> createState() => _RescheduleCalendarScreenState();
 }
 
-class _RescheduleCalendarScreenState extends State<RescheduleCalendarScreen> {
+class _RescheduleCalendarScreenState extends ConsumerState<RescheduleCalendarScreen> {
   late PageController _pageController;
   late DateTime _currentMonth;
   late DateTime _originalVisitDate;
@@ -333,228 +337,245 @@ class _RescheduleCalendarScreenState extends State<RescheduleCalendarScreen> {
 
 
 
-  @override
+ @override
 Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.grey[100],
-    appBar: AppBar(
-      toolbarHeight: 65,
-      backgroundColor: Color(0xFF10295C), // Updated to match ticket support
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
-      ),
-      leading: GestureDetector(
-        onTap: () => Navigator.of(context).pop(),
-        child: Container(
-          padding: EdgeInsets.all(8),
-          child: Icon(
-            Icons.arrow_back_ios,
-            color: Color(0xFFFFA200), // Updated to match ticket support
-            size: 20,
+  final loc = AppLocalizations.of(context)!;
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
+  return Directionality(
+    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+    child: Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        toolbarHeight: 65,
+        backgroundColor: Color(0xFF10295C),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(24),
+            bottomRight: Radius.circular(24),
           ),
         ),
-      ),
-      title: Text(
-        'Reschedule Visit',
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFFFFA200), // Updated to match ticket support
-        ),
-      ),
-      centerTitle: true,
-      elevation: 0,
-    ),
-    body: Column(
-      children: [
-        const SizedBox(height: 20),
-        
-        // Visit Info Card
-        Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.visit['service_name'] ?? 'Service',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF10295C), // Updated color
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Current Visit Date: ${DateFormat('dd/MM/yyyy').format(_originalVisitDate)}',
-                    style: TextStyle(color: Colors.grey[700]),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-            ],
-          ),
-        ),
-        
-        // Calendar
-        Expanded(
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.all(8),
+            child: Icon(
+              isArabic ? Icons.arrow_back_ios : Icons.arrow_back_ios,
+              color: Color(0xFFFFA200),
+              size: 20,
+            ),
+          ),
+        ),
+        title: Text(
+          isArabic ? 'إعادة جدولة الزيارة' : 'Reschedule Visit',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFFFFA200),
+          ),
+          textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+        ),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          const SizedBox(height: 20),
+          
+          // Visit Info Card with Arabic support
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
-                });
-              },
-              itemCount: 24,
-              itemBuilder: (context, index) {
-                final month = DateTime(DateTime.now().year, DateTime.now().month + index);
-                return _buildMonthView(month);
-              },
-            ),
-          ),
-        ),
-        
-        // Action buttons - moved to bottom with same styling as add_new_address
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: MediaQuery.of(context).padding.bottom > 0 
-                ? MediaQuery.of(context).padding.bottom + 10  // For devices with home indicator (iOS)
-                : 25, // For devices without home indicator (most Android)
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(25),
-                topRight: Radius.circular(25),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0xFF1E49A0).withOpacity(0.15),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                  offset: const Offset(0, -5),
-                ),
-                BoxShadow(
-                  color: Color(0xFF1E49A0).withOpacity(0.08),
-                  blurRadius: 40,
-                  spreadRadius: 5,
-                  offset: const Offset(0, -10),
-                ),
-              ],
-            ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.4,
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF10295C)),
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Color(0xFF10295C),
-                          fontSize: 19,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                Align(
+                  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Text(
+                    widget.visit['service_name'] ?? (isArabic ? 'خدمة' : 'Service'),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF10295C),
                     ),
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.4,
-                    child: ElevatedButton(
-                      onPressed: _isLoading || _newSelectedDate == null
-                          ? null
-                          : _rescheduleVisit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: (_newSelectedDate != null && !_isLoading)
-                            ? Color(0xFF10295C)
-                            : null,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: Color(0xFF768090),
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        elevation: (_newSelectedDate != null && !_isLoading) ? 2 : 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text(
-                              'Reschedule',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 19,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                const SizedBox(height: 8),
+                Row(
+                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                  children: [
+                    Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      isArabic 
+                        ? 'تاريخ الزيارة الحالي: ${DateFormat('dd/MM/yyyy').format(_originalVisitDate)}'
+                        : 'Current Visit Date: ${DateFormat('dd/MM/yyyy').format(_originalVisitDate)}',
+                      style: TextStyle(color: Colors.grey[700]),
+                      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
                     ),
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 4),
               ],
             ),
           ),
-        ),
-      ],
+          
+          // Calendar with Arabic day headers
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentMonth = DateTime(DateTime.now().year, DateTime.now().month + index);
+                  });
+                },
+                itemCount: 24,
+                itemBuilder: (context, index) {
+                  final month = DateTime(DateTime.now().year, DateTime.now().month + index);
+                  return _buildMonthView(month);
+                },
+              ),
+            ),
+          ),
+          
+          // Action buttons with Arabic support
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).padding.bottom > 0 
+                  ? MediaQuery.of(context).padding.bottom + 10
+                  : 25,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF1E49A0).withOpacity(0.15),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, -5),
+                  ),
+                  BoxShadow(
+                    color: Color(0xFF1E49A0).withOpacity(0.08),
+                    blurRadius: 40,
+                    spreadRadius: 5,
+                    offset: const Offset(0, -10),
+                  ),
+                ],
+              ),
+              child: Row(
+                textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                children: [
+                  Expanded(
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.4,
+                      child: OutlinedButton(
+                        onPressed: _isLoading ? null : () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF10295C)),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          isArabic ? 'إلغاء' : 'Cancel',
+                          style: const TextStyle(
+                            color: Color(0xFF10295C),
+                            fontSize: 19,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.4,
+                      child: ElevatedButton(
+                        onPressed: _isLoading || _newSelectedDate == null
+                            ? null
+                            : _rescheduleVisit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: (_newSelectedDate != null && !_isLoading)
+                              ? Color(0xFF10295C)
+                              : null,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: Color(0xFF768090),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          elevation: (_newSelectedDate != null && !_isLoading) ? 2 : 0,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                isArabic ? 'إعادة الجدولة' : 'Reschedule',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                        ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
