@@ -26,6 +26,7 @@ class ServiceDetailsStep extends ConsumerStatefulWidget {
   final Function(int) onVisitsPerWeekChanged; // Changed from String to int
   final Function(List<String>) onSelectedDaysChanged;
   final Function(List<int>)? onWorkerIdsChanged;
+  final Function(int?)? onPromotionIdChanged;
   final VoidCallback? onSelectDatePressed;
   final VoidCallback? onDonePressed;
   final VoidCallback? onNextPressed;
@@ -83,6 +84,7 @@ class ServiceDetailsStep extends ConsumerStatefulWidget {
     this.onPricePerVisitChanged,
     this.onHourPriceChanged,
     this.onPriceVatChanged,
+    this.onPromotionIdChanged,
   }) : super(key: key);
 
   @override
@@ -140,6 +142,8 @@ double _originalPricePerVisit = 0.0; // Store original price per visit before co
 TextEditingController _couponController = TextEditingController();
 Address? _previousAddress;
 
+int? _appliedPromotionId;
+
   @override
   void initState() {
     super.initState();
@@ -166,6 +170,8 @@ void didUpdateWidget(ServiceDetailsStep oldWidget) {
   
   // Check if the selected address has changed
   if (widget.selectedAddress != _previousAddress) {
+    print('🔄 [ADDRESS CHANGE DETECTED] Old: ${_previousAddress?.toString()} -> New: ${widget.selectedAddress?.toString()}');
+    
     // Schedule the coupon reset for after the current build cycle
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -180,8 +186,11 @@ void didUpdateWidget(ServiceDetailsStep oldWidget) {
 
 // 3. Add this method to reset coupon when address changes
 void _resetCouponOnAddressChange() {
+  print('🔄 [ADDRESS CHANGE] Resetting coupon and all fields due to address change');
+  
+  // First reset coupon if applied
   if (_isCouponApplied || _couponCode.isNotEmpty) {
-    print('🔄 [ADDRESS CHANGE] Resetting coupon due to address change');
+    print('💳 [COUPON] Resetting coupon due to address change');
     
     setState(() {
       _isCouponApplied = false;
@@ -189,35 +198,20 @@ void _resetCouponOnAddressChange() {
       _couponMessage = '';
       _couponCode = '';
       _couponController.clear();
+      _appliedPromotionId = null;
       
-      // Restore original prices if they were stored
-      if (_originalFinalPrice > 0) {
-        _apiFinalPricePerVisit = _originalFinalPrice;
-        _apiPricePerVisit = _originalPricePerVisit;
-        _originalFinalPrice = 0.0;
-        _originalPricePerVisit = 0.0;
-      }
+      
     });
 
-    // Recalculate total price with original prices if dates are selected
-    if (_internalSelectedDates.isNotEmpty) {
-      double originalTotalPrice = _internalSelectedDates.length * _apiFinalPricePerVisit;
-      setState(() {
-        _calculatedTotalPrice = originalTotalPrice;
-      });
-
-      // Update parent with original total price
-      if (widget.onTotalPriceChanged != null) {
-        widget.onTotalPriceChanged!(originalTotalPrice);
-      }
-    }
-
-    // Update parent callbacks with original prices
-    if (widget.onPricePerVisitChanged != null) {
-      widget.onPricePerVisitChanged!(_apiPricePerVisit);
+    // Clear promotion in parent
+    if (widget.onPromotionIdChanged != null) {
+      widget.onPromotionIdChanged!(null);
     }
   }
+
 }
+
+
 Future<void> _loadContractDurations() async {
     setState(() {
       isLoadingContractDurations = true;
@@ -394,6 +388,7 @@ Future<void> _validateCouponCode() async {
       // Update prices with coupon discount
       final newFinalPrice = response['final_price']?.toDouble() ?? _apiFinalPricePerVisit;
       final newPricePerVisit = response['price_per_visit']?.toDouble() ?? _apiPricePerVisit;
+      final promotionId = response['promotion_id'] as int?;
       
       print("newFinalPrice = ${newFinalPrice}");
       print("newPricePerVisit = ${newPricePerVisit}");
@@ -401,6 +396,7 @@ Future<void> _validateCouponCode() async {
         _isCouponValid = true;
         _isCouponApplied = true;
         _couponMessage = response['message'] ?? 'Coupon applied successfully!';
+        _appliedPromotionId = promotionId;
         
         // Update the prices with coupon discount
         _apiFinalPricePerVisit = newFinalPrice;
@@ -408,6 +404,11 @@ Future<void> _validateCouponCode() async {
         
         _isValidatingCoupon = false;
       });
+
+      // Call the promotion callback if available
+      if (widget.onPromotionIdChanged != null && promotionId != null) {
+        widget.onPromotionIdChanged!(promotionId);
+      }
 
       // Recalculate total price with new discounted price
       if (_internalSelectedDates.isNotEmpty) {
@@ -459,6 +460,7 @@ void _removeCoupon() {
     _couponMessage = '';
     _couponCode = '';
     _couponController.clear();
+    _appliedPromotionId = null;
     
     // Restore original prices
     if (_originalFinalPrice > 0) {
@@ -485,6 +487,10 @@ void _removeCoupon() {
   // Update parent callbacks with original prices
   if (widget.onPricePerVisitChanged != null) {
     widget.onPricePerVisitChanged!(_apiPricePerVisit);
+  }
+
+  if (widget.onPromotionIdChanged != null) {
+    widget.onPromotionIdChanged!(null);
   }
 }
 
@@ -901,7 +907,7 @@ Future<bool> _validateWorkers() async {
     widget.onTotalPriceChanged!(0.0);
   }
   
-  // Also reset the parent's selected days
+  // Reset the parent's selected days
   widget.onSelectedDaysChanged([]);
   
   // Reset selected dates in parent if callback exists

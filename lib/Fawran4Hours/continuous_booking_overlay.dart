@@ -137,6 +137,7 @@ double? _hourPrice;
   double? _priceVatFromServiceDetails;
   // Date Selection Data
   List<DateTime> selectedDates = [];
+  int? _appliedPromotionId;
 
   @override
   void initState() {
@@ -625,6 +626,17 @@ void _showSuccessDialog(String message) {
     });
   }
 
+ void _updatePromotionId(int? promotionId) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _appliedPromotionId = promotionId;
+      });
+      print('Updated promotion ID: $promotionId');
+    }
+  });
+}
+
   void _returnFromDateSelection() {
     setState(() {
       if (widget.isCustomBooking) {
@@ -759,6 +771,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
       packageId: !widget.isCustomBooking && widget.package != null ? widget.package!.packageId : null,
       appointments: appointments.isNotEmpty ? appointments : null,
       workerIds: _validatedWorkerIds,
+      promotionId: _appliedPromotionId,
     );
 
     if (mounted) {
@@ -1208,6 +1221,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                           _updateSelectedDates,
                                       onDonePressed: _completePurchase,
                                       onNextPressed: null,
+                                      onPromotionIdChanged: _updatePromotionId,
                                       showBottomNavigation: true,
                                       totalPrice:
                                           _totalPriceFromServiceDetails ??
@@ -1252,6 +1266,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                       professionId: widget.professionId,
                                       onWorkerValidationSuccess: _onWorkerValidationSuccess,
                                       onPriceChanged: _updateFinalPrice,
+                                      onPromotionIdChanged: _updatePromotionId,
                                     ),
                             ],
                           ),

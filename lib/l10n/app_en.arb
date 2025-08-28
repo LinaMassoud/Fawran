@@ -235,11 +235,11 @@
     "day":"Day",
     "agreementHourly":"I agree to the ",
     "startingFrom":"Starting From",
-    "couponCode":"Coupon Code",
+    "couponCode":"Discount Code",
     "applied":"Applied",
     "promotionApplied":"Promotion applied sucessfully!",
     "pleaseSelect":"Please select ",
-    "enterCouponCode":"Enter coupon code",
+    "enterCouponCode":"Enter Discount code",
     "apply":"Apply",
     "promotionAppliedSuccessfully": "Promotion applied successfully!",
 

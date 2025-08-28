@@ -954,6 +954,7 @@ class ApiService {
     int? packageId,
     List<String>? appointments,
     List<int>? workerIds,
+    int? promotionId,
   }) async {
     try {
       // Prepare request body
@@ -992,6 +993,10 @@ class ApiService {
         requestBody["worker_ids"] = workerIds;
         print('Including worker IDs in contract creation: $workerIds');
       }
+      if (promotionId != null) {
+      requestBody["promotion_id"] = promotionId;
+      print('Including promotion ID in contract creation: $promotionId');
+    }
 
       if (appointments != null && appointments.isNotEmpty) {
         requestBody["appointments"] = appointments;
