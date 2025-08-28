@@ -407,55 +407,53 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   Widget _buildStatusBadge(String status) {
-    Color backgroundColor = Colors.grey.shade200;
-    Color textColor = Colors.grey.shade700;
-    String statusText = status;
+  Color backgroundColor = Colors.grey.shade200;
+  Color textColor = Colors.grey.shade700;
+  String statusText = status;
 
-    switch (status.toLowerCase()) {
-      case "confirmed":
-        backgroundColor = const Color(0xFFE8F5E8); // Light green background
-        textColor = const Color(0xFF1EAC1E); // --Done-green
-        statusText = "Confirmed";
-        break;
-      case "pending":
-        backgroundColor = const Color(0xFFFFF3E0); // Light orange background
-        textColor = const Color(0xFFFFA200); // --Main-Orange
-        break;
-      case "cancelled":
-      case "canceled":
-      case "ملغي":
-        backgroundColor = const Color(0xFFFFEBEE); // Light red background
-        textColor = const Color(0xFFE53935);
-        statusText = "Cancelled";
-        break;
-      case "not confirmed":
-      case "غير مؤكد":
-        backgroundColor = const Color(0xFFFFF3E0); // Light orange background
-        textColor = const Color(0xFFFFA200); // --Main-Orange
-        statusText = "Not Confirmed";
-        break;
-      default:
-        backgroundColor = const Color(0xFFE8F5E8); // Light green background
-        textColor = const Color(0xFF1EAC1E); // --Done-green
-        statusText = "Confirmed";
-    }
+  final normalizedStatus = status.toLowerCase();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Text(
-        statusText,
-        style: TextStyle(
-          color: textColor,
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
-        ),
-      ),
-    );
+  if (normalizedStatus == "confirmed" || normalizedStatus == "مؤكد") {
+    backgroundColor = const Color(0xFFE8F5E8); // Light green background
+    textColor = const Color(0xFF1EAC1E); // --Done-green
+    statusText = "Confirmed";
+  } else if (normalizedStatus == "pending") {
+    backgroundColor = const Color(0xFFFFF3E0); // Light orange background
+    textColor = const Color(0xFFFFA200); // --Main-Orange
+    statusText = "Pending";
+  } else if (normalizedStatus == "cancelled" || 
+             normalizedStatus == "canceled" || 
+             normalizedStatus == "ملغي") {
+    backgroundColor = const Color(0xFFFFEBEE); // Light red background
+    textColor = const Color(0xFFE53935);
+    statusText = "Cancelled";
+  } else if (normalizedStatus == "not confirmed" || 
+             normalizedStatus == "غير مؤكد") {
+    backgroundColor = const Color(0xFFFFF3E0); // Light orange background
+    textColor = const Color(0xFFFFA200); // --Main-Orange
+    statusText = "Not Confirmed";
+  } else {
+    backgroundColor = const Color(0xFFE8F5E8); // Light green background
+    textColor = const Color(0xFF1EAC1E); // --Done-green
+    statusText = "Confirmed";
   }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(15),
+    ),
+    child: Text(
+      statusText,
+      style: TextStyle(
+        color: textColor,
+        fontWeight: FontWeight.w500,
+        fontSize: 12,
+      ),
+    ),
+  );
+}
 
   Widget _buildServiceTypeBadge(String serviceType, Color color) {
     return Container(
@@ -758,7 +756,7 @@ Widget _buildHourlyContractCard(
           _buildInfoRow(loc.totalPrice ?? "Total Price", "${booking["total_price"] ?? 0}"),
           _buildInfoRow(loc.vat ?? "VAT", "${booking["vat_price"] ?? 0}"),
           _buildInfoRow(loc.startDate ?? "Start Date", formatDate(booking["contract_start_date"])),
-          _buildInfoRow("Status", status),
+          _buildInfoRow(loc.status ?? "Status", status),
 
           if (isCancelled)
             _buildInfoRow("Cancelled Time", _formatDeadlineTime(booking["time_info"], status)),
