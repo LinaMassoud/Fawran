@@ -1265,7 +1265,7 @@ abstract class AppLocalizations {
   /// No description provided for @couponCode.
   ///
   /// In en, this message translates to:
-  /// **'Coupon Code'**
+  /// **'Discount Code'**
   String get couponCode;
 
   /// No description provided for @applied.
@@ -1289,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @enterCouponCode.
   ///
   /// In en, this message translates to:
-  /// **'Enter coupon code'**
+  /// **'Enter Discount code'**
   String get enterCouponCode;
 
   /// No description provided for @apply.

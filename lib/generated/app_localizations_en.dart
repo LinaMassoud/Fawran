@@ -595,7 +595,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startingFrom => 'Starting From';
 
   @override
-  String get couponCode => 'Coupon Code';
+  String get couponCode => 'Discount Code';
 
   @override
   String get applied => 'Applied';
@@ -607,7 +607,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseSelect => 'Please select ';
 
   @override
-  String get enterCouponCode => 'Enter coupon code';
+  String get enterCouponCode => 'Enter Discount code';
 
   @override
   String get apply => 'Apply';
