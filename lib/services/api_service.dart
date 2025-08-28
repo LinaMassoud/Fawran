@@ -1499,7 +1499,9 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        return {
+          'body': 'success',
+        };
       } else {
         throw Exception(
             'Failed to attach contract. Status code: ${response.statusCode}');
