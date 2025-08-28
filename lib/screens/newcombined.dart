@@ -263,7 +263,7 @@ Widget _buildSteps() {
                     items: nationalities.map((nat) {
                       return DropdownMenuItem(
                         value: nat,
-                        child: Text(nat.name),
+                        child: Text(nat?.name??''),
                       );
                     }).toList(),
                     onChanged: (val) {
