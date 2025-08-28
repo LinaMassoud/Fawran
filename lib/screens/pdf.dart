@@ -241,51 +241,75 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
     }
   }
 
-  Future<void> _saveAndShowPdf() async {
-  if (pdfPath == null) return;
+Future<void> _saveAndShowPdf() async {
+  if (contractId == null) return;
 
-  final originalPath = "${(await getTemporaryDirectory()).path}/generated_contract.pdf";
-  final pdfDoc = PdfDocument(inputBytes: File(originalPath).readAsBytesSync());
+  try {
+    // Step 1: Load HTML and replace placeholders again
+    String htmlContent = await rootBundle.loadString(widget.htmlAssetPath);
+    htmlContent = await _replacePlaceholders(htmlContent, contractId);
 
-  // Capture the signature
-  if (signatureKey.currentState != null) {
-    final data = await signatureKey.currentState!.toImage(pixelRatio: 3.0);
-    final bytes = await data.toByteData(format: ui.ImageByteFormat.png);
-    _signatureBytes = bytes!.buffer.asUint8List();
+    final outputDir = await getTemporaryDirectory();
+    final freshPdf = await FlutterHtmlToPdf.convertFromHtmlContent(
+      htmlContent,
+      outputDir.path,
+      'temp_regenerated_contract.pdf',
+    );
+
+    // Step 2: Get signature image
+    if (signatureKey.currentState != null) {
+      final data = await signatureKey.currentState!.toImage(pixelRatio: 3.0);
+      final bytes = await data.toByteData(format: ui.ImageByteFormat.png);
+      _signatureBytes = bytes?.buffer.asUint8List();
+    }
+
+    if (_signatureBytes == null) return;
+
+    // Step 3: Apply signature to last page
+    final pdfDoc = PdfDocument(inputBytes: File(freshPdf.path).readAsBytesSync());
+    final page = pdfDoc.pages[pdfDoc.pages.count - 1];
+    final pageSize = page.getClientSize();
+
+    const sigWidth = 100.0;
+    const sigHeight = 50.0;
+    const x = 100.0;
+    final y = pageSize.height - 490;
+
+    page.graphics.drawImage(
+      PdfBitmap(_signatureBytes!),
+      Rect.fromLTWH(x, y, sigWidth, sigHeight),
+    );
+
+    // Step 4: Save signed PDF to file
+    final signedBytes = pdfDoc.saveSync();
+    pdfDoc.dispose();
+
+    final appDir = await getApplicationDocumentsDirectory();
+    final signedPath = "${appDir.path}/signed_contract.pdf";
+    final signedFile = File(signedPath);
+    await signedFile.writeAsBytes(signedBytes);
+
+    // Step 5: Update state
+    setState(() {
+      _signedPdfFile = signedFile;
+      pdfPath = signedPath;
+      _hasSigned = true;
+      _signatureBytes = null;
+    });
+
+    // Optional: clear signature pad after saving
+    signatureKey.currentState?.clear();
+  } catch (e) {
+    print("Error in _saveAndShowPdf: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Failed to regenerate PDF.'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
-
-  if (_signatureBytes == null) return;
-
-  final page = pdfDoc.pages[pdfDoc.pages.count - 1];
-  final pageSize = page.getClientSize();
-
-  const sigWidth = 100.0;
-  const sigHeight = 50.0;
-  const x = 100.0;
-  final y = pageSize.height - 490;
-
-  page.graphics.drawImage(
-    PdfBitmap(_signatureBytes!),
-    Rect.fromLTWH(x, y, sigWidth, sigHeight),
-  );
-
-  final signedBytes = pdfDoc.saveSync();
-  pdfDoc.dispose();
-
-  final dir = await getApplicationDocumentsDirectory();
-  final signedPath = "${dir.path}/signed_contract.pdf";
-  final signedFile = File(signedPath);
-  await signedFile.writeAsBytes(signedBytes);
-
-  setState(() {
-    _signedPdfFile = signedFile;
-    pdfPath = signedPath;
-    _hasSigned = true;
-    _signatureBytes = null;
-  });
-
-  signatureKey.currentState?.clear();
 }
+
 
   Future<void> uploadSignedPdf() async {
     if (_signedPdfFile == null) return;
