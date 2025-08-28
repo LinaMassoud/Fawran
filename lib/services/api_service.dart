@@ -287,6 +287,34 @@ class ApiService {
     }
   }
 
+
+static Future<List<Map<String, dynamic>>?> getVisits(int customerId) async {
+  try {
+    final url = '$_baseUrl/visits/$customerId';
+    
+    print('🔍 [GET_VISITS] Fetching visits for customer: $customerId');
+    
+    final response = await makeAuthenticatedRequest(
+      method: 'GET',
+      url: url,
+    );
+
+    print('📡 [GET_VISITS] Response status: ${response.statusCode}');
+    print('📡 [GET_VISITS] Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = json.decode(response.body);
+      return responseData.cast<Map<String, dynamic>>();
+    } else {
+      print('❌ [GET_VISITS] Failed with status: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('💥 [GET_VISITS] Error: $e');
+    return null;
+  }
+}
+
 static Future<Map<String, dynamic>?> rescheduleVisit({
   required int customerId,
   required int hourlyVisitId,

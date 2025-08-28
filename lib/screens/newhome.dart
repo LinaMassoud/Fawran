@@ -32,6 +32,7 @@ import '../models/promotion_model.dart';
 import 'package:fawran/services/location_service.dart';
 import 'dart:ui';
 import 'package:fawran/screens/ticket_support_screen.dart';
+import 'package:fawran/screens/visits_screen.dart';
 
 class Newhome extends ConsumerWidget {
   const Newhome({super.key});
@@ -611,6 +612,41 @@ Future<void> _launchUrl(String url) async {
                     title: loc.companyBranches,
                     onTap: () {},
                   ),
+
+                  _buildDrawerItem(
+  iconWidget: SvgPicture.asset(
+    'assets/images/bookings.svg', // You'll need to add this SVG file
+    width: 18,
+    height: 18,
+    color: Color(0xFF1E49A0),
+  ),
+  title: isArabic ? "الزيارات" : "Visits", // You'll need to add this localization key
+  onTap: () async {
+    Navigator.pop(context);
+    
+    // Get the customer ID (you might need to adjust this based on how you store customer ID)
+    final storage = FlutterSecureStorage();
+    final customerIdString = await storage.read(key: 'user_id');
+    
+    if (customerIdString != null) {
+      final customerId = int.parse(customerIdString);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VisitsScreen(customerId: customerId),
+        ),
+      );
+    } else {
+      // Handle case where customer ID is not found
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Customer ID not found. Please login again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  },
+),
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/social.svg',
