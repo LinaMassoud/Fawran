@@ -208,32 +208,38 @@ class Newhome extends ConsumerWidget {
                                       itemCount: items.length,
                                       onPageChanged: (index) =>
                                           pageNotifier.value = index,
-                                 itemBuilder: (context, index) {
-  final item = items[index];
-  final imageUrl = getFullImageUrl(item.imageUrl);
+                                      itemBuilder: (context, index) {
+                                        final item = items[index];
+                                        final imageUrl =
+                                            getFullImageUrl(item.imageUrl);
 
-  return GestureDetector(
-    onTap: () {
-      if (item.externalUrl != null && item.externalUrl!.isNotEmpty) {
-        _launchUrl(item.externalUrl!);
-      }
-    },
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        imageUrl,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey[300],
-            child: const Icon(Icons.error, color: Colors.red),
-          );
-        },
-      ),
-    ),
-  );
-},     ),
+                                        return GestureDetector(
+                                          onTap: () {
+                                            if (item.externalUrl != null &&
+                                                item.externalUrl!.isNotEmpty) {
+                                              _launchUrl(item.externalUrl!);
+                                            }
+                                          },
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            child: Image.network(
+                                              imageUrl,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.grey[300],
+                                                  child: const Icon(Icons.error,
+                                                      color: Colors.red),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   // Slider indicator
@@ -465,14 +471,16 @@ class Newhome extends ConsumerWidget {
       ),
     );
   }
-Future<void> _launchUrl(String url) async {
-  final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } else {
-    throw 'Could not launch $url';
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
-}
+
   Widget _buildSideDrawer(
     BuildContext context,
     WidgetRef ref,
@@ -610,43 +618,56 @@ Future<void> _launchUrl(String url) async {
                       color: Color(0xFF1E49A0), // optional tint
                     ),
                     title: loc.companyBranches,
-                    onTap: () {},
+                    onTap: () async {
+                      Navigator.pop(context);
+                      const url = 'https://emdadhr.com/#/contact-us';
+                      final Uri uri = Uri.parse(url);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        throw 'Could not launch $url';
+                      }
+                    },
                   ),
-
                   _buildDrawerItem(
-  iconWidget: SvgPicture.asset(
-    'assets/images/bookings.svg', // You'll need to add this SVG file
-    width: 18,
-    height: 18,
-    color: Color(0xFF1E49A0),
-  ),
-  title: isArabic ? "الزيارات" : "Visits", // You'll need to add this localization key
-  onTap: () async {
-    Navigator.pop(context);
-    
-    // Get the customer ID (you might need to adjust this based on how you store customer ID)
-    final storage = FlutterSecureStorage();
-    final customerIdString = await storage.read(key: 'user_id');
-    
-    if (customerIdString != null) {
-      final customerId = int.parse(customerIdString);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => VisitsScreen(customerId: customerId),
-        ),
-      );
-    } else {
-      // Handle case where customer ID is not found
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Customer ID not found. Please login again.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  },
-),
+                    iconWidget: SvgPicture.asset(
+                      'assets/images/bookings.svg', // You'll need to add this SVG file
+                      width: 18,
+                      height: 18,
+                      color: Color(0xFF1E49A0),
+                    ),
+                    title: isArabic
+                        ? "الزيارات"
+                        : "Visits", // You'll need to add this localization key
+                    onTap: () async {
+                      Navigator.pop(context);
+
+                      // Get the customer ID (you might need to adjust this based on how you store customer ID)
+                      final storage = FlutterSecureStorage();
+                      final customerIdString =
+                          await storage.read(key: 'user_id');
+
+                      if (customerIdString != null) {
+                        final customerId = int.parse(customerIdString);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                VisitsScreen(customerId: customerId),
+                          ),
+                        );
+                      } else {
+                        // Handle case where customer ID is not found
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Customer ID not found. Please login again.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
                   _buildDrawerItem(
                     iconWidget: SvgPicture.asset(
                       'assets/images/social.svg',

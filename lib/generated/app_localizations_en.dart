@@ -942,7 +942,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get displayfile => 'Display file';
 
   @override
-  String get completecontract => 'complete contract';
+  String get completecontract => 'Submit';
 
   @override
   String get signhere => 'sign here';

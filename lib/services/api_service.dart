@@ -287,85 +287,89 @@ class ApiService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>?> getVisits(int customerId) async {
+    try {
+      final url = '$_baseUrl/visits/$customerId';
 
-static Future<List<Map<String, dynamic>>?> getVisits(int customerId) async {
-  try {
-    final url = '$_baseUrl/visits/$customerId';
-    
-    print('🔍 [GET_VISITS] Fetching visits for customer: $customerId');
-    
-    final response = await makeAuthenticatedRequest(
-      method: 'GET',
-      url: url,
-    );
+      print('🔍 [GET_VISITS] Fetching visits for customer: $customerId');
 
-    print('📡 [GET_VISITS] Response status: ${response.statusCode}');
-    print('📡 [GET_VISITS] Response body: ${response.body}');
+      final response = await makeAuthenticatedRequest(
+        method: 'GET',
+        url: url,
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> responseData = json.decode(response.body);
-      return responseData.cast<Map<String, dynamic>>();
-    } else {
-      print('❌ [GET_VISITS] Failed with status: ${response.statusCode}');
+      print('📡 [GET_VISITS] Response status: ${response.statusCode}');
+      print('📡 [GET_VISITS] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseData = json.decode(response.body);
+        return responseData.cast<Map<String, dynamic>>();
+      } else {
+        print('❌ [GET_VISITS] Failed with status: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('💥 [GET_VISITS] Error: $e');
       return null;
     }
-  } catch (e) {
-    print('💥 [GET_VISITS] Error: $e');
-    return null;
   }
-}
 
-static Future<Map<String, dynamic>?> rescheduleVisit({
-  required int customerId,
-  required int hourlyVisitId,
-  required String newDate,
-  String? notes,
-}) async {
-  try {
-    final url = '$_baseUrl/reschedule-visit/$customerId';
-    
-    final body = {
-      'hourly_visit_id': hourlyVisitId,
-      'new_date': newDate,
-      if (notes != null && notes.isNotEmpty) 'notes': notes,
-    };
+  static Future<Map<String, dynamic>?> rescheduleVisit({
+    required int customerId,
+    required int hourlyVisitId,
+    required String newDate,
+    String? notes,
+  }) async {
+    try {
+      final url = '$_baseUrl/reschedule-visit/$customerId';
 
-    print('🔄 [RESCHEDULE_VISIT] Rescheduling visit for customer: $customerId');
-    print('🔄 [RESCHEDULE_VISIT] Request body: ${json.encode(body)}');
-
-    final response = await makeAuthenticatedRequest(
-      method: 'POST',
-      url: url,
-      body: json.encode(body),
-    );
-
-    print('📡 [RESCHEDULE_VISIT] Response status: ${response.statusCode}');
-    print('📡 [RESCHEDULE_VISIT] Response body: ${response.body}');
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = json.decode(response.body);
-      return {
-        'success': true,
-        'data': responseData,
-        'message': responseData['message'] ?? 'Visit rescheduled successfully',
+      final body = {
+        'hourly_visit_id': hourlyVisitId,
+        'new_date': newDate,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
       };
-    } else {
-      final errorData = json.decode(response.body);
+
+      print(
+          '🔄 [RESCHEDULE_VISIT] Rescheduling visit for customer: $customerId');
+      print('🔄 [RESCHEDULE_VISIT] Request body: ${json.encode(body)}');
+
+      final response = await makeAuthenticatedRequest(
+        method: 'POST',
+        url: url,
+        body: json.encode(body),
+      );
+
+      print('📡 [RESCHEDULE_VISIT] Response status: ${response.statusCode}');
+      print('📡 [RESCHEDULE_VISIT] Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        return {
+          'success': true,
+          'data': responseData,
+          'message':
+              responseData['message'] ?? 'Visit rescheduled successfully',
+        };
+      } else {
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['error'] ??
+              errorData['message'] ??
+              'Failed to reschedule visit',
+          'statusCode': response.statusCode,
+        };
+      }
+    } catch (e) {
+      print('💥 [RESCHEDULE_VISIT] Error: $e');
       return {
         'success': false,
-        'message': errorData['error'] ?? errorData['message'] ?? 'Failed to reschedule visit',
-        'statusCode': response.statusCode,
+        'message': 'Failed to reschedule visit: ${e.toString()}',
+        'error': e.toString(),
       };
     }
-  } catch (e) {
-    print('💥 [RESCHEDULE_VISIT] Error: $e');
-    return {
-      'success': false,
-      'message': 'Failed to reschedule visit: ${e.toString()}',
-      'error': e.toString(),
-    };
   }
-}
+
   static Future<List<dynamic>> fetchCustomerAddresses(
       {required String userId}) async {
     try {
@@ -1583,7 +1587,8 @@ static Future<Map<String, dynamic>?> rescheduleVisit({
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final resukt = {'body': ''};
+        return resukt;
       } else {
         throw Exception(
             'Failed to attach contract. Status code: ${response.statusCode}');
