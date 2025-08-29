@@ -9,7 +9,7 @@ final hasUnconfirmedContractsProvider = Provider<bool>((ref) {
   );
 
   final hasUnconfirmedHourly = contracts.hourly.any(
-    (c) => c['status_id'] == 1 || c['status'].toLowerCase() == "not confirmed",
+    (c) => c['status'] == "غير مؤكد" || c['status'].toLowerCase() == "not confirmed",
   );
 
   return hasUnconfirmedPermanent || hasUnconfirmedHourly;

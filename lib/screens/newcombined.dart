@@ -358,81 +358,115 @@ Widget _buildSteps() {
             laborersAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Text('Error: $err', style: const TextStyle(color: Colors.red)),
-              data: (laborers) {
-                if (laborers.isEmpty) {
-                  return const Text("No drivers found");
-                }
+        data: (laborers) {
+  if (laborers.isEmpty) {
+    return const Text("No drivers found");
+  }
 
-                final isRTL = Directionality.of(context) == TextDirection.rtl;
+  // 🔹 Apply filters here
+  final filteredLaborers = laborers.where((laborer) {
+    bool matches = true;
 
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: laborers.length,
-                  itemBuilder: (context, index) {
-                    final laborer = laborers[index];
-                    final driverValue =
-                        "${laborer.employeeName} - ${laborer.employeeNumber}";
-                    final isSelected = selectedDriver == driverValue;
+    if (filterAge != null) {
+      // Example: if filterAge = 30, only show laborers with age >= 30
+      matches &= laborer.age >= filterAge!;
+    }
 
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          ref.read(selectedLaborerProvider.notifier).state = laborer;
-                          selectedDriver = driverValue;
-                          if (currentStep == 2) goToNextStep();
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.blue.shade50 : Colors.white,
-                          border: Border.all(
-                            color: isSelected ? Colors.blue : Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: isRTL
-                              ? _buildDriverCardContent(
-                                  context: context,
-                                  isSelected: isSelected,
-                                  name: laborer.employeeName,
-                                  employeeNumber: laborer.employeeNumber.toString(),
-                                  imageOnRight: true,
-                                  onInfoPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => LaborProfilePage(laborer: laborer),
-                                      ),
-                                    );
-                                  },
-                                )
-                              : _buildDriverCardContent(
-                                  context: context,
-                                  isSelected: isSelected,
-                                  name: laborer.employeeName,
-                                  employeeNumber: laborer.employeeNumber.toString(),
-                                  imageOnRight: false,
-                                  onInfoPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => LaborProfilePage(laborer: laborer),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
+    if (filterSocialStatus != null && filterSocialStatus!.isNotEmpty) {
+      matches &= laborer.socialStatus.toLowerCase() ==
+          filterSocialStatus!.toLowerCase();
+    }
+
+    if (filterExperience != null) {
+      // Example: if filterExperience = 5, only show laborers with exp >= 5
+      matches &= laborer.experience >= filterExperience!;
+    }
+
+    return matches;
+  }).toList();
+
+  if (filteredLaborers.isEmpty) {
+    return const Text("No drivers match your filters");
+  }
+
+  final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+  return ListView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: filteredLaborers.length,
+    itemBuilder: (context, index) {
+      final laborer = filteredLaborers[index];
+      final driverValue =
+          "${laborer.employeeName} - ${laborer.employeeNumber}";
+      final isSelected = selectedDriver == driverValue;
+
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            ref.read(selectedLaborerProvider.notifier).state = laborer;
+            selectedDriver = driverValue;
+            if (currentStep == 2) goToNextStep();
+          });
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.blue.shade50 : Colors.white,
+            border: Border.all(
+              color: isSelected ? Colors.blue : Colors.grey.shade300,
+              width: 1.5,
             ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: isRTL
+                ? _buildDriverCardContent(
+                    context: context,
+                    isSelected: isSelected,
+                    name: laborer.employeeName,
+                    employeeNumber: laborer.employeeNumber.toString(),
+                    age: laborer.age.toString(),
+                    experience: laborer.experience.toString(),
+                    socialStatus: laborer.socialStatus,
+                    imageOnRight: true,
+                    onInfoPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              LaborProfilePage(laborer: laborer),
+                        ),
+                      );
+                    },
+                  )
+                : _buildDriverCardContent(
+                    context: context,
+                    isSelected: isSelected,
+                    name: laborer.employeeName,
+                    employeeNumber: laborer.employeeNumber.toString(),
+                    age: laborer.age.toString(),
+                    experience: laborer.experience.toString(),
+                    socialStatus: laborer.socialStatus,
+                    imageOnRight: false,
+                    onInfoPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              LaborProfilePage(laborer: laborer),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      );
+    },
+  );
+},
+    ),
             const SizedBox(height: 24),
           ],
         ),
@@ -861,93 +895,44 @@ Widget _buildFooterStepper() {
     );
   }
 
-  List<Widget> _buildDriverCardContent({
-    required BuildContext context,
-    required bool isSelected,
-    required String name,
-    required String employeeNumber,
-    required bool imageOnRight,
-    required VoidCallback onInfoPressed,
-  }) {
-    final profileImage = Container(
-      margin: const EdgeInsets.all(2), // 2px gap on all sides
-      width: 82,
-      height: 82,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: AssetImage("assets/images/default_avatar.jpg"),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
+List<Widget> _buildDriverCardContent({
+  required BuildContext context,
+  required bool isSelected,
+  required String name,
+  required String employeeNumber,
+  required String age,
+  required String experience,
+  required String socialStatus,
+  required bool imageOnRight,
+  required VoidCallback onInfoPressed,
+}) {
+  final textWidgets = Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.blue : Colors.black,
+            )),
+        Text("ID: $employeeNumber",
+            style: const TextStyle(color: Colors.grey)),
+        Text("Age: $age"),
+        Text("Experience: $experience years"),
+        Text("Status: $socialStatus"),
+      ],
+    ),
+  );
 
-    final textAndRadio = Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFF003366),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Employee Number: $employeeNumber",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF768090),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: onInfoPressed,
-              tooltip: 'View Profile',
-            ),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.blue : Colors.grey.shade400,
-                  width: 2,
-                ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
+  final infoButton = IconButton(
+    icon: const Icon(Icons.info_outline, color: Colors.blue),
+    onPressed: onInfoPressed,
+  );
 
-    return imageOnRight
-        ? [textAndRadio, profileImage]
-        : [profileImage, textAndRadio];
-  }
+  return imageOnRight
+      ? [infoButton, const SizedBox(width: 12), textWidgets]
+      : [textWidgets, const SizedBox(width: 12), infoButton];
+}
 
   Widget _textRow(String label, String value) {
     return Padding(
