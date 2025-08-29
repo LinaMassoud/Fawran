@@ -7,9 +7,9 @@ class Laborer {
   final String nationalityId;
   final String positionName;
 
-  final int? age;
-  final int? experience;
-  final String? socialStatus;
+  final int age;            // made required int
+  final int experience;     // made required int
+  final String socialStatus; // made required String
 
   var imageUrl;
 
@@ -21,9 +21,9 @@ class Laborer {
     required this.nationality,
     required this.nationalityId,
     required this.positionName,
-    this.age,
-    this.experience,
-    this.socialStatus,
+    required this.age,
+    required this.experience,
+    required this.socialStatus,
   });
 
   factory Laborer.fromJson(Map<String, dynamic> json) {
@@ -37,11 +37,9 @@ class Laborer {
         nationality: json['nationality']?.toString() ?? 'Unknown',
         nationalityId: json['nationality_id']?.toString() ?? 'N/A',
         positionName: json['position_name']?.toString() ?? 'N/A',
-        age: json['age'] != null ? int.tryParse(json['age'].toString()) : null,
-        experience: json['experience'] != null
-            ? int.tryParse(json['experience'].toString())
-            : null,
-        socialStatus: json['social_status']?.toString(),
+        age: int.tryParse(json['age']?.toString() ?? '') ?? 0,
+        experience: int.tryParse(json['experience_years']?.toString() ?? '') ?? 0,
+        socialStatus: json['marital_status']?.toString() ?? 'Unknown',
       );
     } catch (e) {
       print('Error parsing Laborer: $e');
@@ -53,9 +51,9 @@ class Laborer {
         nationality: 'Unknown',
         nationalityId: 'N/A',
         positionName: 'N/A',
-        age: null,
-        experience: null,
-        socialStatus: null,
+        age: 0,
+        experience: 0,
+        socialStatus: 'Unknown',
       );
     }
   }
