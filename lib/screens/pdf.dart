@@ -259,8 +259,8 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
     final pageSize = page.getClientSize();
     final double sigWidth = 100;
     final double sigHeight = 50;
-    final double x = 200; // adjust to align perfectly
-    final double y = pageSize.height - 300;
+    final double x = 150; // adjust to align perfectly
+    final double y = pageSize.height - 490;
 
     page.graphics.drawImage(
       PdfBitmap(_signatureBytes!),

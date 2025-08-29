@@ -1949,7 +1949,7 @@ abstract class AppLocalizations {
   /// No description provided for @completecontract.
   ///
   /// In en, this message translates to:
-  /// **'complete contract'**
+  /// **'Submit'**
   String get completecontract;
 
   /// No description provided for @signhere.
