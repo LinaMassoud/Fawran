@@ -688,7 +688,7 @@ Future<void> _launchUrl(String url) async {
                       height: 18,
                       color: Color(0xFF1E49A0),
                     ),
-                    title: loc.ticketSupport,
+                    title: loc.ticketsSupport,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(

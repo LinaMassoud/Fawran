@@ -145,17 +145,22 @@ Address? _previousAddress;
 int? _appliedPromotionId;
 
   @override
-  void initState() {
-    super.initState();
-    _previousAddress = widget.selectedAddress;
-    if (widget.isCustomBooking) {
-      _loadCountryGroups();
-      _loadServiceShifts();
-      _loadVisitDurations(); // Add this call
-      _loadContractDurations(); // Add this
-      _loadHourlyVisits();
-    }
+void initState() {
+  super.initState();
+  _previousAddress = widget.selectedAddress;
+  
+  if (widget.isCustomBooking) {
+    // Reset all fields to defaults first for custom booking
+    _resetAllFieldsToDefaults();
+    
+    // Then load the dropdown options
+    _loadCountryGroups();
+    _loadServiceShifts();
+    _loadVisitDurations();
+    _loadContractDurations();
+    _loadHourlyVisits();
   }
+}
 
   @override
 void dispose() {
@@ -168,9 +173,23 @@ void dispose() {
 void didUpdateWidget(ServiceDetailsStep oldWidget) {
   super.didUpdateWidget(oldWidget);
   
+  // Check if we're switching to custom booking mode or if it's a fresh load
+  if (widget.isCustomBooking && 
+      (oldWidget.isCustomBooking != widget.isCustomBooking || 
+       oldWidget.serviceId != widget.serviceId)) {
+    print('🔄 [WIDGET UPDATE] Detected custom booking mode change or service change');
+    
+    // Schedule reset for after current build cycle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _resetAllFieldsToDefaults();
+      }
+    });
+  }
+  
   // Check if the selected address has changed
   if (widget.selectedAddress != _previousAddress) {
-    print('🔄 [ADDRESS CHANGE DETECTED] Old: ${_previousAddress?.toString()} -> New: ${widget.selectedAddress?.toString()}');
+    print('🏠 [ADDRESS CHANGE DETECTED] Old: ${_previousAddress?.toString()} -> New: ${widget.selectedAddress?.toString()}');
     
     // Schedule the coupon reset for after the current build cycle
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -191,7 +210,7 @@ void _resetCouponOnAddressChange() {
   // First reset coupon if applied
   if (_isCouponApplied || _couponCode.isNotEmpty) {
     print('💳 [COUPON] Resetting coupon due to address change');
-    
+    _resetAllFieldsToDefaults();
     setState(() {
       _isCouponApplied = false;
       _isCouponValid = false;
@@ -211,6 +230,79 @@ void _resetCouponOnAddressChange() {
 
 }
 
+void _resetAllFieldsToDefaults() {
+  print('🔄 [RESET] Resetting all fields to defaults');
+  
+  // Reset dropdown selections to empty/default values
+  if (widget.onNationalityChanged != null) {
+    widget.onNationalityChanged!('');
+  }
+  
+  if (widget.onTimeChanged != null) {
+    widget.onTimeChanged!('');
+  }
+  
+  if (widget.onVisitDurationChanged != null) {
+    widget.onVisitDurationChanged!('');
+  }
+  
+  // Reset numeric fields to 0
+  widget.onContractDurationChanged(0);
+  widget.onVisitsPerWeekChanged(0);
+  
+  // Reset selected days and dates
+  widget.onSelectedDaysChanged([]);
+  if (widget.onSelectedDatesChanged != null) {
+    widget.onSelectedDatesChanged!([]);
+  }
+  
+  // Reset calendar and price calculations
+  _resetCalendarSelection();
+  
+  // Reset API prices to initial state
+  setState(() {
+    _apiPricePerVisit = 0.0;
+    _apiTotalPrice = 0.0;
+    _apiFinalPricePerVisit = 0.0;
+    _vatAmount = 0.0;
+    _apiPriceVat = 0.0;
+    _apiTotalVisits = 1;
+    _calculatedTotalPrice = 0.0;
+    
+    // Reset coupon state
+    _isCouponApplied = false;
+    _isCouponValid = false;
+    _couponMessage = '';
+    _couponCode = '';
+    _couponController.clear();
+    _appliedPromotionId = null;
+    _originalFinalPrice = 0.0;
+    _originalPricePerVisit = 0.0;
+  });
+  
+  // Reset parent callbacks
+  if (widget.onTotalPriceChanged != null) {
+    widget.onTotalPriceChanged!(0.0);
+  }
+  
+  if (widget.onPricePerVisitChanged != null) {
+    widget.onPricePerVisitChanged!(0.0);
+  }
+  
+  if (widget.onHourPriceChanged != null) {
+    widget.onHourPriceChanged!(0.0);
+  }
+  
+  if (widget.onPriceVatChanged != null) {
+    widget.onPriceVatChanged!(0.0);
+  }
+  
+  if (widget.onPromotionIdChanged != null) {
+    widget.onPromotionIdChanged!(null);
+  }
+  
+  print('✅ [RESET] All fields reset to defaults');
+}
 
 Future<void> _loadContractDurations() async {
     setState(() {
@@ -495,37 +587,53 @@ void _removeCoupon() {
 }
 
 void _resetDependentFields(String changedField) {
-    switch (changedField) {
-      case 'nationality':
-        // Reset all fields below nationality
-        if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
-        widget.onContractDurationChanged(0); // Changed from '' to 0
-        break;
-      case 'workerCount':
-        // Reset all fields below worker count
-        widget.onContractDurationChanged(0); // Changed from '' to 0
-        if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
-        break;
-      case 'contractDuration':
-        // Reset fields below contract duration
-        if (widget.onTimeChanged != null) widget.onTimeChanged!('');
-        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
-        break;
-      case 'time':
-        // Reset fields below time
-        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
-        break;
-      case 'visitDuration':
-        // Reset fields below visit duration
-        widget.onVisitsPerWeekChanged(0); // Changed from '' to 0
-        break;
-    }
-    
-    // Always reset calendar and dates for any field change
-    _resetCalendarSelection();
+  print('🔄 [RESET DEPENDENT] Resetting fields dependent on: $changedField');
+  
+  switch (changedField) {
+    case 'nationality':
+      // Reset all fields below nationality
+      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+      widget.onVisitsPerWeekChanged(0);
+      widget.onContractDurationChanged(0);
+      break;
+    case 'workerCount':
+      // Reset all fields below worker count
+      widget.onContractDurationChanged(0);
+      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+      widget.onVisitsPerWeekChanged(0);
+      break;
+    case 'contractDuration':
+      // Reset fields below contract duration
+      if (widget.onTimeChanged != null) widget.onTimeChanged!('');
+      widget.onVisitsPerWeekChanged(0);
+      break;
+    case 'time':
+      // Reset fields below time
+      widget.onVisitsPerWeekChanged(0);
+      break;
+    case 'visitDuration':
+      // Reset fields below visit duration
+      widget.onVisitsPerWeekChanged(0);
+      break;
   }
+  
+  // Always reset calendar, dates, and prices for any field change
+  _resetCalendarSelection();
+  
+  // Reset price-related state
+  setState(() {
+    _apiPricePerVisit = 0.0;
+    _apiTotalPrice = 0.0;
+    _apiFinalPricePerVisit = 0.0;
+    _vatAmount = 0.0;
+    _calculatedTotalPrice = 0.0;
+  });
+  
+  // Reset coupon if applied
+  if (_isCouponApplied || _couponCode.isNotEmpty) {
+    _removeCoupon();
+  }
+}
 
 
 
