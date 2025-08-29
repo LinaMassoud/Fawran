@@ -51,9 +51,6 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   String? selectedStatus;
   final _storage = FlutterSecureStorage();
 
-
-
-
   Widget _buildHeader(BuildContext context) {
     final selectedProfession = ref.watch(selectedProfessionProvider);
 
@@ -76,11 +73,13 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
             top: 0,
             bottom: 0,
             child: IconButton(
-              
-              icon: const Icon(Icons.arrow_back, color: Color(0xFFFFA200), textDirection: TextDirection.ltr,),
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Color(0xFFFFA200),
+                textDirection: TextDirection.ltr,
+              ),
               onPressed: () {
-                   ref.read(selectedPackageProvider.notifier).state =
-                                null;
+                ref.read(selectedPackageProvider.notifier).state = null;
                 Navigator.pop(context);
               },
             ),
@@ -164,7 +163,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       return;
     }
 
-    final double deliveryCharge = pickupOption == "delivery" ? selectedPackage.deliveryCharge : 0.0;
+    final double deliveryCharge =
+        pickupOption == "delivery" ? selectedPackage.deliveryCharge : 0.0;
     final double amountToPay = selectedPackage.vatAmount +
         selectedPackage.contractAmount +
         deliveryCharge;
@@ -184,8 +184,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       "amount_to_pay": amountToPay,
       "vat_amount": selectedPackage.vatAmount,
       "worker_id": selectedLabor?.personId,
-      "address_notes":selectedAddress?.cardText,
-      "address_id":selectedAddress?.addressId,
+      "address_notes": selectedAddress?.cardText,
+      "address_id": selectedAddress?.addressId,
     };
 
     // 🚀 Submit contract
@@ -195,15 +195,16 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
           .createPermanentContract(requestBody);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-              
-   final parsed= jsonDecode(response.body);
+        final parsed = jsonDecode(response.body);
         setState(() {
           isLoading = false;
         });
 
-        Navigator.pushReplacementNamed(context, '/pdf'  , arguments: {
-   'contract_Id':parsed["contract_id"]
-  },);
+        Navigator.pushReplacementNamed(
+          context,
+          '/pdf',
+          arguments: {'contract_Id': parsed["contract_id"]},
+        );
       } else {
         setState(() {
           isLoading = false;
@@ -222,472 +223,491 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     }
   }
 
-Widget _buildSteps() {
-  final loc = AppLocalizations.of(context)!;
-  final nationalityAsync = ref.watch(nationalitiesProvider);
-  final packagesAsync = ref.watch(packageProvider);
-  final selectedProfession = ref.watch(selectedProfessionProvider);
-  final selectedPackage = ref.watch(selectedPackageProvider);
-  final laborersAsync = ref.watch(laborersProvider);
+  Widget _buildSteps() {
+    final loc = AppLocalizations.of(context)!;
+    final nationalityAsync = ref.watch(nationalitiesProvider);
+    final packagesAsync = ref.watch(packageProvider);
+    final selectedProfession = ref.watch(selectedProfessionProvider);
+    final selectedPackage = ref.watch(selectedPackageProvider);
+    final laborersAsync = ref.watch(laborersProvider);
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Step 1: Nationality
-      if (currentStep >= 0)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loc.nationality,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Step 1: Nationality
+        if (currentStep >= 0)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                loc.nationality,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            nationalityAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Text('Error loading nationalities'),
-              data: (nationalities) {
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: DropdownButtonFormField<Nationality>(
-                    value: selectedNationality,
-                    hint: Text(loc.choose + " " + loc.nationality),
-                    decoration: const InputDecoration(border: InputBorder.none),
-                    items: nationalities.map((nat) {
-                      return DropdownMenuItem(
-                        value: nat,
-                        child: Text(nat?.name??''),
+              const SizedBox(height: 8),
+              nationalityAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Text('Error loading nationalities'),
+                data: (nationalities) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: DropdownButtonFormField<Nationality>(
+                      value: selectedNationality,
+                      hint: Text(loc.choose + " " + loc.nationality),
+                      decoration:
+                          const InputDecoration(border: InputBorder.none),
+                      items: nationalities.map((nat) {
+                        return DropdownMenuItem(
+                          value: nat,
+                          child: Text(nat?.name ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        ref.read(selectedNationalityProvider.notifier).state =
+                            val;
+                        checkCarAvailability();
+                        setState(() {
+                          selectedNationality = val;
+                        });
+                        if (currentStep == 0) goToNextStep();
+                      },
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+
+        // Step 2: Package
+        if (currentStep >= 1)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                loc.choose_package,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 8),
+              packagesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Text("Failed to load packages"),
+                data: (packages) {
+                  return Column(
+                    children: packages.map<Widget>((package) {
+                      final title =
+                          "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} ${loc.riyal}";
+
+                      final subtitle = [
+                        "${loc.contract_amount}: ${package.contractAmount.toStringAsFixed(2)} ${loc.riyal}",
+                        "${loc.vat}: ${package.vatAmount.toStringAsFixed(2)} ${loc.riyal}",
+                        "${loc.duration}: ${package.contractDays} ${loc.days}",
+                      ].join(" • ");
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: buildPackageCard(
+                          title: title,
+                          subtitle: subtitle,
+                          isSelected:
+                              selectedPackage?.packageId == package.packageId,
+                          onTap: () {
+                            ref.read(selectedPackageProvider.notifier).state =
+                                package;
+                            if (currentStep == 1) goToNextStep();
+                          },
+                        ),
                       );
                     }).toList(),
-                    onChanged: (val) {
-                      ref.read(selectedNationalityProvider.notifier).state = val;
-                      checkCarAvailability();
-                      setState(() {
-                        selectedNationality = val;
-                      });
-                      if (currentStep == 0) goToNextStep();
-                    },
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-
-      // Step 2: Package
-      if (currentStep >= 1)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loc.choose_package,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 8),
-            packagesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Text("Failed to load packages"),
-              data: (packages) {
-                return Column(
-                  children: packages.map<Widget>((package) {
-                    final title =
-                        "${package.packageName} - ${(package.contractAmount + package.vatAmount).toStringAsFixed(2)} ${loc.riyal}";
-
-                    final subtitle = [
-                      "${loc.contract_amount}: ${package.contractAmount.toStringAsFixed(2)} ${loc.riyal}",
-                      "${loc.vat}: ${package.vatAmount.toStringAsFixed(2)} ${loc.riyal}",
-                      "${loc.duration}: ${package.contractDays} ${loc.days}",
-                    ].join(" • ");
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: buildPackageCard(
-                        title: title,
-                        subtitle: subtitle,
-                        isSelected:
-                            selectedPackage?.packageId == package.packageId,
-                        onTap: () {
-                          ref.read(selectedPackageProvider.notifier).state = package;
-                          if (currentStep == 1) goToNextStep();
-                        },
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-
-      // Step 3: Choose Laborer (from app — always)
-      if (currentStep >= 2)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Choose ${selectedProfession?.positionName}",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                GestureDetector(
-                  onTap: _openFilterDialog,
-                  child: SvgPicture.asset(
-                    "assets/images/filter.svg",
-                    height: 24,
-                    width: 24,
-                    color: Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            laborersAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Text('Error: $err', style: const TextStyle(color: Colors.red)),
-        data: (laborers) {
-  if (laborers.isEmpty) {
-    return const Text("No drivers found");
-  }
-
-  // 🔹 Apply filters here
-  final filteredLaborers = laborers.where((laborer) {
-    bool matches = true;
-
-    if (filterAge != null) {
-      // Example: if filterAge = 30, only show laborers with age >= 30
-      matches &= laborer.age >= filterAge!;
-    }
-
-    if (filterSocialStatus != null && filterSocialStatus!.isNotEmpty) {
-      matches &= laborer.socialStatus.toLowerCase() ==
-          filterSocialStatus!.toLowerCase();
-    }
-
-    if (filterExperience != null) {
-      // Example: if filterExperience = 5, only show laborers with exp >= 5
-      matches &= laborer.experience >= filterExperience!;
-    }
-
-    return matches;
-  }).toList();
-
-  if (filteredLaborers.isEmpty) {
-    return const Text("No drivers match your filters");
-  }
-
-  final isRTL = Directionality.of(context) == TextDirection.rtl;
-
-  return ListView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: filteredLaborers.length,
-    itemBuilder: (context, index) {
-      final laborer = filteredLaborers[index];
-      final driverValue =
-          "${laborer.employeeName} - ${laborer.employeeNumber}";
-      final isSelected = selectedDriver == driverValue;
-
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            ref.read(selectedLaborerProvider.notifier).state = laborer;
-            selectedDriver = driverValue;
-            if (currentStep == 2) goToNextStep();
-          });
-        },
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.shade50 : Colors.white,
-            border: Border.all(
-              color: isSelected ? Colors.blue : Colors.grey.shade300,
-              width: 1.5,
-            ),
-            borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 8),
+            ],
           ),
-          child: Row(
-            children: isRTL
-                ? _buildDriverCardContent(
-                    context: context,
-                    isSelected: isSelected,
-                    name: laborer.employeeName,
-                    employeeNumber: laborer.employeeNumber.toString(),
-                    age: laborer.age.toString(),
-                    experience: laborer.experience.toString(),
-                    socialStatus: laborer.socialStatus,
-                    imageOnRight: true,
-                    onInfoPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              LaborProfilePage(laborer: laborer),
-                        ),
-                      );
-                    },
-                  )
-                : _buildDriverCardContent(
-                    context: context,
-                    isSelected: isSelected,
-                    name: laborer.employeeName,
-                    employeeNumber: laborer.employeeNumber.toString(),
-                    age: laborer.age.toString(),
-                    experience: laborer.experience.toString(),
-                    socialStatus: laborer.socialStatus,
-                    imageOnRight: false,
-                    onInfoPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              LaborProfilePage(laborer: laborer),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ),
-      );
-    },
-  );
-},
-    ),
-            const SizedBox(height: 24),
-          ],
-        ),
 
-      // Step 4: Delivery Method
-      if (currentStep >= 3)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loc.pickup_or_delivey,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            RadioListTile<String>(
-              title: Text(
-                loc.pickup,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: const Color.fromRGBO(118, 128, 144, 1.0),
-                ),
-              ),
-              value: "pickup",
-              groupValue: pickupOption,
-              onChanged: (val) {
-                setState(() => pickupOption = val);
-                if (currentStep == 3) goToNextStep();
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-            ),
-            RadioListTile<String>(
-              title: Text(
-                loc.delivery,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: const Color.fromRGBO(118, 128, 144, 1.0),
-                ),
-              ),
-              value: "delivery",
-              groupValue: pickupOption,
-              onChanged: deliveryAvailable
-                  ? (val) {
-                      setState(() => pickupOption = val);
-                      if (currentStep == 3) goToNextStep();
-                    }
-                  : null,
-              subtitle: !deliveryAvailable
-                  ? Text(
-                      loc.delivery_not_available,
-                      style: GoogleFonts.poppins(
-                        color: Colors.red,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    )
-                  : null,
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-
-      // Step 5: Agreement
-      if (currentStep == 4)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loc.agreement,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade100, Colors.white],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        // Step 3: Choose Laborer (from app — always)
+        if (currentStep >= 2)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _textRow(
-                    selectedProfession?.positionName ?? '',
-                    selectedDriver ?? "Not selected",
+                  Text(
+                    "Choose ${selectedProfession?.positionName}",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  _textRow(
-                    "${loc.nationality}: ",
-                    ref.read(selectedLaborerProvider)?.nationality ?? '',
-                  ),
-                  _textRow(
-                    "${loc.package}: ",
-                    selectedPackage?.packageName ?? "Not selected",
-                  ),
-                  _textRow(
-                    "${loc.vat}: ",
-                    selectedPackage?.vatAmount.toString() ?? '',
-                  ),
-                  _textRow(
-                    "${loc.price}: ",
-                    () {
-                      if (selectedPackage == null) return "N/A";
-                      double basePrice = selectedPackage.contractAmount +
-                          selectedPackage.vatAmount;
-                      if (pickupOption == "delivery") {
-                        basePrice += 100;
-                      }
-                      return "${basePrice.toStringAsFixed(2)} SR";
-                    }(),
-                  ),
-                  _textRow(
-                    "${loc.delivery}: ",
-                    pickupOption == "pickup"
-                        ? loc.pickup
-                        : pickupOption == "delivery"
-                            ? loc.delivery_fee
-                            : "Not selected",
+                  GestureDetector(
+                    onTap: _openFilterDialog,
+                    child: SvgPicture.asset(
+                      "assets/images/filter.svg",
+                      height: 24,
+                      width: 24,
+                      color: Colors.blue,
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: submitOrder,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[900],
-                  padding: const EdgeInsets.symmetric(horizontal: 120, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+              const SizedBox(height: 8),
+              laborersAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Text('Error: $err',
+                    style: const TextStyle(color: Colors.red)),
+                data: (laborers) {
+                  if (laborers.isEmpty) {
+                    return const Text("No drivers found");
+                  }
+
+                  // 🔹 Apply filters here
+                  final filteredLaborers = laborers.where((laborer) {
+                    bool matches = true;
+
+                    if (filterAge != null) {
+                      // Example: if filterAge = 30, only show laborers with age >= 30
+                      matches &= laborer.age >= filterAge!;
+                    }
+
+                    if (filterSocialStatus != null &&
+                        filterSocialStatus!.isNotEmpty) {
+                      matches &= laborer.socialStatus.toLowerCase() ==
+                          filterSocialStatus!.toLowerCase();
+                    }
+
+                    if (filterExperience != null) {
+                      // Example: if filterExperience = 5, only show laborers with exp >= 5
+                      matches &= laborer.experience >= filterExperience!;
+                    }
+
+                    return matches;
+                  }).toList();
+
+                  if (filteredLaborers.isEmpty) {
+                    return const Text("No drivers match your filters");
+                  }
+
+                  final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredLaborers.length,
+                    itemBuilder: (context, index) {
+                      final laborer = filteredLaborers[index];
+                      final driverValue =
+                          "${laborer.employeeName} - ${laborer.employeeNumber}";
+                      final isSelected = selectedDriver == driverValue;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            ref.read(selectedLaborerProvider.notifier).state =
+                                laborer;
+                            selectedDriver = driverValue;
+                            if (currentStep == 2) goToNextStep();
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected ? Colors.blue.shade50 : Colors.white,
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.blue
+                                  : Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: isRTL
+                                ? _buildDriverCardContent(
+                                    context: context,
+                                    isSelected: isSelected,
+                                    name: laborer.employeeName,
+                                    employeeNumber:
+                                        laborer.employeeNumber.toString(),
+                                    age: laborer.age.toString(),
+                                    experience: laborer.experience.toString(),
+                                    socialStatus: laborer.socialStatus,
+                                    imageOnRight: true,
+                                    onInfoPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              LaborProfilePage(
+                                                  laborer: laborer),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : _buildDriverCardContent(
+                                    context: context,
+                                    isSelected: isSelected,
+                                    name: laborer.employeeName,
+                                    employeeNumber:
+                                        laborer.employeeNumber.toString(),
+                                    age: laborer.age.toString(),
+                                    experience: laborer.experience.toString(),
+                                    socialStatus: laborer.socialStatus,
+                                    imageOnRight: false,
+                                    onInfoPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              LaborProfilePage(
+                                                  laborer: laborer),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+
+        // Step 4: Delivery Method
+        if (currentStep >= 3)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                loc.pickup_or_delivey,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              RadioListTile<String>(
+                title: Text(
+                  loc.pickup,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: const Color.fromRGBO(118, 128, 144, 1.0),
                   ),
                 ),
+                value: "pickup",
+                groupValue: pickupOption,
+                onChanged: (val) {
+                  setState(() => pickupOption = val);
+                  if (currentStep == 3) goToNextStep();
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+              ),
+              RadioListTile<String>(
+                title: Text(
+                  loc.delivery,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: const Color.fromRGBO(118, 128, 144, 1.0),
+                  ),
+                ),
+                value: "delivery",
+                groupValue: pickupOption,
+                onChanged: deliveryAvailable
+                    ? (val) {
+                        setState(() => pickupOption = val);
+                        if (currentStep == 3) goToNextStep();
+                      }
+                    : null,
+                subtitle: !deliveryAvailable
+                    ? Text(
+                        loc.delivery_not_available,
+                        style: GoogleFonts.poppins(
+                          color: Colors.red,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      )
+                    : null,
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+
+        // Step 5: Agreement
+        if (currentStep == 4)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                loc.agreement,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade100, Colors.white],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black12, blurRadius: 4)
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _textRow(
+                      selectedProfession?.positionName ?? '',
+                      selectedDriver ?? "Not selected",
+                    ),
+                    _textRow(
+                      "${loc.nationality}: ",
+                      ref.read(selectedLaborerProvider)?.nationality ?? '',
+                    ),
+                    _textRow(
+                      "${loc.package}: ",
+                      selectedPackage?.packageName ?? "Not selected",
+                    ),
+                    _textRow(
+                      "${loc.vat}: ",
+                      selectedPackage?.vatAmount.toString() ?? '',
+                    ),
+                    _textRow(
+                      "${loc.price}: ",
+                      () {
+                        if (selectedPackage == null) return "N/A";
+                        double basePrice = selectedPackage.contractAmount +
+                            selectedPackage.vatAmount;
+                        if (pickupOption == "delivery") {
+                          basePrice += 100;
+                        }
+                        return "${basePrice.toStringAsFixed(2)} SR";
+                      }(),
+                    ),
+                    _textRow(
+                      "${loc.delivery}: ",
+                      pickupOption == "pickup"
+                          ? loc.pickup
+                          : pickupOption == "delivery"
+                              ? loc.delivery_fee
+                              : "Not selected",
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: submitOrder,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[900],
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 120, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: Text(
+                    loc.submit_order,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMinimalRadio({
+    required String label,
+    required String value,
+  }) {
+    final isSelected = selectedLaborSource == value;
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: isRTL ? 0 : 10, // push right in LTR
+        right: 8, // push left in RTL
+        bottom: 8, // optional vertical spacing between radios
+      ),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            selectedLaborSource = value;
+            if (value == "company") {
+              currentStep = 4;
+            } else if (value == "app") {
+              currentStep = 3;
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 30, // fixed width for radio button alignment
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey, width: 1.5),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 5,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: isRTL
+                    ? const EdgeInsets.only(right: 24, left: 12)
+                    : const EdgeInsets.only(left: 12, right: 12),
                 child: Text(
-                  loc.submit_order,
-                  style: const TextStyle(color: Colors.white),
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: const Color.fromRGBO(118, 128, 144, 1),
+                  ),
                 ),
               ),
             ),
           ],
         ),
-    ],
-  );
-}
-
-Widget _buildMinimalRadio({
-  required String label,
-  required String value,
-}) {
-  final isSelected = selectedLaborSource == value;
-  final isRTL = Directionality.of(context) == TextDirection.rtl;
-
-  return Padding(
-    padding: EdgeInsets.only(
-      left: isRTL ? 0 : 10, // push right in LTR
-      right: 8, // push left in RTL
-      bottom: 8, // optional vertical spacing between radios
-    ),
-    child: InkWell(
-      onTap: () {
-        setState(() {
-          selectedLaborSource = value;
-          if (value == "company") {
-            currentStep = 4;
-          } else if (value == "app") {
-            currentStep = 3;
-          }
-        });
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 30, // fixed width for radio button alignment
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey, width: 1.5),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 5,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: isRTL
-                  ? const EdgeInsets.only(right: 24, left: 12)
-                  : const EdgeInsets.only(left: 12, right: 12),
-              child: Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: const Color.fromRGBO(118, 128, 144, 1),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _handleStepNavigation(String value) {
     if (value == "company") {
@@ -731,67 +751,68 @@ Widget _buildMinimalRadio({
     }
   }
 
-Widget _buildFooterStepper() {
-  return Container(
-    decoration: BoxDecoration(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(16),  // adjust the value as needed
-        topRight: Radius.circular(16),
-      ),
-      color: Colors.white,
-      boxShadow: [
-        BoxShadow(
-          color: const Color(0x338789C8), // #3789C8 with 20% opacity
-          blurRadius: 19, // make the shadow softer
-          spreadRadius: 4,
-          offset: const Offset(0, -4), // shadow goes upwards
+  Widget _buildFooterStepper() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16), // adjust the value as needed
+          topRight: Radius.circular(16),
         ),
-      ],
-    ),
-    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-    child: Row(
-      children: List.generate(totalSteps * 2 - 1, (index) {
-        if (index.isEven) {
-          int stepIndex = index ~/ 2;
-          Color color;
-          if (stepIndex < currentStep) {
-            color = Colors.blue[900]!;
-          } else if (stepIndex == currentStep) {
-            color = Colors.lightBlue;
-          } else {
-            color = Colors.grey.shade300;
-          }
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x338789C8), // #3789C8 with 20% opacity
+            blurRadius: 19, // make the shadow softer
+            spreadRadius: 4,
+            offset: const Offset(0, -4), // shadow goes upwards
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      child: Row(
+        children: List.generate(totalSteps * 2 - 1, (index) {
+          if (index.isEven) {
+            int stepIndex = index ~/ 2;
+            Color color;
+            if (stepIndex < currentStep) {
+              color = Colors.blue[900]!;
+            } else if (stepIndex == currentStep) {
+              color = Colors.lightBlue;
+            } else {
+              color = Colors.grey.shade300;
+            }
 
-          return Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '${stepIndex + 1}',
-                style: const TextStyle(color: Colors.white),
+            return Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
               ),
-            ),
-          );
-        } else {
-          int lineIndex = (index - 1) ~/ 2;
-          Color lineColor =
-              lineIndex < currentStep ? Colors.blue[900]! : Colors.grey.shade300;
+              child: Center(
+                child: Text(
+                  '${stepIndex + 1}',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            );
+          } else {
+            int lineIndex = (index - 1) ~/ 2;
+            Color lineColor = lineIndex < currentStep
+                ? Colors.blue[900]!
+                : Colors.grey.shade300;
 
-          return Expanded(
-            child: Container(
-              height: 4,
-              color: lineColor,
-            ),
-          );
-        }
-      }),
-    ),
-  );
-}
+            return Expanded(
+              child: Container(
+                height: 4,
+                color: lineColor,
+              ),
+            );
+          }
+        }),
+      ),
+    );
+  }
 
   void _openFilterDialog() {
     showModalBottomSheet(
@@ -834,7 +855,7 @@ Widget _buildFooterStepper() {
                     value: selectedSocialStatus,
                     items: ["Single", "Married", "Divorced", "Widowed"]
                         .map((status) => DropdownMenuItem(
-                            value: status, child: Text(status)))
+                            value: status[0], child: Text(status)))
                         .toList(),
                     onChanged: (value) {
                       setModalState(() => selectedSocialStatus = value);
@@ -895,44 +916,44 @@ Widget _buildFooterStepper() {
     );
   }
 
-List<Widget> _buildDriverCardContent({
-  required BuildContext context,
-  required bool isSelected,
-  required String name,
-  required String employeeNumber,
-  required String age,
-  required String experience,
-  required String socialStatus,
-  required bool imageOnRight,
-  required VoidCallback onInfoPressed,
-}) {
-  final textWidgets = Expanded(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(name,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.blue : Colors.black,
-            )),
-        Text("ID: $employeeNumber",
-            style: const TextStyle(color: Colors.grey)),
-        Text("Age: $age"),
-        Text("Experience: $experience years"),
-        Text("Status: $socialStatus"),
-      ],
-    ),
-  );
+  List<Widget> _buildDriverCardContent({
+    required BuildContext context,
+    required bool isSelected,
+    required String name,
+    required String employeeNumber,
+    required String age,
+    required String experience,
+    required String socialStatus,
+    required bool imageOnRight,
+    required VoidCallback onInfoPressed,
+  }) {
+    final textWidgets = Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.blue : Colors.black,
+              )),
+          Text("ID: $employeeNumber",
+              style: const TextStyle(color: Colors.grey)),
+          Text("Age: $age"),
+          Text("Experience: $experience years"),
+          Text("Status: $socialStatus"),
+        ],
+      ),
+    );
 
-  final infoButton = IconButton(
-    icon: const Icon(Icons.info_outline, color: Colors.blue),
-    onPressed: onInfoPressed,
-  );
+    final infoButton = IconButton(
+      icon: const Icon(Icons.info_outline, color: Colors.blue),
+      onPressed: onInfoPressed,
+    );
 
-  return imageOnRight
-      ? [infoButton, const SizedBox(width: 12), textWidgets]
-      : [textWidgets, const SizedBox(width: 12), infoButton];
-}
+    return imageOnRight
+        ? [infoButton, const SizedBox(width: 12), textWidgets]
+        : [textWidgets, const SizedBox(width: 12), infoButton];
+  }
 
   Widget _textRow(String label, String value) {
     return Padding(
@@ -983,31 +1004,30 @@ List<Widget> _buildDriverCardContent({
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final nationalityAsync = ref.watch(nationalitiesProvider);
 
-    return 
-    
-      Directionality(
-    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-    child: Scaffold(
-      backgroundColor: Colors.white,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(120),
-        child: _buildHeader(context),
+    return Directionality(
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(120),
+          child: _buildHeader(context),
+        ),
+        body: SingleChildScrollView(
+          child: Container(
+            color: Colors.white,
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  kToolbarHeight - // adjust for AppBar
+                  kBottomNavigationBarHeight, // adjust for footer
+            ),
+            padding: const EdgeInsets.all(16),
+            child: _buildSteps(),
+          ),
+        ),
+        bottomNavigationBar: _buildFooterStepper(), // move footer here
       ),
-      body: SingleChildScrollView(
-  child: Container(
-    color: Colors.white,
-    constraints: BoxConstraints(
-      minHeight: MediaQuery.of(context).size.height -
-          kToolbarHeight - // adjust for AppBar
-          kBottomNavigationBarHeight, // adjust for footer
-    ),
-    padding: const EdgeInsets.all(16),
-    child: _buildSteps(),
-  ),
-),
-      bottomNavigationBar: _buildFooterStepper(), // move footer here
-    ),
-  );  }
+    );
+  }
 }
 
 Widget buildPackageCard({
