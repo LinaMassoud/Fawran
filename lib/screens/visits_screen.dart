@@ -549,7 +549,7 @@ class _VisitsScreenState extends ConsumerState<VisitsScreen> with SingleTickerPr
                       style: const TextStyle(
                         color: Color(0xFFFFA200),
                         fontWeight: FontWeight.w600,
-                        fontSize: 27,
+                        fontSize: 24,
                       ),
                     ),
                   ),
