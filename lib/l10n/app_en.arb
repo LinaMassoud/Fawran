@@ -396,7 +396,16 @@
 
 
 
-  "logoutconfirm":"Are you sure you want to logout?"
+  "logoutconfirm":"Are you sure you want to logout?",
+  "visits": "Visits",
+  "todayVisits": "Today Visits",
+  "comingVisits": "Coming Visits",
+  "reschedule": "Reschedule",
+  "from": "From",
+  "service": "Service",
+  "retry": "Retry",
+  "noVisitsToday": "No visits scheduled for today",
+  "noUpcomingVisits": "No upcoming visits scheduled"
 
 
   

@@ -340,9 +340,13 @@ Future<void> _fetchAddresses() async {
   }
 
   void _updateSelectedDays(List<String> newSelectedDays) {
-    setState(() {
-      selectedDays = newSelectedDays;
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        selectedDays = newSelectedDays;
+      });
+    }
+  });
   }
   void _updateFinalPrice(double price) {
   setState(() {
@@ -370,25 +374,36 @@ Future<void> _fetchAddresses() async {
 
 
 void _updatePricePerVisit(double pricePerVisit) {
-  setState(() {
-    _pricePerVisitFromServiceDetails = pricePerVisit;
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _pricePerVisitFromServiceDetails = pricePerVisit;
+      });
+      print("Price per visit updated: $pricePerVisit");
+    }
   });
-  print("Price per visit updated: $pricePerVisit");
 }
 
 void _updateHourPrice(double hourPrice) {
-  setState(() {
-    // Store the hour price in a state variable in the parent
-    hourPrice = hourPrice; // You'll need to add this variable to parent state
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _hourPrice = hourPrice;
+      });
+      print('Updated hour price: $hourPrice');
+    }
   });
-  print('Updated hour price: $hourPrice');
 }
 
 void _updatePriceVat(double priceVat) {
-  setState(() {
-    _priceVatFromServiceDetails = priceVat;
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _priceVatFromServiceDetails = priceVat;
+      });
+      print('Updated price VAT: $priceVat');
+    }
   });
-  print('Updated price VAT: $priceVat');
 }
 
   void _previousStep() {
@@ -549,72 +564,101 @@ void _showSuccessDialog(String message) {
 
   // New methods for updating service details in custom booking
   void _updateNationality(String newNationality) {
-    setState(() {
-      selectedNationality = newNationality;
-    });
-    // Price doesn't directly depend on nationality, but trigger update for consistency
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
+  // Schedule the setState for after the current build cycle
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        selectedNationality = newNationality;
+      });
+      // Price doesn't directly depend on nationality, but trigger update for consistency
+      if (widget.isCustomBooking) {
+        _calculatePricePerVisit();
+      }
     }
-  }
+  });
+}
 
   void _updateTime(String newTime) {
-    setState(() {
-      selectedTime = newTime;
-    });
-    // Price doesn't directly depend on time slot, but trigger update for consistency
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        selectedTime = newTime;
+      });
+      // Price doesn't directly depend on time slot, but trigger update for consistency
+      if (widget.isCustomBooking) {
+        _calculatePricePerVisit();
+      }
     }
-  }
+  });
+}
 
   void _updateVisitDuration(String newVisitDuration) {
-    setState(() {
-      visitDuration = newVisitDuration;
-    });
-    // Price depends on visit duration, recalculate
-    if (widget.isCustomBooking) {
-      print("calculatePricePerVisit recalculated in _updateVisitDuration");
-      _calculatePricePerVisit();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        visitDuration = newVisitDuration;
+      });
+      // Price depends on visit duration, recalculate
+      if (widget.isCustomBooking) {
+        print("calculatePricePerVisit recalculated in _updateVisitDuration");
+        _calculatePricePerVisit();
+      }
     }
-  }
+  });
+}
 
   void _updateWorkerCount(int newCount) {
-    setState(() {
-      workerCount = newCount;
-    });
-    // Price depends on worker count, recalculate
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        workerCount = newCount;
+      });
+      // Price depends on worker count, recalculate
+      if (widget.isCustomBooking) {
+        _calculatePricePerVisit();
+      }
     }
-  }
+  });
+}
 
   void _onWorkerValidationSuccess(List<int> workerIds) {
-  setState(() {
-    _validatedWorkerIds = workerIds;
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _validatedWorkerIds = workerIds;
+      });
+      print('✅ Worker IDs received in overlay: $workerIds');
+    }
   });
-  print('✅ Worker IDs received in overlay: $workerIds');
 }
 
   void _updateContractDuration(int newDuration) {
-    setState(() {
-      contractDuration = newDuration;
-    });
-    // Price depends on contract duration, recalculate
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        contractDuration = newDuration;
+      });
+      // Price depends on contract duration, recalculate
+      if (widget.isCustomBooking) {
+        _calculatePricePerVisit();
+      }
     }
-  }
+  });
+}
 
   void _updateVisitsPerWeek(int newVisitsPerWeek) {
-    setState(() {
-      visitsPerWeek = newVisitsPerWeek;
-    });
-    // Price depends on visits per week, recalculate
-    if (widget.isCustomBooking) {
-      _calculatePricePerVisit();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        visitsPerWeek = newVisitsPerWeek;
+      });
+      // Price depends on visits per week, recalculate
+      if (widget.isCustomBooking) {
+        _calculatePricePerVisit();
+      }
     }
-  }
+  });
+}
 
   void _updateSelectedDates(List<DateTime> dates) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -772,6 +816,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
       appointments: appointments.isNotEmpty ? appointments : null,
       workerIds: _validatedWorkerIds,
       promotionId: _appliedPromotionId,
+      addressId: selectedAddress.addressId,
     );
 
     if (mounted) {
@@ -971,10 +1016,14 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
 }
 
   void _updateTotalPriceFromServiceDetails(double totalPrice) {
-    setState(() {
-      _totalPriceFromServiceDetails = totalPrice;
-    });
-  }
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _totalPriceFromServiceDetails = totalPrice;
+      });
+    }
+  });
+}
 
   double _calculateTotalPrice() {
     print('=== PRICE CALCULATION DEBUG ===');

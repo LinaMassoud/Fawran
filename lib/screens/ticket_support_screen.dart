@@ -27,9 +27,11 @@ class _TicketsSupportScreenState extends ConsumerState<TicketsSupportScreen> {
 
   Future<void> _loadTickets() async {
   try {
-    setState(() {
-      isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
     // Get customer ID from secure storage
     final customerId = await _secureStorage.read(key: 'user_id');
@@ -86,20 +88,26 @@ class _TicketsSupportScreenState extends ConsumerState<TicketsSupportScreen> {
         }
       }
       
-      setState(() {
-        tickets = fetchedTickets;
-      });
+      if (mounted) {
+        setState(() {
+          tickets = fetchedTickets;
+        });
+      }
     }
   } catch (e) {
     print('Error loading tickets: $e');
     // Show error snackbar if needed
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load tickets')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load tickets')),
+      );
+    }
   } finally {
-    setState(() {
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 }
 
@@ -325,16 +333,22 @@ Widget _buildTicketCard(Map<String, dynamic> ticket) {
             children: [
               // Background SVG positioned at bottom right for LTR, bottom left for RTL
               Positioned(
-                bottom: 0,
-                right: isArabic ? null : 0,
-                left: isArabic ? 0 : null,
-                child: SvgPicture.asset(
-                    'assets/images/design.svg', // Your background SVG path
-                    width: 96, // Adjust size as needed
-                    height: 96, // Adjust size as needed
-                    fit: BoxFit.contain,
-                  ),
-              ),
+  bottom: 0,
+  right: isArabic ? null : 0,
+  left: isArabic ? 0 : null,
+  child: Transform(
+    alignment: Alignment.center,
+    transform: isArabic 
+      ? (Matrix4.identity()..scale(-1.0, 1.0)) 
+      : Matrix4.identity(),
+    child: SvgPicture.asset(
+      'assets/images/design.svg',
+      width: 96,
+      height: 96,
+      fit: BoxFit.contain,
+    ),
+  ),
+),
               
               // Main content column
               Column(

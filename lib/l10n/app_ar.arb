@@ -173,7 +173,7 @@
   "myInformation": "معلوماتي",
   "myContracts": "عقودي",
   "aboutCompany": "عن الشركة",
-  "ticketsSupport": "دعم التذاكر",
+  "ticketsSupport": "تذاكر الدعم",
   "companyBranches": "فروع الشركة",
   "socialMediaLinks": "روابط وسائل التواصل الاجتماعي",
   "faq": "الأسئلة الشائعة",
@@ -402,7 +402,17 @@
   "connectwithus":"تواصل معنا",
 
 
-  "logoutconfirm":"هل متأكد انك تريد تسجيل الخروج؟"
+  "logoutconfirm":"هل متأكد انك تريد تسجيل الخروج؟",
+  "noUpcomingVisits":"لا توجد زيارات قادمة",
+  "visits": "الزيارات",
+  "todayVisits": "زيارات اليوم",
+  "comingVisits": "الزيارات القادمة",
+  "reschedule": "إعادة جدولة",
+  "from": "من",
+  "service": "الخدمة",
+  "retry": "إعادة المحاولة",
+  "noVisitsToday": "لا توجد زيارات مجدولة لليوم",
+  "noUpcomingVisits": "لا توجد زيارات قادمة مجدولة"
 
 
 

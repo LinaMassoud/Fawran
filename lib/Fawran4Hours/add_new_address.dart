@@ -1634,7 +1634,7 @@ Widget build(BuildContext context) {
                           ),
                           const SizedBox(height: 8),
                           _buildTextField('${loc.fullAddress}', _fullAddressController,
-                              maxLines: 3, enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 100),
+                              maxLines: 3, enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 500),
 
                           const SizedBox(height: 20),
 
@@ -1651,7 +1651,7 @@ Widget build(BuildContext context) {
                           const SizedBox(height: 8),
                           _buildTextField(
                               '${loc.selectNote}', _notesController,
-                              maxLines: 2, enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 100),
+                              maxLines: 2, enabled: _useCurrentLocation || _canProceedToDetails, maxLength: 500),
                           
                           // Add bottom padding to account for fixed button
                           const SizedBox(height: 120),

@@ -1034,6 +1034,7 @@ static Future<Map<String, dynamic>?> rescheduleVisit({
     List<String>? appointments,
     List<int>? workerIds,
     int? promotionId,
+    int? addressId,
   }) async {
     try {
       // Prepare request body
@@ -1075,6 +1076,10 @@ static Future<Map<String, dynamic>?> rescheduleVisit({
       if (promotionId != null) {
         requestBody["promotion_id"] = promotionId;
         print('Including promotion ID in contract creation: $promotionId');
+      }
+
+      if (addressId != null) {
+        requestBody["address_id"] = addressId;
       }
 
       if (appointments != null && appointments.isNotEmpty) {
