@@ -1620,25 +1620,40 @@ Color _getShiftIconColor(String shiftName, bool isSelected) {
             ),
           )
         else if (filteredPackages.isNotEmpty)
-          Container(
-            height: 320,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              reverse: isArabic,
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              itemCount: filteredPackages.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 280,
-                  margin: EdgeInsets.only(
-                    right: isArabic ? 0 : 16,
-                    left: isArabic ? 16 : 0,
+          filteredPackages.length == 1
+              ? Container(
+                  height: 320,
+                  child: Align(
+                    alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      width: 280,
+                      margin: EdgeInsets.only(
+                        right: isArabic ? 0 : 16,
+                        left: isArabic ? 16 : 0,
+                      ),
+                      child: _buildCompactServiceCard(filteredPackages[0], loc),
+                    ),
                   ),
-                  child: _buildCompactServiceCard(filteredPackages[index], loc),
-                );
-              },
-            ),
-          ),
+                )
+              : Container(
+                  height: 320,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    reverse: isArabic,
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    itemCount: filteredPackages.length,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        width: 280,
+                        margin: EdgeInsets.only(
+                          right: isArabic ? 0 : 16,
+                          left: isArabic ? 16 : 0,
+                        ),
+                        child: _buildCompactServiceCard(filteredPackages[index], loc),
+                      );
+                    },
+                  ),
+                ),
       ],
     ),
   );

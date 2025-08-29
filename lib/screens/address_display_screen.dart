@@ -254,17 +254,14 @@ class _AddressDisplayScreenState extends ConsumerState<AddressDisplayScreen> {
             ),
             child: Row(
               textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E49A0).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.location_on,
-                    color: Color(0xFF1E49A0),
-                    size: 24,
+              children: [ 
+                SvgPicture.asset(
+                  'assets/images/addresses.svg',
+                  width: 24,
+                  height: 26,
+                  colorFilter: const ColorFilter.mode(
+                    Color(0xFF1E49A0),
+                    BlendMode.srcIn,
                   ),
                 ),
                 const SizedBox(width: 15),
