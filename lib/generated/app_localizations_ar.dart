@@ -577,7 +577,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get price => 'السعر';
 
   @override
-  String get delivery_fee => 'توصيل العامل للمنزل (100 ريال)';
+  String get delivery_fee => 'توصيل العاملة للمنزل ';
 
   @override
   String get riyal => 'ريال';

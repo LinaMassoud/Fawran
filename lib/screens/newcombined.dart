@@ -615,7 +615,8 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                               ? loc.delivery_fee +
                                   '(' +
                                   deliveryCharge.toString() +
-                                  ") SR"
+                                  ") " +
+                                  loc.riyal
                               : "Not selected",
                     ),
                   ],
