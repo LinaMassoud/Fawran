@@ -27,6 +27,7 @@ class PrivateDriverScreen extends ConsumerStatefulWidget {
       _PrivateDriverScreenState();
 }
 
+@override
 class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int currentStep = 0;
   final int totalSteps = 5;
@@ -39,7 +40,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int? filterAge;
   String? filterSocialStatus;
   int? filterExperience;
-  double deliveryCharge = 0.0;
+  int deliveryCharge = 0;
 
   int? selectedPackageIndex;
   int? selectedLaborId;
@@ -165,7 +166,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
     }
 
     deliveryCharge =
-        pickupOption == "delivery" ? selectedPackage.deliveryCharge : 0.0;
+        pickupOption == "delivery" ? selectedPackage.deliveryCharge : 0;
     final double amountToPay = selectedPackage.vatAmount +
         selectedPackage.contractAmount +
         deliveryCharge;
@@ -327,6 +328,10 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                           onTap: () {
                             ref.read(selectedPackageProvider.notifier).state =
                                 package;
+                            setState(() {
+                              deliveryCharge =
+                                  selectedPackage?.deliveryCharge ?? 0;
+                            });
                             if (currentStep == 1) goToNextStep();
                           },
                         ),
