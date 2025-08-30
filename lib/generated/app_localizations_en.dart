@@ -577,7 +577,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get price => 'Price';
 
   @override
-  String get delivery_fee => 'Deliver laborer to home (100 SR fee)';
+  String get delivery_fee => 'Deliver laborer to home ';
 
   @override
   String get riyal => 'Riyal';
@@ -924,7 +924,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ok => 'OK';
 
   @override
-  String get uploadContract => 'Upload Contract PDF';
+  String get uploadContract => 'Attachement';
 
   @override
   String get customServicePackage => 'Custom Service Package';

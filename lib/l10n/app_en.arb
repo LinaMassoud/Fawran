@@ -228,7 +228,7 @@
    "contract_amount":"Contract Price before vat",
     "package":"Package",
     "price":"Price",
-    "delivery_fee":"Deliver laborer to home (100 SR fee)",
+    "delivery_fee":"Deliver laborer to home ",
     
     "riyal":"Riyal",
     "days":"Days",
@@ -375,7 +375,7 @@
   "paymentDeclined": "Payment Declined",
   "thankYou": "Thank you for your purchase.",
   "ok": "OK",
-  "uploadContract": "Upload Contract PDF",
+  "uploadContract": "Attachement",
   
    "customServicePackage": "Custom Service Package",
 
