@@ -329,8 +329,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                             ref.read(selectedPackageProvider.notifier).state =
                                 package;
                             setState(() {
-                              deliveryCharge =
-                                  selectedPackage?.deliveryCharge ?? 0;
+                              deliveryCharge = package.deliveryCharge;
                             });
                             if (currentStep == 1) goToNextStep();
                           },
