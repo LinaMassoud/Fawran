@@ -13,6 +13,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
@@ -234,8 +235,11 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
 // Draw signature on top
           page.graphics.drawImage(
             PdfBitmap(_signatureBytes!),
-            Rect.fromLTWH(bounds.left - page.size.width * .6, bounds.top,
-                page.size.width * .2, page.size.height * .09),
+            Rect.fromLTWH(
+                bounds.left - page.size.width * .64,
+                bounds.top - page.size.height * .03,
+                page.size.width * .2,
+                page.size.height * .09),
           );
 
           // Exit the loop since placeholder is replaced
@@ -248,7 +252,8 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
       pdfDoc.dispose();
 
       final dir = await getApplicationDocumentsDirectory();
-      final signedPath = "${dir.path}/signed_contract.pdf";
+      final signedPath =
+          "${dir.path}/signed_contract${DateTime.now().microsecond.toString().replaceAll(' ', '')}.pdf";
       final signedFile = File(signedPath);
       await signedFile.writeAsBytes(signedBytes);
 
@@ -342,20 +347,13 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
               : Column(
                   children: [
                     Expanded(
-                      child: SfPdfViewer.file(
-                        File(pdfPath!),
-                        controller: _pdfViewerController,
-                        onDocumentLoaded: (details) {
-                          // Auto-jump when loaded
-                          if (_jumpToLastPageAfterReload) {
-                            _jumpToLastPageAfterReload = false; // reset flag
-                            _pdfViewerController
-                                .jumpToPage(_pdfViewerController.pageCount);
-                          }
-                        },
-                        onDocumentLoadFailed: (details) {
-                          print("PDF load failed: ${details.error}");
-                        },
+                      child: PDFView(
+                        key: ValueKey(pdfPath),
+                        filePath: pdfPath,
+                        enableSwipe: true,
+                        swipeHorizontal: false,
+                        autoSpacing: true,
+                        pageFling: true,
                       ),
                     ),
                     // Signature pad container
