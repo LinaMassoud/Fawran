@@ -7,8 +7,8 @@ class Laborer {
   final String nationalityId;
   final String positionName;
 
-  final int age;            // made required int
-  final int experience;     // made required int
+  final int age; // made required int
+  final int experience; // made required int
   final String socialStatus; // made required String
 
   var imageUrl;
@@ -38,8 +38,9 @@ class Laborer {
         nationalityId: json['nationality_id']?.toString() ?? 'N/A',
         positionName: json['position_name']?.toString() ?? 'N/A',
         age: int.tryParse(json['age']?.toString() ?? '') ?? 0,
-        experience: int.tryParse(json['experience_years']?.toString() ?? '') ?? 0,
-        socialStatus: json['marital_status']?.toString() ?? 'Unknown',
+        experience:
+            int.tryParse(json['experience_years']?.toString() ?? '') ?? 0,
+        socialStatus: json['marital_status_desc']?.toString() ?? 'Unknown',
       );
     } catch (e) {
       print('Error parsing Laborer: $e');

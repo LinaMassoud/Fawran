@@ -39,6 +39,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
   int? filterAge;
   String? filterSocialStatus;
   int? filterExperience;
+  double deliveryCharge = 0.0;
 
   int? selectedPackageIndex;
   int? selectedLaborId;
@@ -163,7 +164,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       return;
     }
 
-    final double deliveryCharge =
+    deliveryCharge =
         pickupOption == "delivery" ? selectedPackage.deliveryCharge : 0.0;
     final double amountToPay = selectedPackage.vatAmount +
         selectedPackage.contractAmount +
@@ -203,7 +204,10 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
         Navigator.pushReplacementNamed(
           context,
           '/pdf',
-          arguments: {'contract_Id': parsed["contract_id"]},
+          arguments: {
+            'contract_Id': parsed["contract_id"],
+            'delivery_fee': deliveryCharge
+          },
         );
       } else {
         setState(() {
@@ -598,7 +602,7 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                         double basePrice = selectedPackage.contractAmount +
                             selectedPackage.vatAmount;
                         if (pickupOption == "delivery") {
-                          basePrice += 100;
+                          basePrice += deliveryCharge;
                         }
                         return "${basePrice.toStringAsFixed(2)} SR";
                       }(),
@@ -608,7 +612,10 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                       pickupOption == "pickup"
                           ? loc.pickup
                           : pickupOption == "delivery"
-                              ? loc.delivery_fee
+                              ? loc.delivery_fee +
+                                  '(' +
+                                  deliveryCharge.toString() +
+                                  ") SR"
                               : "Not selected",
                     ),
                   ],
@@ -853,9 +860,9 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
                   DropdownButtonFormField<String>(
                     decoration: InputDecoration(labelText: "Social Status"),
                     value: selectedSocialStatus,
-                    items: ["Single", "Married", "Divorced", "Widowed"]
+                    items: ["Single", "Married", "Divorced", "Widow"]
                         .map((status) => DropdownMenuItem(
-                            value: status[0], child: Text(status)))
+                            value: status, child: Text(status)))
                         .toList(),
                     onChanged: (value) {
                       setModalState(() => selectedSocialStatus = value);
@@ -915,114 +922,114 @@ class _PrivateDriverScreenState extends ConsumerState<PrivateDriverScreen> {
       },
     );
   }
-List<Widget> _buildDriverCardContent({
-  required BuildContext context,
-  required bool isSelected,
-  required String name,
-  required String employeeNumber,
-  required String age,
-  required String experience,
-  required String socialStatus,
-  required bool imageOnRight,
-  required VoidCallback onInfoPressed,
-}) {
-  // 👇 Use your old profileImage container
-  final profileImage = Container(
-    margin: const EdgeInsets.all(2), // 2px gap on all sides
-    width: 82,
-    height: 82,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      image: const DecorationImage(
-        image: AssetImage("assets/images/default_avatar.jpg"),
-        fit: BoxFit.cover,
-      ),
-    ),
-  );
 
-  // 👇 New text section (with name, employee number, age, exp, status)
-  final textWidgets = Expanded(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            name,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: isSelected ? Colors.blue : const Color(0xFF003366),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Employee Number: $employeeNumber",
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF768090),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text("Age: $age", style: const TextStyle(color: Colors.black54)),
-          Text("Experience: $experience years",
-              style: const TextStyle(color: Colors.black54)),
-          Text("Status: $socialStatus",
-              style: const TextStyle(color: Colors.black54)),
-        ],
+  List<Widget> _buildDriverCardContent({
+    required BuildContext context,
+    required bool isSelected,
+    required String name,
+    required String employeeNumber,
+    required String age,
+    required String experience,
+    required String socialStatus,
+    required bool imageOnRight,
+    required VoidCallback onInfoPressed,
+  }) {
+    // 👇 Use your old profileImage container
+    final profileImage = Container(
+      margin: const EdgeInsets.all(2), // 2px gap on all sides
+      width: 82,
+      height: 82,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        image: const DecorationImage(
+          image: AssetImage("assets/images/default_avatar.jpg"),
+          fit: BoxFit.cover,
+        ),
       ),
-    ),
-  );
+    );
 
-  final infoButton = IconButton(
-    icon: const Icon(Icons.info_outline),
-    onPressed: onInfoPressed,
-    tooltip: 'View Profile',
-  );
-
-  // 👇 Selection indicator (radio style)
-  final selectionCircle = Container(
-    width: 22,
-    height: 22,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(
-        color: isSelected ? Colors.blue : Colors.grey.shade400,
-        width: 2,
-      ),
-    ),
-    child: isSelected
-        ? Center(
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.blue,
+    // 👇 New text section (with name, employee number, age, exp, status)
+    final textWidgets = Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isSelected ? Colors.blue : const Color(0xFF003366),
               ),
             ),
-          )
-        : null,
-  );
+            const SizedBox(height: 4),
+            Text(
+              "Employee Number: $employeeNumber",
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF768090),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text("Age: $age", style: const TextStyle(color: Colors.black54)),
+            Text("Experience: $experience years",
+                style: const TextStyle(color: Colors.black54)),
+            Text("Status: $socialStatus",
+                style: const TextStyle(color: Colors.black54)),
+          ],
+        ),
+      ),
+    );
 
-  // 👇 Wrap everything in a Row (keep RTL/LTR support)
-  final textAndControls = Expanded(
-    child: Row(
-      children: [
-        textWidgets,
-        infoButton,
-        selectionCircle,
-      ],
-    ),
-  );
+    final infoButton = IconButton(
+      icon: const Icon(Icons.info_outline),
+      onPressed: onInfoPressed,
+      tooltip: 'View Profile',
+    );
 
-  return imageOnRight
-      ? [textAndControls, profileImage]
-      : [profileImage, textAndControls];
-}
+    // 👇 Selection indicator (radio style)
+    final selectionCircle = Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isSelected ? Colors.blue : Colors.grey.shade400,
+          width: 2,
+        ),
+      ),
+      child: isSelected
+          ? Center(
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue,
+                ),
+              ),
+            )
+          : null,
+    );
 
- 
+    // 👇 Wrap everything in a Row (keep RTL/LTR support)
+    final textAndControls = Expanded(
+      child: Row(
+        children: [
+          textWidgets,
+          infoButton,
+          selectionCircle,
+        ],
+      ),
+    );
+
+    return imageOnRight
+        ? [textAndControls, profileImage]
+        : [profileImage, textAndControls];
+  }
+
   Widget _textRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

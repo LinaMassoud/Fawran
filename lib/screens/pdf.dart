@@ -45,6 +45,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   bool isLoading = true;
   final _storage = const FlutterSecureStorage();
   String? contractId;
+  double deliverFee = 0.0;
   bool _hasSigned = false;
   File? _signedPdfFile;
   final GlobalKey<SfSignaturePadState> signatureKey = GlobalKey();
@@ -57,6 +58,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
       contractId = args?['contract_Id'] as String;
+      deliverFee = args?['delivery_fee'] as double;
       _loadAndGeneratePdf(contractId);
     });
   }
@@ -98,7 +100,8 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
         result.replaceAll("#PACKAGE_NAME#", selectedPackage?.packageName ?? '');
     result = result.replaceAll(
         "#GENDER#", selectedProfession?.positionId == 7 ? 'أنثى' : "ذكر");
-    result = result.replaceAll("#FINAL_PRICE#", finalPrice.toString());
+    result = result.replaceAll(
+        "#FINAL_PRICE#", (finalPrice + deliverFee).toString());
     result = result.replaceAll("#EMAIL#", email);
     result =
         result.replaceAll("#NATIONALITY#", selectedNationality?.name ?? '');

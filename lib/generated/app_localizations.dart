@@ -1229,7 +1229,7 @@ abstract class AppLocalizations {
   /// No description provided for @delivery_fee.
   ///
   /// In en, this message translates to:
-  /// **'Deliver laborer to home (100 SR fee)'**
+  /// **'Deliver laborer to home '**
   String get delivery_fee;
 
   /// No description provided for @riyal.
@@ -1913,7 +1913,7 @@ abstract class AppLocalizations {
   /// No description provided for @uploadContract.
   ///
   /// In en, this message translates to:
-  /// **'Upload Contract PDF'**
+  /// **'Attachement'**
   String get uploadContract;
 
   /// No description provided for @customServicePackage.
