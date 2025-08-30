@@ -30,8 +30,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
 
-  final nameOnlyRegex =
-      RegExp(r'^(?=.{3,}$)[a-zA-Z\u0600-\u06FF]+(?: [a-zA-Z\u0600-\u06FF]+)*$');
+  // At least 3 letters (English or Arabic), spaces allowed between names
+// ≥3 letters (Arabic or English) anywhere in the value (spaces ignored)
+  final minThreeLettersRegex = RegExp(r'(?:[a-zA-Z\u0621-\u064A]){3,}');
+
+// Detect any illegal char: not English letter, not Arabic letter, not space
+  final hasIllegalCharsRegex = RegExp(r'[^a-zA-Z\u0621-\u064A ]');
 
   final numberOnlyRegex = RegExp(r'^\d+$');
   final phoneRegex = RegExp(r'^\+?[0-9\s\-\(\)]{7,20}$');
@@ -75,312 +79,326 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final isArabic = locale.languageCode == 'ar';
 
     return Directionality(
-  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-  child:  BackgroundContainer(
-      showBackButton: true,
-      topSectionHeight: MediaQuery.of(context).size.height * 0.16,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      topRightWidget: GestureDetector(
-        onTap: () {
-          final newLocale = isArabic ? const Locale('en') : const Locale('ar');
-          ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          child: SvgPicture.asset(
-            'assets/icons/language.svg',
-            color: const Color(0xFFFFA200),
-            width: 23,
-            height: 23,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: BackgroundContainer(
+        showBackButton: true,
+        topSectionHeight: MediaQuery.of(context).size.height * 0.16,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        topRightWidget: GestureDetector(
+          onTap: () {
+            final newLocale =
+                isArabic ? const Locale('en') : const Locale('ar');
+            ref.read(localeNotifierProvider.notifier).setLocale(newLocale);
+          },
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            child: SvgPicture.asset(
+              'assets/icons/language.svg',
+              color: const Color(0xFFFFA200),
+              width: 23,
+              height: 23,
+            ),
           ),
         ),
-      ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-            children: [
-              // Title
-              Center(
-              child: Text(
-                loc.getStarted,
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF10295C),
-                ),
-                textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-              ),
-            ),
-              const SizedBox(height: 24),
-
-              // Form fields
-              _buildTextField(
-                controller: _firstNameController,
-                label: loc.firstName,
-                hintText:
-                    isArabic ? 'أدخل الاسم الأول' : 'Enter your first name',
-                iconPath: 'assets/icons/person.svg',
-                isArabic: isArabic,
-                validator: (val) {
-                  if (val == null || val.isEmpty)
-                    return '${loc.firstName} is required';
-                  if (!nameOnlyRegex.hasMatch(val))
-                    return '${loc.firstName} must not contain special characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _middleNameController,
-                label: loc.middleName,
-                hintText:
-                    isArabic ? 'أدخل الاسم الأوسط' : 'Enter your middle name',
-                iconPath: 'assets/icons/person.svg',
-                isArabic: isArabic,
-                validator: (val) {
-                  if (val == null || val.isEmpty)
-                    return '${loc.middleName} is required';
-                  if (!nameOnlyRegex.hasMatch(val))
-                    return '${loc.middleName} must not contain special characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _lastNameController,
-                label: loc.lastName,
-                hintText:
-                    isArabic ? 'أدخل الاسم الأخير' : 'Enter your last name',
-                iconPath: 'assets/icons/person.svg',
-                isArabic: isArabic,
-                validator: (val) {
-                  if (val == null || val.isEmpty)
-                    return '${loc.lastName} is required';
-                  if (!nameOnlyRegex.hasMatch(val))
-                    return '${loc.lastName} must not contain special characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _nationalIdController,
-                label: "National ID",
-                hintText: isArabic
-                    ? 'أدخل رقم الهوية الوطنية'
-                    : 'Enter your national ID',
-                icon: Icons.badge_outlined,
-                keyboardType: TextInputType.number,
-                isArabic: isArabic,
-                validator: (val) {
-                  if (val == null || val.isEmpty)
-                    return 'National ID is required';
-                  if (!nationalIdRegex.hasMatch(val))
-                    return 'National ID must be 10 digits and start with 1 or 2';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _phoneController,
-                label: loc.phoneNumber,
-                hintText:
-                    isArabic ? 'أدخل رقم الهاتف' : 'Enter your phone number',
-                iconPath: 'assets/icons/phone.svg',
-                keyboardType: TextInputType.phone,
-                isArabic: isArabic,
-                validator: (val) {
-                  if (val == null || val.isEmpty)
-                    return '${loc.phoneNumber} is required';
-                  if (!phoneRegex.hasMatch(val))
-                    return 'Enter valid Saudi ${loc.phoneNumber}';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _emailController,
-                label: loc.email,
-                hintText:
-                    isArabic ? 'أدخل البريد الإلكتروني' : 'Enter your email',
-                iconPath: 'assets/icons/email.svg',
-                keyboardType: TextInputType.emailAddress,
-                isArabic: isArabic,
-                validator: (val) {
-                  if (val == null || val.isEmpty)
-                    return '${loc.email} is required';
-                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                  return emailRegex.hasMatch(val) ? null : 'Invalid email';
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _passwordController,
-                label: loc.password,
-                hintText: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
-                iconPath: 'assets/icons/lock.svg',
-                isArabic: isArabic,
-                validator: (val) => val != null && val.length >= 6
-                    ? null
-                    : 'Password must be at least 6 characters',
-                isObscured: !_showPassword,
-                toggleVisibility: () {
-                  setState(() {
-                    _showPassword = !_showPassword;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _confirmPasswordController,
-                label: loc.confirmPassword,
-                hintText:
-                    isArabic ? 'تأكيد كلمة المرور' : 'Confirm your password',
-                iconPath: 'assets/icons/lock.svg',
-                isArabic: isArabic,
-                validator: (val) => val == _passwordController.text
-                    ? null
-                    : 'Passwords do not match',
-                isObscured: !_showConfirmPassword,
-                toggleVisibility: () {
-                  setState(() {
-                    _showConfirmPassword = !_showConfirmPassword;
-                  });
-                },
-              ),
-              const SizedBox(height: 32),
-
-              // Sign Up Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: authState.isLoading
-                      ? null
-                      : () {
-                          // Trim all inputs before validation and usage
-                          _firstNameController.text =
-                              _firstNameController.text.trim();
-                          _middleNameController.text =
-                              _middleNameController.text.trim();
-                          _lastNameController.text =
-                              _lastNameController.text.trim();
-                          _nationalIdController.text =
-                              _nationalIdController.text.trim();
-
-                          if (_formKey.currentState!.validate()) {
-                            ref.read(authProvider.notifier).signUp(
-                                  userName: _phoneController.text,
-                                  firstName: _firstNameController.text,
-                                  middleName: _middleNameController.text,
-                                  lastName: _lastNameController.text,
-                                  phoneNumber: _phoneController.text,
-                                  email: _emailController.text,
-                                  password: _passwordController.text,
-                                  nationalId: _nationalIdController.text,
-                                );
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF06214B),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          loc.signUp,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-
-              // Error message
-              if (authState.errorMessage.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error_outline,
-                          color: Colors.red.shade600, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          authState.errorMessage,
-                          style: TextStyle(
-                            color: Colors.red.shade700,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 24),
-
-              // Login navigation
-              Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment:
+                  isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
               children: [
-                Text(
-                  "${loc.alreadyHaveAccount} ",
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
+                // Title
+                Center(
                   child: Text(
-                    loc.login,
+                    loc.getStarted,
                     style: const TextStyle(
-                      color: Color(0xFF4A90E2),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF10295C),
                     ),
-                    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        isArabic ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 ),
+                const SizedBox(height: 24),
+
+                // Form fields
+                _buildTextField(
+                  controller: _firstNameController,
+                  label: loc.firstName,
+                  hintText:
+                      isArabic ? 'أدخل الاسم الأول' : 'Enter your first name',
+                  iconPath: 'assets/icons/person.svg',
+                  isArabic: isArabic,
+                  validator: (val) =>
+                      _validateName(val, loc.firstName, isArabic),
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _middleNameController,
+                  label: loc.middleName,
+                  hintText:
+                      isArabic ? 'أدخل الاسم الأوسط' : 'Enter your middle name',
+                  iconPath: 'assets/icons/person.svg',
+                  isArabic: isArabic,
+                  validator: (val) =>
+                      _validateName(val, loc.middleName, isArabic),
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _lastNameController,
+                  label: loc.lastName,
+                  hintText:
+                      isArabic ? 'أدخل الاسم الأخير' : 'Enter your last name',
+                  iconPath: 'assets/icons/person.svg',
+                  isArabic: isArabic,
+                  validator: (val) =>
+                      _validateName(val, loc.lastName, isArabic),
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _nationalIdController,
+                  label: "National ID",
+                  hintText: isArabic
+                      ? 'أدخل رقم الهوية الوطنية'
+                      : 'Enter your national ID',
+                  icon: Icons.badge_outlined,
+                  keyboardType: TextInputType.number,
+                  isArabic: isArabic,
+                  validator: (val) {
+                    if (val == null || val.isEmpty)
+                      return 'National ID is required';
+                    if (!nationalIdRegex.hasMatch(val))
+                      return 'National ID must be 10 digits and start with 1 or 2';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _phoneController,
+                  label: loc.phoneNumber,
+                  hintText:
+                      isArabic ? 'أدخل رقم الهاتف' : 'Enter your phone number',
+                  iconPath: 'assets/icons/phone.svg',
+                  keyboardType: TextInputType.phone,
+                  isArabic: isArabic,
+                  validator: (val) {
+                    if (val == null || val.isEmpty)
+                      return '${loc.phoneNumber} is required';
+                    if (!phoneRegex.hasMatch(val))
+                      return 'Enter valid Saudi ${loc.phoneNumber}';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _emailController,
+                  label: loc.email,
+                  hintText:
+                      isArabic ? 'أدخل البريد الإلكتروني' : 'Enter your email',
+                  iconPath: 'assets/icons/email.svg',
+                  keyboardType: TextInputType.emailAddress,
+                  isArabic: isArabic,
+                  validator: (val) {
+                    if (val == null || val.isEmpty)
+                      return '${loc.email} is required';
+                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                    return emailRegex.hasMatch(val) ? null : 'Invalid email';
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _passwordController,
+                  label: loc.password,
+                  hintText:
+                      isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
+                  iconPath: 'assets/icons/lock.svg',
+                  isArabic: isArabic,
+                  validator: (val) => val != null && val.length >= 6
+                      ? null
+                      : 'Password must be at least 6 characters',
+                  isObscured: !_showPassword,
+                  toggleVisibility: () {
+                    setState(() {
+                      _showPassword = !_showPassword;
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildTextField(
+                  controller: _confirmPasswordController,
+                  label: loc.confirmPassword,
+                  hintText:
+                      isArabic ? 'تأكيد كلمة المرور' : 'Confirm your password',
+                  iconPath: 'assets/icons/lock.svg',
+                  isArabic: isArabic,
+                  validator: (val) => val == _passwordController.text
+                      ? null
+                      : 'Passwords do not match',
+                  isObscured: !_showConfirmPassword,
+                  toggleVisibility: () {
+                    setState(() {
+                      _showConfirmPassword = !_showConfirmPassword;
+                    });
+                  },
+                ),
+                const SizedBox(height: 32),
+
+                // Sign Up Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: authState.isLoading
+                        ? null
+                        : () {
+                            // Trim all inputs before validation and usage
+                            _firstNameController.text =
+                                _firstNameController.text.trim();
+                            _middleNameController.text =
+                                _middleNameController.text.trim();
+                            _lastNameController.text =
+                                _lastNameController.text.trim();
+                            _nationalIdController.text =
+                                _nationalIdController.text.trim();
+
+                            if (_formKey.currentState!.validate()) {
+                              ref.read(authProvider.notifier).signUp(
+                                    userName: _phoneController.text,
+                                    firstName: _firstNameController.text,
+                                    middleName: _middleNameController.text,
+                                    lastName: _lastNameController.text,
+                                    phoneNumber: _phoneController.text,
+                                    email: _emailController.text,
+                                    password: _passwordController.text,
+                                    nationalId: _nationalIdController.text,
+                                  );
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF06214B),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: authState.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            loc.signUp,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+
+                // Error message
+                if (authState.errorMessage.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline,
+                            color: Colors.red.shade600, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            authState.errorMessage,
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // Login navigation
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  textDirection:
+                      isArabic ? TextDirection.rtl : TextDirection.ltr,
+                  children: [
+                    Text(
+                      "${loc.alreadyHaveAccount} ",
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                      textDirection:
+                          isArabic ? TextDirection.rtl : TextDirection.ltr,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        loc.login,
+                        style: const TextStyle(
+                          color: Color(0xFF4A90E2),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textDirection:
+                            isArabic ? TextDirection.rtl : TextDirection.ltr,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Extra bottom padding for safe scrolling
+                const SizedBox(height: 32),
               ],
             ),
-
-
-              // Extra bottom padding for safe scrolling
-              const SizedBox(height: 32),
-            ],
           ),
         ),
       ),
-  ),
     );
+  }
+
+  String? _validateName(String? val, String fieldLabel, bool isArabic) {
+    if (val == null || val.trim().isEmpty) {
+      return isArabic ? '$fieldLabel مطلوب' : '$fieldLabel is required';
+    }
+    final v = val.trim();
+
+    // Special characters / numbers
+    if (hasIllegalCharsRegex.hasMatch(v)) {
+      return isArabic
+          ? '$fieldLabel يجب ألا يحتوي على أرقام أو رموز خاصة'
+          : '$fieldLabel must not contain numbers or special characters';
+    }
+
+    // At least 3 letters (Arabic/English)
+    if (!minThreeLettersRegex.hasMatch(v)) {
+      return isArabic
+          ? '$fieldLabel يجب أن يتكوّن من 3 أحرف على الأقل'
+          : '$fieldLabel must have at least 3 letters';
+    }
+
+    return null;
   }
 
   Widget _buildTextField({
@@ -408,11 +426,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         hintText: hintText,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         prefixIcon: iconPath != null
-        ? isArabic 
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
+            ? isArabic
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SvgPicture.asset(
+                          iconPath,
+                          color: Colors.grey.shade400,
+                          width: 16,
+                          height: 16,
+                        ),
+                      ),
+                    ],
+                  )
+                : Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: SvgPicture.asset(
                       iconPath,
@@ -420,25 +449,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       width: 16,
                       height: 16,
                     ),
-                  ),
-                ],
-              )
-            : Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SvgPicture.asset(
-                  iconPath,
-                  color: Colors.grey.shade400,
-                  width: 16,
-                  height: 16,
-                ),
-              )
-        : icon != null
-            ? Icon(
-                icon,
-                color: Colors.grey.shade400,
-                size: 16,
-              )
-            : null,
+                  )
+            : icon != null
+                ? Icon(
+                    icon,
+                    color: Colors.grey.shade400,
+                    size: 16,
+                  )
+                : null,
         suffixIcon: toggleVisibility != null
             ? IconButton(
                 icon: Icon(
@@ -492,11 +510,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           fontWeight: FontWeight.w500,
         ),
         hintStyle: TextStyle(
-                  color: Color(0xFFD8DBDB),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w300,
-                  fontFamily: 'poppins'
-                ),
+            color: Color(0xFFD8DBDB),
+            fontSize: 16,
+            fontWeight: FontWeight.w300,
+            fontFamily: 'poppins'),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,

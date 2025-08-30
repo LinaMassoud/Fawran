@@ -1993,6 +1993,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to logout?'**
   String get logoutconfirm;
+
+  /// No description provided for @visits.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits'**
+  String get visits;
+
+  /// No description provided for @todayVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Today Visits'**
+  String get todayVisits;
+
+  /// No description provided for @comingVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming Visits'**
+  String get comingVisits;
+
+  /// No description provided for @reschedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Reschedule'**
+  String get reschedule;
+
+  /// No description provided for @from.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get from;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @noVisitsToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No visits scheduled for today'**
+  String get noVisitsToday;
+
+  /// No description provided for @noUpcomingVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming visits scheduled'**
+  String get noUpcomingVisits;
 }
 
 class _AppLocalizationsDelegate

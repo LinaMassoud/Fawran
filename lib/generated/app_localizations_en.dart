@@ -964,4 +964,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoutconfirm => 'Are you sure you want to logout?';
+
+  @override
+  String get visits => 'Visits';
+
+  @override
+  String get todayVisits => 'Today Visits';
+
+  @override
+  String get comingVisits => 'Coming Visits';
+
+  @override
+  String get reschedule => 'Reschedule';
+
+  @override
+  String get from => 'From';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get noVisitsToday => 'No visits scheduled for today';
+
+  @override
+  String get noUpcomingVisits => 'No upcoming visits scheduled';
 }
