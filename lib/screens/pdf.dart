@@ -46,20 +46,21 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   bool isLoading = true;
   final _storage = const FlutterSecureStorage();
   String? contractId;
-  double deliverFee = 0.0;
+  int deliverFee = 0;
   bool _hasSigned = false;
   File? _signedPdfFile;
   final GlobalKey<SfSignaturePadState> signatureKey = GlobalKey();
   Uint8List? _signatureBytes;
   Map<String, dynamic>? args;
   final PdfViewerController _pdfViewerController = PdfViewerController();
+  bool _jumpToLastPageAfterReload = false;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
       contractId = args?['contract_Id'] as String;
-      deliverFee = args?['delivery_fee'] as double;
+      deliverFee = args?['delivery_fee'] as int;
       _loadAndGeneratePdf(contractId);
     });
   }
@@ -190,38 +191,80 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
     }
   }
 
-  Future<void> _saveAndUploadPdf() async {
-    if (original == null) return;
+  Future<void> _saveAndShowPdf() async {
+    try {
+      if (original == null) return;
 
-    if (signatureKey.currentState != null) {
-      final data = await signatureKey.currentState!.toImage(pixelRatio: 3.0);
-      final bytes = await data.toByteData(format: ui.ImageByteFormat.png);
-      _signatureBytes = bytes!.buffer.asUint8List();
+      // Capture signature
+      if (signatureKey.currentState != null) {
+        final data = await signatureKey.currentState!.toImage(pixelRatio: 1);
+        final bytes = await data.toByteData(format: ui.ImageByteFormat.png);
+        _signatureBytes = bytes!.buffer.asUint8List();
+      }
+
+      if (_signatureBytes == null) return;
+
+      // Load PDF
+      final pdfBytes = await File(original!).readAsBytes();
+      final pdfDoc = PdfDocument(inputBytes: pdfBytes);
+
+      // Get the last page
+      final lastPageIndex = pdfDoc.pages.count - 1;
+      final page = pdfDoc.pages[lastPageIndex];
+      final pageHeight = page.size.height;
+      // Extract text lines on last page
+      final textExtractor = PdfTextExtractor(pdfDoc);
+      List<TextLine> lines = textExtractor.extractTextLines(
+          startPageIndex: lastPageIndex, endPageIndex: lastPageIndex);
+      lines = lines.sublist(lines.length - 4);
+
+      for (final line in lines) {
+        if (line.text.contains('{{SIGN_HERE}}')) {
+          final bounds = line.bounds;
+          final y = pageHeight - bounds.top - bounds.height;
+
+// Draw white rectangle to cover placeholder
+          page.graphics.drawRectangle(
+            bounds: Rect.fromLTWH(bounds.left - page.size.width * .6,
+                bounds.top, page.size.width * .14, page.size.height * .02),
+            pen: PdfPen(PdfColor(255, 255, 255)),
+            brush: PdfBrushes.white,
+          );
+
+// Draw signature on top
+          page.graphics.drawImage(
+            PdfBitmap(_signatureBytes!),
+            Rect.fromLTWH(bounds.left - page.size.width * .6, bounds.top,
+                page.size.width * .2, page.size.height * .09),
+          );
+
+          // Exit the loop since placeholder is replaced
+          break;
+        }
+      }
+
+      // Save updated PDF
+      final signedBytes = pdfDoc.saveSync();
+      pdfDoc.dispose();
+
+      final dir = await getApplicationDocumentsDirectory();
+      final signedPath = "${dir.path}/signed_contract.pdf";
+      final signedFile = File(signedPath);
+      await signedFile.writeAsBytes(signedBytes);
+
+      setState(() {
+        _signedPdfFile = signedFile;
+        pdfPath = signedPath;
+        _signatureBytes = null;
+        _hasSigned = true;
+        _jumpToLastPageAfterReload = true;
+      });
+
+      // Clear signature pad
+      signatureKey.currentState?.clear();
+    } catch (ex) {
+      print('Error signing PDF: $ex');
     }
-
-    final pdfDoc = PdfDocument(inputBytes: File(original!).readAsBytesSync());
-    final page = pdfDoc.pages[pdfDoc.pages.count - 1];
-
-    if (_signatureBytes != null) {
-      page.graphics.drawImage(
-        PdfBitmap(_signatureBytes!),
-        const Rect.fromLTWH(100, 600, 200, 80),
-      );
-    }
-
-    final signedBytes = pdfDoc.saveSync();
-    pdfDoc.dispose();
-
-    final dir = await getApplicationDocumentsDirectory();
-    final signedPath = "${dir.path}/signed_contract.pdf";
-    await File(signedPath).writeAsBytes(signedBytes);
-
-    setState(() {
-      pdfPath = signedPath;
-      _signatureBytes = null;
-    });
-
-    await _uploadPdf(signedPath);
   }
 
   Future<void> _uploadPdf(String filePath) async {
@@ -243,61 +286,6 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
     } catch (e) {
       print("Upload error: $e");
     }
-  }
-
-  Future<void> _saveAndShowPdf() async {
-    if (original == null) return;
-
-    // Capture the signature
-    if (signatureKey.currentState != null) {
-      final data = await signatureKey.currentState!.toImage(pixelRatio: 3.0);
-      final bytes = await data.toByteData(format: ui.ImageByteFormat.png);
-      _signatureBytes = bytes!.buffer.asUint8List();
-    }
-
-    if (_signatureBytes == null) return; // Nothing drawn
-
-    // Load PDF and add signature
-    final pdfDoc = PdfDocument(inputBytes: File(original!).readAsBytesSync());
-    final page = pdfDoc.pages[pdfDoc.pages.count - 1];
-
-    final pageSize = page.getClientSize();
-    const double sigWidth = 100;
-    const double sigHeight = 50;
-    final double x = pageSize.width * 0.22; // 25% from the left edge
-    final double y = pageSize.height * 0.62;
-
-    page.graphics.drawImage(
-      PdfBitmap(_signatureBytes!),
-      Rect.fromLTWH(x, y, sigWidth, sigHeight),
-    );
-
-    // Save the updated PDF
-    final signedBytes = pdfDoc.saveSync();
-    pdfDoc.dispose();
-
-    final dir = await getApplicationDocumentsDirectory();
-    final signedPath = "${dir.path}/signed_contract.pdf";
-    final signedFile = File(signedPath);
-    await signedFile.writeAsBytes(signedBytes);
-
-    // Store the file in state for later upload
-    setState(() {
-      _signedPdfFile = signedFile;
-      pdfPath = signedPath; // refresh viewer
-      _signatureBytes = null;
-      _hasSigned = true;
-    });
-
-    // Clear signature pad
-    signatureKey.currentState?.clear();
-
-    // ⬇️ Jump to last page in viewer
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_pdfViewerController.pageCount > 0) {
-        _pdfViewerController.jumpToPage(_pdfViewerController.pageCount);
-      }
-    });
   }
 
   Future<void> uploadSignedPdf() async {
@@ -359,8 +347,11 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
                         controller: _pdfViewerController,
                         onDocumentLoaded: (details) {
                           // Auto-jump when loaded
-                          _pdfViewerController
-                              .jumpToPage(details.document.pages.count);
+                          if (_jumpToLastPageAfterReload) {
+                            _jumpToLastPageAfterReload = false; // reset flag
+                            _pdfViewerController
+                                .jumpToPage(_pdfViewerController.pageCount);
+                          }
                         },
                         onDocumentLoadFailed: (details) {
                           print("PDF load failed: ${details.error}");
