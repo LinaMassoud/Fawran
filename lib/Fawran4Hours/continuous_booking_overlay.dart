@@ -621,15 +621,121 @@ void _showSuccessDialog(String message) {
   });
 }
 
-  void _onWorkerValidationSuccess(List<int> workerIds) {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
+  void _onWorkerValidationSuccess(List<int> workerIds) async {
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
     if (mounted) {
       setState(() {
         _validatedWorkerIds = workerIds;
       });
-      print('✅ Worker IDs received in overlay: $workerIds');
+      print('Worker IDs received in overlay: $workerIds');
+      
+      // Show loading dialog immediately after worker validation
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Creating your service contract...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      
+      // Wait a moment to ensure the dialog is shown
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      // Automatically proceed with contract creation
+      await _proceedWithContractCreation();
     }
   });
+}
+
+Future<void> _proceedWithContractCreation() async {
+  final selectedAddress = ref.read(selectedAddressProvider);
+
+  final totalPrice = widget.isCustomBooking
+      ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
+      : (_finalPriceFromDateSelection ?? widget.package!.finalPrice);
+
+  final originalPrice = widget.isCustomBooking
+      ? _calculateOriginalPrice()
+      : widget.package!.packagePrice ?? widget.package!.finalPrice;
+
+  // Create initial BookingData
+  final initialBookingData = BookingData(
+    selectedDates: selectedDates,
+    totalPrice: totalPrice,
+    originalPrice: originalPrice,
+    selectedAddress: selectedAddress != null
+        ? _extractLocationName(selectedAddress.cardText)
+        : 'No Address',
+    workerCount: workerCount,
+    contractDuration: contractDuration,
+    visitsPerWeek: visitsPerWeek,
+    selectedNationality: selectedNationality,
+    packageName: widget.isCustomBooking
+        ? AppLocalizations.of(context)!.customServicePackage
+        : widget.package!.packageName,
+  );
+
+  // Create contract
+  final contractResult = await _createContract(initialBookingData);
+
+  // Close loading dialog
+  if (Navigator.canPop(context)) {
+    Navigator.of(context).pop();
+  }
+
+  // Create final BookingData with contract_id
+  final finalBookingData = BookingData(
+    selectedDates: selectedDates,
+    totalPrice: totalPrice,
+    originalPrice: originalPrice,
+    selectedAddress: selectedAddress != null
+        ? _extractLocationName(selectedAddress.cardText)
+        : 'No Address',
+    workerCount: workerCount,
+    contractDuration: contractDuration,
+    visitsPerWeek: visitsPerWeek,
+    selectedNationality: selectedNationality,
+    packageName: widget.isCustomBooking
+        ? AppLocalizations.of(context)!.customServicePackage
+        : widget.package!.packageName,
+    contractId: contractResult['success'] == true ? contractResult['contract_id'] : null,
+  );
+
+  print("bookingData total price after contract creation = ${finalBookingData.totalPrice}");
+  print("bookingData contract_id = ${finalBookingData.contractId}");
+  
+  // Close overlay and trigger callback
+  await _animationController.reverse();
+  Navigator.pop(context);
+
+  if (contractResult['success'] == true && widget.onBookingCompleted != null) {
+    widget.onBookingCompleted!(finalBookingData);
+  }
 }
 
   void _updateContractDuration(int newDuration) {
@@ -948,12 +1054,72 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
   }
 }
 
+void _handleDateSelectionNext() async {
+  // Show loading state
+  setState(() {
+    _isCompletingPurchase = true;
+  });
 
+  // Wait for worker validation to complete and get worker IDs
+  // The validation is triggered by the DateSelectionStep internally
+  // We need to wait for the worker IDs to be set
+  
+  // Wait up to 30 seconds for worker IDs to be received
+  int attempts = 0;
+  const maxAttempts = 60; // 30 seconds with 500ms intervals
+  
+  while (_validatedWorkerIds == null && attempts < maxAttempts) {
+    await Future.delayed(Duration(milliseconds: 500));
+    attempts++;
+  }
+  
+  if (_validatedWorkerIds == null) {
+    // Reset loading state
+    setState(() {
+      _isCompletingPurchase = false;
+    });
+    
+    // Show error message
+    if (mounted) {
+      FlashyFlushbar(
+        leadingWidget: const Icon(
+          Icons.error_outline,
+          color: Colors.white,
+          size: 24,
+        ),
+        message: 'Worker validation failed. Please try again.',
+        duration: const Duration(seconds: 3),
+        backgroundColor: Colors.red,
+        messageStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ).show();
+    }
+    return;
+  }
+
+  // Worker IDs received, proceed with contract creation
+  print('✅ Worker validation completed. Worker IDs: $_validatedWorkerIds');
+  _completePurchase();
+}
 
   void _completePurchase() async {
   if (_isCompletingPurchase) return; // Prevent duplicate calls
   _isCompletingPurchase = true;
   final selectedAddress = ref.read(selectedAddressProvider);
+
+  // Ensure we have worker IDs before proceeding
+  if (_validatedWorkerIds == null) {
+    print('❌ No worker IDs available for contract creation');
+    setState(() {
+      _isCompletingPurchase = false;
+    });
+    return;
+  }
+
+  print('🚀 Creating contract with worker IDs: $_validatedWorkerIds');
 
   // Use the total price from ServiceDetailsStep for custom booking
   final totalPrice = widget.isCustomBooking
@@ -1298,7 +1464,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
                                       selectedAddress: selectedAddress,
                                       onDatesChanged: _updateSelectedDates,
                                       onNextPressed: selectedDates.isNotEmpty
-                                          ? _completePurchase
+                                          ? _handleDateSelectionNext
                                           : null,
                                       maxSelectableDates: workerCount,
                                       selectedDays: selectedDays,
