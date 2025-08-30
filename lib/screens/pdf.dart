@@ -42,6 +42,7 @@ class HtmlToPdfScreen extends ConsumerStatefulWidget {
 
 class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   String? pdfPath;
+  String? original;
   bool isLoading = true;
   final _storage = const FlutterSecureStorage();
   String? contractId;
@@ -51,7 +52,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   final GlobalKey<SfSignaturePadState> signatureKey = GlobalKey();
   Uint8List? _signatureBytes;
   Map<String, dynamic>? args;
-
+  final PdfViewerController _pdfViewerController = PdfViewerController();
   @override
   void initState() {
     super.initState();
@@ -180,6 +181,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
 
       setState(() {
         pdfPath = file.path;
+        original = file.path;
         isLoading = false;
       });
     } catch (e) {
@@ -189,7 +191,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   }
 
   Future<void> _saveAndUploadPdf() async {
-    if (pdfPath == null) return;
+    if (original == null) return;
 
     if (signatureKey.currentState != null) {
       final data = await signatureKey.currentState!.toImage(pixelRatio: 3.0);
@@ -197,7 +199,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
       _signatureBytes = bytes!.buffer.asUint8List();
     }
 
-    final pdfDoc = PdfDocument(inputBytes: File(pdfPath!).readAsBytesSync());
+    final pdfDoc = PdfDocument(inputBytes: File(original!).readAsBytesSync());
     final page = pdfDoc.pages[pdfDoc.pages.count - 1];
 
     if (_signatureBytes != null) {
@@ -244,7 +246,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
   }
 
   Future<void> _saveAndShowPdf() async {
-    if (pdfPath == null) return;
+    if (original == null) return;
 
     // Capture the signature
     if (signatureKey.currentState != null) {
@@ -256,14 +258,14 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
     if (_signatureBytes == null) return; // Nothing drawn
 
     // Load PDF and add signature
-    final pdfDoc = PdfDocument(inputBytes: File(pdfPath!).readAsBytesSync());
+    final pdfDoc = PdfDocument(inputBytes: File(original!).readAsBytesSync());
     final page = pdfDoc.pages[pdfDoc.pages.count - 1];
 
     final pageSize = page.getClientSize();
-    final double sigWidth = 100;
-    final double sigHeight = 50;
-    final double x = 150; // adjust to align perfectly
-    final double y = pageSize.height - 490;
+    const double sigWidth = 100;
+    const double sigHeight = 50;
+    final double x = pageSize.width * 0.22; // 25% from the left edge
+    final double y = pageSize.height * 0.62;
 
     page.graphics.drawImage(
       PdfBitmap(_signatureBytes!),
@@ -289,6 +291,13 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
 
     // Clear signature pad
     signatureKey.currentState?.clear();
+
+    // ⬇️ Jump to last page in viewer
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pdfViewerController.pageCount > 0) {
+        _pdfViewerController.jumpToPage(_pdfViewerController.pageCount);
+      }
+    });
   }
 
   Future<void> uploadSignedPdf() async {
@@ -347,6 +356,12 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
                     Expanded(
                       child: SfPdfViewer.file(
                         File(pdfPath!),
+                        controller: _pdfViewerController,
+                        onDocumentLoaded: (details) {
+                          // Auto-jump when loaded
+                          _pdfViewerController
+                              .jumpToPage(details.document.pages.count);
+                        },
                         onDocumentLoadFailed: (details) {
                           print("PDF load failed: ${details.error}");
                         },
