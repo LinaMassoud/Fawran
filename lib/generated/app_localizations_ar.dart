@@ -439,7 +439,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutCompany => 'عن الشركة';
 
   @override
-  String get ticketsSupport => 'دعم التذاكر';
+  String get ticketsSupport => 'تذاكر الدعم';
 
   @override
   String get companyBranches => 'فروع الشركة';
@@ -963,4 +963,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get logoutconfirm => 'هل متأكد انك تريد تسجيل الخروج؟';
+
+  @override
+  String get visits => 'الزيارات';
+
+  @override
+  String get todayVisits => 'زيارات اليوم';
+
+  @override
+  String get comingVisits => 'الزيارات القادمة';
+
+  @override
+  String get reschedule => 'إعادة جدولة';
+
+  @override
+  String get from => 'من';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get noVisitsToday => 'لا توجد زيارات مجدولة لليوم';
+
+  @override
+  String get noUpcomingVisits => 'لا توجد زيارات قادمة مجدولة';
 }
