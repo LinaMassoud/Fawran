@@ -217,7 +217,6 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
       final textExtractor = PdfTextExtractor(pdfDoc);
       List<TextLine> lines = textExtractor.extractTextLines(
           startPageIndex: lastPageIndex, endPageIndex: lastPageIndex);
-      lines = lines.sublist(lines.length - 4);
 
       for (final line in lines) {
         if (line.text.contains('{{SIGN_HERE}}')) {
