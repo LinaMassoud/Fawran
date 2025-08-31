@@ -883,21 +883,61 @@ void _setStartDateFromSelectedDays([List<String>? selectedDays]) {
 
   void _selectDate(DateTime date) {
   setState(() {
-    // If we have selected days, don't allow manual date selection
+    // If we have selected days, handle auto-generated dates differently
     if (widget.selectedDays.isNotEmpty && !_isSelectingStartDate) {
-      // Only allow changing the start date or deselecting dates
+      // Allow changing the start date
       if (date == _userSelectedStartDate) {
         _showStartDateChangeDialog();
         return;
       }
       
-      // Show message that dates are auto-selected based on days
-      _showSnackBar('Dates are automatically selected based on your chosen days');
-      return;
+      // Allow deselecting auto-generated dates
+      if (_selectedDates.contains(date)) {
+        _selectedDates.remove(date);
+        _updateWeeklyVisitCounts();
+        widget.onDatesChanged(_selectedDates);
+        return;
+      } else {
+        // For adding new dates when days are selected, apply strict validation
+        
+        // Don't allow selecting Fridays
+        if (date.weekday == 5) {
+          return;
+        }
+        
+        // Check if date is within contract period
+        if (_contractStartDate != null && _contractEndDate != null) {
+          if (date.isBefore(_contractStartDate!) || date.isAfter(_contractEndDate!)) {
+            return;
+          }
+        }
+        
+        // Check if we've reached the total visit limit
+        if (_selectedDates.length >= _totalAllowedVisits) {
+          return;
+        }
+        
+        // Check if the week is already full (dates will be disabled by _isDateSelectable)
+        if (_isWeekFull(date)) {
+          return; // Date should already be disabled, but just in case
+        }
+        
+        // Add the manually selected date
+        _selectedDates.add(date);
+        _selectedDates.sort();
+        _updateWeeklyVisitCounts();
+        widget.onDatesChanged(_selectedDates);
+        return;
+      }
     }
     
     // Original logic for when no days are selected or still selecting start date
     if (_isSelectingStartDate) {
+      // Don't allow Friday as start date
+      if (date.weekday == 5) {
+        return;
+      }
+      
       _userSelectedStartDate = date;
       _selectedDates.clear();
       _isSelectingStartDate = false;
@@ -913,30 +953,42 @@ void _setStartDateFromSelectedDays([List<String>? selectedDays]) {
       return;
     }
 
-    // Rest of the original logic for manual selection when no days are selected
+    // If clicking on the start date, allow user to change it
     if (date == _userSelectedStartDate) {
-      _resetToStartDateSelection();
+      _showStartDateChangeDialog();
       return;
     }
 
-    // Manual date selection/deselection (only when no days are selected)
+    // Don't allow selecting Fridays for regular visits
+    if (date.weekday == 5) {
+      _showSnackBar('Friday is a holiday and cannot be selected');
+      return;
+    }
+
+    // Regular date selection for visits (only when no days are selected)
     if (_selectedDates.contains(date)) {
       _selectedDates.remove(date);
     } else {
-      // Check constraints before adding
+      // Check if we've reached the total visit limit
       if (_selectedDates.length >= _totalAllowedVisits) {
         _showSnackBar('Maximum $_totalAllowedVisits visits allowed for this contract');
         return;
       }
 
-      if (_isWeekFull(date)) {
+      // FIX: Check week capacity BEFORE adding the date
+      // Include ALL dates in the week count (including start date)
+      String weekKey = _getWeekKey(date);
+      int currentWeekCount = _selectedDates.where((selectedDate) => 
+          _getWeekKey(selectedDate) == weekKey
+      ).length;
+      
+      if (currentWeekCount >= _visitsPerWeekCount) {
         _showSnackBar('Maximum $_visitsPerWeekCount visits per week allowed');
         return;
       }
 
       _selectedDates.add(date);
     }
-    
     _selectedDates.sort();
     _updateWeeklyVisitCounts();
     widget.onDatesChanged(_selectedDates);
