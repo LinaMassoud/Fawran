@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -217,8 +218,7 @@ class _HtmlToPdfScreenState extends ConsumerState<HtmlToPdfScreen> {
       final textExtractor = PdfTextExtractor(pdfDoc);
       List<TextLine> lines = textExtractor.extractTextLines(
           startPageIndex: lastPageIndex, endPageIndex: lastPageIndex);
-      lines = lines.sublist(lines.length - 4);
-
+      lines = lines.sublist(max(0, lines.length - 4));
       for (final line in lines) {
         if (line.text.contains('{{SIGN_HERE}}')) {
           final bounds = line.bounds;
