@@ -1109,52 +1109,63 @@ void _showSnackBarWithShake(String message) {
 }
 
   bool _isDateSelectable(DateTime date) {
-    final dateOnly = DateTime(date.year, date.month, date.day);
-    final today = DateTime.now();
-    final todayOnly = DateTime(today.year, today.month, today.day);
+  final dateOnly = DateTime(date.year, date.month, date.day);
+  final today = DateTime.now();
+  final todayOnly = DateTime(today.year, today.month, today.day);
 
-    // ALWAYS disable Fridays - this is the first check to ensure no Friday can be selected
-    if (date.weekday == 5) return false;
+  // ALWAYS disable Fridays - this is the first check to ensure no Friday can be selected
+  if (date.weekday == 5) return false;
 
-    // If selecting start date, only allow today or future dates (but not Fridays - already checked above)
-    if (_isSelectingStartDate) {
-      return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
-    }
+  // If selecting start date, only allow today or future dates (but not Fridays - already checked above)
+  if (_isSelectingStartDate) {
+    return dateOnly.isAfter(todayOnly) || dateOnly.isAtSameMomentAs(todayOnly);
+  }
 
-    // Start date is always selectable (for changing) - but not if it's Friday (already checked above)
-    if (date == _userSelectedStartDate) {
-      return true;
-    }
-
-    // Check if date is within contract period
-    if (_contractStartDate != null && _contractEndDate != null) {
-      if (dateOnly.isBefore(_contractStartDate!) || dateOnly.isAfter(_contractEndDate!)) {
-        return false;
-      }
-    }
-
-    // Check if date is already selected
-    if (_selectedDates.contains(date)) {
-      return true; // Allow deselection
-    }
-
-    // Check if we've reached the total visit limit
-    if (_selectedDates.length >= _totalAllowedVisits) {
-      return false;
-    }
-
-    // Check if the week is already full
-    if (_isWeekFull(date)) {
-      return false;
-    }
-
-    // For package bookings, check if date matches selected days
-    if (!widget.isCustomBooking && !_isDateAllowedForPackage(date)) {
-      return false;
-    }
-
+  // Start date is always selectable (for changing) - but not if it's Friday (already checked above)
+  if (date == _userSelectedStartDate) {
     return true;
   }
+
+  // Check if date is within contract period
+  if (_contractStartDate != null && _contractEndDate != null) {
+    if (dateOnly.isBefore(_contractStartDate!) || dateOnly.isAfter(_contractEndDate!)) {
+      return false;
+    }
+  }
+
+  // Check if date is already selected
+  if (_selectedDates.contains(date)) {
+    return true; // Allow deselection
+  }
+
+  // Check if we've reached the total visit limit
+  if (_selectedDates.length >= _totalAllowedVisits) {
+    return false;
+  }
+
+  // Check if the week is already full
+  if (_isWeekFull(date)) {
+    return false;
+  }
+
+  // Special handling for single visit per week: disable other dates in the same week as start date
+  if (_visitsPerWeekCount == 1 && _userSelectedStartDate != null) {
+    String dateWeekKey = _getWeekKey(date);
+    String startDateWeekKey = _getWeekKey(_userSelectedStartDate!);
+    
+    // If this date is in the same week as the start date and it's not the start date itself
+    if (dateWeekKey == startDateWeekKey && date != _userSelectedStartDate) {
+      return false; // Disable other dates in the same week
+    }
+  }
+
+  // For package bookings, check if date matches selected days
+  if (!widget.isCustomBooking && !_isDateAllowedForPackage(date)) {
+    return false;
+  }
+
+  return true;
+}
 
   void _navigateToMonth(int monthOffset) {
     setState(() {
