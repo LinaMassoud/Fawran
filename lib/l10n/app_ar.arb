@@ -412,7 +412,10 @@
   "service": "الخدمة",
   "retry": "إعادة المحاولة",
   "noVisitsToday": "لا توجد زيارات مجدولة لليوم",
-  "noUpcomingVisits": "لا توجد زيارات قادمة مجدولة"
+  "noUpcomingVisits": "لا توجد زيارات قادمة مجدولة",
+
+  "searchCities": "ابحث عن المدن...",
+  "searchDistricts": "ابحث عن المناطق..."
 
 
 

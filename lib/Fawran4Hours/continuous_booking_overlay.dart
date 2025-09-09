@@ -138,6 +138,7 @@ double? _hourPrice;
   // Date Selection Data
   List<DateTime> selectedDates = [];
   int? _appliedPromotionId;
+  String? _appliedPromotionCode;
 
   @override
   void initState() {
@@ -724,6 +725,8 @@ Future<void> _proceedWithContractCreation() async {
         ? AppLocalizations.of(context)!.customServicePackage
         : widget.package!.packageName,
     contractId: contractResult['success'] == true ? contractResult['contract_id'] : null,
+    promotionCode: _appliedPromotionCode,
+  promotionId: _appliedPromotionId,
   );
 
   print("bookingData total price after contract creation = ${finalBookingData.totalPrice}");
@@ -783,6 +786,17 @@ Future<void> _proceedWithContractCreation() async {
         _appliedPromotionId = promotionId;
       });
       print('Updated promotion ID: $promotionId');
+    }
+  });
+}
+
+void _updatePromotionCode(String? promotionCode) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _appliedPromotionCode = promotionCode;
+      });
+      print('Updated promotion code: $promotionCode');
     }
   });
 }
@@ -1437,6 +1451,7 @@ void _handleDateSelectionNext() async {
                                       onDonePressed: _completePurchase,
                                       onNextPressed: null,
                                       onPromotionIdChanged: _updatePromotionId,
+                                      onPromotionCodeChanged: _updatePromotionCode,
                                       showBottomNavigation: true,
                                       totalPrice:
                                           _totalPriceFromServiceDetails ??
@@ -1482,6 +1497,7 @@ void _handleDateSelectionNext() async {
                                       onWorkerValidationSuccess: _onWorkerValidationSuccess,
                                       onPriceChanged: _updateFinalPrice,
                                       onPromotionIdChanged: _updatePromotionId,
+                                      onPromotionCodeChanged: _updatePromotionCode,
                                     ),
                             ],
                           ),

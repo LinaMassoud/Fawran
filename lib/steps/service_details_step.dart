@@ -27,6 +27,7 @@ class ServiceDetailsStep extends ConsumerStatefulWidget {
   final Function(List<String>) onSelectedDaysChanged;
   final Function(List<int>)? onWorkerIdsChanged;
   final Function(int?)? onPromotionIdChanged;
+  final Function(String?)? onPromotionCodeChanged;
   final VoidCallback? onSelectDatePressed;
   final VoidCallback? onDonePressed;
   final VoidCallback? onNextPressed;
@@ -85,6 +86,7 @@ class ServiceDetailsStep extends ConsumerStatefulWidget {
     this.onHourPriceChanged,
     this.onPriceVatChanged,
     this.onPromotionIdChanged,
+    this.onPromotionCodeChanged,
   }) : super(key: key);
 
   @override
@@ -143,6 +145,8 @@ TextEditingController _couponController = TextEditingController();
 Address? _previousAddress;
 
 int? _appliedPromotionId;
+
+String _appliedPromotionCode = '';
 
   @override
 void initState() {
@@ -302,6 +306,15 @@ void _resetAllFieldsToDefaults() {
   }
   
   print('✅ [RESET] All fields reset to defaults');
+}
+
+bool _areAllFieldsCompleted() {
+  return widget.selectedNationality.isNotEmpty &&
+         widget.workerCount > 0 &&
+         widget.contractDuration > 0 &&
+         widget.selectedTime.isNotEmpty &&
+         widget.visitDuration.isNotEmpty &&
+         widget.visitsPerWeek > 0;
 }
 
 Future<void> _loadContractDurations() async {
@@ -489,6 +502,7 @@ Future<void> _validateCouponCode() async {
         _isCouponApplied = true;
         _couponMessage = response['message'] ?? 'Coupon applied successfully!';
         _appliedPromotionId = promotionId;
+        _appliedPromotionCode = _couponCode.trim();
         
         // Update the prices with coupon discount
         _apiFinalPricePerVisit = newFinalPrice;
@@ -501,6 +515,10 @@ Future<void> _validateCouponCode() async {
       if (widget.onPromotionIdChanged != null && promotionId != null) {
         widget.onPromotionIdChanged!(promotionId);
       }
+
+      if (widget.onPromotionCodeChanged != null) {
+      widget.onPromotionCodeChanged!(_appliedPromotionCode);
+    }
 
       // Recalculate total price with new discounted price
       if (_internalSelectedDates.isNotEmpty) {
@@ -553,6 +571,7 @@ void _removeCoupon() {
     _couponCode = '';
     _couponController.clear();
     _appliedPromotionId = null;
+    _appliedPromotionCode = '';
     
     // Restore original prices
     if (_originalFinalPrice > 0) {
@@ -583,6 +602,9 @@ void _removeCoupon() {
 
   if (widget.onPromotionIdChanged != null) {
     widget.onPromotionIdChanged!(null);
+  }
+  if (widget.onPromotionCodeChanged != null) {
+    widget.onPromotionCodeChanged!(null);
   }
 }
 
@@ -1220,7 +1242,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
 // Add this method to build the Select Date field
   Widget _buildSelectDateField(AppLocalizations loc) {
   bool hasSelectedDates = _internalSelectedDates.isNotEmpty;
-  bool canSelectDates = widget.contractDuration > 0 && widget.visitsPerWeek > 0;
+  bool canSelectDates = _areAllFieldsCompleted(); // Changed this line
   final currentLocale = ref.watch(localeNotifierProvider);
   final isArabic = currentLocale.languageCode == 'ar';
 
@@ -1238,7 +1260,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
               border: Border.all(color: Colors.orange.withOpacity(0.3)),
             ),
             child: Text(
-              loc.dialogForPrevious,
+              'Please complete all fields above before selecting dates', // Updated message
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.orange[700],
@@ -1256,14 +1278,17 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                 }
               : () {
                   _showValidationMessage(
-                      loc.dialogForPrevious);
+                      'Please complete all fields above before selecting dates'); // Updated message
                 },
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!, width: 1.5),
+              border: Border.all(
+                color: canSelectDates ? Colors.grey[300]! : Colors.grey[400]!, 
+                width: 1.5
+              ),
               borderRadius: BorderRadius.circular(12),
-              color: Colors.white,
+              color: canSelectDates ? Colors.white : Colors.grey[100], // Visual indicator
             ),
             child: Row(
               textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
@@ -1273,7 +1298,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                     loc.date,
                     style: TextStyle(
                       fontSize: 16,
-                      color: const Color(0xFF768090),
+                      color: canSelectDates ? const Color(0xFF768090) : Colors.grey[500], // Disabled color
                       fontWeight: FontWeight.w600,
                     ),
                     textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
@@ -1297,10 +1322,10 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                   )
                 else
                   Text(
-                    loc.tapToSelect,
+                    canSelectDates ? loc.tapToSelect : 'Complete fields first', // Updated hint text
                     style: TextStyle(
                       fontSize: 16,
-                      color: const Color(0xFF768090),
+                      color: canSelectDates ? const Color(0xFF768090) : Colors.grey[500],
                       fontWeight: FontWeight.w700,
                     ),
                     textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
@@ -1310,19 +1335,19 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                     _showCalendar
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: Colors.grey[600],
+                    color: canSelectDates ? Colors.grey[600] : Colors.grey[500], // Disabled color
                     size: 20),
               ],
             ),
           ),
         ),
 
-        // Animated calendar container
+        // Animated calendar container - only show if all fields are completed
         AnimatedContainer(
           duration: Duration(milliseconds: 300),
-          height: _showCalendar ? 650 : 0,
+          height: (_showCalendar && canSelectDates) ? 650 : 0, // Added canSelectDates condition
           curve: Curves.easeInOut,
-          child: _showCalendar
+          child: (_showCalendar && canSelectDates) // Added canSelectDates condition
               ? Container(
                   margin: EdgeInsets.only(top: 10),
                   decoration: BoxDecoration(
@@ -1616,6 +1641,9 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
   final currentLocale = ref.watch(localeNotifierProvider);
   final isArabic = currentLocale.languageCode == 'ar';
   bool hasValidValue = value.isNotEmpty && options.contains(value);
+  
+  // Check if this field should show red border (incomplete and date field is disabled)
+  bool shouldShowRedBorder = !_areAllFieldsCompleted() && !hasValidValue && isEnabled;
 
   return Container(
     margin: EdgeInsets.only(bottom: 15),
@@ -1642,7 +1670,12 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            border: Border.all(
+              color: shouldShowRedBorder 
+                ? Colors.red 
+                : Colors.grey[300]!, 
+              width: shouldShowRedBorder ? 2.0 : 1.5
+            ),
             borderRadius: BorderRadius.circular(12),
             color: isEnabled ? Colors.white : Colors.grey[100],
           ),
@@ -1657,22 +1690,22 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
               ),
               value: hasValidValue ? value : null,
               items: options.map((String option) {
-  return DropdownMenuItem<String>(
-    value: option,
-    child: Align(
-      alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
-      child: Text(
-      option,
-      style: TextStyle(
-        fontSize: 16,
-        color: isEnabled ? Colors.black : Colors.grey[400],
-      ),
-      textAlign: isArabic ? TextAlign.right : TextAlign.left,
-      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-    ),
-    ),
-  );
-}).toList(),
+                return DropdownMenuItem<String>(
+                  value: option,
+                  child: Align(
+                    alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isEnabled ? Colors.black : Colors.grey[400],
+                      ),
+                      textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                    ),
+                  ),
+                );
+              }).toList(),
               onChanged: isEnabled && !isLoading ? (String? selectedValue) {
                 if (selectedValue != null) {
                   onChanged(selectedValue);

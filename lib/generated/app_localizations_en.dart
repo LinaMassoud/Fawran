@@ -988,4 +988,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noUpcomingVisits => 'No upcoming visits scheduled';
+
+  @override
+  String get searchCities => 'Search cities...';
+
+  @override
+  String get searchDistricts => 'Search districts...';
 }

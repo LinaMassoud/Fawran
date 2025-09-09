@@ -18,6 +18,7 @@ class DateSelectionStep extends ConsumerStatefulWidget {
   final Function(List<String>)? onSelectedDaysChanged;
   final Function(List<int>)? onWorkerValidationSuccess;
   final Function(int?)? onPromotionIdChanged;
+  final Function(String?)? onPromotionCodeChanged;
   final Function(double)? onPriceChanged;
   final VoidCallback? onNextPressed;
   final int maxSelectableDates;
@@ -48,6 +49,7 @@ class DateSelectionStep extends ConsumerStatefulWidget {
     required this.professionId,
     this.onSelectedDaysChanged,
     this.onWorkerValidationSuccess,
+    this.onPromotionCodeChanged,
     this.onPriceChanged,
     this.onPromotionIdChanged,
   }) : super(key: key);
@@ -95,6 +97,9 @@ void initState() {
     if (widget.package!.promotionId != null && widget.onPromotionIdChanged != null) {
       widget.onPromotionIdChanged!(widget.package!.promotionId!);
     }
+    if (widget.onPromotionCodeChanged != null) {
+    widget.onPromotionCodeChanged!(widget.package!.promotionCode!);
+  }
   }
   
   _calculateContractDetails();
@@ -186,6 +191,9 @@ void _validateCouponCode() async {
           if (promotionId != null && widget.onPromotionIdChanged != null) {
             widget.onPromotionIdChanged!(promotionId);
           }
+          if (widget.onPromotionCodeChanged != null) {
+          widget.onPromotionCodeChanged!(_couponController.text.trim());
+        }
           if (widget.onPriceChanged != null) {
           widget.onPriceChanged!(_discountedPrice);
         }
@@ -236,6 +244,9 @@ void _removeCoupon() {
   // Clear promotion ID when coupon is removed
   if (widget.onPromotionIdChanged != null) {
     widget.onPromotionIdChanged!(null);
+  }
+  if (widget.onPromotionCodeChanged != null) {
+    widget.onPromotionCodeChanged!(null);
   }
   if (widget.onPriceChanged != null) {
     widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);

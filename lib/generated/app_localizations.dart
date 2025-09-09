@@ -2041,6 +2041,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No upcoming visits scheduled'**
   String get noUpcomingVisits;
+
+  /// No description provided for @searchCities.
+  ///
+  /// In en, this message translates to:
+  /// **'Search cities...'**
+  String get searchCities;
+
+  /// No description provided for @searchDistricts.
+  ///
+  /// In en, this message translates to:
+  /// **'Search districts...'**
+  String get searchDistricts;
 }
 
 class _AppLocalizationsDelegate

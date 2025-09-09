@@ -405,7 +405,10 @@
   "service": "Service",
   "retry": "Retry",
   "noVisitsToday": "No visits scheduled for today",
-  "noUpcomingVisits": "No upcoming visits scheduled"
+  "noUpcomingVisits": "No upcoming visits scheduled",
+
+  "searchCities":"Search cities...",
+  "searchDistricts":"Search districts..."
 
 
   

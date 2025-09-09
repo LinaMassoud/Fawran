@@ -9,6 +9,8 @@ class BookingData {
   final String selectedNationality;
   final String packageName;
   final int? contractId; // Add contract_id field
+  final String? promotionCode;
+  final int? promotionId;
 
   BookingData({
     required this.selectedDates,
@@ -21,6 +23,8 @@ class BookingData {
     required this.selectedNationality,
     required this.packageName,
     this.contractId, // Optional contract_id parameter
+    this.promotionCode,
+    this.promotionId,
   });
   
   // Helper method to get the discount amount

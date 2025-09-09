@@ -987,4 +987,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noUpcomingVisits => 'لا توجد زيارات قادمة مجدولة';
+
+  @override
+  String get searchCities => 'ابحث عن المدن...';
+
+  @override
+  String get searchDistricts => 'ابحث عن المناطق...';
 }
