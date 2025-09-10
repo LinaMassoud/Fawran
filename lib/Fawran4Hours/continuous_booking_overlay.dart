@@ -22,6 +22,7 @@ import '../providers/address_provider.dart';
 import '../providers/auth_provider.dart';
 import 'package:flashy_flushbar/flashy_flushbar.dart';
 import 'package:fawran/generated/app_localizations.dart';
+import '../steps/discount_step.dart';
 
 class ContinuousBookingOverlay extends ConsumerStatefulWidget {
   final PackageModel? package; // Made optional
@@ -108,9 +109,7 @@ double? _finalPriceFromDateSelection;
 
   int currentStep = 0;
   // Modified: Dynamic total steps based on booking type
-  int get totalSteps =>
-      2; // Custom: Address, Service Details, Date Selection | Package: Address, Date Selection
-
+  int get totalSteps => 3; // Now: Address, Service/Date, Discount
   // Track if we're returning from date selection
   bool isReturningFromDateSelection = false;
 
@@ -138,6 +137,12 @@ double? _hourPrice;
   // Date Selection Data
   List<DateTime> selectedDates = [];
   int? _appliedPromotionId;
+  String? _appliedPromotionCode;
+
+  double? _discountedTotalPrice;
+double? _discountedPricePerVisit;
+int? _promotionIdFromDiscount;
+String? _promotionCodeFromDiscount;
 
   @override
   void initState() {
@@ -356,21 +361,20 @@ Future<void> _fetchAddresses() async {
 
   // Modified: Handle step navigation based on booking type
   void _nextStep() {
-    if (currentStep < totalSteps - 1) {
-      setState(() {
-        currentStep++;
-      });
+  if (currentStep < totalSteps - 1) {
+    setState(() {
+      currentStep++;
+    });
 
-      // Use the correct page index for navigation
-      int targetPageIndex = _getPageIndex();
+    int targetPageIndex = _getPageIndex();
 
-      _pageController.animateToPage(
-        targetPageIndex,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
+    _pageController.animateToPage(
+      targetPageIndex,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
+}
 
 
 void _updatePricePerVisit(double pricePerVisit) {
@@ -407,26 +411,25 @@ void _updatePriceVat(double priceVat) {
 }
 
   void _previousStep() {
-    if (currentStep > 0) {
-      setState(() {
-        currentStep--;
-        if (widget.isCustomBooking &&
-            currentStep == 1 &&
-            selectedDates.isNotEmpty) {
-          isReturningFromDateSelection = true;
-        }
-      });
+  if (currentStep > 0) {
+    setState(() {
+      currentStep--;
+      if (widget.isCustomBooking &&
+          currentStep == 1 &&
+          selectedDates.isNotEmpty) {
+        isReturningFromDateSelection = true;
+      }
+    });
 
-      // Use the correct page index for navigation
-      int targetPageIndex = _getPageIndex();
-
-      _pageController.animateToPage(
-        targetPageIndex,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
+    // Use the correct page index for navigation
+    int targetPageIndex = _getPageIndex();
+    _pageController.animateToPage(
+      targetPageIndex,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
+}
 
   // Helper method to get the correct page index for PageView
   int _getPageIndex() {
@@ -629,114 +632,12 @@ void _showSuccessDialog(String message) {
       });
       print('Worker IDs received in overlay: $workerIds');
       
-      // Show loading dialog immediately after worker validation
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return WillPopScope(
-            onWillPop: () async => false,
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'Creating your service contract...',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-      
-      // Wait a moment to ensure the dialog is shown
-      await Future.delayed(Duration(milliseconds: 500));
-      
-      // Automatically proceed with contract creation
-      await _proceedWithContractCreation();
+      // Instead of immediately creating contract, move to discount step
+      _nextStep();
     }
   });
 }
 
-Future<void> _proceedWithContractCreation() async {
-  final selectedAddress = ref.read(selectedAddressProvider);
-
-  final totalPrice = widget.isCustomBooking
-      ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
-      : (_finalPriceFromDateSelection ?? widget.package!.finalPrice);
-
-  final originalPrice = widget.isCustomBooking
-      ? _calculateOriginalPrice()
-      : widget.package!.packagePrice ?? widget.package!.finalPrice;
-
-  // Create initial BookingData
-  final initialBookingData = BookingData(
-    selectedDates: selectedDates,
-    totalPrice: totalPrice,
-    originalPrice: originalPrice,
-    selectedAddress: selectedAddress != null
-        ? _extractLocationName(selectedAddress.cardText)
-        : 'No Address',
-    workerCount: workerCount,
-    contractDuration: contractDuration,
-    visitsPerWeek: visitsPerWeek,
-    selectedNationality: selectedNationality,
-    packageName: widget.isCustomBooking
-        ? AppLocalizations.of(context)!.customServicePackage
-        : widget.package!.packageName,
-  );
-
-  // Create contract
-  final contractResult = await _createContract(initialBookingData);
-
-  // Close loading dialog
-  if (Navigator.canPop(context)) {
-    Navigator.of(context).pop();
-  }
-
-  // Create final BookingData with contract_id
-  final finalBookingData = BookingData(
-    selectedDates: selectedDates,
-    totalPrice: totalPrice,
-    originalPrice: originalPrice,
-    selectedAddress: selectedAddress != null
-        ? _extractLocationName(selectedAddress.cardText)
-        : 'No Address',
-    workerCount: workerCount,
-    contractDuration: contractDuration,
-    visitsPerWeek: visitsPerWeek,
-    selectedNationality: selectedNationality,
-    packageName: widget.isCustomBooking
-        ? AppLocalizations.of(context)!.customServicePackage
-        : widget.package!.packageName,
-    contractId: contractResult['success'] == true ? contractResult['contract_id'] : null,
-  );
-
-  print("bookingData total price after contract creation = ${finalBookingData.totalPrice}");
-  print("bookingData contract_id = ${finalBookingData.contractId}");
-  
-  // Close overlay and trigger callback
-  await _animationController.reverse();
-  Navigator.pop(context);
-
-  if (contractResult['success'] == true && widget.onBookingCompleted != null) {
-    widget.onBookingCompleted!(finalBookingData);
-  }
-}
 
   void _updateContractDuration(int newDuration) {
   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -785,6 +686,73 @@ Future<void> _proceedWithContractCreation() async {
       print('Updated promotion ID: $promotionId');
     }
   });
+}
+
+void _updatePromotionCode(String? promotionCode) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _appliedPromotionCode = promotionCode;
+      });
+      print('Updated promotion code: $promotionCode');
+    }
+  });
+}
+
+void _updateDiscountedTotalPrice(double price) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _discountedTotalPrice = price;
+      });
+    }
+  });
+}
+
+void _updateDiscountedPricePerVisit(double pricePerVisit) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _discountedPricePerVisit = pricePerVisit;
+      });
+    }
+  });
+}
+
+void _updatePromotionFromDiscount(int? promotionId) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _promotionIdFromDiscount = promotionId;
+        _appliedPromotionId = promotionId; // Keep existing variable updated
+      });
+    }
+  });
+}
+
+void _updatePromotionCodeFromDiscount(String? promotionCode) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      setState(() {
+        _promotionCodeFromDiscount = promotionCode;
+        _appliedPromotionCode = promotionCode; // Keep existing variable updated
+      });
+    }
+  });
+}
+
+void _handleDiscountStepNext() async {
+  // Move to final purchase completion
+  await _completePurchase();
+}
+
+void _handleDiscountStepSkip() async {
+  // Skip discount and proceed with original price
+  _discountedTotalPrice = null;
+  _discountedPricePerVisit = null;
+  _promotionIdFromDiscount = null;
+  _promotionCodeFromDiscount = null;
+  await _completePurchase();
 }
 
   void _returnFromDateSelection() {
@@ -921,7 +889,7 @@ print("serviceId before passing ApiService.createContract = ${widget.serviceId}"
       packageId: !widget.isCustomBooking && widget.package != null ? widget.package!.packageId : null,
       appointments: appointments.isNotEmpty ? appointments : null,
       workerIds: _validatedWorkerIds,
-      promotionId: _appliedPromotionId,
+      promotionId: _promotionIdFromDiscount ?? _appliedPromotionId,
       addressId: selectedAddress.addressId,
     );
 
@@ -1105,7 +1073,7 @@ void _handleDateSelectionNext() async {
   _completePurchase();
 }
 
-  void _completePurchase() async {
+  Future<void> _completePurchase() async {
   if (_isCompletingPurchase) return; // Prevent duplicate calls
   _isCompletingPurchase = true;
   final selectedAddress = ref.read(selectedAddressProvider);
@@ -1122,9 +1090,10 @@ void _handleDateSelectionNext() async {
   print('🚀 Creating contract with worker IDs: $_validatedWorkerIds');
 
   // Use the total price from ServiceDetailsStep for custom booking
-  final totalPrice = widget.isCustomBooking
-      ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
-      : (_finalPriceFromDateSelection ?? widget.package!.finalPrice); 
+  final totalPrice = _discountedTotalPrice ?? 
+                   (widget.isCustomBooking
+                       ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
+                       : (_finalPriceFromDateSelection ?? widget.package!.finalPrice));
 
   final originalPrice = widget.isCustomBooking
       ? _calculateOriginalPrice()
@@ -1166,6 +1135,8 @@ void _handleDateSelectionNext() async {
         ? AppLocalizations.of(context)!.customServicePackage
         : widget.package!.packageName,
     contractId: contractResult['success'] == true ? contractResult['contract_id'] : null,
+    promotionCode: _promotionCodeFromDiscount ?? _appliedPromotionCode, // ADD THIS LINE
+  promotionId: _promotionIdFromDiscount ?? _appliedPromotionId,
   );
 
   print("bookingData total price after _completePurchase = ${finalBookingData.totalPrice}");
@@ -1434,9 +1405,8 @@ void _handleDateSelectionNext() async {
                                           _updateSelectedDays,
                                       onSelectedDatesChanged:
                                           _updateSelectedDates,
-                                      onDonePressed: _completePurchase,
+                                      onDonePressed: _nextStep,
                                       onNextPressed: null,
-                                      onPromotionIdChanged: _updatePromotionId,
                                       showBottomNavigation: true,
                                       totalPrice:
                                           _totalPriceFromServiceDetails ??
@@ -1463,9 +1433,7 @@ void _handleDateSelectionNext() async {
                                       selectedDates: selectedDates,
                                       selectedAddress: selectedAddress,
                                       onDatesChanged: _updateSelectedDates,
-                                      onNextPressed: selectedDates.isNotEmpty
-                                          ? _handleDateSelectionNext
-                                          : null,
+                                      onNextPressed: _nextStep,
                                       maxSelectableDates: workerCount,
                                       selectedDays: selectedDays,
                                       workerCount: workerCount,
@@ -1482,7 +1450,31 @@ void _handleDateSelectionNext() async {
                                       onWorkerValidationSuccess: _onWorkerValidationSuccess,
                                       onPriceChanged: _updateFinalPrice,
                                       onPromotionIdChanged: _updatePromotionId,
+                                      onPromotionCodeChanged: _updatePromotionCode,
                                     ),
+
+                                    DiscountStep(
+      originalPrice: widget.isCustomBooking
+          ? (_totalPriceFromServiceDetails ?? _calculateTotalPrice())
+          : (_finalPriceFromDateSelection ?? widget.package!.finalPrice!.toDouble()),
+      originalPricePerVisit: widget.isCustomBooking
+          ? (_pricePerVisitFromServiceDetails ?? _calculatePricePerVisit())
+          : (widget.package?.visitPrice?.toDouble() ?? 0.0),
+      serviceId: widget.serviceId,
+      selectedTime: selectedTime,
+      selectedAddress: selectedAddress,
+      hourPrice: widget.isCustomBooking ? (_hourPrice ?? hourPrice) : widget.package!.hourPrice,
+      totalVisits: widget.isCustomBooking 
+          ? (contractDuration * visitsPerWeek) 
+          : selectedDates.length,
+      onTotalPriceChanged: _updateDiscountedTotalPrice,
+      onPricePerVisitChanged: _updateDiscountedPricePerVisit,
+      onPromotionIdChanged: _updatePromotionFromDiscount,
+      onPromotionCodeChanged: _updatePromotionCodeFromDiscount,
+      onSkipPressed: _handleDiscountStepSkip,
+      onNextPressed: _handleDiscountStepNext,
+      package: widget.package,
+    ),
                             ],
                           ),
                         ),

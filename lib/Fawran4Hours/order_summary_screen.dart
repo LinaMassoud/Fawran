@@ -12,6 +12,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fawran/providers/localProvider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dotted_border/dotted_border.dart';
 
 class OrderSummaryScreen extends ConsumerStatefulWidget {
   final BookingData bookingData;
@@ -38,6 +39,8 @@ class _OrderSummaryScreenState extends ConsumerState<OrderSummaryScreen> {
   bool _agreeToTerms = false;
   bool _isLoadingTerms = false; 
   String _termsContent = '';
+  String? _appliedPromotionCode;
+  bool _hasPromotion = false;
 
   late ConfettiController _confettiController;
   String _checkoutStatus = '';
@@ -49,6 +52,7 @@ class _OrderSummaryScreenState extends ConsumerState<OrderSummaryScreen> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _checkAppliedPromotion();
   }
 
   @override
@@ -56,6 +60,15 @@ class _OrderSummaryScreenState extends ConsumerState<OrderSummaryScreen> {
     _confettiController.dispose();
     super.dispose();
   }
+
+  void _checkAppliedPromotion() {
+  // You can get this from your booking data or API
+  // For now, I'll show how to extract it if it exists
+    setState(() {
+      _hasPromotion = true;
+      _appliedPromotionCode = widget.bookingData.promotionCode; // Replace with actual promo code from your data
+    });
+}
 
 Future<void> _fetchServiceTerms() async {
   setState(() {
@@ -255,6 +268,50 @@ Widget _buildFormattedTerms() {
     );
   }
 }
+Widget _buildPromotionSection(AppLocalizations loc) {
+  if (!_hasPromotion || _appliedPromotionCode == null) return SizedBox.shrink();
+
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+
+  return Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: DottedBorder(
+      color: Colors.green,
+      strokeWidth: 2,
+      borderType: BorderType.RRect,
+      radius: Radius.circular(12),
+      dashPattern: [6, 3], // 6px line, 3px gap
+      child: Container(
+        padding: EdgeInsets.all(16),
+        color: Colors.green.withOpacity(0.05),
+        child: Row(
+          children: [
+            Image.asset(
+              'assets/icons/check.png',
+              width: 25,
+              height: 25,
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isArabic 
+                  ? 'تم تطبيق العرض "$_appliedPromotionCode"'
+                  : 'Offer "$_appliedPromotionCode" Applied',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
   @override
 Widget build(BuildContext context) {
   final loc = AppLocalizations.of(context)!;
@@ -459,9 +516,17 @@ Widget build(BuildContext context) {
                                 'assets/images/visa-logo.png', Colors.blue),
                             SizedBox(width: 8),
                             _buildPaymentLogo(
-                                'assets/images/mastercard.png', Colors.red),
+                                'assets/images/Mastercard-new.png', Colors.red),
+                                SizedBox(width: 8),
+                            _buildPaymentLogo(
+                                'assets/images/Apple_Pay.png', Colors.red),
+                                SizedBox(width: 8),
+                            _buildPaymentLogo(
+                                'assets/images/Stc_pay.png', Colors.red),
                           ],
                         ),
+                        SizedBox(height: 24),
+                        _buildPromotionSection(loc),
                         SizedBox(height: 24),
 
                         // Payment summary section - Hidden for custom bookings
@@ -774,8 +839,8 @@ String _getLocalizedContractDurationSimple(int contractDuration, AppLocalization
 
   Widget _buildPaymentLogo(String imagePath, Color fallbackColor) {
     return Container(
-      height: 32,
-      width: 50,
+      height: 37,
+      width: 55,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(6),

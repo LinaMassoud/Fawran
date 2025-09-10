@@ -811,7 +811,7 @@ void didChangeDependencies() {
                             ),
                             SizedBox(width: 8),
                             Text(
-                              '${loc.congratulations} ${completedBooking!.discountAmount.toStringAsFixed(1)}${loc.currencyHourly} ${loc.saved} ',
+                              '${loc.congratulations} ${completedBooking!.discountAmount.toStringAsFixed(1)} ${loc.currencyHourly} ${loc.saved} ',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,

@@ -48,6 +48,7 @@ dependencies:
   syncfusion_flutter_pdf: ^30.2.7
   syncfusion_flutter_signaturepad: ^30.2.6
   syncfusion_flutter_pdfviewer: ^30.2.7
+  dotted_border: ^2.1.0
 
   
 

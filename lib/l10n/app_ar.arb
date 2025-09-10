@@ -412,7 +412,30 @@
   "service": "الخدمة",
   "retry": "إعادة المحاولة",
   "noVisitsToday": "لا توجد زيارات مجدولة لليوم",
-  "noUpcomingVisits": "لا توجد زيارات قادمة مجدولة"
+  "noUpcomingVisits": "لا توجد زيارات قادمة مجدولة",
+
+  "searchCities": "ابحث عن المدن...",
+  "searchDistricts": "ابحث عن المناطق...",
+
+  "applyDiscountCode": "تطبيق رمز الخصم",
+  "enterCouponCodeDescription": "أدخل رمز القسيمة للحصول على خصم على خدمتك",
+  "skip": "تخطي",
+
+  "completeAllAboveFields":"يرجى إكمال جميع الحقول أعلاه قبل تحديد التواريخ",
+  "completeFields": "يرجى إكمال الحقول أولاً",
+
+
+  "packagePromotionApplied":"تم تطبيق عرض الباقة بنجاح!",
+  "pleaseEnterCouponCode":"الرجاء إدخال كود الكوبون",
+  "pleaseSelectAddressFirst":"الرجاء اختيار العنوان أولاً",
+  "couponAppliedSuccessfully":"تم تطبيق الكوبون بنجاح!",
+  "invalidCouponCode":"كود كوبون غير صالح",
+  "errorValidatingCoupon":"خطأ في التحقق من الكوبون. يرجى المحاولة مرة أخرى.",
+
+  "packagePromotionAvailable": "عرض الباقة متاح",
+  "code": "الكود",
+  "availablePromotions": "العروض المتوفّرة:"
+
 
 
 

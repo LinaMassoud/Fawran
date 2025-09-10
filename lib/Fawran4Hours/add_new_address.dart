@@ -48,6 +48,16 @@ class _AddNewAddressScreenState extends ConsumerState<AddNewAddressScreen> {
   String? _selectedHouseType;
   int? _selectedFloorNumber;
 
+
+  final TextEditingController _citySearchController = TextEditingController();
+final TextEditingController _districtSearchController = TextEditingController();
+List<City> _filteredCities = [];
+List<District> _filteredDistricts = [];
+bool _showCityDropdown = false;
+bool _showDistrictDropdown = false;
+final FocusNode _cityFocusNode = FocusNode();
+final FocusNode _districtFocusNode = FocusNode();
+
   bool _useCurrentLocation = false;
   bool _hasTriedCurrentLocation = false;
 bool _currentLocationFailed = false;
@@ -88,40 +98,79 @@ bool _isGettingCurrentLocation = false;
   bool _isLoadingDistricts = false;
   String? _selectedDistrictCode;
 
-  @override
   void initState() {
-    super.initState();
-    // Get serviceId from package, with fallback to default value
-    int serviceId = widget.serviceId ?? 1;
-    _fetchCitiesFromAPI(serviceId);
+  super.initState();
+  // Get serviceId from package, with fallback to default value
+  int serviceId = widget.serviceId ?? 1;
+  _fetchCitiesFromAPI(serviceId);
 
-    // Add listeners to text controllers
-    _addressTitleController.addListener(_onFieldChanged);
-    _streetNameController.addListener(_onFieldChanged);
-    _houseNumberController.addListener(_onFieldChanged);
-    _apartmentNumberController.addListener(_onFieldChanged);
-    _fullAddressController.addListener(_onFieldChanged);
-    _notesController.addListener(_onFieldChanged);
-  }
+  // Initialize filtered lists
+  _filteredCities = _availableCities;
+  _filteredDistricts = _availableDistricts;
+
+  // Add listeners to text controllers (remove search controller listeners)
+  _addressTitleController.addListener(_onFieldChanged);
+  _streetNameController.addListener(_onFieldChanged);
+  _houseNumberController.addListener(_onFieldChanged);
+  _apartmentNumberController.addListener(_onFieldChanged);
+  _fullAddressController.addListener(_onFieldChanged);
+  _notesController.addListener(_onFieldChanged);
+}
+
+void _filterCities() {
+  setState(() {
+    if (_citySearchController.text.isEmpty) {
+      _filteredCities = _availableCities;
+    } else {
+      _filteredCities = _availableCities
+          .where((city) => city.cityName
+              .toLowerCase()
+              .contains(_citySearchController.text.toLowerCase()))
+          .toList();
+    }
+  });
+}
+
+void _filterDistricts() {
+  setState(() {
+    if (_districtSearchController.text.isEmpty) {
+      _filteredDistricts = _availableDistricts;
+    } else {
+      _filteredDistricts = _availableDistricts
+          .where((district) => district.districtName
+              .toLowerCase()
+              .contains(_districtSearchController.text.toLowerCase()))
+          .toList();
+    }
+  });
+}
+
 
   @override
-  void dispose() {
-    _addressTitleController.removeListener(_onFieldChanged);
-    _streetNameController.removeListener(_onFieldChanged);
-    _houseNumberController.removeListener(_onFieldChanged);
-    _apartmentNumberController.removeListener(_onFieldChanged);
-    _fullAddressController.removeListener(_onFieldChanged);
-    _notesController.removeListener(_onFieldChanged);
+void dispose() {
+  _addressTitleController.removeListener(_onFieldChanged);
+  _streetNameController.removeListener(_onFieldChanged);
+  _houseNumberController.removeListener(_onFieldChanged);
+  _apartmentNumberController.removeListener(_onFieldChanged);
+  _fullAddressController.removeListener(_onFieldChanged);
+  _notesController.removeListener(_onFieldChanged);
 
-    _addressTitleController.dispose();
-    _streetNameController.dispose();
-    _buildingNumberController.dispose();
-    _houseNumberController.dispose();
-    _apartmentNumberController.dispose();
-    _fullAddressController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
+  _addressTitleController.dispose();
+  _streetNameController.dispose();
+  _buildingNumberController.dispose();
+  _houseNumberController.dispose();
+  _apartmentNumberController.dispose();
+  _fullAddressController.dispose();
+  _notesController.dispose();
+  
+  // Keep the search controllers but don't remove listeners since we're not adding them
+  _citySearchController.dispose();
+  _districtSearchController.dispose();
+  _cityFocusNode.dispose();
+  _districtFocusNode.dispose();
+  
+  super.dispose();
+}
 
   List<City> get _cities {
     return _availableCities;
@@ -180,62 +229,72 @@ List<String> _getLocalizedHouseTypes(AppLocalizations loc) {
   return [loc.villa, loc.appartment];
 }
   void _onCityChanged(City? city) {
-    setState(() {
-      _selectedCity = city;
+  setState(() {
+    _selectedCity = city;
+    _selectedDistrict = null;
+    _selectedDistrictCode = null;
+    _availableDistricts.clear();
+    _filteredDistricts.clear();
+    
+    // Clear search controllers
+    _districtSearchController.clear();
+
+    // Clear map-related data when city changes
+    _districtMapData = null;
+    _selectedLocation = null;
+    _isMapCompleted = false;
+    _hasUserMovedPin = false;
+    _isLocationConfirmed = false;
+
+    if (city != null) {
+      final selectedCityObj = _availableCities.firstWhere(
+        (city) => city.cityName == city.cityName,
+        orElse: () => City(cityCode: 0, cityName: ''),
+      );
+      _selectedCityCode = city.cityCode;
+
+      if (_selectedCityCode != null && _selectedCityCode! > 0) {
+        _fetchDistrictsFromAPI(city.cityCode!);
+      }
+    } else {
+      _selectedCityCode = null;
+    }
+
+    _checkDistrictCompletion();
+  });
+}
+
+  void _onDistrictChanged(String? districtCode) {
+  setState(() {
+    // Find the district object to get the name
+    if (districtCode != null) {
+      final selectedDistrictObj = _availableDistricts.firstWhere(
+        (district) => district.districtCode == districtCode,
+        orElse: () => District(districtCode: '', districtName: ''),
+      );
+      
+      _selectedDistrict = selectedDistrictObj.districtName; // Store the name for display
+      _selectedDistrictCode = districtCode; // Store the code for API calls
+    } else {
       _selectedDistrict = null;
       _selectedDistrictCode = null;
-      _availableDistricts.clear();
+    }
 
-      // Clear map-related data when city changes
+    // Clear map-related data when district changes
+    _selectedLocation = null;
+    _isMapCompleted = false;
+    _hasUserMovedPin = false;
+    _isLocationConfirmed = false;
+
+    if (_selectedDistrictCode != null && _selectedDistrictCode!.isNotEmpty) {
+      _fetchDistrictMapData(_selectedDistrictCode!);
+    } else {
       _districtMapData = null;
-      _selectedLocation = null;
-      _isMapCompleted = false;
-      _hasUserMovedPin = false;
-      _isLocationConfirmed = false;
+    }
 
-      if (city != null) {
-        final selectedCityObj = _availableCities.firstWhere(
-          (city) => city.cityName == city.cityName,
-          orElse: () => City(cityCode: 0, cityName: ''),
-        );
-        _selectedCityCode = city.cityCode;
-
-        if (_selectedCityCode != null && _selectedCityCode! > 0) {
-          _fetchDistrictsFromAPI(city.cityCode!);
-        }
-      } else {
-        _selectedCityCode = null;
-      }
-
-      _checkDistrictCompletion();
-    });
-  }
-
-  void _onDistrictChanged(String? value) {
-    setState(() {
-      _selectedDistrict = value;
-
-      // Clear map-related data when district changes
-      _selectedLocation = null;
-      _isMapCompleted = false;
-      _hasUserMovedPin = false;
-      _isLocationConfirmed = false;
-
-      if (value != null) {
-        _selectedDistrictCode = value;
-
-        if (_selectedDistrictCode != null &&
-            _selectedDistrictCode!.isNotEmpty) {
-          _fetchDistrictMapData(_selectedDistrictCode!);
-        }
-      } else {
-        _selectedDistrictCode = null;
-        _districtMapData = null;
-      }
-
-      _checkDistrictCompletion();
-    });
-  }
+    _checkDistrictCompletion();
+  });
+}
 
   void _checkDistrictCompletion() {
     setState(() {
@@ -439,6 +498,7 @@ districtId: _useCurrentLocation
     final cities = await ApiService.fetchCities(serviceId);
     setState(() {
       _availableCities = cities;
+      _filteredCities = cities; // Initialize filtered list
       _isLoadingCities = false;
     });
   } catch (e) {
@@ -459,6 +519,7 @@ districtId: _useCurrentLocation
     final districts = await ApiService.fetchDistricts(cityCode);
     setState(() {
       _availableDistricts = districts;
+      _filteredDistricts = districts; // Initialize filtered list
       _isLoadingDistricts = false;
     });
   } catch (e) {
@@ -869,86 +930,355 @@ Future<void> _getCurrentLocation() async {
   );
 }
 
-  Widget _buildCityDropdown(AppLocalizations loc) {
-    if (_isLoadingCities) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!, width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.grey[100],
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
-              ),
-            ),
-            SizedBox(width: 12),
-            Text(
-              'Loading cities...',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+  Widget _buildSearchableCityDropdown(AppLocalizations loc) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
 
-    return _buildaCityDropdown(
-        loc.selectCity,
-        _selectedCity, // This should now be a City object, not a String
-        _cities, // This should now be a list of City objects
-        _onCityChanged,
-        enabled:
-            !_isLoadingCities // Keep the condition for enabled/disabled state
-        );
+  if (_isLoadingCities) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey[100],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+            ),
+          ),
+          SizedBox(width: 12),
+          Text(
+            'Loading cities...',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildDistrictDropdown(AppLocalizations loc) {
-    if (_isLoadingDistricts) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!, width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.grey[100],
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+  return Column(
+    children: [
+      GestureDetector(
+        onTap: () {
+          setState(() {
+            _showCityDropdown = !_showCityDropdown;
+            if (_showCityDropdown) {
+              _filteredCities = _availableCities;
+              _citySearchController.clear();
+            }
+          });
+        },
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+          ),
+          child: Row(
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+            children: [
+              Expanded(
+                child: Text(
+                  _selectedCity?.cityName ?? loc.selectCity,
+                  style: TextStyle(
+                    color: _selectedCity != null ? Colors.black : Colors.grey[600],
+                    fontSize: 16,
+                  ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
               ),
-            ),
-            SizedBox(width: 12),
-            Text(
-              'Loading districts...',
-              style: TextStyle(
+              Icon(
+                _showCityDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                 color: Colors.grey[600],
-                fontSize: 16,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      );
-    }
+      ),
+      if (_showCityDropdown)
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
+            color: Colors.white,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Search field at the top of dropdown
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+                  ),
+                ),
+                child: TextField(
+                  controller: _citySearchController,
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                  decoration: InputDecoration(
+                    hintText: loc.searchCities,
+                    hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Color(0xFF1E3A8A), width: 1),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    isDense: true,
+                  ),
+                  style: TextStyle(fontSize: 14),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value.isEmpty) {
+                        _filteredCities = _availableCities;
+                      } else {
+                        _filteredCities = _availableCities
+                            .where((city) => city.cityName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      }
+                    });
+                  },
+                ),
+              ),
+              // Cities list with reduced spacing
+              ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: 200, // Only constrain when there are many items
+              ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: _filteredCities.length,
+                  itemBuilder: (context, index) {
+                    final city = _filteredCities[index];
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedCity = city;
+                          _showCityDropdown = false;
+                        });
+                        _onCityChanged(city);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced from 12 to 8
+                        child: Text(
+                          city.cityName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+    ],
+  );
+}
 
-    return _buildDropdown(loc.selectDistrict, _selectedDistrict,
-        _districts, _onDistrictChanged,
-        enabled: _selectedCity != null && !_isLoadingDistricts);
+  Widget _buildSearchableDistrictDropdown(AppLocalizations loc) {
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+
+  if (_isLoadingDistricts) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey[100],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E3A8A)),
+            ),
+          ),
+          SizedBox(width: 12),
+          Text(
+            'Loading districts...',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
   }
+
+  return Column(
+    children: [
+      GestureDetector(
+        onTap: () {
+          if (_selectedCity != null && !_isLoadingDistricts) {
+            setState(() {
+              _showDistrictDropdown = !_showDistrictDropdown;
+              if (_showDistrictDropdown) {
+                _filteredDistricts = _availableDistricts;
+                _districtSearchController.clear();
+              }
+            });
+          }
+        },
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            color: _selectedCity != null ? Colors.white : Colors.grey[100],
+          ),
+          child: Row(
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+            children: [
+              Expanded(
+                child: Text(
+                  _selectedDistrict ?? loc.selectDistrict,
+                  style: TextStyle(
+                    color: _selectedCity != null 
+                        ? (_selectedDistrict != null ? Colors.black : Colors.grey[600])
+                        : Colors.grey[400],
+                    fontSize: 16,
+                  ),
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              ),
+              Icon(
+                _showDistrictDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                color: _selectedCity != null ? Colors.grey[600] : Colors.grey[400],
+              ),
+            ],
+          ),
+        ),
+      ),
+      if (_showDistrictDropdown && _filteredDistricts.isNotEmpty)
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
+            color: Colors.white,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Search field at the top of dropdown
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+                  ),
+                ),
+                child: TextField(
+                  controller: _districtSearchController,
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                  decoration: InputDecoration(
+                    hintText: loc.searchDistricts,
+                    hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Color(0xFF1E3A8A), width: 1),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    isDense: true,
+                  ),
+                  style: TextStyle(fontSize: 14),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value.isEmpty) {
+                        _filteredDistricts = _availableDistricts;
+                      } else {
+                        _filteredDistricts = _availableDistricts
+                            .where((district) => district.districtName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      }
+                    });
+                  },
+                ),
+              ),
+              // Districts list with reduced spacing
+              ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: 200, // Only constrain when there are many items
+              ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: _filteredDistricts.length,
+                  itemBuilder: (context, index) {
+                    final district = _filteredDistricts[index];
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedDistrict = district.districtName;
+                          _showDistrictDropdown = false;
+                        });
+                        _onDistrictChanged(district.districtCode);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced from 12 to 8
+                        child: Text(
+                          district.districtName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+    ],
+  );
+}
 
   Widget _buildDropdown(String hint, String? value, List<District> items,
     Function(String?) onChanged,
@@ -1402,6 +1732,16 @@ Widget build(BuildContext context) {
   
   return Directionality(
     textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: GestureDetector(
+      onTap: () {
+        // Dismiss dropdowns when tapping outside
+        setState(() {
+          _showCityDropdown = false;
+          _showDistrictDropdown = false;
+        });
+        _cityFocusNode.unfocus();
+        _districtFocusNode.unfocus();
+      },
     child: Scaffold(
     backgroundColor: Colors.grey[100],
     body: Stack(
@@ -1464,9 +1804,9 @@ Widget build(BuildContext context) {
                             _buildStepIndicator(
                                 1, '${loc.district} *', _isDistrictCompleted, _currentStep >= 1),
                             const SizedBox(height: 20),
-                            _buildCityDropdown(loc),
+                            _buildSearchableCityDropdown(loc),
                             const SizedBox(height: 15),
-                            _buildDistrictDropdown(loc),
+                            _buildSearchableDistrictDropdown(loc),
 
                             const SizedBox(height: 30),
                             Container(height: 1, color: Colors.grey[300]),
@@ -1734,6 +2074,7 @@ Widget build(BuildContext context) {
   ),
 ),
       ],
+    ),
     ),
     ),
   );

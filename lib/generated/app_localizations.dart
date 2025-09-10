@@ -2041,6 +2041,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No upcoming visits scheduled'**
   String get noUpcomingVisits;
+
+  /// No description provided for @searchCities.
+  ///
+  /// In en, this message translates to:
+  /// **'Search cities...'**
+  String get searchCities;
+
+  /// No description provided for @searchDistricts.
+  ///
+  /// In en, this message translates to:
+  /// **'Search districts...'**
+  String get searchDistricts;
+
+  /// No description provided for @applyDiscountCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Discount Code'**
+  String get applyDiscountCode;
+
+  /// No description provided for @enterCouponCodeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your coupon code to get a discount on your service'**
+  String get enterCouponCodeDescription;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// No description provided for @completeAllAboveFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete all fields above before selecting dates'**
+  String get completeAllAboveFields;
+
+  /// No description provided for @completeFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete fields first'**
+  String get completeFields;
+
+  /// No description provided for @packagePromotionApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Package promotion applied successfully!'**
+  String get packagePromotionApplied;
+
+  /// No description provided for @pleaseEnterCouponCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a coupon code'**
+  String get pleaseEnterCouponCode;
+
+  /// No description provided for @pleaseSelectAddressFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select an address first'**
+  String get pleaseSelectAddressFirst;
+
+  /// No description provided for @couponAppliedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon applied successfully!'**
+  String get couponAppliedSuccessfully;
+
+  /// No description provided for @invalidCouponCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid coupon code'**
+  String get invalidCouponCode;
+
+  /// No description provided for @errorValidatingCoupon.
+  ///
+  /// In en, this message translates to:
+  /// **'Error validating coupon. Please try again.'**
+  String get errorValidatingCoupon;
+
+  /// No description provided for @packagePromotionAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Package Promotion Available'**
+  String get packagePromotionAvailable;
+
+  /// No description provided for @code.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get code;
+
+  /// No description provided for @availablePromotions.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Promotions :'**
+  String get availablePromotions;
 }
 
 class _AppLocalizationsDelegate
