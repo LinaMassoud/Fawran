@@ -114,268 +114,261 @@ class _VisitsScreenState extends ConsumerState<VisitsScreen> with SingleTickerPr
   }
 
   Widget _buildVisitCard(Map<String, dynamic> visit, bool isToday) {
-    final loc = AppLocalizations.of(context)!;
-    final currentLocale = ref.watch(localeNotifierProvider);
-    final isArabic = currentLocale.languageCode == 'ar';
-    
-    final visitDate = DateTime.parse(visit['visit_date']);
-    final formattedDate = DateFormat('dd/MM/yyyy').format(visitDate);
-    final visitId = visit['visit_id']?.toString() ?? '';
-    
-    // Create unique identifier by combining visit ID with tab type
-    final uniqueId = isToday ? 'today_$visitId' : 'upcoming_$visitId';
-    
-    // Use the appropriate expanded set based on whether it's today or upcoming
-    final currentExpandedSet = isToday ? expandedTodayTickets : expandedUpcomingTickets;
-    final isExpanded = isToday 
-      ? expandedTodayTickets.contains(uniqueId)
-      : expandedUpcomingTickets.contains(uniqueId);
-    
-    return Column(
+  final loc = AppLocalizations.of(context)!;
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+  
+  final visitDate = DateTime.parse(visit['visit_date']);
+  final formattedDate = DateFormat('dd/MM/yyyy').format(visitDate);
+  final visitId = visit['visit_id']?.toString() ?? '';
+  
+  // Create unique identifier by combining visit ID with tab type
+  final uniqueId = '${isToday ? "today" : "upcoming"}_${visitId}_${visit['visit_date']}_${visit['shift'] ?? ""}';
+  
+  // Use the appropriate expanded set based on whether it's today or upcoming
+  final currentExpandedSet = isToday ? expandedTodayTickets : expandedUpcomingTickets;
+  final isExpanded = isToday 
+    ? expandedTodayTickets.contains(uniqueId)
+    : expandedUpcomingTickets.contains(uniqueId);
+  
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFF1E49A0), width: 1),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          spreadRadius: 0,
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
       children: [
+        // Header section with full-width blue background
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF1E49A0), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                spreadRadius: 0,
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
+          child: Row(
+            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
             children: [
-              // Header section with full-width blue background
-              Container(
-                child: Row(
-                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                  children: [
-                    // Blue background section extending from left to divider
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFF1E49A0),
-                          borderRadius: BorderRadius.only(
-                            topLeft: isArabic ? Radius.zero : Radius.circular(9),
-                            topRight: isArabic ? Radius.circular(9) : Radius.zero,
-                            bottomLeft: isArabic ? Radius.zero : Radius.circular(0),
-                            bottomRight: isArabic ? Radius.circular(0) : Radius.zero,
+              // Blue background section extending from left to divider
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFF1E49A0),
+                    borderRadius: BorderRadius.only(
+                      topLeft: isArabic ? Radius.zero : Radius.circular(9),
+                      topRight: isArabic ? Radius.circular(9) : Radius.zero,
+                      bottomLeft: isArabic ? Radius.zero : Radius.circular(0),
+                      bottomRight: isArabic ? Radius.circular(0) : Radius.zero,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                    children: [
+                      // Expand/Collapse arrow
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isToday) {
+                              if (expandedTodayTickets.contains(uniqueId)) {
+                                expandedTodayTickets.remove(uniqueId);
+                              } else {
+                                expandedTodayTickets.add(uniqueId);
+                              }
+                            } else {
+                              if (expandedUpcomingTickets.contains(uniqueId)) {
+                                expandedUpcomingTickets.remove(uniqueId);
+                              } else {
+                                expandedUpcomingTickets.add(uniqueId);
+                              }
+                            }
+                          });
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          child: AnimatedRotation(
+                            turns: isExpanded ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 300),
+                            child: const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                         ),
-                        padding: const EdgeInsets.all(18),
-                        child: Row(
-                          textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                          children: [
-                            // Expand/Collapse arrow
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  if (isToday) {
-                                    if (expandedTodayTickets.contains(uniqueId)) {
-                                      expandedTodayTickets.remove(uniqueId);
-                                    } else {
-                                      expandedTodayTickets.add(uniqueId);
-                                    }
-                                  } else {
-                                    if (expandedUpcomingTickets.contains(uniqueId)) {
-                                      expandedUpcomingTickets.remove(uniqueId);
-                                    } else {
-                                      expandedUpcomingTickets.add(uniqueId);
-                                    }
-                                  }
-                                });
-                              },
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                child: AnimatedRotation(
-                                  turns: isExpanded ? 0.5 : 0,
-                                  duration: const Duration(milliseconds: 300),
-                                  child: const Icon(
-                                    Icons.keyboard_arrow_down,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            
-                            const SizedBox(width: 8),
-                            
-                          ],
-                        ),
                       ),
-                    ),
-                    // White section with name and time info
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              textDirection: isArabic ? ui.TextDirection.rtl :ui.TextDirection.ltr,
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/images/person.svg', // Replace with your person SVG file name
-                                  width: 15,
-                                  height: 15,
-                                  colorFilter: ColorFilter.mode(Color(0xFF1E3A8A), BlendMode.srcIn),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${_firstName.isNotEmpty ? _firstName : ''} ${_middleName.isNotEmpty ? _middleName + ' ' : ''}${_lastName.isNotEmpty ? _lastName : ''}' + (_firstName.isEmpty && _middleName.isEmpty && _lastName.isEmpty ? 'User Name' : ''),
-                                    style: const TextStyle(
-                                      color: Color(0xFF1E3A8A),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                              children: [
-                                const Icon(
-                                  Icons.access_time,
-                                  size: 16,
-                                  color: Color(0xFF1E49A0),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${loc.from ?? 'From'} ${_formatShift(visit['shift'])}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF1E49A0),
-                                    fontSize: 9,
-                                  ),
-                                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                      
+                      const SizedBox(width: 8),
+                      
+                    ],
+                  ),
                 ),
               ),
-              
-              // Expandable content
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                height: isExpanded ? null : 0,
-                child: isExpanded
-                    ? Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Column(
-                          children: [
-                            // Divider
-                            Container(
-                              height: 1,
-                              color: const Color(0xFFE0E0E0),
-                              margin: const EdgeInsets.only(bottom: 16),
-                            ),
-                            Row(
+              // White section with name and time info
+              Expanded(
+                flex: 3,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        textDirection: isArabic ? ui.TextDirection.rtl :ui.TextDirection.ltr,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/images/person.svg', // Replace with your person SVG file name
+                            width: 15,
+                            height: 15,
+                            colorFilter: ColorFilter.mode(Color(0xFF1E3A8A), BlendMode.srcIn),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${_firstName.isNotEmpty ? _firstName : ''} ${_middleName.isNotEmpty ? _middleName + ' ' : ''}${_lastName.isNotEmpty ? _lastName : ''}' + (_firstName.isEmpty && _middleName.isEmpty && _lastName.isEmpty ? 'User Name' : ''),
+                              style: const TextStyle(
+                                color: Color(0xFF1E3A8A),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                               textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                              children: [
-                                Expanded(
-                                  child: _buildDetailColumn(
-                                    Icons.attach_money,
-                                    visit['worker_names'],
-                                    useWorkerIcon: true,
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                              ],
                             ),
-                            const SizedBox(height: 12),
-                            // Service details in rows format
-                            Row(
-                              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                              children: [
-                                Expanded(
-                                  child: _buildDetailColumn(
-                                    Icons.attach_money,
-                                    '${visit['price'] ?? '0'} ${loc.currencyHourly ?? 'SAR'}',
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _buildDetailColumn(
-                                    Icons.business,
-                                    visit['service_name'] ?? (loc.service ?? 'Service'),
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                              ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                        children: [
+                          const Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Color(0xFF1E49A0),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${loc.from ?? 'From'} ${_formatShift(visit['shift'])}',
+                            style: const TextStyle(
+                              color: Color(0xFF1E49A0),
+                              fontSize: 9,
                             ),
-                            const SizedBox(height: 12),
-                            
-                            Row(
-                              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                              children: [
-                                Expanded(
-                                  child: _buildDetailColumn(
-                                    Icons.access_time,
-                                    visit['contract_id'] ?? 'Unknown',
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _buildDetailColumn(
-                                    Icons.info_outline,
-                                    visit['contract_status'] ?? 'Unknown',
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            
-                            Row(
-                              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                              children: [
-                                Expanded(
-                                  child: _buildDetailColumn(
-                                    Icons.receipt_long,
-                                    visit['visit_status'] ?? 'Unknown',
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _buildDetailColumn(
-                                    Icons.calendar_today,
-                                    formattedDate,
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+                            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
-
             ],
           ),
         ),
         
-        // Reschedule button - attached to card bottom border
+        // Expandable content
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: isExpanded ? null : 0,
+          child: isExpanded
+              ? Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(
+                    children: [
+                      // Divider
+                      Container(
+                        height: 1,
+                        color: const Color(0xFFE0E0E0),
+                        margin: const EdgeInsets.only(bottom: 16),
+                      ),
+                      Row(
+                        textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                        children: [
+                          Expanded(
+                            child: _buildDetailColumn(
+                              Icons.attach_money,
+                              visit['worker_names'],
+                              useWorkerIcon: true,
+                              isArabic: isArabic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Service details in rows format
+                      Row(
+                        textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                        children: [
+                          Expanded(
+                            child: _buildDetailColumn(
+                              Icons.attach_money,
+                              '${visit['price'] ?? '0'} ${loc.currencyHourly ?? 'SAR'}',
+                              isArabic: isArabic,
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildDetailColumn(
+                              Icons.business,
+                              visit['service_name'] ?? (loc.service ?? 'Service'),
+                              isArabic: isArabic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      Row(
+                        textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                        children: [
+                          Expanded(
+                            child: _buildDetailColumn(
+                              Icons.access_time,
+                              visit['contract_id'] ?? 'Unknown',
+                              isArabic: isArabic,
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildDetailColumn(
+                              Icons.info_outline,
+                              visit['contract_status'] ?? 'Unknown',
+                              isArabic: isArabic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      Row(
+                        textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+                        children: [
+                          Expanded(
+                            child: _buildDetailColumn(
+                              Icons.receipt_long,
+                              visit['visit_status'] ?? 'Unknown',
+                              isArabic: isArabic,
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildDetailColumn(
+                              Icons.calendar_today,
+                              formattedDate,
+                              isArabic: isArabic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+
+        // Reschedule button - now integrated at the bottom of the card
         Container(
           width: double.infinity,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 6), // Changed from 0 to -12 to attach to card
           child: ElevatedButton(
             onPressed: () => _navigateToReschedule(visit),
             style: ElevatedButton.styleFrom(
@@ -384,8 +377,8 @@ class _VisitsScreenState extends ConsumerState<VisitsScreen> with SingleTickerPr
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(11),
+                  bottomRight: Radius.circular(11),
                 ),
               ),
               elevation: 0,
@@ -400,8 +393,9 @@ class _VisitsScreenState extends ConsumerState<VisitsScreen> with SingleTickerPr
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDetailColumn(IconData icon, String text, {Color? statusColor, bool useWorkerIcon = false, required bool isArabic}) {
     return Column(

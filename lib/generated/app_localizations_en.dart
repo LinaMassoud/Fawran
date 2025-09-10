@@ -994,4 +994,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchDistricts => 'Search districts...';
+
+  @override
+  String get applyDiscountCode => 'Apply Discount Code';
+
+  @override
+  String get enterCouponCodeDescription =>
+      'Enter your coupon code to get a discount on your service';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get completeAllAboveFields =>
+      'Please complete all fields above before selecting dates';
+
+  @override
+  String get completeFields => 'Complete fields first';
+
+  @override
+  String get packagePromotionApplied =>
+      'Package promotion applied successfully!';
+
+  @override
+  String get pleaseEnterCouponCode => 'Please enter a coupon code';
+
+  @override
+  String get pleaseSelectAddressFirst => 'Please select an address first';
+
+  @override
+  String get couponAppliedSuccessfully => 'Coupon applied successfully!';
+
+  @override
+  String get invalidCouponCode => 'Invalid coupon code';
+
+  @override
+  String get errorValidatingCoupon =>
+      'Error validating coupon. Please try again.';
+
+  @override
+  String get packagePromotionAvailable => 'Package Promotion Available';
+
+  @override
+  String get code => 'Code';
+
+  @override
+  String get availablePromotions => 'Available Promotions :';
 }

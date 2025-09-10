@@ -271,40 +271,42 @@ Widget _buildFormattedTerms() {
 Widget _buildPromotionSection(AppLocalizations loc) {
   if (!_hasPromotion || _appliedPromotionCode == null) return SizedBox.shrink();
 
-  return DottedBorder(
-    color: Colors.green,
-    strokeWidth: 2,
-    borderType: BorderType.RRect,
-    radius: Radius.circular(12),
-    dashPattern: [6, 3], // 6px line, 3px gap
-    child: Container(
-      padding: EdgeInsets.all(16),
-      color: Colors.green.withOpacity(0.05),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/icons/check.png', // update with your actual file name
-            width: 25,
-            height: 25, // optional: tint image white like the icon
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Offer "$_appliedPromotionCode" Applied',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 4),
-              ],
+  final currentLocale = ref.watch(localeNotifierProvider);
+  final isArabic = currentLocale.languageCode == 'ar';
+
+  return Directionality(
+    textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+    child: DottedBorder(
+      color: Colors.green,
+      strokeWidth: 2,
+      borderType: BorderType.RRect,
+      radius: Radius.circular(12),
+      dashPattern: [6, 3], // 6px line, 3px gap
+      child: Container(
+        padding: EdgeInsets.all(16),
+        color: Colors.green.withOpacity(0.05),
+        child: Row(
+          children: [
+            Image.asset(
+              'assets/icons/check.png',
+              width: 25,
+              height: 25,
             ),
-          ),
-        ],
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isArabic 
+                  ? 'تم تطبيق العرض "$_appliedPromotionCode"'
+                  : 'Offer "$_appliedPromotionCode" Applied',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );

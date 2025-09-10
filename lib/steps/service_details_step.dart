@@ -26,8 +26,6 @@ class ServiceDetailsStep extends ConsumerStatefulWidget {
   final Function(int) onVisitsPerWeekChanged; // Changed from String to int
   final Function(List<String>) onSelectedDaysChanged;
   final Function(List<int>)? onWorkerIdsChanged;
-  final Function(int?)? onPromotionIdChanged;
-  final Function(String?)? onPromotionCodeChanged;
   final VoidCallback? onSelectDatePressed;
   final VoidCallback? onDonePressed;
   final VoidCallback? onNextPressed;
@@ -85,8 +83,6 @@ class ServiceDetailsStep extends ConsumerStatefulWidget {
     this.onPricePerVisitChanged,
     this.onHourPriceChanged,
     this.onPriceVatChanged,
-    this.onPromotionIdChanged,
-    this.onPromotionCodeChanged,
   }) : super(key: key);
 
   @override
@@ -134,19 +130,9 @@ int _apiTotalVisits = 1;
 
 bool _isSnackBarShowing = false;
 
-String _couponCode = '';
-bool _isValidatingCoupon = false;
-bool _isCouponApplied = false;
-String _couponMessage = '';
-bool _isCouponValid = false;
-double _originalFinalPrice = 0.0; // Store original price before coupon
-double _originalPricePerVisit = 0.0; // Store original price per visit before coupon
-TextEditingController _couponController = TextEditingController();
+
 Address? _previousAddress;
 
-int? _appliedPromotionId;
-
-String _appliedPromotionCode = '';
 
   @override
 void initState() {
@@ -168,7 +154,6 @@ void initState() {
 
   @override
 void dispose() {
-  _couponController.dispose();
   super.dispose();
 }
 
@@ -195,44 +180,12 @@ void didUpdateWidget(ServiceDetailsStep oldWidget) {
   if (widget.selectedAddress != _previousAddress) {
     print('🏠 [ADDRESS CHANGE DETECTED] Old: ${_previousAddress?.toString()} -> New: ${widget.selectedAddress?.toString()}');
     
-    // Schedule the coupon reset for after the current build cycle
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _resetCouponOnAddressChange();
-      }
-    });
     
     // Update the previous address reference
     _previousAddress = widget.selectedAddress;
   }
 }
 
-// 3. Add this method to reset coupon when address changes
-void _resetCouponOnAddressChange() {
-  print('🔄 [ADDRESS CHANGE] Resetting coupon and all fields due to address change');
-  
-  // First reset coupon if applied
-  if (_isCouponApplied || _couponCode.isNotEmpty) {
-    print('💳 [COUPON] Resetting coupon due to address change');
-    _resetAllFieldsToDefaults();
-    setState(() {
-      _isCouponApplied = false;
-      _isCouponValid = false;
-      _couponMessage = '';
-      _couponCode = '';
-      _couponController.clear();
-      _appliedPromotionId = null;
-      
-      
-    });
-
-    // Clear promotion in parent
-    if (widget.onPromotionIdChanged != null) {
-      widget.onPromotionIdChanged!(null);
-    }
-  }
-
-}
 
 void _resetAllFieldsToDefaults() {
   print('🔄 [RESET] Resetting all fields to defaults');
@@ -273,15 +226,6 @@ void _resetAllFieldsToDefaults() {
     _apiTotalVisits = 1;
     _calculatedTotalPrice = 0.0;
     
-    // Reset coupon state
-    _isCouponApplied = false;
-    _isCouponValid = false;
-    _couponMessage = '';
-    _couponCode = '';
-    _couponController.clear();
-    _appliedPromotionId = null;
-    _originalFinalPrice = 0.0;
-    _originalPricePerVisit = 0.0;
   });
   
   // Reset parent callbacks
@@ -301,9 +245,6 @@ void _resetAllFieldsToDefaults() {
     widget.onPriceVatChanged!(0.0);
   }
   
-  if (widget.onPromotionIdChanged != null) {
-    widget.onPromotionIdChanged!(null);
-  }
   
   print('✅ [RESET] All fields reset to defaults');
 }
@@ -421,192 +362,6 @@ Future<void> _loadContractDurations() async {
 }
 
 
-Future<void> _validateCouponCode() async {
-  if (_couponCode.trim().isEmpty) {
-    _showValidationMessage('Please enter a coupon code');
-    return;
-  }
-
-  // Check if all required data is available from the existing calculation
-  if (_apiPricePerVisit <= 0 || _apiTotalPrice <= 0 || _apiHourPrice <= 0) {
-    _showValidationMessage('Please complete all fields first to apply coupon');
-    return;
-  }
-
-  setState(() {
-    _isValidatingCoupon = true;
-    _couponMessage = '';
-  });
-
-  try {
-    // Get shift ID from selected time
-    int shiftId = 1; // Default fallback
-    try {
-      final serviceShifts = await ApiService.fetchServiceShifts(serviceId: widget.serviceId);
-      final matchingShift = serviceShifts.firstWhere(
-        (shift) => shift['service_shifts']?.toString().toLowerCase() == widget.selectedTime.toLowerCase(),
-        orElse: () => {'id': 1},
-      );
-      shiftId = int.parse(matchingShift['id'].toString());
-    } catch (e) {
-      print('❌ Error fetching shift ID for coupon: $e');
-    }
-
-    // Get city code - you might need to adjust this based on your address model
-    int cityCode = 1; // Default
-    if (widget.selectedAddress != null) {
-      cityCode = int.tryParse(widget.selectedAddress!.cityCode.toString()) ?? 1;
-    }
-
-    // Use existing calculated values instead of calling calculatePackagePrice again
-    final finalPrice = _apiFinalPricePerVisit; // Use already calculated final price with VAT
-    final totalVisits = _apiTotalVisits; // Calculate total visits
-    final hourPrice = _apiHourPrice; // Use already calculated hour price
-
-    print('🔍 [COUPON] Validating coupon with parameters:');
-    print('  - promotionCode: $_couponCode');
-    print('  - shiftId: $shiftId');
-    print('  - cityCode: $cityCode');
-    print('  - originalPrice: $finalPrice');
-    print('  - hourPrice: $hourPrice');
-    print('  - totalVisits: $totalVisits');
-
-    // Call the validatePromotion API with the existing calculated values
-    final response = await ApiService.validatePromotion(
-      promotionCode: _couponCode.trim(),
-      shiftId: shiftId,
-      cityCode: cityCode,
-      originalPrice: finalPrice, // Use existing final_price
-      hourPrice: hourPrice, // Use existing hour_price
-      totalVisits: totalVisits, // Use calculated total_visits
-    );
-
-    print('🔍 [COUPON] API response: $response');
-
-    if (response != null && response['valid'] == true) {
-      // Store original prices if not already stored
-      if (_originalFinalPrice == 0.0) {
-        _originalFinalPrice = _apiFinalPricePerVisit;
-        _originalPricePerVisit = _apiPricePerVisit;
-      }
-
-      // Update prices with coupon discount
-      final newFinalPrice = response['final_price']?.toDouble() ?? _apiFinalPricePerVisit;
-      final newPricePerVisit = response['price_per_visit']?.toDouble() ?? _apiPricePerVisit;
-      final promotionId = response['promotion_id'] as int?;
-      
-      print("newFinalPrice = ${newFinalPrice}");
-      print("newPricePerVisit = ${newPricePerVisit}");
-      setState(() {
-        _isCouponValid = true;
-        _isCouponApplied = true;
-        _couponMessage = response['message'] ?? 'Coupon applied successfully!';
-        _appliedPromotionId = promotionId;
-        _appliedPromotionCode = _couponCode.trim();
-        
-        // Update the prices with coupon discount
-        _apiFinalPricePerVisit = newFinalPrice;
-        _apiPricePerVisit = newPricePerVisit;
-        
-        _isValidatingCoupon = false;
-      });
-
-      // Call the promotion callback if available
-      if (widget.onPromotionIdChanged != null && promotionId != null) {
-        widget.onPromotionIdChanged!(promotionId);
-      }
-
-      if (widget.onPromotionCodeChanged != null) {
-      widget.onPromotionCodeChanged!(_appliedPromotionCode);
-    }
-
-      // Recalculate total price with new discounted price
-      if (_internalSelectedDates.isNotEmpty) {
-        double newTotalPrice = _internalSelectedDates.length * _apiPricePerVisit;
-        print("newTotalPrice = ${newTotalPrice}");
-        setState(() {
-          _calculatedTotalPrice = newTotalPrice;
-        });
-
-        print("_calculatedTotalPrice = ${_calculatedTotalPrice}");
-        // Update parent with new total price
-        if (widget.onTotalPriceChanged != null) {
-          widget.onTotalPriceChanged!(newTotalPrice);
-        }
-      }
-
-      // Update parent callbacks with new prices
-      if (widget.onPricePerVisitChanged != null) {
-        widget.onPricePerVisitChanged!(_apiPricePerVisit);
-      }
-
-      print('✅ [COUPON] Coupon applied successfully');
-    } else {
-      setState(() {
-        _isCouponValid = false;
-        _isCouponApplied = false;
-        _couponMessage = response?['message'] ?? 'Invalid coupon code';
-        _isValidatingCoupon = false;
-      });
-      print('❌ [COUPON] Invalid coupon code');
-    }
-  } catch (e) {
-    print('💥 [COUPON] Error validating coupon: $e');
-    setState(() {
-      _isValidatingCoupon = false;
-      _isCouponValid = false;
-      _isCouponApplied = false;
-      _couponMessage = 'Error validating coupon. Please try again.';
-    });
-  }
-}
-
-// 3. Add this method to remove coupon
-
-void _removeCoupon() {
-  setState(() {
-    _isCouponApplied = false;
-    _isCouponValid = false;
-    _couponMessage = '';
-    _couponCode = '';
-    _couponController.clear();
-    _appliedPromotionId = null;
-    _appliedPromotionCode = '';
-    
-    // Restore original prices
-    if (_originalFinalPrice > 0) {
-      _apiFinalPricePerVisit = _originalFinalPrice;
-      _apiPricePerVisit = _originalPricePerVisit;
-      _originalFinalPrice = 0.0;
-      _originalPricePerVisit = 0.0;
-    }
-  });
-
-  // Recalculate total price with original prices
-  if (_internalSelectedDates.isNotEmpty) {
-    double originalTotalPrice = _internalSelectedDates.length * _apiFinalPricePerVisit;
-    setState(() {
-      _calculatedTotalPrice = originalTotalPrice;
-    });
-
-    // Update parent with original total price
-    if (widget.onTotalPriceChanged != null) {
-      widget.onTotalPriceChanged!(originalTotalPrice);
-    }
-  }
-
-  // Update parent callbacks with original prices
-  if (widget.onPricePerVisitChanged != null) {
-    widget.onPricePerVisitChanged!(_apiPricePerVisit);
-  }
-
-  if (widget.onPromotionIdChanged != null) {
-    widget.onPromotionIdChanged!(null);
-  }
-  if (widget.onPromotionCodeChanged != null) {
-    widget.onPromotionCodeChanged!(null);
-  }
-}
 
 void _resetDependentFields(String changedField) {
   print('🔄 [RESET DEPENDENT] Resetting fields dependent on: $changedField');
@@ -651,10 +406,6 @@ void _resetDependentFields(String changedField) {
     _calculatedTotalPrice = 0.0;
   });
   
-  // Reset coupon if applied
-  if (_isCouponApplied || _couponCode.isNotEmpty) {
-    _removeCoupon();
-  }
 }
 
 
@@ -840,11 +591,6 @@ Future<void> _calculatePriceFromAPI() async {
           print('✅ DEBUG: Called onPriceVatChanged callback with: $_apiPriceVat');
         }
 
-        // Re-validate coupon if it was previously applied
-        if (_isCouponApplied && _isCouponValid && _couponCode.isNotEmpty) {
-          print('🔄 DEBUG: Re-validating coupon after price calculation');
-          await _validateCouponCode();
-        }
 
         // Update parent with the new price per visit if callback is available
         print('🔍 DEBUG: Checking callback and selected dates:');
@@ -1080,164 +826,6 @@ Future<bool> _validateWorkers() async {
   }
 }
 
-Widget _buildCouponCodeField(AppLocalizations loc) {
-    final currentLocale = ref.watch(localeNotifierProvider);
-    final isArabic = currentLocale.languageCode == 'ar';
-    bool canApplyCoupon = _apiPricePerVisit > 0 && _apiTotalPrice > 0 && _apiHourPrice > 0;
-    
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      margin: EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: canApplyCoupon ? Colors.grey.shade50 : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: canApplyCoupon ? Colors.grey.shade200 : Colors.grey.shade300,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Align(
-  alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
-  child: Text(
-            loc.couponCode,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: canApplyCoupon ? Color(0xFF091735) : const Color(0xFF768090),
-            ),
-            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-          ),
-          ),
-          
-          SizedBox(height: 12),
-          Row(
-            textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _couponController,
-                  enabled: canApplyCoupon,
-                  textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                  onChanged: canApplyCoupon ? (value) {
-                    setState(() {
-                      _couponCode = value;
-                      _couponMessage = '';
-                    });
-                  } : null,
-                  decoration: InputDecoration(
-                    hintText: loc.enterCouponCode,
-                    hintStyle: TextStyle(
-                      color: canApplyCoupon ? Colors.grey.shade500 : Colors.grey.shade400,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: canApplyCoupon ? Colors.grey.shade300 : Colors.grey.shade400,
-                      ),
-                    ),
-                    disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: canApplyCoupon ? Color(0xFF1E3A8A) : Colors.grey.shade400,
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                    filled: true,
-                    fillColor: canApplyCoupon ? Colors.white : Colors.grey.shade200,
-                    suffixIcon: (_isCouponApplied && canApplyCoupon)
-                        ? IconButton(
-                            icon: Icon(Icons.close, color: Colors.red),
-                            onPressed: _removeCoupon,
-                          )
-                        : null,
-                  ),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: canApplyCoupon ? Colors.black : const Color(0xFF768090),
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Container(
-                height: 36,
-                child: ElevatedButton(
-                  onPressed: (canApplyCoupon && !_isValidatingCoupon) ? _validateCouponCode : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: canApplyCoupon 
-                        ? (_isCouponApplied ? Colors.green : Color(0xFF1E3A8A))
-                        : Colors.grey.shade400,
-                    disabledBackgroundColor: Color(0xFF768090),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                    padding: EdgeInsets.symmetric(horizontal: 25),
-                    minimumSize: Size(80, 48),
-                  ),
-                  child: _isValidatingCoupon
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          _isCouponApplied ? loc.applied : loc.apply,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-          if (_couponMessage.isNotEmpty && canApplyCoupon) ...[
-            SizedBox(height: 8),
-            Row(
-              textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-              children: [
-                Icon(
-                  _isCouponValid ? Icons.check_circle : Icons.error,
-                  size: 16,
-                  color: _isCouponValid ? Colors.green : Colors.red,
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _couponMessage,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _isCouponValid ? Colors.green.shade700 : Colors.red.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
 // Add this method to build the Select Date field
   Widget _buildSelectDateField(AppLocalizations loc) {
@@ -1260,7 +848,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
               border: Border.all(color: Colors.orange.withOpacity(0.3)),
             ),
             child: Text(
-              'Please complete all fields above before selecting dates', // Updated message
+              loc.completeAllAboveFields,
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.orange[700],
@@ -1322,7 +910,7 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                   )
                 else
                   Text(
-                    canSelectDates ? loc.tapToSelect : 'Complete fields first', // Updated hint text
+                    canSelectDates ? loc.tapToSelect : loc.completeFields, // Updated hint text
                     style: TextStyle(
                       fontSize: 16,
                       color: canSelectDates ? const Color(0xFF768090) : Colors.grey[500],
@@ -1385,14 +973,12 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
                       },
                       onNextPressed: null,
                       // Pass the correct price based on coupon status
-                      pricePerVisit: _isCouponApplied && _isCouponValid 
-                          ? _apiPricePerVisit  // Use discounted price when coupon is applied
-                          : (_apiPricePerVisit > 0 ? _apiPricePerVisit : widget.pricePerVisit),
+                      pricePerVisit:  (_apiPricePerVisit > 0 ? _apiPricePerVisit : widget.pricePerVisit),
                       contractDuration: widget.contractDuration,
                       visitsPerWeek: widget.visitsPerWeek,
                       maxSelectableDates: _getMaxSelectableDates(),
                       showBottomNavigation: false,
-                      vatAmount: _isCouponApplied && _isCouponValid ? 0.0 : _vatAmount, // No additional VAT when coupon is applied
+                      vatAmount:  _vatAmount, // No additional VAT when coupon is applied
                       professionId: widget.professionId,
                       workerCount: widget.workerCount,
                     )
@@ -1637,30 +1223,48 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
   String? customTitle,
   bool isLoading = false,
   required AppLocalizations loc,
+  bool isRequired = true, // Add this parameter
 }) {
   final currentLocale = ref.watch(localeNotifierProvider);
   final isArabic = currentLocale.languageCode == 'ar';
   bool hasValidValue = value.isNotEmpty && options.contains(value);
   
-  // Check if this field should show red border (incomplete and date field is disabled)
-  bool shouldShowRedBorder = !_areAllFieldsCompleted() && !hasValidValue && isEnabled;
+  // Use lighter red color and check if field is required and empty
+  bool shouldShowRedBorder = isRequired && !hasValidValue && isEnabled;
 
   return Container(
     margin: EdgeInsets.only(bottom: 15),
     child: Column(
       crossAxisAlignment: isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        // Label
+        // Label with Required indicator
         Align(
           alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              color: isEnabled ? Colors.grey[600] : Colors.grey[400],
-              fontWeight: FontWeight.w500,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isEnabled ? Colors.grey[600] : Colors.grey[400],
+                  fontWeight: FontWeight.w500,
+                ),
+                textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
+              ),
+              if (isRequired && isEnabled) ...[
+                SizedBox(width: 2),
+                 Text(
+                    '*',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.red[400],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -1672,9 +1276,9 @@ Widget _buildCouponCodeField(AppLocalizations loc) {
           decoration: BoxDecoration(
             border: Border.all(
               color: shouldShowRedBorder 
-                ? Colors.red 
+                ? Colors.red[200]! // Lighter red color
                 : Colors.grey[300]!, 
-              width: shouldShowRedBorder ? 2.0 : 1.5
+              width: shouldShowRedBorder ? 1.5 : 1.5
             ),
             borderRadius: BorderRadius.circular(12),
             color: isEnabled ? Colors.white : Colors.grey[100],
@@ -2002,7 +1606,6 @@ Future<void> _handleDonePressed() async {
                       ],
                     ),
 
-                    _buildCouponCodeField(loc),
 
                     SizedBox(height: 20),
 
@@ -2021,7 +1624,8 @@ Future<void> _handleDonePressed() async {
                       isEnabled: widget.isCustomBooking && widget.onNationalityChanged != null,
                       customTitle: loc.selectNationality,
                       isLoading: isLoadingNationalities,
-                      loc: loc
+                      loc: loc,
+                      isRequired: widget.isCustomBooking,
                     ),
 
                     _buildWorkerCountField(loc),
@@ -2051,6 +1655,7 @@ Future<void> _handleDonePressed() async {
                       customTitle: loc.selectContractDuration,
                       isLoading: isLoadingContractDurations,
                       loc: loc,
+                      isRequired: true,
                     ),
 
                     _buildDropdownField(
@@ -2189,7 +1794,7 @@ Future<void> _handleDonePressed() async {
                                   ),
                                 )
                               : Text(
-                                  loc.done,
+                                  loc.next,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,

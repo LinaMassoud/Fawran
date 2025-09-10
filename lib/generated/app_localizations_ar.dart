@@ -993,4 +993,49 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchDistricts => 'ابحث عن المناطق...';
+
+  @override
+  String get applyDiscountCode => 'تطبيق رمز الخصم';
+
+  @override
+  String get enterCouponCodeDescription =>
+      'أدخل رمز القسيمة للحصول على خصم على خدمتك';
+
+  @override
+  String get skip => 'تخطي';
+
+  @override
+  String get completeAllAboveFields =>
+      'يرجى إكمال جميع الحقول أعلاه قبل تحديد التواريخ';
+
+  @override
+  String get completeFields => 'يرجى إكمال الحقول أولاً';
+
+  @override
+  String get packagePromotionApplied => 'تم تطبيق عرض الباقة بنجاح!';
+
+  @override
+  String get pleaseEnterCouponCode => 'الرجاء إدخال كود الكوبون';
+
+  @override
+  String get pleaseSelectAddressFirst => 'الرجاء اختيار العنوان أولاً';
+
+  @override
+  String get couponAppliedSuccessfully => 'تم تطبيق الكوبون بنجاح!';
+
+  @override
+  String get invalidCouponCode => 'كود كوبون غير صالح';
+
+  @override
+  String get errorValidatingCoupon =>
+      'خطأ في التحقق من الكوبون. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get packagePromotionAvailable => 'عرض الباقة متاح';
+
+  @override
+  String get code => 'الكود';
+
+  @override
+  String get availablePromotions => 'العروض المتوفّرة:';
 }

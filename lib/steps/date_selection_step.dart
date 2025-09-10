@@ -72,12 +72,6 @@ class _DateSelectionStepState extends ConsumerState<DateSelectionStep>  {
   List<String> _localSelectedDays = [];
   bool _isSnackBarShowing = false;
 
-  TextEditingController _couponController = TextEditingController();
-bool _isCouponApplied = false;
-double _discountedPrice = 0.0;
-String _couponMessage = '';
-bool _isValidatingCoupon = false;
-
  @override
 void initState() {
   super.initState();
@@ -86,21 +80,6 @@ void initState() {
   _selectedDates = List.from(widget.selectedDates);
   _localSelectedDays = List.from(widget.selectedDays);
   
-  // Pre-fill coupon code if available from package and auto-apply
-  if (widget.package?.promotionCode != null && widget.package!.promotionCode!.isNotEmpty) {
-    _couponController.text = widget.package!.promotionCode!;
-    // Auto-apply the promotion without validation since it's already applied in the package
-    _isCouponApplied = true;
-    _discountedPrice = widget.package!.finalPrice; // Use the already calculated final price
-    _couponMessage = 'Promotion applied successfully!';
-    // PASS THE PROMOTION ID FROM PACKAGE
-    if (widget.package!.promotionId != null && widget.onPromotionIdChanged != null) {
-      widget.onPromotionIdChanged!(widget.package!.promotionId!);
-    }
-    if (widget.onPromotionCodeChanged != null) {
-    widget.onPromotionCodeChanged!(widget.package!.promotionCode!);
-  }
-  }
   
   _calculateContractDetails();
   _updateWeeklyVisitCounts();
@@ -109,277 +88,10 @@ void initState() {
   @override
 void dispose() {
   _pageController.dispose();
-  _couponController.dispose();
   super.dispose();
 }
 
-void _updatePromotionMessageLocalization() {
-  if (widget.package?.promotionCode != null && 
-      widget.package!.promotionCode!.isNotEmpty && 
-      _isCouponApplied && 
-      _couponMessage == 'Promotion applied successfully!') {
-    setState(() {
-      _couponMessage = AppLocalizations.of(context)!.promotionAppliedSuccessfully;
-    });
-  }
-}
 
-
-
-void _validateCouponCode() async {
-  if (_couponController.text.trim().isEmpty) {
-    setState(() {
-      _isCouponApplied = false;
-      _discountedPrice = 0.0;
-      _couponMessage = '';
-    });
-    return;
-  }
-
-  // Check if this is the pre-applied promotion code from the package
-  if (widget.package?.promotionCode != null && 
-      _couponController.text.trim() == widget.package!.promotionCode!) {
-    setState(() {
-      _isCouponApplied = true;
-      _discountedPrice = widget.package!.finalPrice;
-      _couponMessage = AppLocalizations.of(context)!.promotionAppliedSuccessfully;
-    });
-    return;
-  }
-
-  if (widget.selectedAddress == null) {
-    _showSnackBar('Please select an address first');
-    return;
-  }
-
-  setState(() {
-    _isValidatingCoupon = true;
-    _couponMessage = '';
-  });
-
-  try {
-    print('🌐 DEBUG: Calling ApiService.validatePromotion with parameters:');
-    print('  - promotionCode: ${_couponController.text.trim()}');
-    print('  - shiftId: ${widget.package!.serviceShift}');
-    print('  - cityCode: ${widget.selectedAddress!.cityCode}');
-    print('  - originalPrice: ${widget.package?.originalPrice}');
-    print('  - hourPrice: ${widget.package?.hourPrice}');
-
-    final result = await ApiService.validatePromotion(
-      promotionCode: _couponController.text.trim(),
-      shiftId: int.parse(widget.package!.serviceShift),
-      cityCode: widget.selectedAddress!.cityCode,
-      originalPrice: widget.package?.originalPrice ?? widget.totalPrice,
-      hourPrice: widget.package?.hourPrice ?? 0.0,
-    );
-
-    setState(() {
-      _isValidatingCoupon = false;
-      
-      if (result != null) {
-        bool isValid = result['valid'] == true;
-        String message = result['message']?.toString() ?? '';
-        
-        if (isValid) {
-          _isCouponApplied = true;
-          _discountedPrice = (result['final_price'] as num?)?.toDouble() ?? widget.totalPrice;
-          _couponMessage = message;
-          _showSnackBar('Coupon applied successfully!');
-
-          // EXTRACT AND PASS PROMOTION ID
-          int? promotionId = result['promotion_id'] as int?;
-          if (promotionId != null && widget.onPromotionIdChanged != null) {
-            widget.onPromotionIdChanged!(promotionId);
-          }
-          if (widget.onPromotionCodeChanged != null) {
-          widget.onPromotionCodeChanged!(_couponController.text.trim());
-        }
-          if (widget.onPriceChanged != null) {
-          widget.onPriceChanged!(_discountedPrice);
-        }
-        } else {
-          _isCouponApplied = false;
-          _discountedPrice = 0.0;
-          _couponMessage = message.isNotEmpty ? message : 'Invalid coupon code';
-          _showSnackBar(_couponMessage);
-
-          if (widget.onPromotionIdChanged != null) {
-            widget.onPromotionIdChanged!(null);
-          }
-          if (widget.onPriceChanged != null) {
-          widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
-        }
-        }
-      } else {
-        _isCouponApplied = false;
-        _discountedPrice = 0.0;
-        _couponMessage = 'Failed to validate coupon';
-        _showSnackBar(_couponMessage);
-        if (widget.onPriceChanged != null) {
-        widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
-      }
-      }
-    });
-  } catch (e) {
-    setState(() {
-      _isValidatingCoupon = false;
-      _isCouponApplied = false;
-      _discountedPrice = 0.0;
-      _couponMessage = 'Error validating coupon';
-    });
-    _showSnackBar('Error validating coupon: ${e.toString()}');
-    if (widget.onPromotionIdChanged != null) {
-      widget.onPromotionIdChanged!(null);
-    }
-  }
-}
-
-void _removeCoupon() {
-  setState(() {
-    _couponController.clear();
-    _isCouponApplied = false;
-    _discountedPrice = 0.0;
-    _couponMessage = '';
-  });
-  // Clear promotion ID when coupon is removed
-  if (widget.onPromotionIdChanged != null) {
-    widget.onPromotionIdChanged!(null);
-  }
-  if (widget.onPromotionCodeChanged != null) {
-    widget.onPromotionCodeChanged!(null);
-  }
-  if (widget.onPriceChanged != null) {
-    widget.onPriceChanged!(widget.package?.originalPrice ?? widget.totalPrice);
-  }
-}
-
-Widget _buildCouponSection(AppLocalizations loc) {
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    margin: EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      color: Colors.grey.shade50,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.grey.shade200),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          loc.couponCode,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF091735),
-          ),
-        ),
-        SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _couponController,
-                decoration: InputDecoration(
-                  hintText: loc.enterCouponCode,
-                  hintStyle: TextStyle(color: Colors.grey.shade500),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Color(0xFF1E3A8A)),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  suffixIcon: _isCouponApplied
-                      ? IconButton(
-                          icon: Icon(Icons.close, color: Colors.red),
-                          onPressed: _removeCoupon,
-                        )
-                      : null,
-                ),
-                style: TextStyle(fontSize: 14),
-                onChanged: (value) {
-                // Reset validation state when text changes, but only if it's not the pre-applied promotion
-                if (widget.package?.promotionCode == null || 
-                    value.trim() != widget.package!.promotionCode!) {
-                  if (_isCouponApplied || _couponMessage.isNotEmpty) {
-                    setState(() {
-                      _isCouponApplied = false;
-                      _discountedPrice = 0.0;
-                      _couponMessage = '';
-                    });
-                  }
-                }
-              },
-              ),
-            ),
-            SizedBox(width: 12),
-            Container(
-              height: 36,
-              child: ElevatedButton(
-                onPressed: _isValidatingCoupon ? null : _validateCouponCode,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _isCouponApplied ? Colors.green : Color(0xFF1E3A8A),
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 25),
-                ),
-                child: _isValidatingCoupon
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Text(
-                        _isCouponApplied ? loc.applied : loc.apply,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
-          ],
-        ),
-        if (_couponMessage.isNotEmpty) ...[
-          SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                _isCouponApplied ? Icons.check_circle : Icons.error,
-                size: 16,
-                color: _isCouponApplied ? Colors.green : Colors.red,
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _couponMessage,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _isCouponApplied ? Colors.green.shade700 : Colors.red.shade700,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    ),
-  );
-}
 List<String> _getLocalizedDays(AppLocalizations loc) {
   return [
     loc.sunday,
@@ -1421,11 +1133,6 @@ Widget build(BuildContext context) {
   final loc = AppLocalizations.of(context)!;
     final locale = ref.watch(localeNotifierProvider);
     final isArabic = locale.languageCode == 'ar';
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      _updatePromotionMessageLocalization();
-    }
-  });
   return Directionality(
       textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       child:  Column(
@@ -1448,8 +1155,6 @@ Widget build(BuildContext context) {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // ADD THIS LINE: Coupon section
-              _buildCouponSection(loc),
               
               // Day selection widget
               _buildDaySelectionWidget(loc),
@@ -1535,15 +1240,13 @@ Widget build(BuildContext context) {
           ),
           // UPDATE THIS PART TO SHOW DISCOUNTED PRICE
           Text(
-            _isCouponApplied && _discountedPrice > 0
-                ? '${_discountedPrice.toInt()} ${loc.currencyHourly}'
-                : '${(widget.package?.originalPrice ?? widget.totalPrice).toInt()} ${loc.currencyHourly}',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFF2582A),
-            ),
-          ),
+  '${(widget.package?.finalPrice ?? widget.totalPrice).toInt()} ${loc.currencyHourly}',
+  style: TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: Color(0xFFF2582A),
+  ),
+),
         ],
       ),
       Spacer(),

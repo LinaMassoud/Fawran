@@ -408,8 +408,26 @@
   "noUpcomingVisits": "No upcoming visits scheduled",
 
   "searchCities":"Search cities...",
-  "searchDistricts":"Search districts..."
+  "searchDistricts":"Search districts...",
 
+  "applyDiscountCode": "Apply Discount Code",
+  "enterCouponCodeDescription": "Enter your coupon code to get a discount on your service",
+  "skip": "Skip",
+
+  "completeAllAboveFields":"Please complete all fields above before selecting dates",
+  "completeFields": "Complete fields first",
+
+
+  "packagePromotionApplied":"Package promotion applied successfully!",
+  "pleaseEnterCouponCode":"Please enter a coupon code",
+  "pleaseSelectAddressFirst":"Please select an address first",
+  "couponAppliedSuccessfully":"Coupon applied successfully!",
+  "invalidCouponCode":"Invalid coupon code",
+  "errorValidatingCoupon":"Error validating coupon. Please try again.",
+
+  "packagePromotionAvailable":"Package Promotion Available",
+  "code":"Code",
+  "availablePromotions":"Available Promotions :"
 
   
 }
